@@ -22,10 +22,10 @@ int checkCMD(wxString input)
 }
 
 
-int checkCMDinput(wxString input, wxSting Compare)
+int checkCMDinput(wxString input,wxString Compare)
 {
-    comp = Compare.c_str();
-    wxString first4letters = input.substr(0,comp.length());
+    // comp = Compare.c_str();
+    wxString first4letters = input.substr(0,Compare.length());
     if (first4letters == input)
     {
         return 1;
@@ -36,7 +36,7 @@ int checkCMDinput(wxString input, wxSting Compare)
     }
 }
 
-wxString sendGPIBcmd(wxString input,leng)
+wxString sendGPIBcmd(wxString input, int leng)
 {
     wxString onlyCmd = input.substr(leng);
     //ToDo pass string to GPIB Converter
@@ -44,6 +44,6 @@ wxString sendGPIBcmd(wxString input,leng)
 
     wxLogDebug("Command Resived: %s", onlyCmd.c_str());
 
-    return wxString onlyCmd;
+    return onlyCmd;
 
 }

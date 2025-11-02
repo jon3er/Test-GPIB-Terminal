@@ -65,51 +65,48 @@ FT_STATUS configUsbDev(DWORD numDev, FT_HANDLE& ftHandle,int BaudRate)
 }
 
 
-FT_STATUS writeUsbDev(FT_HANDLE ftHandle, wxString cmdText)
+FT_STATUS writeUsbDev(FT_HANDLE ftHandle, wxString cmdText,DWORD& bytesWritten)
 {
-    char txBuffer[] = cmdText.c_str();
-    DWORD dataSize = sizeof(txBuffer);
+    wxCharBuffer txBuffer = cmdText.c_str();
 
-    FT_STATUS ftStatus = FT_Write(ftHandle, txBuffer, dataSize, &bytesWritten);
+    DWORD dataSize = strlen(txBuffer.data()); // bei null terminatior +1 addieren
 
-    int errorDetect = printErr(ftStatus,"Failed to write data");
+    FT_STATUS ftStatus = FT_Write(ftHandle, txBuffer.data(), dataSize, &bytesWritten);
 
-    if (errorDetect != -1)
+
+    if (bytesWritten != dataSize)
     {
-        if (bytesWritten != dataSize)
-        {
-            errorDetect = printErr(ftStatus,"Failed All of the Data");
-        }
-        else
-        {
-            wxLogDebug("Write Successful");
-        }
+        int errorDetect = printErr(ftStatus,"Failed All of the Data");
     }
+    else
+    {
+        wxLogDebug("Write Successful");
+    }
+
 
     return ftStatus;
 }
 
 
-FT_STATUS readUsbDev(FT_HANDLE ftHandle,char *RPBuffer,DWORD BytesToRead,DWORD* BytesReturned)
+FT_STATUS readUsbDev(FT_HANDLE ftHandle,LPVOID RPBuffer,DWORD BytesToRead,DWORD* BytesReturned)
 {
+    DWORD ByteToRead;
 
-    FT_STATUS ftStatus = FT_Read(ftHandle, *RPBuffer, ByteToRead, *BytesReturned);
+    FT_STATUS ftStatus = FT_Read(ftHandle, RPBuffer, ByteToRead, BytesReturned);
 
     int errorDetect = printErr(ftStatus,"Failed to Write data");
-    int dataSize = sizeof(RPBuffer)
+    DWORD dataSize = sizeof(RPBuffer);
 
-    if (errorDetect != -1)
+    if (*BytesReturned != dataSize)
     {
-        if (BytesReturned != dataSize)
-        {
-            errorDetect = printErr(ftStatus,"Failed to recive all of the Data");
-        }
-        else
-        {
-            wxLogDebug("Read Successful");
-        }
+        errorDetect = printErr(ftStatus,"Failed to recive all of the Data");
     }
+    else
+    {
+        wxLogDebug("Read Successful");
+    }
+
 
     return ftStatus;
 }
-*/
+
