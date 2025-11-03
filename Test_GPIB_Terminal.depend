@@ -1648,10 +1648,10 @@
 	<wx/wx.h>
 	"ftd2xx.h"
 
-1762098973 source:/home/jon3r/Documents/Code/Diplom/Test-GPIB-Terminal/fkt_d2xx.cpp
+1762154406 source:/home/jon3r/Documents/Code/Diplom/Test-GPIB-Terminal/fkt_d2xx.cpp
 	"fkt_d2xx.h"
 
-1762038691 /home/jon3r/Documents/Code/Diplom/Test-GPIB-Terminal/fkt_d2xx.h
+1762152653 /home/jon3r/Documents/Code/Diplom/Test-GPIB-Terminal/fkt_d2xx.h
 	<iostream>
 	<string>
 	<vector>
@@ -3164,14 +3164,14 @@
 1761997910 /usr/local/include/wx-3.3/wx/gtk/mdi.h
 	"wx/frame.h"
 
-1762099441 source:/home/jon3r/Documents/Code/Diplom/Test-GPIB-Terminal/fkt_GPIB.cpp
+1762128045 source:/home/jon3r/Documents/Code/Diplom/Test-GPIB-Terminal/fkt_GPIB.cpp
 	<wx/wx.h>
 	"fkt_GPIB.h"
 
-1762099428 /home/jon3r/Documents/Code/Diplom/Test-GPIB-Terminal/fkt_GPIB.h
+1762127863 /home/jon3r/Documents/Code/Diplom/Test-GPIB-Terminal/fkt_GPIB.h
 	<wx/wx.h>
 
-1762104994 source:/home/jon3r/Documents/Code/Diplom/Test-GPIB-Terminal/Main.cpp
+1762154778 source:/home/jon3r/Documents/Code/Diplom/Test-GPIB-Terminal/Main.cpp
 	<wx/wx.h>
 	"fkt_GPIB.h"
 	"fkt_d2xx.h"

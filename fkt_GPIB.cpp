@@ -47,3 +47,14 @@ wxString sendGPIBcmd(wxString input, int leng)
     return onlyCmd;
 
 }
+
+wxString terminalTimestampOutput(wxString Text)
+{
+    //Set Terminal Output Format
+    wxDateTime zeitJetzt = wxDateTime::Now();
+    wxString timestamp = zeitJetzt.Format("%H:%M:%S");
+    wxString FormatText = "[" + timestamp + "] " + Text;
+
+    //Output to terminal
+    return FormatText;
+}

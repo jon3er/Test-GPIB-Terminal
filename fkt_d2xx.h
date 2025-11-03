@@ -17,7 +17,7 @@ FT_STATUS configUsbDev(DWORD numDev, FT_HANDLE& ftHandle,int BaudRate);
 
 FT_STATUS writeUsbDev(FT_HANDLE ftHandle, wxString cmdText, DWORD& bytesWritten);
 
-FT_STATUS readUsbDev(FT_HANDLE ftHandle,LPVOID *RPBuffer,DWORD BytesToRead,LPDWORD BytesReturned);
+FT_STATUS readUsbDev(FT_HANDLE ftHandle,char *RPBuffer, DWORD& BufferSize);
 
 
 

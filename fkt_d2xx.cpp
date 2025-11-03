@@ -1,10 +1,21 @@
 #include "fkt_d2xx.h"
 
+class FTDevice
+{
+public:
+    FT_HANDLE ftHandle;
+    FT_STATUS ftStatus;
+    DWORD numDev;
+    int BaudRate;
+};
+
+
 int printErr(FT_STATUS status, const std::string& msg)
 {
     if (status != FT_OK)
     {
-        wxLogDebug("Error:", msg, " (FT_Status Code: ", status, ")/n");
+        wxString Text = "Error:" + msg + " (FT_Status Code: " + std::to_string(status) + ")";
+        wxLogDebug(Text);
         return 1;
     }
 
@@ -24,7 +35,7 @@ DWORD scanUsbDev()
     return numDevs;
 }
 
-FT_STATUS configUsbDev(DWORD numDev, FT_HANDLE& ftHandle,int BaudRate)
+FT_STATUS configUsbDev(DWORD numDev, FT_HANDLE &ftHandle,int BaudRate)
 {
         //open first Device
     FT_STATUS ftStatus = FT_Open(numDev, &ftHandle);
@@ -62,40 +73,82 @@ FT_STATUS configUsbDev(DWORD numDev, FT_HANDLE& ftHandle,int BaudRate)
 
     return ftStatus;
 
+    FT_Close(ftHandle);
+
 }
 
 
 FT_STATUS writeUsbDev(FT_HANDLE ftHandle, wxString cmdText,DWORD& bytesWritten)
 {
+
+    //open first Device
+    FT_STATUS ftStatus = FT_Open(0, &ftHandle);
+
+    int errorDetect = printErr(ftStatus,"FT Open Failed. Is programm Run as su? are ftdi_sio driver trunned off?");
+
+    if (errorDetect)
+    {
+        return ftStatus;
+    }
+
+    // TODO -- CR (ASCII 13), LF (ASCII 10), ESC (ASCII 27), ‘+’ (ASCII 43) – they must be escaped by preceding them with an ESC character.
     wxCharBuffer txBuffer = cmdText.c_str();
 
     DWORD dataSize = strlen(txBuffer.data()); // bei null terminatior +1 addieren
 
-    FT_STATUS ftStatus = FT_Write(ftHandle, txBuffer.data(), dataSize, &bytesWritten);
+    ftStatus = FT_Write(ftHandle, txBuffer.data(), dataSize, &bytesWritten);
 
+    errorDetect = printErr(ftStatus,"Failed to write all of the Data");
 
     if (bytesWritten != dataSize)
     {
-        int errorDetect = printErr(ftStatus,"Failed All of the Data");
+        wxLogDebug("Write Failed");
     }
     else
     {
-        wxLogDebug("Write Successful");
+        wxLogDebug("Write Successful!");
     }
 
-
+    FT_Close(ftHandle);
     return ftStatus;
 }
 
 
-FT_STATUS readUsbDev(FT_HANDLE ftHandle,LPVOID RPBuffer,DWORD BytesToRead,DWORD* BytesReturned)
+FT_STATUS readUsbDev(FT_HANDLE ftHandle,char *RPBuffer, DWORD& BufferSize)
 {
-    DWORD ByteToRead;
+    DWORD BytesToRead;
+    DWORD* BytesReturned;
+    wxString Text;
 
-    FT_STATUS ftStatus = FT_Read(ftHandle, RPBuffer, ByteToRead, BytesReturned);
+    //open first Device
+    FT_STATUS ftStatus = FT_Open(0, &ftHandle);
 
-    int errorDetect = printErr(ftStatus,"Failed to Write data");
-    DWORD dataSize = sizeof(RPBuffer);
+    int errorDetect = printErr(ftStatus,"FT Open Failed. Is programm Run as su? are ftdi_sio driver trunned off?");
+
+    if (errorDetect)
+    {
+        return ftStatus;
+    }
+
+
+    //Get Number of bytes to read from receive queue
+    ftStatus = FT_GetQueueStatus(ftHandle,&BytesToRead);
+
+    Text = "Bytes to read from queue: " + std::to_string(BytesToRead);
+    wxLogDebug(Text);
+
+    if (BytesToRead <= 0)
+    {
+        FT_Close(ftHandle);
+        return ftStatus;
+    }
+
+    ftStatus = FT_Read(ftHandle, RPBuffer, BytesToRead, BytesReturned);
+
+    errorDetect = printErr(ftStatus,"Failed to Write data");
+    DWORD dataSize = sizeof(*RPBuffer);
+
+    BufferSize = *BytesReturned;
 
     if (*BytesReturned != dataSize)
     {
@@ -106,7 +159,7 @@ FT_STATUS readUsbDev(FT_HANDLE ftHandle,LPVOID RPBuffer,DWORD BytesToRead,DWORD*
         wxLogDebug("Read Successful");
     }
 
-
+    FT_Close(ftHandle);
     return ftStatus;
 }
 

@@ -9,3 +9,5 @@ int checkCMDinput(wxString input, wxString Compare);
 
 wxString sendGPIBcmd(wxString input, int leng);
 
+wxString terminalTimestampOutput(wxString Text);
+
