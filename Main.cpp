@@ -439,6 +439,10 @@ void FunctionWindow::OnWriteGpib(wxCommandEvent& event)
 
         wxString GPIBText = FunctionWindow::writeFuncInput->GetValue();
 
+        std::string CheckText(GPIBText.ToUTF8());
+
+        GPIBText = checkAscii(CheckText);
+
         wxLogDebug("Reading from Device...");
         FT_STATUS ftStatus =writeUsbDev(ftHandle, GPIBText, bytesWritten);
 
@@ -501,38 +505,25 @@ void FunctionWindow::OnReadGpib(wxCommandEvent& event)
 
 void FunctionWindow::OnReadWriteGpib(wxCommandEvent& event)
 {
-    wxString Text;
+    char charInput[] = {104 ,01 ,02 ,13 ,96 ,10 ,100 ,27 ,05 ,43 ,06, 111};
+    //char charInput[] = {104 ,97 ,27 ,108 ,108 ,111};
+    int leng = sizeof(charInput);
 
-    wxLogDebug("On Write Pressed");
-
-    if (DeviceFound)
+    for (int i=0 ;i<leng ; i++ )
     {
-        DWORD bytesWritten;
-
-        wxString GPIBText = FunctionWindow::writeFuncInput->GetValue();
-
-        wxLogDebug("Reading from Device...");
-        FT_STATUS ftStatus =writeUsbDev(ftHandle, GPIBText, bytesWritten);
-
-        if (ftStatus == FT_OK)
-        {
-            Text = GPIBText;
-            Text = "Msg sent: " + Text + "\n" + std::to_string(bytesWritten) + "Bytes Written to GPIB Device";
-            FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
-        }
-        else
-        {
-            Text = "Failed to send Data";
-            FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
-        }
-
+        wxLogDebug(std::to_string(charInput[i]));
     }
-    else
-    {
-        wxLogDebug("No Device to send too");
-        Text = "Failed to Connected to a Device";
-        FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
-    }
+
+
+    std::string inputString(charInput, sizeof(charInput));
+
+
+
+    std::string checkedString = checkAscii("test+einfach");
+
+    wxLogDebug(inputString);
+    std::string Text = checkedString + " " + std::to_string(checkedString.length());
+    wxLogDebug(Text);
 }
 
 void FunctionWindow::OnUsbConfig(wxCommandEvent& event)

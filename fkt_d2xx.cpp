@@ -77,6 +77,61 @@ FT_STATUS configUsbDev(DWORD numDev, FT_HANDLE &ftHandle,int BaudRate)
 
 }
 
+std::string checkAscii(std::string input)
+{
+    const char* charInput = input.c_str();
+    int DataSize = strlen(input.c_str());
+
+    wxLogDebug("Length in function:");
+    wxLogDebug(std::to_string(DataSize));
+
+    char* charInputBuffer = new char[input.length()+1];
+    strcpy(charInputBuffer, charInput);
+    char* charOutputBuffer = new char[input.length()*2];
+
+    wxString OgString;
+    wxString ModString;
+
+    int j = 0;
+
+    for (int i=0;i < DataSize;i++)
+    {
+
+
+        switch(charInputBuffer[i])
+        {
+            case 10:
+            case 13:
+            case 27:
+            case 43:
+
+                charOutputBuffer[j] = {27};
+                ModString = ModString + std::to_string(charOutputBuffer[j]) + " ";
+                j++;
+
+                break;
+            default:
+                break;
+        }
+        charOutputBuffer[j]= charInputBuffer[i];
+
+        OgString = OgString + std::to_string(charInputBuffer[i]) + " ";
+        wxLogDebug(OgString);
+        ModString = ModString + std::to_string(charOutputBuffer[j]) + " ";
+        wxLogDebug(ModString);
+
+
+        j++;
+
+    }
+    wxLogDebug(ModString);
+
+    std::string s(charOutputBuffer, j);
+    delete[] charInputBuffer;
+
+    return s;
+
+}
 
 FT_STATUS writeUsbDev(FT_HANDLE ftHandle, wxString cmdText,DWORD& bytesWritten)
 {
