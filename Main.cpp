@@ -443,7 +443,7 @@ void FunctionWindow::OnWriteGpib(wxCommandEvent& event)
 
         GPIBText = checkAscii(CheckText);
 
-        wxLogDebug("Reading from Device...");
+        wxLogDebug("Trying to write to Device...");
         FT_STATUS ftStatus =writeUsbDev(ftHandle, GPIBText, bytesWritten);
 
         if (ftStatus == FT_OK)
