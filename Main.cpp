@@ -437,25 +437,75 @@ void FunctionWindow::OnReadGpib(wxCommandEvent& event)
 
 void FunctionWindow::OnReadWriteGpib(wxCommandEvent& event)
 {
-    char charInput[] = {104 ,01 ,02 ,13 ,96 ,10 ,100 ,27 ,05 ,43 ,06, 111};
-    //char charInput[] = {104 ,97 ,27 ,108 ,108 ,111};
-    int leng = sizeof(charInput);
+    wxString Text;
 
-    for (int i=0 ;i<leng ; i++ )
+
+    wxLogDebug("On Write Pressed");
+
+    if (DeviceFound)
     {
-        wxLogDebug(std::to_string(charInput[i]));
+        DWORD bytesWritten;
+
+        wxString GPIBText = FunctionWindow::writeFuncInput->GetValue();
+
+        std::string CheckText(GPIBText.ToUTF8());
+
+        GPIBText = checkAscii(CheckText);
+
+        wxLogDebug("Trying to write to Device...");
+        FT_STATUS ftStatus =writeUsbDev(ftHandle, GPIBText, bytesWritten);
+
+        if (ftStatus == FT_OK)
+        {
+            Text = GPIBText;
+            Text = "Msg sent: " + Text + " ; " + std::to_string(bytesWritten) + " Bytes Written to GPIB Device\n";
+            FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
+        }
+        else
+        {
+            Text = "Failed to send Data\n";
+            FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
+        }
+
+    }
+    else
+    {
+        wxLogDebug("No Device to send too");
+        Text = "Failed to Connected to a Device\n";
+        FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
     }
 
+    wxLogDebug("On Read Pressed");
 
-    std::string inputString(charInput, sizeof(charInput));
+    if (DeviceFound)
+    {
+        char* Buffer;
+        DWORD BufferSize;
 
+        FT_SetTimeouts(ftHandle, 5000,0);
+        wxLogDebug("Reading from Device...");
+        FT_STATUS ftStatus = readUsbDev(ftHandle, Buffer, BufferSize);
 
+        if (ftStatus == FT_OK)
+        {
+            Text = std::string(Buffer);
+            Text = "Msg received: " + Text + "\n";
+            FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
+        }
+        else
+        {
+            Text = "Failed to Receive Data - TimeOut after 5s\n";
+            FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
+        }
 
-    std::string checkedString = checkAscii("test+einfach");
+    }
+    else
+    {
+        wxLogDebug("No Device to send too");
+        Text = "Failed to Connected to a Device";
+        FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
+    }
 
-    wxLogDebug(inputString);
-    std::string Text = checkedString + " " + std::to_string(checkedString.length());
-    wxLogDebug(Text);
 }
 
 void FunctionWindow::OnUsbConfig(wxCommandEvent& event)

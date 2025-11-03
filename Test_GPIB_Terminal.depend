@@ -1648,7 +1648,7 @@
 	<wx/wx.h>
 	"ftd2xx.h"
 
-1762169751 source:/home/jon3r/Documents/Code/Diplom/Test-GPIB-Terminal/fkt_d2xx.cpp
+1762175215 source:/home/jon3r/Documents/Code/Diplom/Test-GPIB-Terminal/fkt_d2xx.cpp
 	"fkt_d2xx.h"
 
 1762165959 /home/jon3r/Documents/Code/Diplom/Test-GPIB-Terminal/fkt_d2xx.h
@@ -3171,7 +3171,7 @@
 1762127863 /home/jon3r/Documents/Code/Diplom/Test-GPIB-Terminal/fkt_GPIB.h
 	<wx/wx.h>
 
-1762169802 source:/home/jon3r/Documents/Code/Diplom/Test-GPIB-Terminal/Main.cpp
+1762172011 source:/home/jon3r/Documents/Code/Diplom/Test-GPIB-Terminal/Main.cpp
 	<wx/wx.h>
 	"fkt_GPIB.h"
 	"fkt_d2xx.h"

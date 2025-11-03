@@ -87,7 +87,7 @@ std::string checkAscii(std::string input)
 
     char* charInputBuffer = new char[input.length()+1];
     strcpy(charInputBuffer, charInput);
-    char* charOutputBuffer = new char[input.length()*2];
+    char* charOutputBuffer = new char[input.length()*2 + 2];
 
     wxString OgString;
     wxString ModString;
@@ -125,8 +125,13 @@ std::string checkAscii(std::string input)
 
     }
     wxLogDebug(ModString);
+    // Add CR (ascii 13) & ascii 27
 
-    std::string s(charOutputBuffer, j);
+    charOutputBuffer[j+1] = {27};
+
+    charOutputBuffer[j+2] = {10};
+
+    std::string s(charOutputBuffer, j+2);
     delete[] charInputBuffer;
 
     return s;
