@@ -164,7 +164,6 @@ FT_STATUS writeUsbDev(FT_HANDLE ftHandle, wxString cmdText,DWORD& bytesWritten)
         wxLogDebug("Write Successful!");
     }
 
-    FT_Close(ftHandle);
     return ftStatus;
 }
 
@@ -172,40 +171,30 @@ FT_STATUS writeUsbDev(FT_HANDLE ftHandle, wxString cmdText,DWORD& bytesWritten)
 FT_STATUS readUsbDev(FT_HANDLE ftHandle,char *RPBuffer, DWORD& BufferSize)
 {
     DWORD BytesToRead;
-    DWORD* BytesReturned;
+    DWORD BytesReturned;
     wxString Text;
 
-    //open first Device
-    FT_STATUS ftStatus = FT_Open(0, &ftHandle);
-
-    int errorDetect = printErr(ftStatus,"FT Open Failed. Is programm Run as su? are ftdi_sio driver trunned off?");
-
-    if (errorDetect)
-    {
-        return ftStatus;
-    }
-
-
     //Get Number of bytes to read from receive queue
-    ftStatus = FT_GetQueueStatus(ftHandle,&BytesToRead);
+    FT_STATUS ftStatus = FT_GetQueueStatus(ftHandle,&BytesToRead);
 
     Text = "Bytes to read from queue: " + std::to_string(BytesToRead);
     wxLogDebug(Text);
 
     if (BytesToRead <= 0)
     {
+        wxLogDebug("No Data to read");
         FT_Close(ftHandle);
         return ftStatus;
     }
 
-    ftStatus = FT_Read(ftHandle, RPBuffer, BytesToRead, BytesReturned);
+    ftStatus = FT_Read(ftHandle, RPBuffer, BytesToRead, &BytesReturned);
 
-    errorDetect = printErr(ftStatus,"Failed to Write data");
+    int errorDetect = printErr(ftStatus,"Failed to Read data");
     DWORD dataSize = sizeof(*RPBuffer);
 
-    BufferSize = *BytesReturned;
+    BufferSize = BytesReturned;
 
-    if (*BytesReturned != dataSize)
+    if (BytesReturned != dataSize)
     {
         errorDetect = printErr(ftStatus,"Failed to recive all of the Data");
     }

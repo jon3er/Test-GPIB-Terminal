@@ -280,6 +280,7 @@ void MainWinFrame::OnOpenFunctionTest(wxCommandEvent& event)
     //open Window Pauses Main Window
     FuncWin->ShowModal();
     //Close Window
+
     FuncWin->Destroy();
 }
 
@@ -319,77 +320,6 @@ void TerminalWindow::OnEnterTerminal(wxCommandEvent& event)
     TText = TText + "\n";
     //Output to terminal
     TerminalDisplay->AppendText(terminalTimestampOutput(TText));
-
-    /*
-    if (testRes)
-    {
-        wxString onlyCmd = sendGPIBcmd(TText,4);
-        if (onlyCmd == "connect")
-        {
-            DWORD numDev = scanUsbDev();
-
-                if (devices > 0)
-                {
-                    if (devices > 1)
-                    {
-                        wxLogDebug("More than one Device found!");
-                    }
-                    else
-                    {
-                        wxLogDebug("One Device found!");
-
-                        ftStatus = configUsbDev(numDev, &ftHandle,BaudRate);
-                    }
-
-                    if (ftStatus != FT_OK)
-                    {
-                        wxLogDebug("Failed to open Device!");
-                        ftStatus = FT_Close(ftHandle);
-                        DevConnected = false;
-                    }
-                    else
-                    {
-                        wxLogDebug("Device Connected!");
-                        TerminalWindow::DevConnected = true;
-                    }
-                }
-        }
-        sendGPIBcmd(TText,"cmd ");
-
-        if (DevConnected && checkCMDinput(TText, "cmd write"))
-        {
-            wxString cmdText = sendGPIBcmd(TText,9);
-
-            ftStatus = writeUsbDev(ftHandle, cmdText);
-
-            if (ftStatus != FT_OK)
-            {
-                wxLogDebug("Failed to write to Device!");
-                ftStatus = FT_Close(ftHandle);
-                DevConnected = false;
-            }
-            else
-            {
-                wxLogDebug("msg Writen!")
-                DevConnected = true;
-
-                ftStatus = readUsbDev(ftHandle,*RPBuffer,BytesToRead,*BytesReturned);
-                if (ftStatus != FT_OK)
-                {
-                    wxLogDebug("no msg Recived!");
-                    ftStatus = FT_Close(ftHandle);
-                    DevConnected = false;
-                }
-                else
-                {
-                    string msgRes = RPBuffer[BytesReturned];
-                    wxLogDebug("msg resived: %s",msgRes);
-                }
-            }
-        }
-
-    }
-    */
 
 }
 
@@ -479,17 +409,19 @@ void FunctionWindow::OnReadGpib(wxCommandEvent& event)
         char* Buffer;
         DWORD BufferSize;
 
+        FT_SetTimeouts(ftHandle, 5000,0);
         wxLogDebug("Reading from Device...");
         FT_STATUS ftStatus = readUsbDev(ftHandle, Buffer, BufferSize);
+
         if (ftStatus == FT_OK)
         {
-            Text = std::to_string(Buffer[BufferSize]);
-            Text = "Msg received: " + Text;
+            Text = std::string(Buffer);
+            Text = "Msg received: " + Text + "\n";
             FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
         }
         else
         {
-            Text = "Failed to Receive Data";
+            Text = "Failed to Receive Data - TimeOut after 5s\n";
             FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
         }
 
@@ -528,6 +460,76 @@ void FunctionWindow::OnReadWriteGpib(wxCommandEvent& event)
 
 void FunctionWindow::OnUsbConfig(wxCommandEvent& event)
 {
+ /*
+    if (testRes)
+    {
+        wxString onlyCmd = sendGPIBcmd(TText,4);
+        if (onlyCmd == "connect")
+        {
+            DWORD numDev = scanUsbDev();
+
+                if (devices > 0)
+                {
+                    if (devices > 1)
+                    {
+                        wxLogDebug("More than one Device found!");
+                    }
+                    else
+                    {
+                        wxLogDebug("One Device found!");
+
+                        ftStatus = configUsbDev(numDev, &ftHandle,BaudRate);
+                    }
+
+                    if (ftStatus != FT_OK)
+                    {
+                        wxLogDebug("Failed to open Device!");
+                        ftStatus = FT_Close(ftHandle);
+                        DevConnected = false;
+                    }
+                    else
+                    {
+                        wxLogDebug("Device Connected!");
+                        TerminalWindow::DevConnected = true;
+                    }
+                }
+        }
+        sendGPIBcmd(TText,"cmd ");
+
+        if (DevConnected && checkCMDinput(TText, "cmd write"))
+        {
+            wxString cmdText = sendGPIBcmd(TText,9);
+
+            ftStatus = writeUsbDev(ftHandle, cmdText);
+
+            if (ftStatus != FT_OK)
+            {
+                wxLogDebug("Failed to write to Device!");
+                ftStatus = FT_Close(ftHandle);
+                DevConnected = false;
+            }
+            else
+            {
+                wxLogDebug("msg Writen!")
+                DevConnected = true;
+
+                ftStatus = readUsbDev(ftHandle,*RPBuffer,BytesToRead,*BytesReturned);
+                if (ftStatus != FT_OK)
+                {
+                    wxLogDebug("no msg Recived!");
+                    ftStatus = FT_Close(ftHandle);
+                    DevConnected = false;
+                }
+                else
+                {
+                    string msgRes = RPBuffer[BytesReturned];
+                    wxLogDebug("msg resived: %s",msgRes);
+                }
+            }
+        }
+
+    }
+    */
 
     DWORD numDev = 0;
     int BaudRate = 12000;
