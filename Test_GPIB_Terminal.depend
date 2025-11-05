@@ -3177,3 +3177,12 @@
 	"fkt_GPIB.h"
 	"fkt_d2xx.h"
 
+1762365225 source:/home/jon3r/Documents/Code/Diplom/Test-GPIB-Terminal/map_cmds.cpp
+	"map_cmds.h"
+
+1762365244 /home/jon3r/Documents/Code/Diplom/Test-GPIB-Terminal/map_cmds.h
+	<wx/wx.h>
+	<unistd.h>
+	<map>
+	"fkt_d2xx.h"
+

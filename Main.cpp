@@ -1,7 +1,9 @@
 #include <wx/wx.h>
 #include <unistd.h>
+#include <map>
 #include "fkt_GPIB.h"
 #include "fkt_d2xx.h"
+#include "map_cmds.h"
 //#include <Main.h>
 
 enum
@@ -317,8 +319,14 @@ void MainWinFrame::OnScanUsb(wxCommandEvent& event)
 
 //-----TerminalWindow-----
 
+
+
 void TerminalWindow::OnEnterTerminal(wxCommandEvent& event)
 {
+    // Define a type for our command map for easier reading
+    using CommandMap = std::map<std::string, std::function<void(const std::string&)>>;
+
+
     wxTextCtrl* Terminal = static_cast<wxTextCtrl*>(event.GetEventObject());
     wxString TText = Terminal->GetValue();
     Terminal->SetValue("");
@@ -329,6 +337,16 @@ void TerminalWindow::OnEnterTerminal(wxCommandEvent& event)
     TText = TText + "\n";
     //Output to terminal
     TerminalDisplay->AppendText(terminalTimestampOutput(TText));
+
+    CommandMap cmds;
+    cmds["scan"]        = scanDevices;
+    cmds["status"]      = statusDevice;
+    cmds["connect"]     = connectDevice;
+    cmds["disconnect"]  = disconnectDevice;
+    cmds["send"]        = sendToDevice;
+    cmds["read"]        = readFromDevice;
+    cmds["write"]       = writeToDevice;
+
 
 }
 
@@ -473,7 +491,7 @@ void FunctionWindow::OnReadGpib(wxCommandEvent& event)
     else
     {
         wxLogDebug("No Device to send too");
-        Text = "Failed to Connected to a Device";
+        Text = "Failed to Connected to a Device\n";
         FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
     }
 
