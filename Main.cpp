@@ -91,7 +91,7 @@ private:
 class FunctionWindow : public wxDialog
 {
 public:
-    FunctionWindow(wxWindow *parent) : wxDialog(parent, wxID_ANY, "Function Test Window", wxDefaultPosition, wxSize(400,900))
+    FunctionWindow(wxWindow *parent) : wxDialog(parent, wxID_ANY, "Function Test Window", wxDefaultPosition, wxSize(500,750))
     {
         wxPanel* panelfunc = new wxPanel(this);
 
@@ -456,7 +456,11 @@ void FunctionWindow::OnReadGpib(wxCommandEvent& event)
         {
             //Text = std::string(Buffer);
             Text = std::string(BigBuffer.data(),BigBuffer.size());
-            Text = "Msg received: " + Text + "\n";
+            Text = "Msg received:\n" + Text + "\n";
+            if (BigBuffer.size() == 0)
+            {
+                Text = "No Message to Read\n";
+            }
             FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
         }
         else
@@ -522,7 +526,12 @@ void FunctionWindow::OnReadWriteGpib(wxCommandEvent& event)
         {
             //Text = std::string(Buffer);
             Text = std::string(BigBuffer.data(),BigBuffer.size());
-            Text = "Msg received: " + Text + "\n";
+            Text = "Msg received:\n" + Text + "\n";
+            if (BigBuffer.size() == 0)
+            {
+                Text = "No Message to Read\n";
+            }
+
             FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
         }
         else
