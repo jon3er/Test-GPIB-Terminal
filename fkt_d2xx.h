@@ -21,6 +21,8 @@ FT_STATUS writeUsbDev(FT_HANDLE ftHandle, char* cmdText, DWORD& bytesWritten);
 
 FT_STATUS readUsbDev(FT_HANDLE ftHandle,char *RPBuffer,DWORD &BytesReturned);
 
+FT_STATUS readUsbDevTest(FT_HANDLE ftHandle,std::vector<char>& RPBuffer,DWORD &BytesReturned);
+
 const char * statusString(FT_STATUS status);
 
 

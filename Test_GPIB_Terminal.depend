@@ -1648,10 +1648,10 @@
 	<wx/wx.h>
 	"ftd2xx.h"
 
-1762299163 source:/home/jon3r/Documents/Code/Diplom/Test-GPIB-Terminal/fkt_d2xx.cpp
+1762348567 source:/home/jon3r/Documents/Code/Diplom/Test-GPIB-Terminal/fkt_d2xx.cpp
 	"fkt_d2xx.h"
 
-1762297533 /home/jon3r/Documents/Code/Diplom/Test-GPIB-Terminal/fkt_d2xx.h
+1762348542 /home/jon3r/Documents/Code/Diplom/Test-GPIB-Terminal/fkt_d2xx.h
 	<iostream>
 	<string>
 	<vector>

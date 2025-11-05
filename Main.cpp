@@ -443,15 +443,19 @@ void FunctionWindow::OnReadGpib(wxCommandEvent& event)
 
     if (FunctionWindow::Connected)
     {
-        char Buffer[256];
+        //char Buffer[256];
+        std::vector<char> BigBuffer;
         DWORD BufferSize;
+        FT_STATUS ftStatus;
 
         wxLogDebug("Reading from Device...");
-        FT_STATUS ftStatus = readUsbDev(ftHandle, Buffer, BufferSize);
+        //FT_STATUS ftStatus = readUsbDev(ftHandle, Buffer, BufferSize);
+        ftStatus = readUsbDevTest(ftHandle, BigBuffer,BufferSize);
 
         if (ftStatus == FT_OK)
         {
-            Text = std::string(Buffer);
+            //Text = std::string(Buffer);
+            Text = std::string(BigBuffer.data(),BigBuffer.size());
             Text = "Msg received: " + Text + "\n";
             FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
         }
@@ -506,18 +510,18 @@ void FunctionWindow::OnReadWriteGpib(wxCommandEvent& event)
         //read
         usleep(15000);
 
-        char Buffer[256];
+        //char Buffer[256];
+        std::vector<char> BigBuffer;
         DWORD BufferSize;
-        DWORD BytesReturned;
 
         wxLogDebug("Reading from Device...");
-        ftStatus = readUsbDev(ftHandle, Buffer, BytesReturned);
-
-        Buffer[BytesReturned]='\0';
+        //FT_STATUS ftStatus = readUsbDev(ftHandle, Buffer, BufferSize);
+        ftStatus = readUsbDevTest(ftHandle, BigBuffer,BufferSize);
 
         if (ftStatus == FT_OK)
         {
-            Text = std::string(Buffer);
+            //Text = std::string(Buffer);
+            Text = std::string(BigBuffer.data(),BigBuffer.size());
             Text = "Msg received: " + Text + "\n";
             FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
         }
@@ -527,12 +531,11 @@ void FunctionWindow::OnReadWriteGpib(wxCommandEvent& event)
             FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
         }
 
-
     }
     else
     {
-        wxLogDebug("No Connection or Missing config");
-        Text = "Failed to Connect\n";
+        wxLogDebug("No Device to send too");
+        Text = "Failed to Connected to a Device";
         FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
     }
 

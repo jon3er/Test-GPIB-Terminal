@@ -132,6 +132,7 @@ char* checkAscii(std::string input)
 
 }
 
+
 FT_STATUS writeUsbDev(FT_HANDLE ftHandle, char* cmdText,DWORD& bytesWritten)
 {
     FT_STATUS ftStatus;
@@ -157,6 +158,49 @@ FT_STATUS writeUsbDev(FT_HANDLE ftHandle, char* cmdText,DWORD& bytesWritten)
     }
 
     return ftStatus;
+}
+
+FT_STATUS readUsbDevTest(FT_HANDLE ftHandle,std::vector<char>& RPBuffer,DWORD &BytesReturned)
+{
+    DWORD BytesToRead;
+    wxString Text;
+    FT_STATUS ftStatus;
+
+    RPBuffer.clear();
+
+    //Get Number of bytes to read from receive queue
+    ftStatus = FT_GetQueueStatus(ftHandle,&BytesToRead);
+    printErr(ftStatus,"Failed to Get Queue Status");
+
+    RPBuffer.resize(BytesToRead);
+    char* p_RPBuffer = RPBuffer.data();
+
+    Text = "Bytes to read from queue: " + std::to_string(BytesToRead);
+    wxLogDebug(Text);
+
+    if (BytesToRead <= 0)
+    {
+        wxLogDebug("No Data to read bytes to read: %d", (int)BytesToRead);
+        return ftStatus;
+    }
+
+    ftStatus = FT_Read(ftHandle, p_RPBuffer, BytesToRead, &BytesReturned);
+    printErr(ftStatus,"Failed to Read data");
+
+    DWORD dataSize = RPBuffer.size();
+
+    if (BytesReturned != dataSize)
+    {
+        printErr(ftStatus,"Failed to recive all of the Data");
+        wxLogDebug("Received data Size: %d \n Bytes Returned: %d",(int)dataSize,(int)BytesReturned);
+    }
+    else
+    {
+        wxLogDebug("Read Successful %d Bytes read",(int)dataSize);
+    }
+
+    return ftStatus;
+
 }
 
 
