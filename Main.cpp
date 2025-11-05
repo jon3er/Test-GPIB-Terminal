@@ -91,7 +91,7 @@ private:
 class FunctionWindow : public wxDialog
 {
 public:
-    FunctionWindow(wxWindow *parent) : wxDialog(parent, wxID_ANY, "Function Test Window", wxDefaultPosition, wxSize(400,600))
+    FunctionWindow(wxWindow *parent) : wxDialog(parent, wxID_ANY, "Function Test Window", wxDefaultPosition, wxSize(400,900))
     {
         wxPanel* panelfunc = new wxPanel(this);
 
@@ -325,7 +325,7 @@ void TerminalWindow::OnEnterTerminal(wxCommandEvent& event)
 
     wxLogDebug("user entered: %s", TText.c_str());
 
-    int testRes = checkCMD(TText);
+    //int testRes = checkCMD(TText);
     TText = TText + "\n";
     //Output to terminal
     TerminalDisplay->AppendText(terminalTimestampOutput(TText));
@@ -508,7 +508,7 @@ void FunctionWindow::OnReadWriteGpib(wxCommandEvent& event)
         }
 
         //read
-        usleep(15000);
+        usleep(50000);
 
         //char Buffer[256];
         std::vector<char> BigBuffer;
