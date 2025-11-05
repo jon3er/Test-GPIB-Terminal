@@ -71,10 +71,31 @@ public:
 
         TerminalInput->Bind(wxEVT_TEXT_ENTER, &TerminalWindow::OnEnterTerminal,this);
 
-
+        cmds["scan"]        = [this](const std::string& args) { this->scanDevices(args); };
+        cmds["status"]      = [this](const std::string& args) { this->statusDevice(args); };
+        cmds["connect"]     = [this](const std::string& args) { this->connectDevice(args); };
+        cmds["disconnect"]  = [this](const std::string& args) { this->disconnectDevice(args); };
+        cmds["send"]        = [this](const std::string& args) { this->sendToDevice(args); };
+        cmds["read"]        = [this](const std::string& args) { this->readFromDevice(args); };
+        cmds["write"]       = [this](const std::string& args) { this->writeToDevice(args); };
     }
+
+
 private:
     void OnEnterTerminal(wxCommandEvent& event);
+    //Map Functions
+
+    // Define a type for our command map for easier reading
+    using CommandMap = std::map<std::string, std::function<void(const std::string&)>>;
+    CommandMap cmds;
+    void scanDevices(const std::string& args);
+    void statusDevice(const std::string& args);
+    void connectDevice(const std::string& args);
+    void disconnectDevice(const std::string& args);
+    void sendToDevice(const std::string& args);
+    void readFromDevice(const std::string& args);
+    void writeToDevice(const std::string& args);
+
 
     //com Settings
     int BaudRate = 12000;
@@ -318,36 +339,80 @@ void MainWinFrame::OnScanUsb(wxCommandEvent& event)
 
 
 //-----TerminalWindow-----
+void TerminalWindow::scanDevices(const std::string& args)
+{
+    DWORD devNum = scanUsbDev();
+    wxString Text = "Number of devices: " + std::to_string(devNum) + "\n";
+    TerminalDisplay->AppendText(terminalTimestampOutput(Text));
+}
 
+void TerminalWindow::statusDevice(const std::string& args)
+{
+    TerminalDisplay->AppendText(terminalTimestampOutput(args +"\n"));
+}
+void TerminalWindow::connectDevice(const std::string& args)
+{
 
+}
+void TerminalWindow::disconnectDevice(const std::string& args)
+{
+
+}
+void TerminalWindow::sendToDevice(const std::string& args)
+{
+
+}
+void TerminalWindow::readFromDevice(const std::string& args)
+{
+
+}
+void TerminalWindow::writeToDevice(const std::string& args)
+{
+
+}
 
 void TerminalWindow::OnEnterTerminal(wxCommandEvent& event)
 {
-    // Define a type for our command map for easier reading
-    using CommandMap = std::map<std::string, std::function<void(const std::string&)>>;
-
-
     wxTextCtrl* Terminal = static_cast<wxTextCtrl*>(event.GetEventObject());
     wxString TText = Terminal->GetValue();
     Terminal->SetValue("");
 
     wxLogDebug("user entered: %s", TText.c_str());
 
+    std::string rawText = std::string(TText.ToUTF8());
     //int testRes = checkCMD(TText);
     TText = TText + "\n";
     //Output to terminal
     TerminalDisplay->AppendText(terminalTimestampOutput(TText));
 
-    CommandMap cmds;
-    cmds["scan"]        = scanDevices;
-    cmds["status"]      = statusDevice;
-    cmds["connect"]     = connectDevice;
-    cmds["disconnect"]  = disconnectDevice;
-    cmds["send"]        = sendToDevice;
-    cmds["read"]        = readFromDevice;
-    cmds["write"]       = writeToDevice;
+    //entspechende Funktionen finden und aufrufen
+    std::string strCmd;
+    std::string args;
+    size_t firstSpace = rawText.find(' ');
 
+    //seperiert Befehl und argument
+    if (firstSpace == std::string::npos)
+    {
+        strCmd = rawText;
+        args = "";
+    }
+    else
+    {
+        strCmd = rawText.substr(0, firstSpace);
+        args = rawText.substr(firstSpace + 1);
+    }
 
+    //findet passenden command und führt die funktion aus
+    auto match = cmds.find(strCmd);
+
+    if (match != cmds.end())
+    {
+        match->second(args);
+    }
+    else
+    {
+        TerminalDisplay->AppendText(terminalTimestampOutput("Unknown command!"));
+    }
 }
 
 //-----Terminal window Methodes endes-----
