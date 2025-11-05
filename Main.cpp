@@ -1,4 +1,5 @@
 #include <wx/wx.h>
+#include <unistd.h>
 #include "fkt_GPIB.h"
 #include "fkt_d2xx.h"
 //#include <Main.h>
@@ -128,6 +129,11 @@ public:
         // Trigger button Function when Pressing the button
         devConfigButton->Bind(wxEVT_BUTTON, &FunctionWindow::OnUsbConfig,this);
 
+        //Create Button "Read to GPIB"
+        wxButton* connectDevGpibButton = new wxButton(panelfunc, wxID_ANY, "Connected / Disconnect",wxPoint(10,0));
+        // Trigger button Function when Pressing the button
+        connectDevGpibButton->Bind(wxEVT_BUTTON, &FunctionWindow::OnConDisconGpib,this);
+
 
         wxStaticText* discFuncOutput = new wxStaticText(panelfunc,wxID_ANY,"Function output: ");
         // Text Log
@@ -139,11 +145,12 @@ public:
         wxBoxSizer* sizerFunc = new wxBoxSizer(wxVERTICAL);
         sizerFunc->Add(discFuncInput, 0, wxEXPAND | wxALL , 10);
         sizerFunc->Add(writeFuncInput, 0, wxEXPAND | wxALL , 10);
+        sizerFunc->Add(scanUsbButton, 0, wxEXPAND | wxALL , 10);
+        sizerFunc->Add(connectDevGpibButton, 0, wxEXPAND | wxALL , 10);
+        sizerFunc->Add(devConfigButton, 0, wxEXPAND | wxALL , 10);
         sizerFunc->Add(writeGpibButton, 0, wxEXPAND | wxALL , 10);
         sizerFunc->Add(readGpibButton, 0, wxEXPAND | wxALL , 10);
         sizerFunc->Add(readWriteGpibButton, 0, wxEXPAND | wxALL , 10);
-        sizerFunc->Add(scanUsbButton, 0, wxEXPAND | wxALL , 10);
-        sizerFunc->Add(devConfigButton, 0, wxEXPAND | wxALL , 10);
         sizerFunc->Add(discFuncOutput, 0, wxEXPAND | wxALL , 10);
         sizerFunc->Add(textFuncOutput, 0, wxEXPAND | wxALL , 10);
         panelfunc->SetSizerAndFit(sizerFunc);
@@ -156,12 +163,14 @@ private:
     void OnReadWriteGpib(wxCommandEvent& event);
     void OnUsbScan(wxCommandEvent& event);
     void OnUsbConfig(wxCommandEvent& event);
+    void OnConDisconGpib(wxCommandEvent& event);
     //
     wxTextCtrl* textFuncOutput;
     wxTextCtrl* writeFuncInput;
 
-    bool DeviceFound;
-    FT_HANDLE ftHandle;
+    bool configFin;
+    bool Connected;
+    FT_HANDLE ftHandle = NULL;
 };
 
 wxIMPLEMENT_APP(MainWin);
@@ -336,50 +345,78 @@ void FunctionWindow::OnUsbScan(wxCommandEvent& event)
     if (devices <= 0)
     {
         textFuncOutput->AppendText(terminalTimestampOutput("no device found \n"));
-        DeviceFound = false;
+        configFin = false;
     }
     else
     {
         textFuncOutput->AppendText(terminalTimestampOutput(deviceNumString));
-        DeviceFound = true;
+        configFin = true;
     }
 }
 
+void FunctionWindow::OnConDisconGpib(wxCommandEvent& event)
+{
+    FT_STATUS ftStatus;
+    FT_HANDLE tempHandle = FunctionWindow::ftHandle;
+    int dev = 0;
+
+    if (!FunctionWindow::Connected)
+    {
+        ftStatus = FT_Open(dev,&tempHandle);
+        printErr(ftStatus,"Failed to Connect");
+
+        ftStatus = FT_Purge(tempHandle, FT_PURGE_RX | FT_PURGE_TX);
+        printErr(ftStatus,"Purge Failed");
+
+        if (ftStatus == FT_OK)
+        {
+            textFuncOutput->AppendText(terminalTimestampOutput("Connected to a device\n"));
+            wxLogDebug("Connected to %i", dev);
+            FunctionWindow::Connected = true;
+        }
+    }
+    else
+    {
+        ftStatus = FT_Close(tempHandle);
+        printErr(ftStatus,"Failed to Disconnect");
+
+        if (ftStatus == FT_OK)
+        {
+            textFuncOutput->AppendText(terminalTimestampOutput("Disconnected from a device\n"));
+            wxLogDebug("Connected to %i", dev);
+            FunctionWindow::Connected = false;
+        }
+    }
+
+    FunctionWindow::ftHandle = tempHandle;
+}
 
 void FunctionWindow::OnWriteGpib(wxCommandEvent& event)
 {
-    /*
-    wxLogDebug("Writing entered text to device");
-
-    wxString TextBox = FunctionWindow::writeFuncInput->GetValue();
-
-    wxString Text = "trying to write: \"" + TextBox + "\" to the device \n" ;
-
-    FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
-    */
 
     wxString Text;
 
 
     wxLogDebug("On Write Pressed");
 
-    if (DeviceFound)
+    if (FunctionWindow::Connected)
     {
         DWORD bytesWritten;
+        char* charArrWriteGpib;
 
         wxString GPIBText = FunctionWindow::writeFuncInput->GetValue();
 
         std::string CheckText(GPIBText.ToUTF8());
 
-        GPIBText = checkAscii(CheckText);
+        charArrWriteGpib = checkAscii(CheckText);
 
-        wxLogDebug("Trying to write to Device...");
-        FT_STATUS ftStatus =writeUsbDev(ftHandle, GPIBText, bytesWritten);
+        wxLogDebug("Trying to write to Device... %s", charArrWriteGpib);
+        FT_STATUS ftStatus =writeUsbDev(ftHandle, charArrWriteGpib, bytesWritten);
 
         if (ftStatus == FT_OK)
         {
             Text = GPIBText;
-            Text = "Msg sent: " + Text + " ; " + std::to_string(bytesWritten) + " Bytes Written to GPIB Device\n";
+            Text = "Msg sent: " + Text + " \n " + std::to_string(bytesWritten) + " Bytes Written to GPIB Device\n";
             FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
         }
         else
@@ -391,8 +428,8 @@ void FunctionWindow::OnWriteGpib(wxCommandEvent& event)
     }
     else
     {
-        wxLogDebug("No Device to send too");
-        Text = "Failed to Connected to a Device\n";
+        wxLogDebug("No Connection");
+        Text = "Failed to Connected";
         FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
     }
 
@@ -404,12 +441,11 @@ void FunctionWindow::OnReadGpib(wxCommandEvent& event)
 
     wxLogDebug("On Read Pressed");
 
-    if (DeviceFound)
+    if (FunctionWindow::Connected)
     {
-        char* Buffer;
+        char Buffer[256];
         DWORD BufferSize;
 
-        FT_SetTimeouts(ftHandle, 5000,0);
         wxLogDebug("Reading from Device...");
         FT_STATUS ftStatus = readUsbDev(ftHandle, Buffer, BufferSize);
 
@@ -439,26 +475,26 @@ void FunctionWindow::OnReadWriteGpib(wxCommandEvent& event)
 {
     wxString Text;
 
+    wxLogDebug("On Write / Read Pressed");
 
-    wxLogDebug("On Write Pressed");
-
-    if (DeviceFound)
+    if (FunctionWindow::Connected && FunctionWindow::configFin)
     {
         DWORD bytesWritten;
+        char* charArrWriteGpib;
 
         wxString GPIBText = FunctionWindow::writeFuncInput->GetValue();
 
         std::string CheckText(GPIBText.ToUTF8());
 
-        GPIBText = checkAscii(CheckText);
+        charArrWriteGpib = checkAscii(CheckText);
 
-        wxLogDebug("Trying to write to Device...");
-        FT_STATUS ftStatus =writeUsbDev(ftHandle, GPIBText, bytesWritten);
+        wxLogDebug("Trying to write to Device... %s", charArrWriteGpib);
+        FT_STATUS ftStatus =writeUsbDev(ftHandle, charArrWriteGpib, bytesWritten);
 
         if (ftStatus == FT_OK)
         {
-            Text = GPIBText;
-            Text = "Msg sent: " + Text + " ; " + std::to_string(bytesWritten) + " Bytes Written to GPIB Device\n";
+            Text = charArrWriteGpib;
+            Text = "Msg sent: " + Text + " \n " + std::to_string(bytesWritten) + " Bytes Written to GPIB Device\n";
             FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
         }
         else
@@ -467,24 +503,17 @@ void FunctionWindow::OnReadWriteGpib(wxCommandEvent& event)
             FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
         }
 
-    }
-    else
-    {
-        wxLogDebug("No Device to send too");
-        Text = "Failed to Connected to a Device\n";
-        FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
-    }
+        //read
+        usleep(15000);
 
-    wxLogDebug("On Read Pressed");
-
-    if (DeviceFound)
-    {
-        char* Buffer;
+        char Buffer[256];
         DWORD BufferSize;
+        DWORD BytesReturned;
 
-        FT_SetTimeouts(ftHandle, 5000,0);
         wxLogDebug("Reading from Device...");
-        FT_STATUS ftStatus = readUsbDev(ftHandle, Buffer, BufferSize);
+        ftStatus = readUsbDev(ftHandle, Buffer, BytesReturned);
+
+        Buffer[BytesReturned]='\0';
 
         if (ftStatus == FT_OK)
         {
@@ -498,11 +527,12 @@ void FunctionWindow::OnReadWriteGpib(wxCommandEvent& event)
             FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
         }
 
+
     }
     else
     {
-        wxLogDebug("No Device to send too");
-        Text = "Failed to Connected to a Device";
+        wxLogDebug("No Connection or Missing config");
+        Text = "Failed to Connect\n";
         FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
     }
 
@@ -510,96 +540,26 @@ void FunctionWindow::OnReadWriteGpib(wxCommandEvent& event)
 
 void FunctionWindow::OnUsbConfig(wxCommandEvent& event)
 {
- /*
-    if (testRes)
-    {
-        wxString onlyCmd = sendGPIBcmd(TText,4);
-        if (onlyCmd == "connect")
-        {
-            DWORD numDev = scanUsbDev();
-
-                if (devices > 0)
-                {
-                    if (devices > 1)
-                    {
-                        wxLogDebug("More than one Device found!");
-                    }
-                    else
-                    {
-                        wxLogDebug("One Device found!");
-
-                        ftStatus = configUsbDev(numDev, &ftHandle,BaudRate);
-                    }
-
-                    if (ftStatus != FT_OK)
-                    {
-                        wxLogDebug("Failed to open Device!");
-                        ftStatus = FT_Close(ftHandle);
-                        DevConnected = false;
-                    }
-                    else
-                    {
-                        wxLogDebug("Device Connected!");
-                        TerminalWindow::DevConnected = true;
-                    }
-                }
-        }
-        sendGPIBcmd(TText,"cmd ");
-
-        if (DevConnected && checkCMDinput(TText, "cmd write"))
-        {
-            wxString cmdText = sendGPIBcmd(TText,9);
-
-            ftStatus = writeUsbDev(ftHandle, cmdText);
-
-            if (ftStatus != FT_OK)
-            {
-                wxLogDebug("Failed to write to Device!");
-                ftStatus = FT_Close(ftHandle);
-                DevConnected = false;
-            }
-            else
-            {
-                wxLogDebug("msg Writen!")
-                DevConnected = true;
-
-                ftStatus = readUsbDev(ftHandle,*RPBuffer,BytesToRead,*BytesReturned);
-                if (ftStatus != FT_OK)
-                {
-                    wxLogDebug("no msg Recived!");
-                    ftStatus = FT_Close(ftHandle);
-                    DevConnected = false;
-                }
-                else
-                {
-                    string msgRes = RPBuffer[BytesReturned];
-                    wxLogDebug("msg resived: %s",msgRes);
-                }
-            }
-        }
-
-    }
-    */
 
     DWORD numDev = 0;
-    int BaudRate = 12000;
+    int BaudRate = 921600;
     wxString Text;
 
     FT_STATUS Status = configUsbDev(numDev, ftHandle, BaudRate);
 
     if (Status == FT_OK)
     {
-        Text = "Set Device BaudRate to " + std::to_string(BaudRate);
+        Text = "Set Device BaudRate to " + std::to_string(BaudRate) + "\n";
         FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
         wxLogDebug("Baudrate set to: " + std::to_string(BaudRate));
         //wxLogDebug(std::to_string(ftHandle);
-        DeviceFound = true;
+        configFin = true;
     }
     else
     {
         Text = "Failed to config device check if run as SU";
         FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
-        DeviceFound = false;
+        configFin = false;
     }
 }
 

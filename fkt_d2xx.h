@@ -13,13 +13,15 @@ int printErr(FT_STATUS status, const std::string& msg);
 
 DWORD scanUsbDev();
 
-std::string checkAscii(std::string input);
+char* checkAscii(std::string input);
 
 FT_STATUS configUsbDev(DWORD numDev, FT_HANDLE& ftHandle,int BaudRate);
 
-FT_STATUS writeUsbDev(FT_HANDLE ftHandle, wxString cmdText, DWORD& bytesWritten);
+FT_STATUS writeUsbDev(FT_HANDLE ftHandle, char* cmdText, DWORD& bytesWritten);
 
-FT_STATUS readUsbDev(FT_HANDLE ftHandle,char *RPBuffer, DWORD& BufferSize);
+FT_STATUS readUsbDev(FT_HANDLE ftHandle,char *RPBuffer,DWORD &BytesReturned);
+
+const char * statusString(FT_STATUS status);
 
 
 

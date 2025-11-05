@@ -14,7 +14,8 @@ int printErr(FT_STATUS status, const std::string& msg)
 {
     if (status != FT_OK)
     {
-        wxString Text = "Error:" + msg + " (FT_Status Code: " + std::to_string(status) + ")";
+
+        wxString Text = "Error:" + msg + " (FT_Status Code: " + statusString(status) + ")";
         wxLogDebug(Text);
         return 1;
     }
@@ -30,54 +31,35 @@ DWORD scanUsbDev()
 
     wxLogDebug("Number of Devices Found: %i", numDevs);
 
-    wxLogDebug("FT Status Code: %i", ftStatus);
+    printErr(ftStatus, "Create Info List");
 
     return numDevs;
 }
 
 FT_STATUS configUsbDev(DWORD numDev, FT_HANDLE &ftHandle,int BaudRate)
 {
-        //open first Device
-    FT_STATUS ftStatus = FT_Open(numDev, &ftHandle);
-
-    int errorDetect = printErr(ftStatus,"FT Open Failed. Is programm Run as su? are ftdi_sio driver trunned off?");
-
-    if (errorDetect)
-    {
-        return ftStatus;
-    }
-
+    FT_STATUS ftStatus;
 
     //set Baud rate
     ftStatus = FT_SetBaudRate(ftHandle,BaudRate);
-
-    errorDetect = printErr(ftStatus,"Failed to set Baudrate");
-
-    if (errorDetect)
-    {
-        return ftStatus;
-    }
-
+    printErr(ftStatus,"Failed to set Baudrate");
 
     //set Baud rate
     ftStatus = FT_SetDataCharacteristics(ftHandle, FT_BITS_8, FT_STOP_BITS_1, FT_PARITY_NONE);
+    printErr(ftStatus,"Failed to set Data Characteristics");
 
-    errorDetect = printErr(ftStatus,"Failed to set Data Characteristics");
+    ftStatus = FT_SetFlowControl(ftHandle, FT_FLOW_NONE, 0, 0);
+    printErr(ftStatus,"Failed to set Data Characteristics");
 
-    if (errorDetect)
-    {
-        return ftStatus;
-    }
+    ftStatus =  FT_SetTimeouts(ftHandle, 500,500);
+    printErr(ftStatus,"Failed to set TimeOut");
 
     wxLogDebug("FT-Config complete");
 
     return ftStatus;
-
-    FT_Close(ftHandle);
-
 }
 
-std::string checkAscii(std::string input)
+char* checkAscii(std::string input)
 {
     const char* charInput = input.c_str();
     int DataSize = strlen(input.c_str());
@@ -88,6 +70,13 @@ std::string checkAscii(std::string input)
     char* charInputBuffer = new char[input.length()+1];
     strcpy(charInputBuffer, charInput);
     char* charOutputBuffer = new char[input.length()*2 + 2];
+
+    if (input.substr(0,2) == "++")
+    {
+        charInputBuffer[strlen(charInputBuffer)] = '\n';
+        return charInputBuffer;
+    }
+
 
     wxString OgString;
     wxString ModString;
@@ -116,99 +105,145 @@ std::string checkAscii(std::string input)
         charOutputBuffer[j]= charInputBuffer[i];
 
         OgString = OgString + std::to_string(charInputBuffer[i]) + " ";
-        wxLogDebug(OgString);
+        //wxLogDebug(OgString);
         ModString = ModString + std::to_string(charOutputBuffer[j]) + " ";
-        wxLogDebug(ModString);
+        //wxLogDebug(ModString);
 
 
         j++;
 
     }
-    wxLogDebug(ModString);
+
     // Add CR (ascii 13) & ascii 27
 
-    charOutputBuffer[j+1] = {27};
-
-    charOutputBuffer[j+2] = {10};
-
+    charOutputBuffer[j+1] = '\n';
+    charOutputBuffer[j+2] = '\0';
+    ModString = ModString = ModString + std::to_string(charOutputBuffer[j+1]);
+    wxLogDebug(OgString);
+    wxLogDebug(ModString);
     std::string s(charOutputBuffer, j+2);
-    delete[] charInputBuffer;
+    char* asciiString = (char*)malloc((j+2) * sizeof(char));
+    strcpy(asciiString, charOutputBuffer);
 
-    return s;
+    delete[] charInputBuffer;
+    delete[] charOutputBuffer;
+
+    return asciiString;
 
 }
 
-FT_STATUS writeUsbDev(FT_HANDLE ftHandle, wxString cmdText,DWORD& bytesWritten)
+FT_STATUS writeUsbDev(FT_HANDLE ftHandle, char* cmdText,DWORD& bytesWritten)
 {
-
-    //open first Device
-    FT_STATUS ftStatus = FT_Open(0, &ftHandle);
-
-    int errorDetect = printErr(ftStatus,"FT Open Failed. Is programm Run as su? are ftdi_sio driver trunned off?");
-
-    if (errorDetect)
-    {
-        return ftStatus;
-    }
+    FT_STATUS ftStatus;
 
     // TODO -- CR (ASCII 13), LF (ASCII 10), ESC (ASCII 27), ‘+’ (ASCII 43) – they must be escaped by preceding them with an ESC character.
-    wxCharBuffer txBuffer = cmdText.c_str();
 
-    DWORD dataSize = strlen(txBuffer.data()); // bei null terminatior +1 addieren
+    DWORD dataSize = strlen(cmdText); // bei null terminatior +1 addieren
 
-    ftStatus = FT_Write(ftHandle, txBuffer.data(), dataSize, &bytesWritten);
+    ftStatus = FT_Write(ftHandle, cmdText, dataSize, &bytesWritten);
+    printErr(ftStatus,"FT Write Error");
 
-    errorDetect = printErr(ftStatus,"Failed to write all of the Data");
+    free(cmdText);
+
+    printErr(ftStatus,"Failed to write");
 
     if (bytesWritten != dataSize)
     {
-        wxLogDebug("Write Failed");
+        wxLogDebug("Failed to write all data");
     }
     else
     {
-        wxLogDebug("Write Successful!");
+        wxLogDebug("Write Successful! Bytes Written: %d",(int)bytesWritten);
     }
 
     return ftStatus;
 }
 
 
-FT_STATUS readUsbDev(FT_HANDLE ftHandle,char *RPBuffer, DWORD& BufferSize)
+FT_STATUS readUsbDev(FT_HANDLE ftHandle,char *RPBuffer,DWORD &BytesReturned)
 {
     DWORD BytesToRead;
-    DWORD BytesReturned;
     wxString Text;
+    FT_STATUS ftStatus;
 
     //Get Number of bytes to read from receive queue
-    FT_STATUS ftStatus = FT_GetQueueStatus(ftHandle,&BytesToRead);
+    ftStatus = FT_GetQueueStatus(ftHandle,&BytesToRead);
+    printErr(ftStatus,"Failed to Get Queue Status");
 
     Text = "Bytes to read from queue: " + std::to_string(BytesToRead);
     wxLogDebug(Text);
 
     if (BytesToRead <= 0)
     {
-        wxLogDebug("No Data to read");
-        FT_Close(ftHandle);
+        wxLogDebug("No Data to read bytes to read: %d", (int)BytesToRead);
         return ftStatus;
     }
 
     ftStatus = FT_Read(ftHandle, RPBuffer, BytesToRead, &BytesReturned);
+    printErr(ftStatus,"Failed to Read data");
 
-    int errorDetect = printErr(ftStatus,"Failed to Read data");
-    DWORD dataSize = sizeof(*RPBuffer);
-
-    BufferSize = BytesReturned;
+    DWORD dataSize = strlen(RPBuffer);
 
     if (BytesReturned != dataSize)
     {
-        errorDetect = printErr(ftStatus,"Failed to recive all of the Data");
+        printErr(ftStatus,"Failed to recive all of the Data");
+        wxLogDebug("Received data Size: %d \n Bytes Returned: %d",(int)dataSize,(int)BytesReturned);
     }
     else
     {
-        wxLogDebug("Read Successful");
+        wxLogDebug("Read Successful %d Bytes read",(int)dataSize);
     }
 
-    FT_Close(ftHandle);
     return ftStatus;
+}
+
+//static
+const char * statusString(FT_STATUS status)
+{
+    switch (status)
+    {
+        case FT_OK:
+            return "OK";
+        case FT_INVALID_HANDLE:
+            return "INVALID_HANDLE";
+        case FT_DEVICE_NOT_FOUND:
+            return "DEVICE_NOT_FOUND";
+        case FT_DEVICE_NOT_OPENED:
+            return "DEVICE_NOT_OPENED";
+        case FT_IO_ERROR:
+            return "IO_ERROR";
+        case FT_INSUFFICIENT_RESOURCES:
+            return "INSUFFICIENT_RESOURCES";
+        case FT_INVALID_PARAMETER:
+            return "INVALID_PARAMETER";
+        case FT_INVALID_BAUD_RATE:
+            return "INVALID_BAUD_RATE";
+        case FT_DEVICE_NOT_OPENED_FOR_ERASE:
+            return "DEVICE_NOT_OPENED_FOR_ERASE";
+        case FT_DEVICE_NOT_OPENED_FOR_WRITE:
+            return "DEVICE_NOT_OPENED_FOR_WRITE";
+        case FT_FAILED_TO_WRITE_DEVICE:
+            return "FAILED_TO_WRITE_DEVICE";
+        case FT_EEPROM_READ_FAILED:
+            return "EEPROM_READ_FAILED";
+        case FT_EEPROM_WRITE_FAILED:
+            return "EEPROM_WRITE_FAILED";
+        case FT_EEPROM_ERASE_FAILED:
+            return "EEPROM_ERASE_FAILED";
+        case FT_EEPROM_NOT_PRESENT:
+            return "EEPROM_NOT_PRESENT";
+        case FT_EEPROM_NOT_PROGRAMMED:
+            return "EEPROM_NOT_PROGRAMMED";
+        case FT_INVALID_ARGS:
+            return "INVALID_ARGS";
+        case FT_NOT_SUPPORTED:
+            return "NOT_SUPPORTED";
+        case FT_OTHER_ERROR:
+            return "OTHER_ERROR";
+        case FT_DEVICE_LIST_NOT_READY:
+            return "DEVICE_LIST_NOT_READY";
+        default:
+            return "unknown error";
+    }
 }
 
