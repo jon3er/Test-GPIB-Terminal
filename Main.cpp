@@ -78,6 +78,7 @@ public:
         cmds["send"]        = [this](const std::string& args) { this->sendToDevice(args); };
         cmds["read"]        = [this](const std::string& args) { this->readFromDevice(args); };
         cmds["write"]       = [this](const std::string& args) { this->writeToDevice(args); };
+        cmds["test"]        = [this](const std::string& args) { this->testDevice(args); };
     }
 
 
@@ -96,7 +97,7 @@ private:
     void sendToDevice(const std::string& args);
     void readFromDevice(const std::string& args);
     void writeToDevice(const std::string& args);
-
+    void testDevice(const std::string& args);
 
     //com Settings
     int BaudRate = 921600;
@@ -104,11 +105,11 @@ private:
     DWORD BytesToRead = 1024;
     DWORD BytesReturned;
     //com Var
-    FT_HANDLE ftHandle;
+    FT_HANDLE ftHandle = NULL;
     FT_STATUS ftStatus;
 
-    bool Connected;
-    bool configFin;
+    bool Connected = false;
+    bool configFin = false;
     wxStaticText* StaticTE;
     wxTextCtrl* TerminalDisplay;
 };
@@ -365,7 +366,7 @@ void TerminalWindow::statusDevice(const std::string& args)
     }
     if (configFin)
     {
-        Text = Text + "Device config set";
+        Text = Text + "Device config set Baudrate to: " + std::to_string(BaudRate);
     }
 
     TerminalDisplay->AppendText(terminalTimestampOutput(Text +"\n"));
@@ -398,19 +399,25 @@ void TerminalWindow::connectDevice(const std::string& args)
         ftStatus = FT_Open(dev,&tempHandle);
         printErr(ftStatus,"Failed to Connect");
 
-        ftStatus = FT_Purge(tempHandle, FT_PURGE_RX | FT_PURGE_TX);
-        printErr(ftStatus,"Purge Failed");
-
         if (ftStatus == FT_OK)
         {
             TerminalDisplay->AppendText(terminalTimestampOutput("Connected to a device\n"));
             wxLogDebug("Connected to %i", dev);
             TerminalWindow::Connected = true;
         }
+        else
+        {
+            wxLogDebug("Couldnt connect");
+            TerminalDisplay->AppendText(terminalTimestampOutput("Couldnt connect to a device\n Is programm running as SU?\n Is the FTDI_SIO Driver unloaded?"));
+        }
+
+        ftStatus = FT_Purge(tempHandle, FT_PURGE_RX | FT_PURGE_TX);
+        printErr(ftStatus,"Purge Failed");
+
     }
     else
     {
-        TerminalDisplay->AppendText(terminalTimestampOutput("Device Alreday connected\n"));
+        TerminalDisplay->AppendText(terminalTimestampOutput("Device already connected\n"));
     }
 
     TerminalWindow::ftHandle = tempHandle;
@@ -432,6 +439,10 @@ void TerminalWindow::disconnectDevice(const std::string& args)
         wxLogDebug("disconnected from current device");
         TerminalWindow::Connected = false;
         TerminalWindow::configFin = false;
+    }
+    else
+    {
+        TerminalDisplay->AppendText(terminalTimestampOutput("Coulnd't disconnect check if a device is connected with: status\n"));
     }
 
 }
@@ -468,8 +479,8 @@ void TerminalWindow::sendToDevice(const std::string& args)
         }
 
         //read
+        //usleep(1000000/BaudRate);
         usleep(50000);
-
         //char Buffer[256];
         std::vector<char> BigBuffer;
         DWORD BufferSize;
@@ -499,8 +510,8 @@ void TerminalWindow::sendToDevice(const std::string& args)
     }
     else
     {
-        wxLogDebug("No Device to send too");
-        Text = "Failed to Connected to a Device";
+        wxLogDebug("No Device to send too or missing config");
+        Text = "Failed to connect to a device or missing config\n";
         TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
     }
 
@@ -516,9 +527,13 @@ void TerminalWindow::readFromDevice(const std::string& args)
         //char Buffer[256];
         std::vector<char> BigBuffer;
         DWORD BufferSize;
+        DWORD BytesWritten;
         FT_STATUS ftStatus;
 
         wxLogDebug("Reading from Device...");
+
+        //ftStatus = FT_Write(ftHandle, "++read\n",7, &BytesWritten);
+
         //FT_STATUS ftStatus = readUsbDev(ftHandle, Buffer, BufferSize);
         ftStatus = readUsbDevTest(ftHandle, BigBuffer,BufferSize);
 
@@ -620,7 +635,7 @@ void TerminalWindow::configDevice(const std::string& args)
     {
         Text = "Set Device BaudRate to " + std::to_string(BaudRate) + "\n";
         TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
-        wxLogDebug("Baudrate set to: " + std::to_string(BaudRate));
+        wxLogDebug("Baudrate set to: %s", std::to_string(BaudRate));
         //wxLogDebug(std::to_string(ftHandle);
         configFin = true;
     }
@@ -630,6 +645,68 @@ void TerminalWindow::configDevice(const std::string& args)
         TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
         configFin = false;
     }
+}
+
+void TerminalWindow::testDevice(const std::string& args)
+{
+    if (args == "")
+    {
+        connectDevice("");
+        configDevice("9600");
+
+        writeToDevice("++mode 1");
+        writeToDevice("++auto 1");
+        //writeToDevice("++auto 0");
+        writeToDevice("++clr");
+        writeToDevice("++addr 20");
+        writeToDevice("++ver");
+        //writeToDevice("IDE?");
+        //writeToDevice("++read");
+        //auf antwort warten
+        usleep(50000);
+        readFromDevice("");
+    }
+
+    if (args == "1")
+    {
+
+        writeToDevice("++mode 1");
+        writeToDevice("++auto 0");
+
+        writeToDevice("IDE?");
+        writeToDevice("++read");
+        sleep(3);
+        readFromDevice("");
+    }
+    /*
+DWORD bytesWritten;
+DWORD bytesReturned;
+DWORD BytesToRead;
+wxString Text;
+char text* = "++rst\n";
+std::vector<char> charBuffer ;
+
+FT_Write(ftHandle, text, 6, bytesWritten);
+usleep(100); // Give it a moment to reset
+
+FT_Write(ftHandle, "++mode 1\n", 9, bytesWritten);
+FT_Write(ftHandle, "++auto 0\n", 9, bytesWritten);
+FT_Write(ftHandle, "++clr\n", 6, bytesWritten);
+FT_Write(ftHandle, "++addr 20\n", 10, bytesWritten);
+
+FT_Write(ftHandle, "*IDN?\n", 6, &bytesWritten);
+FT_Write(ftHandle, "++read\n", 7, &bytesWritten);
+
+//Get Number of bytes to read from receive queue
+FT_STATUS ftStatus = FT_GetQueueStatus(ftHandle,&BytesToRead);
+printErr(ftStatus,"Failed to Get Queue Status");
+
+RPBuffer.resize(BytesToRead);
+char* p_RPBuffer = RPBuffer.data();
+FT_Read(ftHandle, charBuffer,BytesToRead,BytesReturned)
+
+TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
+*/
 }
 
 void TerminalWindow::OnEnterTerminal(wxCommandEvent& event)
@@ -907,7 +984,7 @@ void FunctionWindow::OnUsbConfig(wxCommandEvent& event)
     {
         Text = "Set Device BaudRate to " + std::to_string(BaudRate) + "\n";
         FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
-        wxLogDebug("Baudrate set to: " + std::to_string(BaudRate));
+        wxLogDebug("Baudrate set to: %s", std::to_string(BaudRate));
         //wxLogDebug(std::to_string(ftHandle);
         configFin = true;
     }

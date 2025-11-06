@@ -65,7 +65,7 @@ char* checkAscii(std::string input)
     int DataSize = strlen(input.c_str());
 
     wxLogDebug("Length in function:");
-    wxLogDebug(std::to_string(DataSize));
+    wxLogDebug("%s",std::to_string(DataSize));
 
     char* charInputBuffer = new char[input.length()+1];
     strcpy(charInputBuffer, charInput);
