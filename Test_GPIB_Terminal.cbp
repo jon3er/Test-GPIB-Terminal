@@ -46,12 +46,14 @@
 		<Unit filename="Main.cpp" />
 		<Unit filename="Main.h" />
 		<Unit filename="Makefile" />
+		<Unit filename="README.md" />
+		<Unit filename="Test_GPIB_Terminal.cbp" />
+		<Unit filename="Test_GPIB_Terminal.depend" />
+		<Unit filename="Test_GPIB_Terminal.layout" />
 		<Unit filename="fkt_GPIB.cpp" />
 		<Unit filename="fkt_GPIB.h" />
 		<Unit filename="fkt_d2xx.cpp" />
 		<Unit filename="fkt_d2xx.h" />
-		<Unit filename="map_cmds.cpp" />
-		<Unit filename="map_cmds.h" />
 		<Extensions />
 	</Project>
 </CodeBlocks_project_file>

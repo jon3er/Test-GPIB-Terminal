@@ -3,7 +3,6 @@
 #include <map>
 #include "fkt_GPIB.h"
 #include "fkt_d2xx.h"
-#include "map_cmds.h"
 //#include <Main.h>
 
 enum
@@ -73,6 +72,7 @@ public:
 
         cmds["scan"]        = [this](const std::string& args) { this->scanDevices(args); };
         cmds["status"]      = [this](const std::string& args) { this->statusDevice(args); };
+        cmds["config"]      = [this](const std::string& args) { this->configDevice(args); };
         cmds["connect"]     = [this](const std::string& args) { this->connectDevice(args); };
         cmds["disconnect"]  = [this](const std::string& args) { this->disconnectDevice(args); };
         cmds["send"]        = [this](const std::string& args) { this->sendToDevice(args); };
@@ -90,6 +90,7 @@ private:
     CommandMap cmds;
     void scanDevices(const std::string& args);
     void statusDevice(const std::string& args);
+    void configDevice(const std::string& args);
     void connectDevice(const std::string& args);
     void disconnectDevice(const std::string& args);
     void sendToDevice(const std::string& args);
@@ -98,7 +99,7 @@ private:
 
 
     //com Settings
-    int BaudRate = 12000;
+    int BaudRate = 921600;
     //data recive var
     DWORD BytesToRead = 1024;
     DWORD BytesReturned;
@@ -106,7 +107,8 @@ private:
     FT_HANDLE ftHandle;
     FT_STATUS ftStatus;
 
-    bool DevConnected;
+    bool Connected;
+    bool configFin;
     wxStaticText* StaticTE;
     wxTextCtrl* TerminalDisplay;
 };
@@ -348,27 +350,286 @@ void TerminalWindow::scanDevices(const std::string& args)
 
 void TerminalWindow::statusDevice(const std::string& args)
 {
-    TerminalDisplay->AppendText(terminalTimestampOutput(args +"\n"));
+    wxString Text;
+    if (Connected)
+    {
+        Text = "Connected to a Device ";
+    }
+    else
+    {
+        Text = "Not connected to a device";
+    }
+    if (Connected && configFin)
+    {
+        Text = Text + " and ";
+    }
+    if (configFin)
+    {
+        Text = Text + "Device config set";
+    }
+
+    TerminalDisplay->AppendText(terminalTimestampOutput(Text +"\n"));
 }
 void TerminalWindow::connectDevice(const std::string& args)
 {
+    FT_STATUS ftStatus;
+    FT_HANDLE tempHandle = TerminalWindow::ftHandle;
+    int dev = 0;
+
+    wxLogDebug("Command entered: connected with args: %s", args);
+
+    if (args != "")
+    {
+        dev = std::stoi(args);
+        if (dev == std::clamp(dev, 1, 20))
+        {
+            wxLogDebug("Valid dev number: %i", dev);
+            dev = dev - 1;
+        }
+        else
+        {
+            wxLogDebug("Invalid dev number: %i", dev);
+            dev = 0;
+        }
+    }
+
+    if (!TerminalWindow::Connected)
+    {
+        ftStatus = FT_Open(dev,&tempHandle);
+        printErr(ftStatus,"Failed to Connect");
+
+        ftStatus = FT_Purge(tempHandle, FT_PURGE_RX | FT_PURGE_TX);
+        printErr(ftStatus,"Purge Failed");
+
+        if (ftStatus == FT_OK)
+        {
+            TerminalDisplay->AppendText(terminalTimestampOutput("Connected to a device\n"));
+            wxLogDebug("Connected to %i", dev);
+            TerminalWindow::Connected = true;
+        }
+    }
+    else
+    {
+        TerminalDisplay->AppendText(terminalTimestampOutput("Device Alreday connected\n"));
+    }
+
+    TerminalWindow::ftHandle = tempHandle;
 
 }
 void TerminalWindow::disconnectDevice(const std::string& args)
 {
+    FT_STATUS ftStatus;
+    FT_HANDLE tempHandle = TerminalWindow::ftHandle;
+
+    wxLogDebug("Command entered: disconnect with arg: %s", args);
+
+    ftStatus = FT_Close(tempHandle);
+    printErr(ftStatus,"Failed to Disconnect");
+
+    if (ftStatus == FT_OK)
+    {
+        TerminalDisplay->AppendText(terminalTimestampOutput("Disconnected from a device\n"));
+        wxLogDebug("disconnected from current device");
+        TerminalWindow::Connected = false;
+        TerminalWindow::configFin = false;
+    }
 
 }
 void TerminalWindow::sendToDevice(const std::string& args)
 {
+    wxString Text;
+
+    wxLogDebug("terminal Command send %s Entered",args);
+
+    if (TerminalWindow::Connected && TerminalWindow::configFin)
+    {
+        DWORD bytesWritten;
+        char* charArrWriteGpib;
+
+        wxString GPIBText = args;
+
+        std::string CheckText(GPIBText.ToUTF8());
+
+        charArrWriteGpib = checkAscii(CheckText);
+
+        wxLogDebug("Trying to write to Device... %s", charArrWriteGpib);
+        FT_STATUS ftStatus =writeUsbDev(ftHandle, charArrWriteGpib, bytesWritten);
+
+        if (ftStatus == FT_OK)
+        {
+            Text = charArrWriteGpib;
+            Text = "Msg sent: " + Text + " \n " + std::to_string(bytesWritten) + " Bytes Written to GPIB Device\n";
+            TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
+        }
+        else
+        {
+            Text = "Failed to send Data\n";
+            TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
+        }
+
+        //read
+        usleep(50000);
+
+        //char Buffer[256];
+        std::vector<char> BigBuffer;
+        DWORD BufferSize;
+
+        wxLogDebug("Reading from Device...");
+        //FT_STATUS ftStatus = readUsbDev(ftHandle, Buffer, BufferSize);
+        ftStatus = readUsbDevTest(ftHandle, BigBuffer,BufferSize);
+
+        if (ftStatus == FT_OK)
+        {
+            //Text = std::string(Buffer);
+            Text = std::string(BigBuffer.data(),BigBuffer.size());
+            Text = "Msg received:\n" + Text + "\n";
+            if (BigBuffer.size() == 0)
+            {
+                Text = "No Message to Read\n";
+            }
+
+            TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
+        }
+        else
+        {
+            Text = "Failed to Receive Data - TimeOut after 5s\n";
+            TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
+        }
+
+    }
+    else
+    {
+        wxLogDebug("No Device to send too");
+        Text = "Failed to Connected to a Device";
+        TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
+    }
 
 }
 void TerminalWindow::readFromDevice(const std::string& args)
 {
+    wxString Text;
 
+    wxLogDebug("command read entered with args: %s", args);
+
+    if (TerminalWindow::Connected)
+    {
+        //char Buffer[256];
+        std::vector<char> BigBuffer;
+        DWORD BufferSize;
+        FT_STATUS ftStatus;
+
+        wxLogDebug("Reading from Device...");
+        //FT_STATUS ftStatus = readUsbDev(ftHandle, Buffer, BufferSize);
+        ftStatus = readUsbDevTest(ftHandle, BigBuffer,BufferSize);
+
+        if (ftStatus == FT_OK)
+        {
+            //Text = std::string(Buffer);
+            Text = std::string(BigBuffer.data(),BigBuffer.size());
+            Text = "Msg received:\n" + Text + "\n";
+            if (BigBuffer.size() == 0)
+            {
+                Text = "No Message to Read\n";
+            }
+            TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
+        }
+        else
+        {
+            Text = "Failed to Receive Data - TimeOut after 5s\n";
+            TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
+        }
+
+    }
+    else
+    {
+        wxLogDebug("No Device to send too");
+        Text = "Failed to Connected to a Device\n";
+        TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
+    }
 }
 void TerminalWindow::writeToDevice(const std::string& args)
 {
+    wxString Text;
 
+    wxLogDebug("Write Command Entered");
+
+    if (TerminalWindow::Connected)
+    {
+        DWORD bytesWritten;
+        char* charArrWriteGpib;
+
+        wxString GPIBText = args;
+
+        std::string CheckText(GPIBText.ToUTF8());
+
+        charArrWriteGpib = checkAscii(CheckText);
+
+        wxLogDebug("Trying to write to Device... %s", charArrWriteGpib);
+        FT_STATUS ftStatus =writeUsbDev(ftHandle, charArrWriteGpib, bytesWritten);
+
+        if (ftStatus == FT_OK)
+        {
+            Text = GPIBText;
+            Text = "Msg sent: " + Text + " \n " + std::to_string(bytesWritten) + " Bytes Written to GPIB Device\n";
+            TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
+        }
+        else
+        {
+            Text = "Failed to send Data\n";
+            TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
+        }
+
+    }
+    else
+    {
+        wxLogDebug("No Connection");
+        Text = "Failed to Connected";
+        TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
+    }
+}
+
+void TerminalWindow::configDevice(const std::string& args)
+{
+    DWORD numDev = 0;
+    wxString Text;
+    //FT_HANDLE tempHandle = TerminalWindow::ftHandle;
+    //args => config Baurate
+
+    if (args != "")
+    {
+
+        if (std::stoi(args) == std::clamp(std::stoi(args), 1, 1000000))
+        {
+            BaudRate = std::stoi(args);
+            wxLogDebug("Set Baudrate to %i", BaudRate);
+        }
+        else
+        {
+            wxLogDebug("Using Default Baudrate: %i",BaudRate);
+        }
+    }
+    else
+        {
+            wxLogDebug("Using Default Baudrate: %i",BaudRate);
+        }
+
+
+    FT_STATUS Status = configUsbDev(numDev, ftHandle, BaudRate);
+
+    if (Status == FT_OK)
+    {
+        Text = "Set Device BaudRate to " + std::to_string(BaudRate) + "\n";
+        TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
+        wxLogDebug("Baudrate set to: " + std::to_string(BaudRate));
+        //wxLogDebug(std::to_string(ftHandle);
+        configFin = true;
+    }
+    else
+    {
+        Text = "Failed to config device check if run as SU\n";
+        TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
+        configFin = false;
+    }
 }
 
 void TerminalWindow::OnEnterTerminal(wxCommandEvent& event)
