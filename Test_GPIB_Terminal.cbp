@@ -47,9 +47,6 @@
 		<Unit filename="Main.h" />
 		<Unit filename="Makefile" />
 		<Unit filename="README.md" />
-		<Unit filename="Test_GPIB_Terminal.cbp" />
-		<Unit filename="Test_GPIB_Terminal.depend" />
-		<Unit filename="Test_GPIB_Terminal.layout" />
 		<Unit filename="fkt_GPIB.cpp" />
 		<Unit filename="fkt_GPIB.h" />
 		<Unit filename="fkt_d2xx.cpp" />

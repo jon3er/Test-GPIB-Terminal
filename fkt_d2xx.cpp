@@ -59,92 +59,22 @@ FT_STATUS configUsbDev(DWORD numDev, FT_HANDLE &ftHandle,int BaudRate)
     return ftStatus;
 }
 
-char* checkAscii(std::string input)
-{
-    const char* charInput = input.c_str();
-    int DataSize = strlen(input.c_str());
-
-    wxLogDebug("Length in function:");
-    wxLogDebug("%s",std::to_string(DataSize));
-
-    char* charInputBuffer = new char[input.length()+1];
-    strcpy(charInputBuffer, charInput);
-    char* charOutputBuffer = new char[input.length()*2 + 2];
-
-    if (input.substr(0,2) == "++")
-    {
-        charInputBuffer[strlen(charInputBuffer)] = '\n';
-        return charInputBuffer;
-    }
 
 
-    wxString OgString;
-    wxString ModString;
-
-    int j = 0;
-
-    for (int i=0;i < DataSize;i++)
-    {
-
-
-        switch(charInputBuffer[i])
-        {
-            case 10:
-            case 13:
-            case 27:
-            case 43:
-
-                charOutputBuffer[j] = {27};
-                ModString = ModString + std::to_string(charOutputBuffer[j]) + " ";
-                j++;
-
-                break;
-            default:
-                break;
-        }
-        charOutputBuffer[j]= charInputBuffer[i];
-
-        OgString = OgString + std::to_string(charInputBuffer[i]) + " ";
-        //wxLogDebug(OgString);
-        ModString = ModString + std::to_string(charOutputBuffer[j]) + " ";
-        //wxLogDebug(ModString);
-
-
-        j++;
-
-    }
-
-    // Add CR (ascii 13) & ascii 27
-
-    charOutputBuffer[j+1] = '\n';
-    charOutputBuffer[j+2] = '\0';
-    ModString = ModString = ModString + std::to_string(charOutputBuffer[j+1]);
-    wxLogDebug(OgString);
-    wxLogDebug(ModString);
-    std::string s(charOutputBuffer, j+2);
-    char* asciiString = (char*)malloc((j+2) * sizeof(char));
-    strcpy(asciiString, charOutputBuffer);
-
-    delete[] charInputBuffer;
-    delete[] charOutputBuffer;
-
-    return asciiString;
-
-}
-
-
-FT_STATUS writeUsbDev(FT_HANDLE ftHandle, char* cmdText,DWORD& bytesWritten)
+FT_STATUS writeUsbDev(FT_HANDLE ftHandle, std::vector<char> cmdText,DWORD& bytesWritten)
 {
     FT_STATUS ftStatus;
 
     // TODO -- CR (ASCII 13), LF (ASCII 10), ESC (ASCII 27), ‘+’ (ASCII 43) – they must be escaped by preceding them with an ESC character.
 
-    DWORD dataSize = strlen(cmdText); // bei null terminatior +1 addieren
+    char* charPtrCmdText = cmdText.data();
+    DWORD dataSize = cmdText.size(); // bei null terminatior +1 addieren
+    wxLogDebug("Write: %s \n strlen: %i",std::string(cmdText.begin(),cmdText.end()),(int)dataSize);
 
-    ftStatus = FT_Write(ftHandle, cmdText, dataSize, &bytesWritten);
+    ftStatus = FT_Write(ftHandle, charPtrCmdText, dataSize, &bytesWritten);
     printErr(ftStatus,"FT Write Error");
 
-    free(cmdText);
+    //free(cmdText);
 
     printErr(ftStatus,"Failed to write");
 
@@ -160,7 +90,7 @@ FT_STATUS writeUsbDev(FT_HANDLE ftHandle, char* cmdText,DWORD& bytesWritten)
     return ftStatus;
 }
 
-FT_STATUS readUsbDevTest(FT_HANDLE ftHandle,std::vector<char>& RPBuffer,DWORD &BytesReturned)
+FT_STATUS readUsbDev(FT_HANDLE ftHandle,std::vector<char>& RPBuffer,DWORD &BytesReturned)
 {
     DWORD BytesToRead;
     wxString Text;
@@ -201,44 +131,6 @@ FT_STATUS readUsbDevTest(FT_HANDLE ftHandle,std::vector<char>& RPBuffer,DWORD &B
 
     return ftStatus;
 
-}
-
-
-FT_STATUS readUsbDev(FT_HANDLE ftHandle,char *RPBuffer,DWORD &BytesReturned)
-{
-    DWORD BytesToRead;
-    wxString Text;
-    FT_STATUS ftStatus;
-
-    //Get Number of bytes to read from receive queue
-    ftStatus = FT_GetQueueStatus(ftHandle,&BytesToRead);
-    printErr(ftStatus,"Failed to Get Queue Status");
-
-    Text = "Bytes to read from queue: " + std::to_string(BytesToRead);
-    wxLogDebug(Text);
-
-    if (BytesToRead <= 0)
-    {
-        wxLogDebug("No Data to read bytes to read: %d", (int)BytesToRead);
-        return ftStatus;
-    }
-
-    ftStatus = FT_Read(ftHandle, RPBuffer, BytesToRead, &BytesReturned);
-    printErr(ftStatus,"Failed to Read data");
-
-    DWORD dataSize = strlen(RPBuffer);
-
-    if (BytesReturned != dataSize)
-    {
-        printErr(ftStatus,"Failed to recive all of the Data");
-        wxLogDebug("Received data Size: %d \n Bytes Returned: %d",(int)dataSize,(int)BytesReturned);
-    }
-    else
-    {
-        wxLogDebug("Read Successful %d Bytes read",(int)dataSize);
-    }
-
-    return ftStatus;
 }
 
 //static

@@ -455,20 +455,19 @@ void TerminalWindow::sendToDevice(const std::string& args)
     if (TerminalWindow::Connected && TerminalWindow::configFin)
     {
         DWORD bytesWritten;
-        char* charArrWriteGpib;
 
         wxString GPIBText = args;
 
         std::string CheckText(GPIBText.ToUTF8());
 
-        charArrWriteGpib = checkAscii(CheckText);
+        std::vector<char> charArrWriteGpib = checkAscii(CheckText);
 
-        wxLogDebug("Trying to write to Device... %s", charArrWriteGpib);
+        wxLogDebug("Trying to write to Device... %s", std::string(charArrWriteGpib.begin(),charArrWriteGpib.end()));
         FT_STATUS ftStatus =writeUsbDev(ftHandle, charArrWriteGpib, bytesWritten);
 
         if (ftStatus == FT_OK)
         {
-            Text = charArrWriteGpib;
+            Text = std::string(charArrWriteGpib.begin(),charArrWriteGpib.end());
             Text = "Msg sent: " + Text + " \n " + std::to_string(bytesWritten) + " Bytes Written to GPIB Device\n";
             TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
         }
@@ -486,8 +485,7 @@ void TerminalWindow::sendToDevice(const std::string& args)
         DWORD BufferSize;
 
         wxLogDebug("Reading from Device...");
-        //FT_STATUS ftStatus = readUsbDev(ftHandle, Buffer, BufferSize);
-        ftStatus = readUsbDevTest(ftHandle, BigBuffer,BufferSize);
+        ftStatus = readUsbDev(ftHandle, BigBuffer,BufferSize);
 
         if (ftStatus == FT_OK)
         {
@@ -534,8 +532,7 @@ void TerminalWindow::readFromDevice(const std::string& args)
 
         //ftStatus = FT_Write(ftHandle, "++read\n",7, &BytesWritten);
 
-        //FT_STATUS ftStatus = readUsbDev(ftHandle, Buffer, BufferSize);
-        ftStatus = readUsbDevTest(ftHandle, BigBuffer,BufferSize);
+        ftStatus = readUsbDev(ftHandle, BigBuffer,BufferSize);
 
         if (ftStatus == FT_OK)
         {
@@ -571,15 +568,14 @@ void TerminalWindow::writeToDevice(const std::string& args)
     if (TerminalWindow::Connected)
     {
         DWORD bytesWritten;
-        char* charArrWriteGpib;
 
         wxString GPIBText = args;
 
         std::string CheckText(GPIBText.ToUTF8());
 
-        charArrWriteGpib = checkAscii(CheckText);
+        std::vector<char> charArrWriteGpib = checkAscii(CheckText);
 
-        wxLogDebug("Trying to write to Device... %s", charArrWriteGpib);
+        wxLogDebug("Trying to write to Device... %s", std::string(charArrWriteGpib.begin(),charArrWriteGpib.end()));
         FT_STATUS ftStatus =writeUsbDev(ftHandle, charArrWriteGpib, bytesWritten);
 
         if (ftStatus == FT_OK)
@@ -652,7 +648,7 @@ void TerminalWindow::testDevice(const std::string& args)
     if (args == "")
     {
         connectDevice("");
-        configDevice("9600");
+        configDevice("");
 
         writeToDevice("++mode 1");
         writeToDevice("++auto 1");
@@ -670,6 +666,9 @@ void TerminalWindow::testDevice(const std::string& args)
     if (args == "1")
     {
 
+        writeToDevice("++rst");
+        usleep(200);
+
         writeToDevice("++mode 1");
         writeToDevice("++auto 0");
 
@@ -678,35 +677,7 @@ void TerminalWindow::testDevice(const std::string& args)
         sleep(3);
         readFromDevice("");
     }
-    /*
-DWORD bytesWritten;
-DWORD bytesReturned;
-DWORD BytesToRead;
-wxString Text;
-char text* = "++rst\n";
-std::vector<char> charBuffer ;
 
-FT_Write(ftHandle, text, 6, bytesWritten);
-usleep(100); // Give it a moment to reset
-
-FT_Write(ftHandle, "++mode 1\n", 9, bytesWritten);
-FT_Write(ftHandle, "++auto 0\n", 9, bytesWritten);
-FT_Write(ftHandle, "++clr\n", 6, bytesWritten);
-FT_Write(ftHandle, "++addr 20\n", 10, bytesWritten);
-
-FT_Write(ftHandle, "*IDN?\n", 6, &bytesWritten);
-FT_Write(ftHandle, "++read\n", 7, &bytesWritten);
-
-//Get Number of bytes to read from receive queue
-FT_STATUS ftStatus = FT_GetQueueStatus(ftHandle,&BytesToRead);
-printErr(ftStatus,"Failed to Get Queue Status");
-
-RPBuffer.resize(BytesToRead);
-char* p_RPBuffer = RPBuffer.data();
-FT_Read(ftHandle, charBuffer,BytesToRead,BytesReturned)
-
-TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
-*/
 }
 
 void TerminalWindow::OnEnterTerminal(wxCommandEvent& event)
@@ -749,7 +720,7 @@ void TerminalWindow::OnEnterTerminal(wxCommandEvent& event)
     }
     else
     {
-        TerminalDisplay->AppendText(terminalTimestampOutput("Unknown command!"));
+        TerminalDisplay->AppendText(terminalTimestampOutput("Unknown command!\n"));
     }
 }
 
@@ -823,15 +794,14 @@ void FunctionWindow::OnWriteGpib(wxCommandEvent& event)
     if (FunctionWindow::Connected)
     {
         DWORD bytesWritten;
-        char* charArrWriteGpib;
 
         wxString GPIBText = FunctionWindow::writeFuncInput->GetValue();
 
         std::string CheckText(GPIBText.ToUTF8());
 
-        charArrWriteGpib = checkAscii(CheckText);
+        std::vector<char> charArrWriteGpib = checkAscii(CheckText);
 
-        wxLogDebug("Trying to write to Device... %s", charArrWriteGpib);
+        wxLogDebug("Trying to write to Device... %s", std::string(charArrWriteGpib.begin(),charArrWriteGpib.end()));
         FT_STATUS ftStatus =writeUsbDev(ftHandle, charArrWriteGpib, bytesWritten);
 
         if (ftStatus == FT_OK)
@@ -870,8 +840,7 @@ void FunctionWindow::OnReadGpib(wxCommandEvent& event)
         FT_STATUS ftStatus;
 
         wxLogDebug("Reading from Device...");
-        //FT_STATUS ftStatus = readUsbDev(ftHandle, Buffer, BufferSize);
-        ftStatus = readUsbDevTest(ftHandle, BigBuffer,BufferSize);
+        ftStatus = readUsbDev(ftHandle, BigBuffer,BufferSize);
 
         if (ftStatus == FT_OK)
         {
@@ -909,20 +878,19 @@ void FunctionWindow::OnReadWriteGpib(wxCommandEvent& event)
     if (FunctionWindow::Connected && FunctionWindow::configFin)
     {
         DWORD bytesWritten;
-        char* charArrWriteGpib;
 
         wxString GPIBText = FunctionWindow::writeFuncInput->GetValue();
 
         std::string CheckText(GPIBText.ToUTF8());
 
-        charArrWriteGpib = checkAscii(CheckText);
+        std::vector<char> charArrWriteGpib = checkAscii(CheckText);
 
-        wxLogDebug("Trying to write to Device... %s", charArrWriteGpib);
+        wxLogDebug("Trying to write to Device... %s", std::string(charArrWriteGpib.begin(),charArrWriteGpib.end()));
         FT_STATUS ftStatus =writeUsbDev(ftHandle, charArrWriteGpib, bytesWritten);
 
         if (ftStatus == FT_OK)
         {
-            Text = charArrWriteGpib;
+            Text = std::string(charArrWriteGpib.begin(),charArrWriteGpib.end());
             Text = "Msg sent: " + Text + " \n " + std::to_string(bytesWritten) + " Bytes Written to GPIB Device\n";
             FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
         }
@@ -940,8 +908,7 @@ void FunctionWindow::OnReadWriteGpib(wxCommandEvent& event)
         DWORD BufferSize;
 
         wxLogDebug("Reading from Device...");
-        //FT_STATUS ftStatus = readUsbDev(ftHandle, Buffer, BufferSize);
-        ftStatus = readUsbDevTest(ftHandle, BigBuffer,BufferSize);
+        ftStatus = readUsbDev(ftHandle, BigBuffer,BufferSize);
 
         if (ftStatus == FT_OK)
         {
