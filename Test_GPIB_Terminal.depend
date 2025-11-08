@@ -2,7 +2,7 @@
 1762615155 source:/home/jon3r/Documents/Code/CodeBlocks/Test_GPIB_Terminal/fkt_d2xx.cpp
 	"fkt_d2xx.h"
 
-1762615072 source:/home/jon3r/Documents/Code/CodeBlocks/Test_GPIB_Terminal/fkt_GPIB.cpp
+1762615966 source:/home/jon3r/Documents/Code/CodeBlocks/Test_GPIB_Terminal/fkt_GPIB.cpp
 	<wx/wx.h>
 	"fkt_GPIB.h"
 
@@ -1635,7 +1635,7 @@
 1762614534 /home/jon3r/Documents/Code/CodeBlocks/Test_GPIB_Terminal/fkt_GPIB.h
 	<wx/wx.h>
 
-1762608450 source:/home/jon3r/Documents/Code/CodeBlocks/Test_GPIB_Terminal/Main.cpp
+1762619264 source:/home/jon3r/Documents/Code/CodeBlocks/Test_GPIB_Terminal/Main.cpp
 	<wx/wx.h>
 	<unistd.h>
 	<map>

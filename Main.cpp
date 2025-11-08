@@ -68,6 +68,8 @@ public:
         //debug msg
         wxLogDebug("Terminal Window Opened");
 
+        //Bind(wxEVT_WINDOW_DESTROY, &TerminalWindow::OnWindowDestroyed, this);
+
         TerminalInput->Bind(wxEVT_TEXT_ENTER, &TerminalWindow::OnEnterTerminal,this);
 
         cmds["scan"]        = [this](const std::string& args) { this->scanDevices(args); };
@@ -81,9 +83,17 @@ public:
         cmds["test"]        = [this](const std::string& args) { this->testDevice(args); };
     }
 
-
+    ~TerminalWindow()
+    {
+        if (Connected)
+        {
+            disconnectDevice(" ");
+        }
+        wxLogDebug("closed Terminal Window");
+    }
 private:
     void OnEnterTerminal(wxCommandEvent& event);
+    void OnWindowDestroyed();
     //Map Functions
 
     // Define a type for our command map for easier reading
@@ -520,12 +530,11 @@ void TerminalWindow::readFromDevice(const std::string& args)
 
     wxLogDebug("command read entered with args: %s", args);
 
-    if (TerminalWindow::Connected)
+    if (TerminalWindow::Connected && TerminalWindow::configFin)
     {
         //char Buffer[256];
         std::vector<char> BigBuffer;
         DWORD BufferSize;
-        DWORD BytesWritten;
         FT_STATUS ftStatus;
 
         wxLogDebug("Reading from Device...");
@@ -656,25 +665,34 @@ void TerminalWindow::testDevice(const std::string& args)
         writeToDevice("++clr");
         writeToDevice("++addr 20");
         writeToDevice("++ver");
+
         //writeToDevice("IDE?");
         //writeToDevice("++read");
         //auf antwort warten
-        usleep(50000);
+        usleep(100000);
         readFromDevice("");
     }
-
-    if (args == "1")
+    else if(args == "1")
     {
 
         writeToDevice("++rst");
-        usleep(200);
+        usleep(200000);
 
         writeToDevice("++mode 1");
         writeToDevice("++auto 0");
+        writeToDevice("++addr 20");
 
-        writeToDevice("IDE?");
-        writeToDevice("++read");
-        sleep(3);
+        writeToDevice("*IDE?");
+        writeToDevice("++read eoi");
+        usleep(50000);
+        readFromDevice("");
+    }
+    else
+    {
+        wxLogDebug("manual read write");
+        writeToDevice(args);
+        writeToDevice("++read eos");
+        usleep(50000);
         readFromDevice("");
     }
 
@@ -722,6 +740,11 @@ void TerminalWindow::OnEnterTerminal(wxCommandEvent& event)
     {
         TerminalDisplay->AppendText(terminalTimestampOutput("Unknown command!\n"));
     }
+}
+
+void TerminalWindow::OnWindowDestroyed()
+{
+    TerminalWindow::disconnectDevice(" ");
 }
 
 //-----Terminal window Methodes endes-----
