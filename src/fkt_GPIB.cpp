@@ -1,6 +1,7 @@
 #include <wx/wx.h>
 #include "fkt_GPIB.h"
 
+//TODO Create Device Class and Create new read read and write funtions
 
 wxString terminalTimestampOutput(wxString Text)
 {

@@ -1,4 +1,5 @@
 #pragma once
+
 #include <wx/wx.h>
 
 wxString terminalTimestampOutput(wxString Text);

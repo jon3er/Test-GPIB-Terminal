@@ -3,205 +3,11 @@
 #include <thread>
 #include "fkt_GPIB.h"
 #include "fkt_d2xx.h"
-//#include <Main.h>
-
-enum
-{
-    ID_Hello = 1,
-    ID_OpenTerminal = 2
-};
-
-
-//-----MainWin-----
-class MainWin : public wxApp
-{
-public:
-    bool OnInit() override; //overrides function of Base Classe wxApp Function OnInit()
-};
-
-//-----MainWinFrame-----
-class MainWinFrame : public wxFrame
-{
-public:
-    MainWinFrame();
-private:
-    wxTextCtrl* ScanUsbDisplay;
-
-    //menubar
-    void OnHello(wxCommandEvent& event);
-    void OnExit(wxCommandEvent& event);
-    void OnAbout(wxCommandEvent& event);
-    //buttons
-    void OnOpenTerminal(wxCommandEvent& event);
-    void OnScanUsb(wxCommandEvent& event);
-    void OnOpenFunctionTest(wxCommandEvent& event);
-};
-
-//-----Terminal-----
-class TerminalWindow : public wxDialog
-{
-public:
-    TerminalWindow(wxWindow *parent) : wxDialog(parent, wxID_ANY, "GPIB Terminal Window", wxDefaultPosition, wxSize(1000,600))
-    {
-        wxPanel* panelTerm = new wxPanel(this);
-
-        //text Output
-        TerminalDisplay = new wxTextCtrl(panelTerm,wxID_ANY,"",wxDefaultPosition,wxSize(1000, 200), wxTE_MULTILINE);
-        //disable user input
-        TerminalDisplay->SetEditable(false);
-        //text input
-        wxTextCtrl* TerminalInput = new wxTextCtrl(panelTerm, wxID_ANY,"",wxDefaultPosition,wxSize(1000, 50), wxTE_MULTILINE | wxTE_PROCESS_ENTER);
-        //set Cursor in input window
-        TerminalInput->SetFocus();
-
-        wxStaticText* StaticTE = new wxStaticText(panelTerm, wxID_ANY,"GPIB Terminal log");
-
-        wxStaticText* StaticTEInput = new wxStaticText(panelTerm, wxID_ANY,"Input GPIB Commands:");
-
-        wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
-        sizer->Add(StaticTE,0, wxALL, 20);
-        sizer->Add(TerminalDisplay, 0, wxEXPAND | wxALL, 20);
-        sizer->Add(StaticTEInput, 0 , wxALL, 20);
-        sizer->Add(TerminalInput, 0, wxALL, 20);
-        panelTerm->SetSizerAndFit(sizer);
-
-        //debug msg
-        wxLogDebug("Terminal Window Opened");
-
-        TerminalInput->Bind(wxEVT_TEXT_ENTER, &TerminalWindow::OnEnterTerminal,this);
-
-        cmds["scan"]        = [this](const std::string& args) { this->scanDevices(args); };
-        cmds["status"]      = [this](const std::string& args) { this->statusDevice(args); };
-        cmds["config"]      = [this](const std::string& args) { this->configDevice(args); };
-        cmds["connect"]     = [this](const std::string& args) { this->connectDevice(args); };
-        cmds["disconnect"]  = [this](const std::string& args) { this->disconnectDevice(args); };
-        cmds["send"]        = [this](const std::string& args) { this->sendToDevice(args); };
-        cmds["read"]        = [this](const std::string& args) { this->readFromDevice(args); };
-        cmds["write"]       = [this](const std::string& args) { this->writeToDevice(args); };
-        cmds["test"]        = [this](const std::string& args) { this->testDevice(args); };
-    }
-
-    ~TerminalWindow()
-    {
-        if (Connected)
-        {
-            disconnectDevice(" ");
-        }
-        wxLogDebug("closed Terminal Window");
-    }
-private:
-    void OnEnterTerminal(wxCommandEvent& event);
-    void OnWindowDestroyed();
-    //Map Functions
-
-    // Define a type for our command map for easier reading
-    using CommandMap = std::map<std::string, std::function<void(const std::string&)>>;
-    CommandMap cmds;
-    void scanDevices(const std::string& args);
-    void statusDevice(const std::string& args);
-    void configDevice(const std::string& args);
-    void connectDevice(const std::string& args);
-    void disconnectDevice(const std::string& args);
-    void sendToDevice(const std::string& args);
-    void readFromDevice(const std::string& args);
-    void writeToDevice(const std::string& args);
-    void testDevice(const std::string& args);
-
-    //Terminal Output
-    wxTextCtrl* TerminalDisplay;
-
-    //com default settings
-    int BaudRate = 921600;
-    //Device Handle
-    FT_HANDLE ftHandle = NULL;
-
-    bool Connected = false;
-    bool configFin = false;
-};
-
-class FunctionWindow : public wxDialog
-{
-public:
-    FunctionWindow(wxWindow *parent) : wxDialog(parent, wxID_ANY, "Function Test Window", wxDefaultPosition, wxSize(500,750))
-    {
-        wxPanel* panelfunc = new wxPanel(this);
-
-        //Input text lable
-        wxStaticText* discFuncInput = new wxStaticText(panelfunc,wxID_ANY,"Input text to write: ");
-
-        //Function input textbox
-        writeFuncInput = new wxTextCtrl(panelfunc, wxID_ANY,"",wxDefaultPosition,wxSize(300, 40));
-        //set Cursor in writeFuncInput window
-        writeFuncInput->SetFocus();
-
-        //Create Button "Write to GPIB"
-        wxButton* writeGpibButton = new wxButton(panelfunc, wxID_ANY, "Write to GPIB",wxPoint(10,0));
-        writeGpibButton->Bind(wxEVT_BUTTON, &FunctionWindow::OnWriteGpib,this);
-
-        //Create Button "Read to GPIB"
-        wxButton* readGpibButton = new wxButton(panelfunc, wxID_ANY, "Read from GPIB",wxPoint(10,0));
-        readGpibButton->Bind(wxEVT_BUTTON, &FunctionWindow::OnReadGpib,this);
-
-        //Create Button "Write and Read GPIB"
-        wxButton* readWriteGpibButton = new wxButton(panelfunc, wxID_ANY, "Write and Read GPIB",wxPoint(10,0));
-        readWriteGpibButton->Bind(wxEVT_BUTTON, &FunctionWindow::OnReadWriteGpib,this);
-
-        //Create Button "Scan For Device"
-        wxButton* scanUsbButton = new wxButton(panelfunc, wxID_ANY, "Scan For Device",wxPoint(10,0));
-        scanUsbButton->Bind(wxEVT_BUTTON, &FunctionWindow::OnUsbScan,this);
-
-        //Create Button "Configure USB Device"
-        wxButton* devConfigButton = new wxButton(panelfunc, wxID_ANY, "Configure USB Device",wxPoint(10,0));
-        devConfigButton->Bind(wxEVT_BUTTON, &FunctionWindow::OnUsbConfig,this);
-
-        //Create Button "Connect / Disconnect"
-        wxButton* connectDevGpibButton = new wxButton(panelfunc, wxID_ANY, "Connected / Disconnect",wxPoint(10,0));
-        connectDevGpibButton->Bind(wxEVT_BUTTON, &FunctionWindow::OnConDisconGpib,this);
-
-        //Funtion Output Lable
-        wxStaticText* discFuncOutput = new wxStaticText(panelfunc,wxID_ANY,"Function output: ");
-        //Funtion Output Text Box
-        textFuncOutput = new wxTextCtrl(panelfunc, wxID_ANY,"",wxDefaultPosition,wxSize(300, 200), wxTE_MULTILINE);
-
-        //sizer     Set Window Layout
-        wxBoxSizer* sizerFunc = new wxBoxSizer(wxVERTICAL);
-        sizerFunc->Add(discFuncInput, 0, wxEXPAND | wxALL , 10);
-        sizerFunc->Add(writeFuncInput, 0, wxEXPAND | wxALL , 10);
-        sizerFunc->Add(scanUsbButton, 0, wxEXPAND | wxALL , 10);
-        sizerFunc->Add(connectDevGpibButton, 0, wxEXPAND | wxALL , 10);
-        sizerFunc->Add(devConfigButton, 0, wxEXPAND | wxALL , 10);
-        sizerFunc->Add(writeGpibButton, 0, wxEXPAND | wxALL , 10);
-        sizerFunc->Add(readGpibButton, 0, wxEXPAND | wxALL , 10);
-        sizerFunc->Add(readWriteGpibButton, 0, wxEXPAND | wxALL , 10);
-        sizerFunc->Add(discFuncOutput, 0, wxEXPAND | wxALL , 10);
-        sizerFunc->Add(textFuncOutput, 0, wxEXPAND | wxALL , 10);
-        panelfunc->SetSizerAndFit(sizerFunc);
-
-    }
-private:
-    //Button Functions
-    void OnWriteGpib(wxCommandEvent& event);
-    void OnReadGpib(wxCommandEvent& event);
-    void OnReadWriteGpib(wxCommandEvent& event);
-    void OnUsbScan(wxCommandEvent& event);
-    void OnUsbConfig(wxCommandEvent& event);
-    void OnConDisconGpib(wxCommandEvent& event);
-
-    //Text Boxes
-    wxTextCtrl* textFuncOutput;
-    wxTextCtrl* writeFuncInput;
-
-    //Class Variables
-    bool configFin;
-    bool Connected;
-    FT_HANDLE ftHandle = NULL;
-};
+#include "main.h"
 
 wxIMPLEMENT_APP(MainWin);
 
-
 //-----MainWin Methodes-----
-
 bool MainWin::OnInit()
 {
     //Enable Debug output window
@@ -212,16 +18,12 @@ bool MainWin::OnInit()
 
     return true;
 }
-
 //-----MainWin Methodes ende-----
 
 
-
 //-----MainWinFrame + Methodes-----
-
 MainWinFrame::MainWinFrame() : wxFrame(nullptr, wxID_ANY, "Main Window", wxDefaultPosition, wxSize(500,600))
 {
-
     //Menu punkt 1 Hello
     wxMenu *menuFile = new wxMenu;
     menuFile->Append(ID_Hello,"&Hello \t Ctrl+H","Help item Hello");
@@ -303,6 +105,7 @@ void MainWinFrame::OnOpenTerminal(wxCommandEvent& event)
     //Close Window
     TWin->Destroy();
 }
+
 void MainWinFrame::OnOpenFunctionTest(wxCommandEvent& event)
 {
     //Create new sub window
@@ -330,10 +133,64 @@ void MainWinFrame::OnScanUsb(wxCommandEvent& event)
 
     }
 }
-//-----MainWinFrame Methodes ende-----
+//-----MainWinFrame Methodes End -----
 
+//----- Terminal Window Constructor -----
+TerminalWindow::TerminalWindow(wxWindow *parent) 
+    : wxDialog(parent, wxID_ANY, "GPIB Terminal Window", wxDefaultPosition, wxSize(1000,600))
+{
+    wxPanel* panelTerm = new wxPanel(this);
 
-//-----TerminalWindow-----
+    //text Output
+    TerminalDisplay = new wxTextCtrl(panelTerm,wxID_ANY,"",wxDefaultPosition,wxSize(1000, 200), wxTE_MULTILINE);
+    //disable user input
+    TerminalDisplay->SetEditable(false);
+    //text input
+    wxTextCtrl* TerminalInput = new wxTextCtrl(panelTerm, wxID_ANY,"",wxDefaultPosition,wxSize(1000, 50), wxTE_MULTILINE | wxTE_PROCESS_ENTER);
+    //set Cursor in input window
+    TerminalInput->SetFocus();
+
+    wxStaticText* StaticTE = new wxStaticText(panelTerm, wxID_ANY,"GPIB Terminal log");
+
+    wxStaticText* StaticTEInput = new wxStaticText(panelTerm, wxID_ANY,"Input GPIB Commands:");
+
+    wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
+    sizer->Add(StaticTE,0, wxALL, 20);
+    sizer->Add(TerminalDisplay, 0, wxEXPAND | wxALL, 20);
+    sizer->Add(StaticTEInput, 0 , wxALL, 20);
+    sizer->Add(TerminalInput, 0, wxALL, 20);
+    panelTerm->SetSizerAndFit(sizer);
+
+    //debug msg
+    wxLogDebug("Terminal Window Opened");
+
+    TerminalInput->Bind(wxEVT_TEXT_ENTER, &TerminalWindow::OnEnterTerminal,this);
+    //define Termianl Commands
+    TerminalWindow::setupCmds();
+}
+//-----Terminal window Destructor -----
+TerminalWindow::~TerminalWindow()
+{
+    if (Connected)
+    {
+        disconnectDevice(" ");
+    }
+    wxLogDebug("Terminal Window Closed");
+}
+//-----Terminal Window Methodes -----
+void TerminalWindow::setupCmds()
+{
+    cmds["scan"]        = [this](const std::string& args) { this->scanDevices(args); };
+    cmds["status"]      = [this](const std::string& args) { this->statusDevice(args); };
+    cmds["config"]      = [this](const std::string& args) { this->configDevice(args); };
+    cmds["connect"]     = [this](const std::string& args) { this->connectDevice(args); };
+    cmds["disconnect"]  = [this](const std::string& args) { this->disconnectDevice(args); };
+    cmds["send"]        = [this](const std::string& args) { this->sendToDevice(args); };
+    cmds["read"]        = [this](const std::string& args) { this->readFromDevice(args); };
+    cmds["write"]       = [this](const std::string& args) { this->writeToDevice(args); };
+    cmds["test"]        = [this](const std::string& args) { this->testDevice(args); };
+}
+
 void TerminalWindow::scanDevices(const std::string& args)
 {
     DWORD devNum = scanUsbDev();
@@ -715,15 +572,83 @@ void TerminalWindow::OnEnterTerminal(wxCommandEvent& event)
         TerminalDisplay->AppendText(terminalTimestampOutput("Unknown command!\n"));
     }
 }
+//-----Terminal Window Methodes End -----
 
-void TerminalWindow::OnWindowDestroyed()
+
+//-----Function Window Constructor-----
+FunctionWindow::FunctionWindow(wxWindow *parent) 
+    : wxDialog(parent, wxID_ANY, "Function Test Window", wxDefaultPosition, wxSize(500,750))
 {
-    TerminalWindow::disconnectDevice(" ");
+    wxPanel* panelfunc = new wxPanel(this);
+
+    //Input text lable
+    wxStaticText* discFuncInput = new wxStaticText(panelfunc,wxID_ANY,"Input text to write: ");
+
+    //Function input textbox
+    writeFuncInput = new wxTextCtrl(panelfunc, wxID_ANY,"",wxDefaultPosition,wxSize(300, 40));
+    //set Cursor in writeFuncInput window
+    writeFuncInput->SetFocus();
+
+    //Create Button "Write to GPIB"
+    wxButton* writeGpibButton = new wxButton(panelfunc, wxID_ANY, "Write to GPIB",wxPoint(10,0));
+    writeGpibButton->Bind(wxEVT_BUTTON, &FunctionWindow::OnWriteGpib,this);
+
+    //Create Button "Read to GPIB"
+    wxButton* readGpibButton = new wxButton(panelfunc, wxID_ANY, "Read from GPIB",wxPoint(10,0));
+    readGpibButton->Bind(wxEVT_BUTTON, &FunctionWindow::OnReadGpib,this);
+
+    //Create Button "Write and Read GPIB"
+    wxButton* readWriteGpibButton = new wxButton(panelfunc, wxID_ANY, "Write and Read GPIB",wxPoint(10,0));
+    readWriteGpibButton->Bind(wxEVT_BUTTON, &FunctionWindow::OnReadWriteGpib,this);
+
+    //Create Button "Scan For Device"
+    wxButton* scanUsbButton = new wxButton(panelfunc, wxID_ANY, "Scan For Device",wxPoint(10,0));
+    scanUsbButton->Bind(wxEVT_BUTTON, &FunctionWindow::OnUsbScan,this);
+
+    //Create Button "Configure USB Device"
+    wxButton* devConfigButton = new wxButton(panelfunc, wxID_ANY, "Configure USB Device",wxPoint(10,0));
+    devConfigButton->Bind(wxEVT_BUTTON, &FunctionWindow::OnUsbConfig,this);
+
+    //Create Button "Connect / Disconnect"
+    wxButton* connectDevGpibButton = new wxButton(panelfunc, wxID_ANY, "Connected / Disconnect",wxPoint(10,0));
+    connectDevGpibButton->Bind(wxEVT_BUTTON, &FunctionWindow::OnConDisconGpib,this);
+
+    //Funtion Output Lable
+    wxStaticText* discFuncOutput = new wxStaticText(panelfunc,wxID_ANY,"Function output: ");
+    //Funtion Output Text Box
+    textFuncOutput = new wxTextCtrl(panelfunc, wxID_ANY,"",wxDefaultPosition,wxSize(300, 200), wxTE_MULTILINE);
+
+    //sizer     Set Window Layout
+    wxBoxSizer* sizerFunc = new wxBoxSizer(wxVERTICAL);
+    sizerFunc->Add(discFuncInput, 0, wxEXPAND | wxALL , 10);
+    sizerFunc->Add(writeFuncInput, 0, wxEXPAND | wxALL , 10);
+    sizerFunc->Add(scanUsbButton, 0, wxEXPAND | wxALL , 10);
+    sizerFunc->Add(connectDevGpibButton, 0, wxEXPAND | wxALL , 10);
+    sizerFunc->Add(devConfigButton, 0, wxEXPAND | wxALL , 10);
+    sizerFunc->Add(writeGpibButton, 0, wxEXPAND | wxALL , 10);
+    sizerFunc->Add(readGpibButton, 0, wxEXPAND | wxALL , 10);
+    sizerFunc->Add(readWriteGpibButton, 0, wxEXPAND | wxALL , 10);
+    sizerFunc->Add(discFuncOutput, 0, wxEXPAND | wxALL , 10);
+    sizerFunc->Add(textFuncOutput, 0, wxEXPAND | wxALL , 10);
+    panelfunc->SetSizerAndFit(sizerFunc);
 }
+//-----Function Window Destructor-----
+FunctionWindow::~FunctionWindow()
+{
+    if (Connected)
+    {
+        FT_STATUS ftStatus = FT_Close(ftHandle);
+        printErr(ftStatus,"Failed to Disconnect");
 
-//-----Terminal window Methodes endes-----
-
-//-----Function Window-----
+        if (ftStatus == FT_OK)
+        {
+            textFuncOutput->AppendText(terminalTimestampOutput("Disconnected from a device\n"));
+            wxLogDebug("Disconnected");
+            Connected = false;
+        }
+    }
+}
+//-----Function Window Methodes-----
 void FunctionWindow::OnUsbScan(wxCommandEvent& event)
 {
     wxLogDebug("Scan USB Devices");
@@ -954,5 +879,5 @@ void FunctionWindow::OnUsbConfig(wxCommandEvent& event)
         configFin = false;
     }
 }
-
+//-----Function Window Methodes End -----
 
