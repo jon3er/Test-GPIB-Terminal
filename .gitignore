@@ -1,8 +1,12 @@
+#LINUX
 bin/
 obj/
+Test_GPIB_Terminal.cbp
+Test_GPIB_Terminal.depend
+Test_GPIB_Terminal.layout
+#WINDOWS
 build/
 /.vscode
 third-party/
-/.vscode/launch.json
-/.vscode/c_cpp_properties.json
-/.vscode/settings.json
+CMakeLists.txt
+
