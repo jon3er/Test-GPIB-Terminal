@@ -3,7 +3,6 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <unistd.h>
 #include <wx/wx.h>
 
 #include "ftd2xx.h"

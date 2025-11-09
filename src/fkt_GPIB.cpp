@@ -29,10 +29,11 @@ std::vector<char> checkAscii(std::string input)
 
     if (input.substr(0,2) == "++")
     {
+        strcpy(charOutputBuffer,charInputBuffer);
         size_t BufferSize = strlen(charInputBuffer);
-        charInputBuffer[BufferSize] = '\n';
-        charInputBuffer[BufferSize + 1] = '\0';
-        std::vector<char> vCharOutputAdptr(charInputBuffer,charInputBuffer + strlen(charInputBuffer));
+        charOutputBuffer[BufferSize] = '\n';
+        charOutputBuffer[BufferSize + 1] = '\0';
+        std::vector<char> vCharOutputAdptr(charOutputBuffer,charOutputBuffer + strlen(charOutputBuffer));
 
         wxLogDebug("Adapter Command: %s",std::string(vCharOutputAdptr.begin(),vCharOutputAdptr.end()));
 

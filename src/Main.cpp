@@ -1,6 +1,6 @@
 #include <wx/wx.h>
-#include <unistd.h>
 #include <map>
+#include <thread>
 #include "fkt_GPIB.h"
 #include "fkt_d2xx.h"
 //#include <Main.h>
@@ -37,7 +37,7 @@ private:
     void OnOpenFunctionTest(wxCommandEvent& event);
 };
 
-//-----Terimal-----
+//-----Terminal-----
 class TerminalWindow : public wxDialog
 {
 public:
@@ -489,7 +489,7 @@ void TerminalWindow::sendToDevice(const std::string& args)
 
         //read
         //usleep(1000000/BaudRate);
-        usleep(50000);
+        std::this_thread::sleep_for(std::chrono::microseconds(50000));
         //char Buffer[256];
         std::vector<char> BigBuffer;
         DWORD BufferSize;
@@ -669,14 +669,14 @@ void TerminalWindow::testDevice(const std::string& args)
         //writeToDevice("IDE?");
         //writeToDevice("++read");
         //auf antwort warten
-        usleep(100000);
+        std::this_thread::sleep_for(std::chrono::microseconds(50000));
         readFromDevice("");
     }
     else if(args == "1")
     {
 
         writeToDevice("++rst");
-        usleep(200000);
+        std::this_thread::sleep_for(std::chrono::microseconds(200000));
 
         writeToDevice("++mode 1");
         writeToDevice("++auto 0");
@@ -684,7 +684,7 @@ void TerminalWindow::testDevice(const std::string& args)
 
         writeToDevice("*IDE?");
         writeToDevice("++read eoi");
-        usleep(50000);
+        std::this_thread::sleep_for(std::chrono::microseconds(50000));
         readFromDevice("");
     }
     else
@@ -692,7 +692,7 @@ void TerminalWindow::testDevice(const std::string& args)
         wxLogDebug("manual read write");
         writeToDevice(args);
         writeToDevice("++read eos");
-        usleep(50000);
+        std::this_thread::sleep_for(std::chrono::microseconds(50000));
         readFromDevice("");
     }
 
@@ -924,7 +924,7 @@ void FunctionWindow::OnReadWriteGpib(wxCommandEvent& event)
         }
 
         //read
-        usleep(50000);
+        std::this_thread::sleep_for(std::chrono::microseconds(50000));
 
         //char Buffer[256];
         std::vector<char> BigBuffer;
