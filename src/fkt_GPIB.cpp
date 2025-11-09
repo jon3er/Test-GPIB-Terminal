@@ -9,7 +9,6 @@ wxString terminalTimestampOutput(wxString Text)
     wxString timestamp = zeitJetzt.Format("%H:%M:%S");
     wxString FormatText = "[" + timestamp + "] " + Text;
 
-    //Output to terminal
     return FormatText;
 }
 
@@ -27,7 +26,7 @@ std::vector<char> checkAscii(std::string input)
     //allocate output for max possible length
     char* charOutputBuffer = new char[input.length()*2 + 2];
 
-    if (input.substr(0,2) == "++")
+    if (input.substr(0,2) == "++")  //Adapter Command
     {
         strcpy(charOutputBuffer,charInputBuffer);
         size_t BufferSize = strlen(charInputBuffer);
@@ -51,8 +50,6 @@ std::vector<char> checkAscii(std::string input)
 
     for (int i=0;i < DataSize;i++)
     {
-
-
         switch(charInputBuffer[i])
         {
             case 10:
@@ -71,11 +68,9 @@ std::vector<char> checkAscii(std::string input)
         charOutputBuffer[j]= charInputBuffer[i];
 
         OgString = OgString + std::to_string(charInputBuffer[i]) + " ";
-        //wxLogDebug(OgString);
         ModString = ModString + std::to_string(charOutputBuffer[j]) + " ";
-        //wxLogDebug(ModString);
-        j++;
 
+        j++;
     }
     //Add LF to end "nicht notwendig wenn ++eos 2 und eigenglich müsste ascii 27 angehängt werden"
     charOutputBuffer[j] = '\n';
@@ -86,12 +81,10 @@ std::vector<char> checkAscii(std::string input)
     wxLogDebug("Input str in ascii: %s", OgString);
     wxLogDebug("Output str in ascii: %s", ModString);
 
-    std::string s(charOutputBuffer, strlen(charOutputBuffer));
     std::vector<char> vCharOutputGpib(charOutputBuffer,charOutputBuffer + strlen(charOutputBuffer));
 
     delete[] charInputBuffer;
     delete[] charOutputBuffer;
 
     return vCharOutputGpib;
-
 }

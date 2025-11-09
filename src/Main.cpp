@@ -31,7 +31,7 @@ private:
     void OnHello(wxCommandEvent& event);
     void OnExit(wxCommandEvent& event);
     void OnAbout(wxCommandEvent& event);
-    //bottons
+    //buttons
     void OnOpenTerminal(wxCommandEvent& event);
     void OnScanUsb(wxCommandEvent& event);
     void OnOpenFunctionTest(wxCommandEvent& event);
@@ -54,7 +54,7 @@ public:
         //set Cursor in input window
         TerminalInput->SetFocus();
 
-        StaticTE = new wxStaticText(panelTerm, wxID_ANY,"GPIB Terminal log");
+        wxStaticText* StaticTE = new wxStaticText(panelTerm, wxID_ANY,"GPIB Terminal log");
 
         wxStaticText* StaticTEInput = new wxStaticText(panelTerm, wxID_ANY,"Input GPIB Commands:");
 
@@ -67,8 +67,6 @@ public:
 
         //debug msg
         wxLogDebug("Terminal Window Opened");
-
-        //Bind(wxEVT_WINDOW_DESTROY, &TerminalWindow::OnWindowDestroyed, this);
 
         TerminalInput->Bind(wxEVT_TEXT_ENTER, &TerminalWindow::OnEnterTerminal,this);
 
@@ -109,19 +107,16 @@ private:
     void writeToDevice(const std::string& args);
     void testDevice(const std::string& args);
 
-    //com Settings
+    //Terminal Output
+    wxTextCtrl* TerminalDisplay;
+
+    //com default settings
     int BaudRate = 921600;
-    //data recive var
-    DWORD BytesToRead = 1024;
-    DWORD BytesReturned;
-    //com Var
+    //Device Handle
     FT_HANDLE ftHandle = NULL;
-    FT_STATUS ftStatus;
 
     bool Connected = false;
     bool configFin = false;
-    wxStaticText* StaticTE;
-    wxTextCtrl* TerminalDisplay;
 };
 
 class FunctionWindow : public wxDialog
@@ -131,53 +126,44 @@ public:
     {
         wxPanel* panelfunc = new wxPanel(this);
 
-
-        //text to Write to Gpib
-
+        //Input text lable
         wxStaticText* discFuncInput = new wxStaticText(panelfunc,wxID_ANY,"Input text to write: ");
 
+        //Function input textbox
         writeFuncInput = new wxTextCtrl(panelfunc, wxID_ANY,"",wxDefaultPosition,wxSize(300, 40));
-        //set Cursor in input window
+        //set Cursor in writeFuncInput window
         writeFuncInput->SetFocus();
 
         //Create Button "Write to GPIB"
         wxButton* writeGpibButton = new wxButton(panelfunc, wxID_ANY, "Write to GPIB",wxPoint(10,0));
-        // Trigger button Function when Pressing the button
         writeGpibButton->Bind(wxEVT_BUTTON, &FunctionWindow::OnWriteGpib,this);
 
         //Create Button "Read to GPIB"
         wxButton* readGpibButton = new wxButton(panelfunc, wxID_ANY, "Read from GPIB",wxPoint(10,0));
-        // Trigger button Function when Pressing the button
         readGpibButton->Bind(wxEVT_BUTTON, &FunctionWindow::OnReadGpib,this);
 
-        //Create Button "Read to GPIB"
-        wxButton* readWriteGpibButton = new wxButton(panelfunc, wxID_ANY, "Write and Read from GPIB",wxPoint(10,0));
-        // Trigger button Function when Pressing the button
+        //Create Button "Write and Read GPIB"
+        wxButton* readWriteGpibButton = new wxButton(panelfunc, wxID_ANY, "Write and Read GPIB",wxPoint(10,0));
         readWriteGpibButton->Bind(wxEVT_BUTTON, &FunctionWindow::OnReadWriteGpib,this);
 
-        //Create Button "Read to GPIB"
+        //Create Button "Scan For Device"
         wxButton* scanUsbButton = new wxButton(panelfunc, wxID_ANY, "Scan For Device",wxPoint(10,0));
-        // Trigger button Function when Pressing the button
         scanUsbButton->Bind(wxEVT_BUTTON, &FunctionWindow::OnUsbScan,this);
 
-        //Create Button "Read to GPIB"
+        //Create Button "Configure USB Device"
         wxButton* devConfigButton = new wxButton(panelfunc, wxID_ANY, "Configure USB Device",wxPoint(10,0));
-        // Trigger button Function when Pressing the button
         devConfigButton->Bind(wxEVT_BUTTON, &FunctionWindow::OnUsbConfig,this);
 
-        //Create Button "Read to GPIB"
+        //Create Button "Connect / Disconnect"
         wxButton* connectDevGpibButton = new wxButton(panelfunc, wxID_ANY, "Connected / Disconnect",wxPoint(10,0));
-        // Trigger button Function when Pressing the button
         connectDevGpibButton->Bind(wxEVT_BUTTON, &FunctionWindow::OnConDisconGpib,this);
 
-
+        //Funtion Output Lable
         wxStaticText* discFuncOutput = new wxStaticText(panelfunc,wxID_ANY,"Function output: ");
-        // Text Log
+        //Funtion Output Text Box
         textFuncOutput = new wxTextCtrl(panelfunc, wxID_ANY,"",wxDefaultPosition,wxSize(300, 200), wxTE_MULTILINE);
 
-
-
-        //sizer
+        //sizer     Set Window Layout
         wxBoxSizer* sizerFunc = new wxBoxSizer(wxVERTICAL);
         sizerFunc->Add(discFuncInput, 0, wxEXPAND | wxALL , 10);
         sizerFunc->Add(writeFuncInput, 0, wxEXPAND | wxALL , 10);
@@ -193,17 +179,19 @@ public:
 
     }
 private:
-
+    //Button Functions
     void OnWriteGpib(wxCommandEvent& event);
     void OnReadGpib(wxCommandEvent& event);
     void OnReadWriteGpib(wxCommandEvent& event);
     void OnUsbScan(wxCommandEvent& event);
     void OnUsbConfig(wxCommandEvent& event);
     void OnConDisconGpib(wxCommandEvent& event);
-    //
+
+    //Text Boxes
     wxTextCtrl* textFuncOutput;
     wxTextCtrl* writeFuncInput;
 
+    //Class Variables
     bool configFin;
     bool Connected;
     FT_HANDLE ftHandle = NULL;
@@ -216,10 +204,12 @@ wxIMPLEMENT_APP(MainWin);
 
 bool MainWin::OnInit()
 {
+    //Enable Debug output window
     wxLog::SetActiveTarget(new wxLogStderr());
 
     MainWinFrame *frame = new MainWinFrame();
     frame->Show();
+
     return true;
 }
 
@@ -260,20 +250,17 @@ MainWinFrame::MainWinFrame() : wxFrame(nullptr, wxID_ANY, "Main Window", wxDefau
     //Create Panel
     wxPanel* panelMain = new wxPanel(this);
 
-    //Create Button "Open Terminal in Position 10,10
+    //Create Button "Open Terminal
     wxButton *terminalButton = new wxButton(panelMain, wxID_ANY, "Open Terminal",wxPoint(10,0));
-    // Trigger OnOpenTerminal when Pressing the button
     terminalButton->Bind(wxEVT_BUTTON, &MainWinFrame::OnOpenTerminal,this);
 
-    //Create Button "Open Function Test" in Position 10,10
+    //Create Button "Open Function Test"
     wxButton *testfunctionButton = new wxButton(panelMain, wxID_ANY, "Open Function Test",wxPoint(10,0));
-    // Trigger OnOpenTerminal when Pressing the button
     testfunctionButton->Bind(wxEVT_BUTTON, &MainWinFrame::OnOpenFunctionTest,this);
 
 
-    //Create Button "Scan Usb" in Position 10,10
+    //Create Button "Scan Usb"
     wxButton *scanUsbButton = new wxButton(panelMain, wxID_ANY, "Scan USB Devices",wxPoint(10,0));
-    // Trigger OnScanUsb when Pressing the button
     scanUsbButton->Bind(wxEVT_BUTTON, &MainWinFrame::OnScanUsb,this);
 
 
@@ -283,15 +270,13 @@ MainWinFrame::MainWinFrame() : wxFrame(nullptr, wxID_ANY, "Main Window", wxDefau
     ScanUsbDisplay->SetEditable(false);
 
 
-    //ass Sizer
+    //sizer     Window layout
     wxBoxSizer* sizerMain = new wxBoxSizer(wxVERTICAL);
     sizerMain->Add(terminalButton, 0, wxEXPAND | wxALL, 10);
     sizerMain->Add(ScanUsbDisplay, 0, wxEXPAND | wxALL, 10);
     sizerMain->Add(scanUsbButton, 0, wxALL | wxALIGN_RIGHT, 10);
     sizerMain->Add(testfunctionButton, 0, wxEXPAND | wxALL, 10);
-
     panelMain->SetSizerAndFit(sizerMain);
-
 }
 
 void MainWinFrame::OnExit(wxCommandEvent& event)
@@ -325,7 +310,6 @@ void MainWinFrame::OnOpenFunctionTest(wxCommandEvent& event)
     //open Window Pauses Main Window
     FuncWin->ShowModal();
     //Close Window
-
     FuncWin->Destroy();
 }
 
@@ -345,9 +329,7 @@ void MainWinFrame::OnScanUsb(wxCommandEvent& event)
         MainWinFrame::ScanUsbDisplay->SetValue(deviceNumString);
 
     }
-
 }
-
 //-----MainWinFrame Methodes ende-----
 
 
@@ -356,12 +338,14 @@ void TerminalWindow::scanDevices(const std::string& args)
 {
     DWORD devNum = scanUsbDev();
     wxString Text = "Number of devices: " + std::to_string(devNum) + "\n";
+
     TerminalDisplay->AppendText(terminalTimestampOutput(Text));
 }
 
 void TerminalWindow::statusDevice(const std::string& args)
 {
     wxString Text;
+
     if (Connected)
     {
         Text = "Connected to a Device ";
@@ -381,10 +365,11 @@ void TerminalWindow::statusDevice(const std::string& args)
 
     TerminalDisplay->AppendText(terminalTimestampOutput(Text +"\n"));
 }
+
 void TerminalWindow::connectDevice(const std::string& args)
 {
     FT_STATUS ftStatus;
-    FT_HANDLE tempHandle = TerminalWindow::ftHandle;
+    
     int dev = 0;
 
     wxLogDebug("Command entered: connected with args: %s", args);
@@ -404,24 +389,24 @@ void TerminalWindow::connectDevice(const std::string& args)
         }
     }
 
-    if (!TerminalWindow::Connected)
+    if (!Connected)
     {
-        ftStatus = FT_Open(dev,&tempHandle);
+        ftStatus = FT_Open(dev,&ftHandle);
         printErr(ftStatus,"Failed to Connect");
 
         if (ftStatus == FT_OK)
         {
             TerminalDisplay->AppendText(terminalTimestampOutput("Connected to a device\n"));
             wxLogDebug("Connected to %i", dev);
-            TerminalWindow::Connected = true;
+            Connected = true;
         }
         else
         {
             wxLogDebug("Couldnt connect");
-            TerminalDisplay->AppendText(terminalTimestampOutput("Couldnt connect to a device\n Is programm running as SU?\n Is the FTDI_SIO Driver unloaded?"));
+            TerminalDisplay->AppendText(terminalTimestampOutput("Couldnt connect to a device\n Is programm running as SU?\n Is the FTDI_SIO Driver unloaded?\n"));
         }
 
-        ftStatus = FT_Purge(tempHandle, FT_PURGE_RX | FT_PURGE_TX);
+        ftStatus = FT_Purge(ftHandle, FT_PURGE_RX | FT_PURGE_TX);
         printErr(ftStatus,"Purge Failed");
 
     }
@@ -429,26 +414,23 @@ void TerminalWindow::connectDevice(const std::string& args)
     {
         TerminalDisplay->AppendText(terminalTimestampOutput("Device already connected\n"));
     }
-
-    TerminalWindow::ftHandle = tempHandle;
-
 }
+
 void TerminalWindow::disconnectDevice(const std::string& args)
 {
     FT_STATUS ftStatus;
-    FT_HANDLE tempHandle = TerminalWindow::ftHandle;
 
     wxLogDebug("Command entered: disconnect with arg: %s", args);
 
-    ftStatus = FT_Close(tempHandle);
+    ftStatus = FT_Close(ftHandle);
     printErr(ftStatus,"Failed to Disconnect");
 
     if (ftStatus == FT_OK)
     {
         TerminalDisplay->AppendText(terminalTimestampOutput("Disconnected from a device\n"));
         wxLogDebug("disconnected from current device");
-        TerminalWindow::Connected = false;
-        TerminalWindow::configFin = false;
+        Connected = false;
+        configFin = false;
     }
     else
     {
@@ -456,29 +438,29 @@ void TerminalWindow::disconnectDevice(const std::string& args)
     }
 
 }
+
 void TerminalWindow::sendToDevice(const std::string& args)
 {
     wxString Text;
 
     wxLogDebug("terminal Command send %s Entered",args);
 
-    if (TerminalWindow::Connected && TerminalWindow::configFin)
+    if (Connected && configFin)
     {
         DWORD bytesWritten;
-
         wxString GPIBText = args;
-
         std::string CheckText(GPIBText.ToUTF8());
-
+        //Check String if Adapter or GPIB Command and check for ASCII 10, 13, 27, 43
         std::vector<char> charArrWriteGpib = checkAscii(CheckText);
 
         wxLogDebug("Trying to write to Device... %s", std::string(charArrWriteGpib.begin(),charArrWriteGpib.end()));
+
         FT_STATUS ftStatus =writeUsbDev(ftHandle, charArrWriteGpib, bytesWritten);
 
         if (ftStatus == FT_OK)
         {
             Text = std::string(charArrWriteGpib.begin(),charArrWriteGpib.end());
-            Text = "Msg sent: " + Text + " \n " + std::to_string(bytesWritten) + " Bytes Written to GPIB Device\n";
+            Text = "Msg sent: " + Text + " ; " + std::to_string(bytesWritten) + " Bytes Written to GPIB Device\n";
             TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
         }
         else
@@ -487,10 +469,10 @@ void TerminalWindow::sendToDevice(const std::string& args)
             TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
         }
 
-        //read
-        //usleep(1000000/BaudRate);
+        //---- read ---
+        // Wait for Responce
         std::this_thread::sleep_for(std::chrono::microseconds(50000));
-        //char Buffer[256];
+
         std::vector<char> BigBuffer;
         DWORD BufferSize;
 
@@ -499,9 +481,8 @@ void TerminalWindow::sendToDevice(const std::string& args)
 
         if (ftStatus == FT_OK)
         {
-            //Text = std::string(Buffer);
-            Text = std::string(BigBuffer.data(),BigBuffer.size());
-            Text = "Msg received:\n" + Text + "\n";
+            Text = std::string(BigBuffer.begin(),BigBuffer.end());
+            Text = "Msg received: " + Text + "\n";
             if (BigBuffer.size() == 0)
             {
                 Text = "No Message to Read\n";
@@ -514,7 +495,6 @@ void TerminalWindow::sendToDevice(const std::string& args)
             Text = "Failed to Receive Data - TimeOut after 5s\n";
             TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
         }
-
     }
     else
     {
@@ -522,36 +502,35 @@ void TerminalWindow::sendToDevice(const std::string& args)
         Text = "Failed to connect to a device or missing config\n";
         TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
     }
-
 }
+
 void TerminalWindow::readFromDevice(const std::string& args)
 {
     wxString Text;
+    
 
     wxLogDebug("command read entered with args: %s", args);
 
-    if (TerminalWindow::Connected && TerminalWindow::configFin)
+    if (Connected && configFin)
     {
-        //char Buffer[256];
         std::vector<char> BigBuffer;
         DWORD BufferSize;
         FT_STATUS ftStatus;
 
         wxLogDebug("Reading from Device...");
 
-        //ftStatus = FT_Write(ftHandle, "++read\n",7, &BytesWritten);
-
         ftStatus = readUsbDev(ftHandle, BigBuffer,BufferSize);
 
         if (ftStatus == FT_OK)
         {
-            //Text = std::string(Buffer);
             Text = std::string(BigBuffer.data(),BigBuffer.size());
-            Text = "Msg received:\n" + Text + "\n";
+            Text = "Msg received: " + Text + "\n";
+
             if (BigBuffer.size() == 0)
             {
                 Text = "No Message to Read\n";
             }
+
             TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
         }
         else
@@ -568,6 +547,7 @@ void TerminalWindow::readFromDevice(const std::string& args)
         TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
     }
 }
+
 void TerminalWindow::writeToDevice(const std::string& args)
 {
     wxString Text;
@@ -577,20 +557,19 @@ void TerminalWindow::writeToDevice(const std::string& args)
     if (TerminalWindow::Connected)
     {
         DWORD bytesWritten;
-
         wxString GPIBText = args;
-
         std::string CheckText(GPIBText.ToUTF8());
-
+        //Check String if Adapter or GPIB Command and check for ASCII 10, 13, 27, 43
         std::vector<char> charArrWriteGpib = checkAscii(CheckText);
 
         wxLogDebug("Trying to write to Device... %s", std::string(charArrWriteGpib.begin(),charArrWriteGpib.end()));
+
         FT_STATUS ftStatus =writeUsbDev(ftHandle, charArrWriteGpib, bytesWritten);
 
         if (ftStatus == FT_OK)
         {
             Text = GPIBText;
-            Text = "Msg sent: " + Text + " \n " + std::to_string(bytesWritten) + " Bytes Written to GPIB Device\n";
+            Text = "Msg sent: " + Text + " ; " + std::to_string(bytesWritten) + " Bytes Written to GPIB Device\n";
             TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
         }
         else
@@ -612,12 +591,9 @@ void TerminalWindow::configDevice(const std::string& args)
 {
     DWORD numDev = 0;
     wxString Text;
-    //FT_HANDLE tempHandle = TerminalWindow::ftHandle;
-    //args => config Baurate
 
     if (args != "")
     {
-
         if (std::stoi(args) == std::clamp(std::stoi(args), 1, 1000000))
         {
             BaudRate = std::stoi(args);
@@ -629,10 +605,9 @@ void TerminalWindow::configDevice(const std::string& args)
         }
     }
     else
-        {
-            wxLogDebug("Using Default Baudrate: %i",BaudRate);
-        }
-
+    {
+        wxLogDebug("Using Default Baudrate: %i",BaudRate);
+    }
 
     FT_STATUS Status = configUsbDev(numDev, ftHandle, BaudRate);
 
@@ -706,15 +681,14 @@ void TerminalWindow::OnEnterTerminal(wxCommandEvent& event)
 
     wxLogDebug("user entered: %s", TText.c_str());
 
-    std::string rawText = std::string(TText.ToUTF8());
-    //int testRes = checkCMD(TText);
-    TText = TText + "\n";
     //Output to terminal
-    TerminalDisplay->AppendText(terminalTimestampOutput(TText));
+    TerminalDisplay->AppendText(terminalTimestampOutput(TText + "\n"));
 
     //entspechende Funktionen finden und aufrufen
     std::string strCmd;
     std::string args;
+    std::string rawText(TText.ToUTF8());
+
     size_t firstSpace = rawText.find(' ');
 
     //seperiert Befehl und argument
@@ -772,65 +746,61 @@ void FunctionWindow::OnUsbScan(wxCommandEvent& event)
 void FunctionWindow::OnConDisconGpib(wxCommandEvent& event)
 {
     FT_STATUS ftStatus;
-    FT_HANDLE tempHandle = FunctionWindow::ftHandle;
     int dev = 0;
 
-    if (!FunctionWindow::Connected)
+    if (!Connected)
     {
-        ftStatus = FT_Open(dev,&tempHandle);
+        ftStatus = FT_Open(dev,&ftHandle);
         printErr(ftStatus,"Failed to Connect");
 
-        ftStatus = FT_Purge(tempHandle, FT_PURGE_RX | FT_PURGE_TX);
+        ftStatus = FT_Purge(ftHandle, FT_PURGE_RX | FT_PURGE_TX);
         printErr(ftStatus,"Purge Failed");
 
         if (ftStatus == FT_OK)
         {
             textFuncOutput->AppendText(terminalTimestampOutput("Connected to a device\n"));
             wxLogDebug("Connected to %i", dev);
-            FunctionWindow::Connected = true;
+            Connected = true;
         }
     }
     else
     {
-        ftStatus = FT_Close(tempHandle);
+        ftStatus = FT_Close(ftHandle);
         printErr(ftStatus,"Failed to Disconnect");
 
         if (ftStatus == FT_OK)
         {
             textFuncOutput->AppendText(terminalTimestampOutput("Disconnected from a device\n"));
             wxLogDebug("Connected to %i", dev);
-            FunctionWindow::Connected = false;
+            Connected = false;
         }
     }
-
-    FunctionWindow::ftHandle = tempHandle;
 }
 
 void FunctionWindow::OnWriteGpib(wxCommandEvent& event)
 {
-
     wxString Text;
 
+    wxLogDebug("Write Pressed!");
 
-    wxLogDebug("On Write Pressed");
-
-    if (FunctionWindow::Connected)
+    if (Connected)
     {
         DWORD bytesWritten;
-
         wxString GPIBText = FunctionWindow::writeFuncInput->GetValue();
 
-        std::string CheckText(GPIBText.ToUTF8());
+        FunctionWindow::writeFuncInput->SetValue("");
 
+        std::string CheckText(GPIBText.ToUTF8());
         std::vector<char> charArrWriteGpib = checkAscii(CheckText);
 
         wxLogDebug("Trying to write to Device... %s", std::string(charArrWriteGpib.begin(),charArrWriteGpib.end()));
+
         FT_STATUS ftStatus =writeUsbDev(ftHandle, charArrWriteGpib, bytesWritten);
 
         if (ftStatus == FT_OK)
         {
             Text = GPIBText;
-            Text = "Msg sent: " + Text + " \n " + std::to_string(bytesWritten) + " Bytes Written to GPIB Device\n";
+            Text = "Msg sent: " + Text + " ; " + std::to_string(bytesWritten) + " Bytes Written to GPIB Device\n";
             FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
         }
         else
@@ -843,7 +813,7 @@ void FunctionWindow::OnWriteGpib(wxCommandEvent& event)
     else
     {
         wxLogDebug("No Connection");
-        Text = "Failed to Connected";
+        Text = "Failed to Connected\n";
         FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
     }
 
@@ -857,23 +827,24 @@ void FunctionWindow::OnReadGpib(wxCommandEvent& event)
 
     if (FunctionWindow::Connected)
     {
-        //char Buffer[256];
         std::vector<char> BigBuffer;
         DWORD BufferSize;
         FT_STATUS ftStatus;
 
         wxLogDebug("Reading from Device...");
+
         ftStatus = readUsbDev(ftHandle, BigBuffer,BufferSize);
 
         if (ftStatus == FT_OK)
         {
-            //Text = std::string(Buffer);
             Text = std::string(BigBuffer.data(),BigBuffer.size());
-            Text = "Msg received:\n" + Text + "\n";
+            Text = "Msg received: " + Text + "\n";
+
             if (BigBuffer.size() == 0)
             {
                 Text = "No Message to Read\n";
             }
+
             FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
         }
         else
@@ -889,7 +860,6 @@ void FunctionWindow::OnReadGpib(wxCommandEvent& event)
         Text = "Failed to Connected to a Device\n";
         FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
     }
-
 }
 
 void FunctionWindow::OnReadWriteGpib(wxCommandEvent& event)
@@ -898,14 +868,12 @@ void FunctionWindow::OnReadWriteGpib(wxCommandEvent& event)
 
     wxLogDebug("On Write / Read Pressed");
 
-    if (FunctionWindow::Connected && FunctionWindow::configFin)
+    if (Connected && configFin)
     {
         DWORD bytesWritten;
-
         wxString GPIBText = FunctionWindow::writeFuncInput->GetValue();
 
         std::string CheckText(GPIBText.ToUTF8());
-
         std::vector<char> charArrWriteGpib = checkAscii(CheckText);
 
         wxLogDebug("Trying to write to Device... %s", std::string(charArrWriteGpib.begin(),charArrWriteGpib.end()));
@@ -914,7 +882,7 @@ void FunctionWindow::OnReadWriteGpib(wxCommandEvent& event)
         if (ftStatus == FT_OK)
         {
             Text = std::string(charArrWriteGpib.begin(),charArrWriteGpib.end());
-            Text = "Msg sent: " + Text + " \n " + std::to_string(bytesWritten) + " Bytes Written to GPIB Device\n";
+            Text = "Msg sent: " + Text + " ; " + std::to_string(bytesWritten) + " Bytes Written to GPIB Device\n";
             FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
         }
         else
@@ -926,18 +894,18 @@ void FunctionWindow::OnReadWriteGpib(wxCommandEvent& event)
         //read
         std::this_thread::sleep_for(std::chrono::microseconds(50000));
 
-        //char Buffer[256];
         std::vector<char> BigBuffer;
         DWORD BufferSize;
 
         wxLogDebug("Reading from Device...");
+
         ftStatus = readUsbDev(ftHandle, BigBuffer,BufferSize);
 
         if (ftStatus == FT_OK)
         {
-            //Text = std::string(Buffer);
             Text = std::string(BigBuffer.data(),BigBuffer.size());
             Text = "Msg received:\n" + Text + "\n";
+
             if (BigBuffer.size() == 0)
             {
                 Text = "No Message to Read\n";
@@ -963,7 +931,6 @@ void FunctionWindow::OnReadWriteGpib(wxCommandEvent& event)
 
 void FunctionWindow::OnUsbConfig(wxCommandEvent& event)
 {
-
     DWORD numDev = 0;
     int BaudRate = 921600;
     wxString Text;
@@ -974,14 +941,16 @@ void FunctionWindow::OnUsbConfig(wxCommandEvent& event)
     {
         Text = "Set Device BaudRate to " + std::to_string(BaudRate) + "\n";
         FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
+
         wxLogDebug("Baudrate set to: %s", std::to_string(BaudRate));
-        //wxLogDebug(std::to_string(ftHandle);
+
         configFin = true;
     }
     else
     {
         Text = "Failed to config device check if run as SU";
         FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
+
         configFin = false;
     }
 }

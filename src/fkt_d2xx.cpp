@@ -10,7 +10,7 @@ public:
 };
 
 
-int printErr(FT_STATUS status, const std::string& msg)
+int printErr(FT_STATUS status, const std::string& msg) //Checks for Error and prints Error msg
 {
     if (status != FT_OK)
     {
@@ -23,7 +23,7 @@ int printErr(FT_STATUS status, const std::string& msg)
     return 0;
 }
 
-DWORD scanUsbDev()
+DWORD scanUsbDev()  //Scans for USB Devices
 {
     DWORD numDevs;
 
@@ -36,7 +36,7 @@ DWORD scanUsbDev()
     return numDevs;
 }
 
-FT_STATUS configUsbDev(DWORD numDev, FT_HANDLE &ftHandle,int BaudRate)
+FT_STATUS configUsbDev(DWORD numDev, FT_HANDLE &ftHandle,int BaudRate)  //Sets Baudrate, Timeouts etc.
 {
     FT_STATUS ftStatus;
 
@@ -44,7 +44,6 @@ FT_STATUS configUsbDev(DWORD numDev, FT_HANDLE &ftHandle,int BaudRate)
     ftStatus = FT_SetBaudRate(ftHandle,BaudRate);
     printErr(ftStatus,"Failed to set Baudrate");
 
-    //set Baud rate
     ftStatus = FT_SetDataCharacteristics(ftHandle, FT_BITS_8, FT_STOP_BITS_1, FT_PARITY_NONE);
     printErr(ftStatus,"Failed to set Data Characteristics");
 
@@ -65,16 +64,11 @@ FT_STATUS writeUsbDev(FT_HANDLE ftHandle, std::vector<char> cmdText,DWORD& bytes
 {
     FT_STATUS ftStatus;
 
-    // TODO -- CR (ASCII 13), LF (ASCII 10), ESC (ASCII 27), ‘+’ (ASCII 43) – they must be escaped by preceding them with an ESC character.
-
     char* charPtrCmdText = cmdText.data();
-    DWORD dataSize = cmdText.size(); // bei null terminatior +1 addieren
+    DWORD dataSize = cmdText.size();
     wxLogDebug("Write: %s \n strlen: %i",std::string(cmdText.begin(),cmdText.end()),(int)dataSize);
 
     ftStatus = FT_Write(ftHandle, charPtrCmdText, dataSize, &bytesWritten);
-    printErr(ftStatus,"FT Write Error");
-
-    //free(cmdText);
 
     printErr(ftStatus,"Failed to write");
 
@@ -96,25 +90,26 @@ FT_STATUS readUsbDev(FT_HANDLE ftHandle,std::vector<char>& RPBuffer,DWORD &Bytes
     wxString Text;
     FT_STATUS ftStatus;
 
-    RPBuffer.clear();
-
     //Get Number of bytes to read from receive queue
     ftStatus = FT_GetQueueStatus(ftHandle,&BytesToRead);
+
     printErr(ftStatus,"Failed to Get Queue Status");
-
+    
+    RPBuffer.clear();
     RPBuffer.resize(BytesToRead);
-    char* p_RPBuffer = RPBuffer.data();
+    char* ptrRPBuffer = RPBuffer.data();
 
-    Text = "Bytes to read from queue: " + std::to_string(BytesToRead);
-    wxLogDebug(Text);
+    wxLogDebug("Bytes to read from queue: %s", std::to_string(BytesToRead));
 
     if (BytesToRead <= 0)
     {
         wxLogDebug("No Data to read bytes to read: %d", (int)BytesToRead);
+
         return ftStatus;
     }
 
-    ftStatus = FT_Read(ftHandle, p_RPBuffer, BytesToRead, &BytesReturned);
+    ftStatus = FT_Read(ftHandle, ptrRPBuffer, BytesToRead, &BytesReturned);
+
     printErr(ftStatus,"Failed to Read data");
 
     DWORD dataSize = RPBuffer.size();
@@ -122,6 +117,7 @@ FT_STATUS readUsbDev(FT_HANDLE ftHandle,std::vector<char>& RPBuffer,DWORD &Bytes
     if (BytesReturned != dataSize)
     {
         printErr(ftStatus,"Failed to recive all of the Data");
+
         wxLogDebug("Received data Size: %d \n Bytes Returned: %d",(int)dataSize,(int)BytesReturned);
     }
     else
@@ -130,11 +126,9 @@ FT_STATUS readUsbDev(FT_HANDLE ftHandle,std::vector<char>& RPBuffer,DWORD &Bytes
     }
 
     return ftStatus;
-
 }
 
-//static
-const char * statusString(FT_STATUS status)
+const char * statusString(FT_STATUS status) //Error Codes
 {
     switch (status)
     {
