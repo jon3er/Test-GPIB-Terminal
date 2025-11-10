@@ -136,7 +136,7 @@ void MainWinFrame::OnScanUsb(wxCommandEvent& event)
 //-----MainWinFrame Methodes End -----
 
 //----- Terminal Window Constructor -----
-TerminalWindow::TerminalWindow(wxWindow *parent) 
+TerminalWindow::TerminalWindow(wxWindow *parent)
     : wxDialog(parent, wxID_ANY, "GPIB Terminal Window", wxDefaultPosition, wxSize(1000,600))
 {
     wxPanel* panelTerm = new wxPanel(this);
@@ -226,7 +226,7 @@ void TerminalWindow::statusDevice(const std::string& args)
 void TerminalWindow::connectDevice(const std::string& args)
 {
     FT_STATUS ftStatus;
-    
+
     int dev = 0;
 
     wxLogDebug("Command entered: connected with args: %s", args);
@@ -328,7 +328,7 @@ void TerminalWindow::sendToDevice(const std::string& args)
 
         //---- read ---
         // Wait for Responce
-        std::this_thread::sleep_for(std::chrono::microseconds(50000));
+        std::this_thread::sleep_for(std::chrono::microseconds(100000));
 
         std::vector<char> BigBuffer;
         DWORD BufferSize;
@@ -364,7 +364,7 @@ void TerminalWindow::sendToDevice(const std::string& args)
 void TerminalWindow::readFromDevice(const std::string& args)
 {
     wxString Text;
-    
+
 
     wxLogDebug("command read entered with args: %s", args);
 
@@ -439,7 +439,7 @@ void TerminalWindow::writeToDevice(const std::string& args)
     else
     {
         wxLogDebug("No Connection");
-        Text = "Failed to Connected";
+        Text = "Failed to Connect\n";
         TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
     }
 }
@@ -491,18 +491,20 @@ void TerminalWindow::testDevice(const std::string& args)
         connectDevice("");
         configDevice("");
 
+
+        writeToDevice("++clr");
+        std::this_thread::sleep_for(std::chrono::microseconds(200000));
         writeToDevice("++mode 1");
         writeToDevice("++auto 1");
-        //writeToDevice("++auto 0");
-        writeToDevice("++clr");
+
+        writeToDevice("++eot_enable 0");
+        writeToDevice("++eot_char 10");
         writeToDevice("++addr 20");
-        writeToDevice("++ver");
+        sendToDevice("++ver");
 
         //writeToDevice("IDE?");
         //writeToDevice("++read");
         //auf antwort warten
-        std::this_thread::sleep_for(std::chrono::microseconds(50000));
-        readFromDevice("");
     }
     else if(args == "1")
     {
@@ -518,6 +520,42 @@ void TerminalWindow::testDevice(const std::string& args)
         writeToDevice("++read eoi");
         std::this_thread::sleep_for(std::chrono::microseconds(50000));
         readFromDevice("");
+    }
+    else if(args == "mess")
+    {
+        writeToDevice("++auto 0");
+        //Rest GPIB Device
+        writeToDevice("RST");
+        writeToDevice("*CLR");
+        //Set Range and Maker
+        writeToDevice("FREQ:CENT 1 GHZ");
+        writeToDevice("FREQ:SPAN 10 MHZ");
+        writeToDevice("BAND:RES 100 KHZ ");
+        writeToDevice("CALC:MARK:MAX");
+        //wait for fin
+        writeToDevice("*WAI");
+        //read makers
+
+        //after setup set to auto 1
+        writeToDevice("++auto 1");
+        std::this_thread::sleep_for(std::chrono::microseconds(20000));
+        sendToDevice("CALC:MARK1:Y?");
+        sendToDevice("CALC:MARK1:X?");
+    }
+    else if ("big")
+    {
+
+        writeToDevice("++auto 0");
+        writeToDevice("INIT:CONT OFF");
+        writeToDevice("SWE:POIN 1001");
+        writeToDevice("INIT:IMM");
+        writeToDevice("*WAI");
+        writeToDevice("FORM:DATA REAL,32");
+        writeToDevice("FORM:BORD NORM");
+        writeToDevice("++auto 1");
+
+        sendToDevice("TRAC1:DATA?");
+
     }
     else
     {
@@ -576,7 +614,7 @@ void TerminalWindow::OnEnterTerminal(wxCommandEvent& event)
 
 
 //-----Function Window Constructor-----
-FunctionWindow::FunctionWindow(wxWindow *parent) 
+FunctionWindow::FunctionWindow(wxWindow *parent)
     : wxDialog(parent, wxID_ANY, "Function Test Window", wxDefaultPosition, wxSize(500,750))
 {
     wxPanel* panelfunc = new wxPanel(this);
@@ -738,7 +776,7 @@ void FunctionWindow::OnWriteGpib(wxCommandEvent& event)
     else
     {
         wxLogDebug("No Connection");
-        Text = "Failed to Connected\n";
+        Text = "Failed to Connect\n";
         FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
     }
 
@@ -782,7 +820,7 @@ void FunctionWindow::OnReadGpib(wxCommandEvent& event)
     else
     {
         wxLogDebug("No Device to send too");
-        Text = "Failed to Connected to a Device\n";
+        Text = "Failed to Connect to a Device\n";
         FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
     }
 }
@@ -848,7 +886,7 @@ void FunctionWindow::OnReadWriteGpib(wxCommandEvent& event)
     else
     {
         wxLogDebug("No Device to send too");
-        Text = "Failed to Connected to a Device";
+        Text = "Failed to Connect to a Device";
         FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
     }
 
