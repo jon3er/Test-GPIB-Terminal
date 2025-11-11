@@ -279,6 +279,15 @@ void TerminalWindow::disconnectDevice(const std::string& args)
 
     wxLogDebug("Command entered: disconnect with arg: %s", args);
 
+    writeToDevice("++auto 0");
+    writeToDevice("*CLS");
+    writeToDevice("++loc");
+    writeToDevice("++ifc");
+
+
+    std::this_thread::sleep_for(std::chrono::microseconds(200000));
+
+
     ftStatus = FT_Close(ftHandle);
     printErr(ftStatus,"Failed to Disconnect");
 
@@ -496,7 +505,8 @@ void TerminalWindow::testDevice(const std::string& args)
         std::this_thread::sleep_for(std::chrono::microseconds(200000));
         writeToDevice("++mode 1");
         writeToDevice("++auto 1");
-
+        writeToDevice("++eos 2");
+        writeToDevice("++eoi 1");
         writeToDevice("++eot_enable 0");
         writeToDevice("++eot_char 10");
         writeToDevice("++addr 20");
@@ -524,6 +534,7 @@ void TerminalWindow::testDevice(const std::string& args)
     else if(args == "mess")
     {
         writeToDevice("++auto 0");
+
         //Rest GPIB Device
         writeToDevice("RST");
         writeToDevice("*CLR");
@@ -538,24 +549,27 @@ void TerminalWindow::testDevice(const std::string& args)
 
         //after setup set to auto 1
         writeToDevice("++auto 1");
-        std::this_thread::sleep_for(std::chrono::microseconds(20000));
+        std::this_thread::sleep_for(std::chrono::microseconds(200000));
         sendToDevice("CALC:MARK1:Y?");
         sendToDevice("CALC:MARK1:X?");
+
+
     }
     else if ("big")
     {
 
         writeToDevice("++auto 0");
         writeToDevice("INIT:CONT OFF");
-        writeToDevice("SWE:POIN 1001");
+        writeToDevice("SWE:POIN 10");
         writeToDevice("INIT:IMM");
         writeToDevice("*WAI");
         writeToDevice("FORM:DATA REAL,32");
         writeToDevice("FORM:BORD NORM");
-        writeToDevice("++auto 1");
 
-        sendToDevice("TRAC1:DATA?");
+        writeToDevice("TRAC1:DATA?");
+        writeToDevice("++read eos");
 
+        readFromDevice("");
     }
     else
     {
