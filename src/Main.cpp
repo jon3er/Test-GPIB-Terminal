@@ -305,9 +305,10 @@ void TerminalWindow::disconnectDevice(const std::string& args)
 
 }
 
-void TerminalWindow::sendToDevice(const std::string& args)
+wxString TerminalWindow::sendToDevice(const std::string& args)
 {
     wxString Text;
+    wxString TextOut;
 
     wxLogDebug("terminal Command send %s Entered",args);
 
@@ -321,7 +322,7 @@ void TerminalWindow::sendToDevice(const std::string& args)
 
         wxLogDebug("Trying to write to Device... %s", std::string(charArrWriteGpib.begin(),charArrWriteGpib.end()));
 
-        FT_STATUS ftStatus =writeUsbDev(ftHandle, charArrWriteGpib, bytesWritten);
+        FT_STATUS ftStatus = writeUsbDev(ftHandle, charArrWriteGpib, bytesWritten);
 
         if (ftStatus == FT_OK)
         {
@@ -347,8 +348,8 @@ void TerminalWindow::sendToDevice(const std::string& args)
 
         if (ftStatus == FT_OK)
         {
-            Text = std::string(BigBuffer.begin(),BigBuffer.end());
-            Text = "Msg received: " + Text + "\n";
+            TextOut = std::string(BigBuffer.begin(),BigBuffer.end());
+            Text = "Msg received: " + TextOut + "\n";
             if (BigBuffer.size() == 0)
             {
                 Text = "No Message to Read\n";
@@ -368,12 +369,14 @@ void TerminalWindow::sendToDevice(const std::string& args)
         Text = "Failed to connect to a device or missing config\n";
         TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
     }
+
+    return TextOut;
 }
 
-void TerminalWindow::readFromDevice(const std::string& args)
+wxString TerminalWindow::readFromDevice(const std::string& args = "")
 {
     wxString Text;
-
+    wxString TextOut;
 
     wxLogDebug("command read entered with args: %s", args);
 
@@ -412,6 +415,8 @@ void TerminalWindow::readFromDevice(const std::string& args)
         Text = "Failed to Connected to a Device\n";
         TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
     }
+
+    return TextOut;
 }
 
 void TerminalWindow::writeToDevice(const std::string& args)
@@ -505,7 +510,7 @@ void TerminalWindow::testDevice(const std::string& args)
         std::this_thread::sleep_for(std::chrono::microseconds(200000));
         writeToDevice("++mode 1");
         writeToDevice("++auto 1");
-        writeToDevice("++eos 2");
+        writeToDevice("++eos 2"); //lf
         writeToDevice("++eoi 1");
         writeToDevice("++eot_enable 0");
         writeToDevice("++eot_char 10");
@@ -559,17 +564,64 @@ void TerminalWindow::testDevice(const std::string& args)
     {
 
         writeToDevice("++auto 0");
-        writeToDevice("INIT:CONT OFF");
-        writeToDevice("SWE:POIN 10");
-        writeToDevice("INIT:IMM");
-        writeToDevice("*WAI");
+        writeToDevice("INIT:CONT OFF"); //Dauerhafter sweep aus
+        writeToDevice("SWE:POIN 100"); //100 messpunkte über messbereich aufnehmen
+        writeToDevice("FREQ:STAR 80 MHZ");
+        writeToDevice("FREQ:STOP 120 MHZ");
+        writeToDevice("BAND:RES 100 KHZ ");
+
         writeToDevice("FORM:DATA REAL,32");
         writeToDevice("FORM:BORD NORM");
+        writeToDevice("SWE:TIME AUTO");
+        std::this_thread::sleep_for(std::chrono::microseconds(200'000));
+        writeToDevice("SWE:TIME?");
+        wxString swpTime = sendToDevice("++read");
+
+        //float muS = std::stof(swpTime.c_str())*100;
+        writeToDevice("INIT:IMM"); //Messung starten
+        writeToDevice("*WAI");
+        std::this_thread::sleep_for(std::chrono::microseconds(100*15000));
+
+        wxString responce;
+        int i;
+        while ((responce.substr(0,1) != "1") || (i == 20))
+        {
+            writeToDevice("*OPC?");
+            std::this_thread::sleep_for(std::chrono::microseconds(100'000));
+            responce = sendToDevice("++read eoi");
+            i++;
+        }
 
         writeToDevice("TRAC1:DATA?");
-        writeToDevice("++read eos");
+        writeToDevice("++read eoi");
 
-        readFromDevice("");
+        std::this_thread::sleep_for(std::chrono::microseconds(300'000));
+        readFromDevice();
+
+        writeToDevice("INIT:CONT ON"); //Dauerhafter sweep an
+    }
+    else if ("swp")
+    {
+
+    writeToDevice("++auto 0");
+    writeToDevice("*RST");
+    writeToDevice("INIT:CONT OFF");                 //single sweep
+    writeToDevice("SYST:DISP:UDP ON");              //Bildschrim an
+    //Frequenzeinstellung
+    writeToDevice("FREQ:STAR 85MHz;STOP 125MHz");   //Frequenz bereich
+    //Pegeleinstellen
+    writeToDevice("DISP:WIND:TRAC:Y:RLEV -20dBm"); //referenzpegel
+    writeToDevice("INIT;*WAI");                     //sweep durchführen mit sync
+    //TOI messen
+    writeToDevice("CALC:MARK:PEXC 6DB");
+    writeToDevice("CALC:MARK:FUNC:TOI ON");         //TOI messung an
+
+    writeToDevice("CALC:MARK:FUNC:TOI:RES?");       //Ergebniss auslesen
+
+    writeToDevice("++read eos");
+    readFromDevice("");
+
+    writeToDevice("++auto 1");
     }
     else
     {
