@@ -1,13 +1,6 @@
 #include "fkt_d2xx.h"
 
-class FTDevice
-{
-public:
-    FT_HANDLE ftHandle;
-    FT_STATUS ftStatus;
-    DWORD numDev;
-    int BaudRate;
-};
+
 
 
 int printErr(FT_STATUS status, const std::string& msg) //Checks for Error and prints Error msg
@@ -84,16 +77,22 @@ FT_STATUS writeUsbDev(FT_HANDLE ftHandle, std::vector<char> cmdText,DWORD& bytes
     return ftStatus;
 }
 
-FT_STATUS readUsbDev(FT_HANDLE ftHandle,std::vector<char>& RPBuffer,DWORD &BytesReturned)
+FT_STATUS readUsbDev(FT_HANDLE ftHandle,std::vector<char>& RPBuffer,DWORD &BytesReturned, DWORD forceReadBytes)
 {
     DWORD BytesToRead;
     wxString Text;
     FT_STATUS ftStatus;
 
     //Get Number of bytes to read from receive queue
-    ftStatus = FT_GetQueueStatus(ftHandle,&BytesToRead);
-
-    printErr(ftStatus,"Failed to Get Queue Status");
+    if (forceReadBytes == 0)
+    {
+        ftStatus = FT_GetQueueStatus(ftHandle,&BytesToRead);
+        printErr(ftStatus,"Failed to Get Queue Status");
+    }
+    else
+    {
+        BytesToRead = forceReadBytes;
+    }
     
     RPBuffer.clear();
     RPBuffer.resize(BytesToRead);

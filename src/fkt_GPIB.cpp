@@ -1,7 +1,179 @@
-#include <wx/wx.h>
 #include "fkt_GPIB.h"
 
 //TODO Create Device Class and Create new read read and write funtions
+GpibDevice::GpibDevice()
+{
+
+}
+
+GpibDevice::~GpibDevice()
+{
+    disconnect();
+}
+
+std::string GpibDevice::read(int forceReadBytes)
+{
+    wxString Text;
+
+    if (Connected && configFin)
+    {
+        std::vector<char> BigBuffer;
+        DWORD BufferSize;
+        FT_STATUS ftStatus;
+
+        wxLogDebug("Reading from Device...");
+
+        ftStatus = readUsbDev(ftHandle, BigBuffer, BufferSize, forceReadBytes);
+
+        if (ftStatus == FT_OK)
+        {
+            Text = std::string(BigBuffer.data(),BigBuffer.size());
+            Text = "Msg received: " + Text + "\n";
+
+            if (BigBuffer.size() == 0)
+            {
+                Text = "No Message to Read\n";
+            }
+        }
+        else
+        {
+            Text = "Failed to Receive Data - TimeOut after 5s\n"; 
+        }
+    }
+    else
+    {
+        wxLogDebug("No Device to send too");
+        Text = "Failed to Connected to a Device\n";
+    }
+    return std::string(Text.ToUTF8());
+}
+
+std::string GpibDevice::write(std::string msg)
+{
+    std::string Text;
+
+    wxLogDebug("Write Command Entered");
+
+    if (Connected)
+    {
+        DWORD bytesWritten;
+        wxString GPIBText = msg;
+        std::string CheckText(GPIBText.ToUTF8());
+        //Check String if Adapter or GPIB Command and check for ASCII 10, 13, 27, 43
+        std::vector<char> charArrWriteGpib = checkAscii(CheckText);
+
+        wxLogDebug("Trying to write to Device... %s", std::string(charArrWriteGpib.begin(),charArrWriteGpib.end()));
+
+        FT_STATUS ftStatus =writeUsbDev(ftHandle, charArrWriteGpib, bytesWritten);
+
+        if (ftStatus == FT_OK)
+        {
+            Text = GPIBText;
+            Text = "Msg sent: " + Text + " ; " + std::to_string(bytesWritten) + " Bytes Written to GPIB Device\n";
+        }
+        else
+        {
+            Text = "Failed to send Data\n";
+        }
+    }
+    else
+    {
+        wxLogDebug("No Connection");
+        Text = "Failed to Connect\n";
+    }
+    return Text;
+}
+
+std::string GpibDevice::send(std::string msg, int DelayMs)
+{
+    write(msg);
+    sleepMs(DelayMs);
+    return read();
+}
+
+DWORD GpibDevice::quaryBuffer()
+{
+    //Get Number of bytes to read from receive queue
+    ftStatus = FT_GetQueueStatus(ftHandle,&BytesToRead);
+    wxLogDebug("Bytes in Queue: %i", BytesToRead);
+    printErr(ftStatus,"Failed to Get Queue Status");
+
+    return BytesToRead;
+}
+
+void GpibDevice::connect(std::string args)
+{
+    if (!Connected)
+    {
+        ftStatus = FT_Open(numDev,&ftHandle);
+        printErr(ftStatus,"Failed to Connect");
+        write("SYST:DISP:UDP ON"); //Turn on monitor
+    }
+}
+void GpibDevice::disconnect(std::string args)
+{
+    write("++auto 0");
+    write("*CLS");
+    write("++loc");
+    write("++ifc");
+
+    sleepMs(200);
+
+
+    ftStatus = FT_Close(ftHandle);
+    printErr(ftStatus,"Failed to Disconnect");
+}
+void GpibDevice::config()
+{
+    //set Baudrate
+    ftStatus = FT_SetBaudRate(ftHandle,BaudRate);
+    printErr(ftStatus,"Failed to set Baudrate");
+
+    ftStatus = FT_SetDataCharacteristics(ftHandle, FT_BITS_8, FT_STOP_BITS_1, FT_PARITY_NONE);
+    printErr(ftStatus,"Failed to set Data Characteristics");
+
+    ftStatus = FT_SetFlowControl(ftHandle, FT_FLOW_NONE, 0, 0);
+    printErr(ftStatus,"Failed to set flow Characteristics");
+
+    ftStatus =  FT_SetTimeouts(ftHandle, 500,500);
+    printErr(ftStatus,"Failed to set TimeOut");
+
+    wxLogDebug("FT-Config complete");
+}
+std::string GpibDevice::statusText()
+{
+    std::string Text;
+
+    if (Connected)
+    {
+        Text = "Connected to a Device ";
+    }
+    else
+    {
+        Text = "Not connected to a device";
+    }
+    if (Connected && configFin)
+    {
+        Text = Text + " and ";
+    }
+    if (configFin)
+    {
+        Text = Text + "Device config set Baudrate to: " + std::to_string(BaudRate);
+    }
+
+    Text += "\nLast Status code:" + wxString(statusString(ftStatus));
+
+    return Text;
+}
+FT_STATUS GpibDevice::getStatus()
+{
+    return ftStatus;
+}
+FT_HANDLE GpibDevice::getHandle()
+{
+    return ftHandle;
+}
+
 
 wxString terminalTimestampOutput(wxString Text)
 {
@@ -88,4 +260,9 @@ std::vector<char> checkAscii(std::string input)
     delete[] charOutputBuffer;
 
     return vCharOutputGpib;
+}
+
+void sleepMs(int timeMs)
+{
+    std::this_thread::sleep_for(std::chrono::milliseconds(timeMs));
 }

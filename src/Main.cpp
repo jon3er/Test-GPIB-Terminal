@@ -392,8 +392,8 @@ wxString TerminalWindow::readFromDevice(const std::string& args = "")
 
         if (ftStatus == FT_OK)
         {
-            Text = std::string(BigBuffer.data(),BigBuffer.size());
-            Text = "Msg received: " + Text + "\n";
+            TextOut = std::string(BigBuffer.data(),BigBuffer.size());
+            Text = "Msg received: " + TextOut + "\n";
 
             if (BigBuffer.size() == 0)
             {
@@ -583,7 +583,7 @@ void TerminalWindow::testDevice(const std::string& args)
         std::this_thread::sleep_for(std::chrono::microseconds(100*15000));
 
         wxString responce;
-        int i;
+        int i = 0;
         while ((responce.substr(0,1) != "1") || (i == 20))
         {
             writeToDevice("*OPC?");
@@ -619,7 +619,7 @@ void TerminalWindow::testDevice(const std::string& args)
     writeToDevice("CALC:MARK:FUNC:TOI:RES?");       //Ergebniss auslesen
 
     writeToDevice("++read eos");
-    readFromDevice("");
+    readFromDevice();
 
     writeToDevice("++auto 1");
     }
