@@ -1,4 +1,5 @@
 #include <wx/wx.h>
+#include <wx/notebook.h>
 #include <map>
 #include <thread>
 #include "fkt_GPIB.h"
@@ -65,6 +66,10 @@ MainWinFrame::MainWinFrame() : wxFrame(nullptr, wxID_ANY, "Main Window", wxDefau
     wxButton *scanUsbButton = new wxButton(panelMain, wxID_ANY, "Scan USB Devices",wxPoint(10,0));
     scanUsbButton->Bind(wxEVT_BUTTON, &MainWinFrame::OnScanUsb,this);
 
+    //Create Button "Settings"
+    wxButton *settingsButton = new wxButton(panelMain, wxID_ANY, "Settings",wxPoint(10,0));
+    settingsButton->Bind(wxEVT_BUTTON, &MainWinFrame::OnOpenSettings,this);
+   
 
     //Display Found Devices
     ScanUsbDisplay = new wxTextCtrl(panelMain,wxID_ANY,"Scan for avalible Devices...",wxDefaultPosition,wxSize(100, 40));
@@ -78,6 +83,7 @@ MainWinFrame::MainWinFrame() : wxFrame(nullptr, wxID_ANY, "Main Window", wxDefau
     sizerMain->Add(ScanUsbDisplay, 0, wxEXPAND | wxALL, 10);
     sizerMain->Add(scanUsbButton, 0, wxALL | wxALIGN_RIGHT, 10);
     sizerMain->Add(testfunctionButton, 0, wxEXPAND | wxALL, 10);
+    sizerMain->Add(settingsButton,0 , wxEXPAND | wxALL,10);
     panelMain->SetSizerAndFit(sizerMain);
 }
 
@@ -133,6 +139,17 @@ void MainWinFrame::OnScanUsb(wxCommandEvent& event)
 
     }
 }
+
+void MainWinFrame::OnOpenSettings(wxCommandEvent& event)
+{
+    //Create new sub window
+    SettingsWindow *SettingsWin = new SettingsWindow(this);
+    //open Window Pauses Main Window
+    SettingsWin->ShowModal();
+    //Close Window
+    SettingsWin->Destroy();
+}
+
 //-----MainWinFrame Methodes End -----
 
 //----- Terminal Window Constructor -----
@@ -815,15 +832,15 @@ void FunctionWindow::OnReadWriteGpib(wxCommandEvent& event)
     wxLogDebug("Writing to device...");
 
     wxString GPIBText = FunctionWindow::writeFuncInput->GetValue();
-    FunctionWindow::writeFuncInput->SetValue("");
-
     std::string CheckText(GPIBText.ToUTF8());
+
+    FunctionWindow::writeFuncInput->SetValue("");
     
     wxString Text = Adapter.write(CheckText);
     
     FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
-
-    sleepMs(100);
+    
+    sleepMs(100);   //wait for responce
 
     wxLogDebug("Reading from device...");
 
@@ -835,6 +852,65 @@ void FunctionWindow::OnReadWriteGpib(wxCommandEvent& event)
 void FunctionWindow::OnUsbConfig(wxCommandEvent& event)
 {
     Adapter.config();
+
+    if (Adapter.getStatus() == FT_OK)
+    {
+        FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput("Set Default config\n"));
+    }
+    else
+    {
+        FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput("Config failed\n"));
+    }
+
+    FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Adapter.statusText()));
 }
 //-----Function Window Methodes End -----
 
+SettingsWindow::SettingsWindow(wxWindow *parent)
+    : wxDialog(parent, wxID_ANY, "Settings", wxDefaultPosition, wxSize(500,750))
+{
+    wxPanel* mainPanel = new wxPanel(this, wxID_ANY);
+
+    //Main settingswindow elements
+    wxStaticText* infoText = new wxStaticText(mainPanel, wxID_ANY, "Settings for FSU Display, Adapter and General programm enviroment");
+    wxButton* resetButton = new wxButton(mainPanel,wxID_ANY,"reset all");
+    //Subtab elements
+    wxNotebook* notebook = new wxNotebook(mainPanel, wxID_ANY);
+
+    SettingsTabDisplay* displayTab = new SettingsTabDisplay(notebook, wxString::FromUTF8("Inhalt für 'display'"));
+    SettingsTabAdapter* adapterTab = new SettingsTabAdapter(notebook, wxString::FromUTF8("Inhalt für 'adapter'"));
+    SettingsTabGeneral* generalTab = new SettingsTabGeneral(notebook, wxString::FromUTF8("Inhalt für 'adapter'"));
+
+    notebook->AddPage(displayTab, "Display");
+    notebook->AddPage(adapterTab, "Adapter");
+    notebook->AddPage(generalTab, "General");
+
+    
+
+    // 5. Layout-Management (Sizer) verwenden, damit das Notebook
+    //    das Hauptfenster ausfüllt
+    wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
+    sizer->Add(infoText, 1, wxEXPAND | wxALL, 5);  
+    sizer->Add(notebook, 18, wxEXPAND | wxALL, 5); // 1 = dehnbar, wxEXPAND = ausfüllen
+    sizer->Add(resetButton,1 ,wxEXPAND | wxALL, 5);
+    mainPanel->SetSizer(sizer);
+    
+}
+
+SettingsTabDisplay::SettingsTabDisplay(wxNotebook *parent, const wxString &label)
+    : wxPanel(parent, wxID_ANY)
+{
+    new wxStaticText(this, wxID_ANY, label, wxPoint(10,10));   
+}
+
+SettingsTabAdapter::SettingsTabAdapter(wxNotebook *parent, const wxString &label)
+    : wxPanel(parent, wxID_ANY)
+{
+    new wxStaticText(this, wxID_ANY, label, wxPoint(10,10));   
+}
+
+SettingsTabGeneral::SettingsTabGeneral(wxNotebook *parent, const wxString &label)
+    : wxPanel(parent, wxID_ANY)
+{
+    new wxStaticText(this, wxID_ANY, label, wxPoint(10,10));   
+}

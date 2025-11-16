@@ -25,8 +25,6 @@ public:
     FT_HANDLE getHandle();
     bool getConnected();
     
-    void setConnected();
-    
 private:
     FT_HANDLE ftHandle = NULL;
     FT_STATUS ftStatus = FT_OK;
@@ -35,6 +33,7 @@ private:
     bool Connected = false;
     bool configFin = false;
     int sendDelayMs = 100;
+    std::string lastMsgReceived = "";
 
     DWORD BytesToRead = 0;
 };

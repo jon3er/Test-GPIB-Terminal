@@ -33,6 +33,7 @@ private:
     void OnOpenTerminal(wxCommandEvent& event);
     void OnScanUsb(wxCommandEvent& event);
     void OnOpenFunctionTest(wxCommandEvent& event);
+    void OnOpenSettings(wxCommandEvent& event);
 };
 
 //-----Terminal-----
@@ -97,3 +98,36 @@ private:
     //device Class
     GpibDevice Adapter;
 };
+
+class SettingsWindow : public wxDialog
+{
+public:
+    SettingsWindow(wxWindow *parent);
+    //virtual ~SettingsWindow();
+
+private:
+
+};
+
+//-----Settings Window-----
+class SettingsTabDisplay : public wxPanel
+{
+public:
+    SettingsTabDisplay(wxNotebook *parent, const wxString &label);
+    //virtual ~SettingsTabDisplay();
+};
+//------Subtabs------
+class SettingsTabAdapter : public wxPanel
+{
+public:
+    SettingsTabAdapter(wxNotebook *parent, const wxString &label);
+    //virtual ~SettingsTabDisplay();
+};
+
+class SettingsTabGeneral : public wxPanel
+{
+public:
+    SettingsTabGeneral(wxNotebook *parent, const wxString &label);
+    //virtual ~SettingsTabDisplay();
+};
+//-----end Subtabs-----

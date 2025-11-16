@@ -27,8 +27,8 @@ std::string GpibDevice::read(int forceReadBytes)
 
         if (ftStatus == FT_OK)
         {
-            Text = std::string(BigBuffer.data(),BigBuffer.size());
-            Text = "Msg received: " + Text + "\n";
+            lastMsgReceived = std::string(BigBuffer.data(),BigBuffer.size());
+            Text = "Msg received: " + lastMsgReceived + "\n";
 
             if (BigBuffer.size() == 0)
             {
@@ -88,6 +88,8 @@ std::string GpibDevice::send(std::string msg, int DelayMs)
 {
     write(msg);
     sleepMs(DelayMs);
+    quaryBuffer();
+
     return read();
 }
 
@@ -150,6 +152,15 @@ void GpibDevice::config()
     printErr(ftStatus,"Failed to set TimeOut");
 
     wxLogDebug("FT-Config complete");
+
+    if (ftStatus == FT_OK)
+    {
+        configFin = true;
+    }
+    else
+    {
+        configFin = false;
+    }
 }
 std::string GpibDevice::statusText()
 {
@@ -172,14 +183,16 @@ std::string GpibDevice::statusText()
         Text = Text + "Device config set Baudrate to: " + std::to_string(BaudRate);
     }
 
-    Text += "\nLast Status code:" + wxString(statusString(ftStatus));
+    Text += "\nLast Status code:" + wxString(statusString(ftStatus)) + "\n";
 
     return Text;
 }
+
 FT_STATUS GpibDevice::getStatus()
 {
     return ftStatus;
 }
+
 FT_HANDLE GpibDevice::getHandle()
 {
     return ftHandle;
