@@ -24,6 +24,10 @@ public:
     FT_STATUS getStatus();
     FT_HANDLE getHandle();
     bool getConnected();
+    std::string getLastMsgReseived();
+    int getBaudrate();
+
+    void setBaudrate(int BaudrateNew);
     
 private:
     FT_HANDLE ftHandle = NULL;

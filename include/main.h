@@ -69,6 +69,8 @@ private:
     FT_HANDLE ftHandle = NULL;
     bool Connected = false;
     bool configFin = false;
+    //device Class
+    GpibDevice Adapter;
 };
 
 class FunctionWindow : public wxDialog
@@ -98,7 +100,7 @@ private:
     //device Class
     GpibDevice Adapter;
 };
-
+//-----Settings Window-----
 class SettingsWindow : public wxDialog
 {
 public:
@@ -109,25 +111,25 @@ private:
 
 };
 
-//-----Settings Window-----
+//------Subtabs------
 class SettingsTabDisplay : public wxPanel
 {
 public:
     SettingsTabDisplay(wxNotebook *parent, const wxString &label);
-    //virtual ~SettingsTabDisplay();
+    
 };
-//------Subtabs------
+
 class SettingsTabAdapter : public wxPanel
 {
 public:
     SettingsTabAdapter(wxNotebook *parent, const wxString &label);
-    //virtual ~SettingsTabDisplay();
+    
 };
 
 class SettingsTabGeneral : public wxPanel
 {
 public:
     SettingsTabGeneral(wxNotebook *parent, const wxString &label);
-    //virtual ~SettingsTabDisplay();
+    
 };
 //-----end Subtabs-----

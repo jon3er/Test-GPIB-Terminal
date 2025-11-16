@@ -218,32 +218,11 @@ void TerminalWindow::scanDevices(const std::string& args)
 
 void TerminalWindow::statusDevice(const std::string& args)
 {
-    wxString Text;
-
-    if (Connected)
-    {
-        Text = "Connected to a Device ";
-    }
-    else
-    {
-        Text = "Not connected to a device";
-    }
-    if (Connected && configFin)
-    {
-        Text = Text + " and ";
-    }
-    if (configFin)
-    {
-        Text = Text + "Device config set Baudrate to: " + std::to_string(BaudRate);
-    }
-
-    TerminalDisplay->AppendText(terminalTimestampOutput(Text +"\n"));
+    TerminalDisplay->AppendText(terminalTimestampOutput(Adapter.statusText()));
 }
 
 void TerminalWindow::connectDevice(const std::string& args)
 {
-    FT_STATUS ftStatus;
-
     int dev = 0;
 
     wxLogDebug("Command entered: connected with args: %s", args);
@@ -263,16 +242,14 @@ void TerminalWindow::connectDevice(const std::string& args)
         }
     }
 
-    if (!Connected)
+    if (!Adapter.getConnected())
     {
-        ftStatus = FT_Open(dev,&ftHandle);
-        printErr(ftStatus,"Failed to Connect");
+        Adapter.connect();
 
-        if (ftStatus == FT_OK)
+        if (Adapter.getStatus() == FT_OK)
         {
             TerminalDisplay->AppendText(terminalTimestampOutput("Connected to a device\n"));
             wxLogDebug("Connected to %i", dev);
-            Connected = true;
         }
         else
         {
@@ -280,7 +257,7 @@ void TerminalWindow::connectDevice(const std::string& args)
             TerminalDisplay->AppendText(terminalTimestampOutput("Couldnt connect to a device\n Is programm running as SU?\n Is the FTDI_SIO Driver unloaded?\n"));
         }
 
-        ftStatus = FT_Purge(ftHandle, FT_PURGE_RX | FT_PURGE_TX);
+        FT_STATUS ftStatus = FT_Purge(ftHandle, FT_PURGE_RX | FT_PURGE_TX);
         printErr(ftStatus,"Purge Failed");
 
     }
@@ -296,24 +273,12 @@ void TerminalWindow::disconnectDevice(const std::string& args)
 
     wxLogDebug("Command entered: disconnect with arg: %s", args);
 
-    writeToDevice("++auto 0");
-    writeToDevice("*CLS");
-    writeToDevice("++loc");
-    writeToDevice("++ifc");
+    Adapter.disconnect();
 
-
-    std::this_thread::sleep_for(std::chrono::microseconds(200000));
-
-
-    ftStatus = FT_Close(ftHandle);
-    printErr(ftStatus,"Failed to Disconnect");
-
-    if (ftStatus == FT_OK)
+    if (Adapter.getStatus() == FT_OK)
     {
         TerminalDisplay->AppendText(terminalTimestampOutput("Disconnected from a device\n"));
         wxLogDebug("disconnected from current device");
-        Connected = false;
-        configFin = false;
     }
     else
     {
@@ -324,116 +289,36 @@ void TerminalWindow::disconnectDevice(const std::string& args)
 
 wxString TerminalWindow::sendToDevice(const std::string& args)
 {
-    wxString Text;
-    wxString TextOut;
-
     wxLogDebug("terminal Command send %s Entered",args);
 
-    if (Connected && configFin)
-    {
-        DWORD bytesWritten;
-        wxString GPIBText = args;
-        std::string CheckText(GPIBText.ToUTF8());
-        //Check String if Adapter or GPIB Command and check for ASCII 10, 13, 27, 43
-        std::vector<char> charArrWriteGpib = checkAscii(CheckText);
+    wxString GPIBText = args;
+    std::string CheckText(GPIBText.ToUTF8());
+    
+    wxString Text = Adapter.write(CheckText);
+    
+    TerminalDisplay->AppendText(terminalTimestampOutput(Text));
+    
+    sleepMs(100);   //wait for responce
 
-        wxLogDebug("Trying to write to Device... %s", std::string(charArrWriteGpib.begin(),charArrWriteGpib.end()));
+    wxLogDebug("Reading from device...");
 
-        FT_STATUS ftStatus = writeUsbDev(ftHandle, charArrWriteGpib, bytesWritten);
+    Text = Adapter.read();
 
-        if (ftStatus == FT_OK)
-        {
-            Text = std::string(charArrWriteGpib.begin(),charArrWriteGpib.end());
-            Text = "Msg sent: " + Text + " ; " + std::to_string(bytesWritten) + " Bytes Written to GPIB Device\n";
-            TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
-        }
-        else
-        {
-            Text = "Failed to send Data\n";
-            TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
-        }
+    TerminalDisplay->AppendText(terminalTimestampOutput(Text));
 
-        //---- read ---
-        // Wait for Responce
-        std::this_thread::sleep_for(std::chrono::microseconds(100000));
-
-        std::vector<char> BigBuffer;
-        DWORD BufferSize;
-
-        wxLogDebug("Reading from Device...");
-        ftStatus = readUsbDev(ftHandle, BigBuffer,BufferSize);
-
-        if (ftStatus == FT_OK)
-        {
-            TextOut = std::string(BigBuffer.begin(),BigBuffer.end());
-            Text = "Msg received: " + TextOut + "\n";
-            if (BigBuffer.size() == 0)
-            {
-                Text = "No Message to Read\n";
-            }
-
-            TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
-        }
-        else
-        {
-            Text = "Failed to Receive Data - TimeOut after 5s\n";
-            TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
-        }
-    }
-    else
-    {
-        wxLogDebug("No Device to send too or missing config");
-        Text = "Failed to connect to a device or missing config\n";
-        TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
-    }
-
-    return TextOut;
+    return Adapter.getLastMsgReseived();
 }
 
 wxString TerminalWindow::readFromDevice(const std::string& args = "")
 {
-    wxString Text;
-    wxString TextOut;
 
     wxLogDebug("command read entered with args: %s", args);
 
-    if (Connected && configFin)
-    {
-        std::vector<char> BigBuffer;
-        DWORD BufferSize;
-        FT_STATUS ftStatus;
+    std::string Text = Adapter.read();
 
-        wxLogDebug("Reading from Device...");
-
-        ftStatus = readUsbDev(ftHandle, BigBuffer,BufferSize);
-
-        if (ftStatus == FT_OK)
-        {
-            TextOut = std::string(BigBuffer.data(),BigBuffer.size());
-            Text = "Msg received: " + TextOut + "\n";
-
-            if (BigBuffer.size() == 0)
-            {
-                Text = "No Message to Read\n";
-            }
-
-            TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
-        }
-        else
-        {
-            Text = "Failed to Receive Data - TimeOut after 5s\n";
-            TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
-        }
-
-    }
-    else
-    {
-        wxLogDebug("No Device to send too");
-        Text = "Failed to Connected to a Device\n";
-        TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
-    }
-
-    return TextOut;
+    TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
+    
+    return Adapter.getLastMsgReseived();
 }
 
 void TerminalWindow::writeToDevice(const std::string& args)
@@ -442,42 +327,14 @@ void TerminalWindow::writeToDevice(const std::string& args)
 
     wxLogDebug("Write Command Entered");
 
-    if (TerminalWindow::Connected)
-    {
-        DWORD bytesWritten;
-        wxString GPIBText = args;
-        std::string CheckText(GPIBText.ToUTF8());
-        //Check String if Adapter or GPIB Command and check for ASCII 10, 13, 27, 43
-        std::vector<char> charArrWriteGpib = checkAscii(CheckText);
+    Text = Adapter.write(args);
 
-        wxLogDebug("Trying to write to Device... %s", std::string(charArrWriteGpib.begin(),charArrWriteGpib.end()));
-
-        FT_STATUS ftStatus =writeUsbDev(ftHandle, charArrWriteGpib, bytesWritten);
-
-        if (ftStatus == FT_OK)
-        {
-            Text = GPIBText;
-            Text = "Msg sent: " + Text + " ; " + std::to_string(bytesWritten) + " Bytes Written to GPIB Device\n";
-            TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
-        }
-        else
-        {
-            Text = "Failed to send Data\n";
-            TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
-        }
-
-    }
-    else
-    {
-        wxLogDebug("No Connection");
-        Text = "Failed to Connect\n";
-        TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
-    }
+    TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
+    
 }
 
 void TerminalWindow::configDevice(const std::string& args)
 {
-    DWORD numDev = 0;
     wxString Text;
 
     if (args != "")
@@ -496,14 +353,16 @@ void TerminalWindow::configDevice(const std::string& args)
     {
         wxLogDebug("Using Default Baudrate: %i",BaudRate);
     }
+    
+    Adapter.setBaudrate(BaudRate);
 
-    FT_STATUS Status = configUsbDev(numDev, ftHandle, BaudRate);
+    Adapter.config();
 
-    if (Status == FT_OK)
+    if (Adapter.getStatus() == FT_OK)
     {
-        Text = "Set Device BaudRate to " + std::to_string(BaudRate) + "\n";
+        Text = "Set Device BaudRate to " + std::to_string(Adapter.getBaudrate()) + "\n";
         TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
-        wxLogDebug("Baudrate set to: %s", std::to_string(BaudRate));
+        wxLogDebug("Baudrate set to: %s", std::to_string(Adapter.getBaudrate()));
         //wxLogDebug(std::to_string(ftHandle);
         configFin = true;
     }
@@ -524,7 +383,7 @@ void TerminalWindow::testDevice(const std::string& args)
 
 
         writeToDevice("++clr");
-        std::this_thread::sleep_for(std::chrono::microseconds(200000));
+        sleepMs(200);
         writeToDevice("++mode 1");
         writeToDevice("++auto 1");
         writeToDevice("++eos 2"); //lf
@@ -542,7 +401,7 @@ void TerminalWindow::testDevice(const std::string& args)
     {
 
         writeToDevice("++rst");
-        std::this_thread::sleep_for(std::chrono::microseconds(200000));
+        sleepMs(200);
 
         writeToDevice("++mode 1");
         writeToDevice("++auto 0");
@@ -550,7 +409,7 @@ void TerminalWindow::testDevice(const std::string& args)
 
         writeToDevice("*IDE?");
         writeToDevice("++read eoi");
-        std::this_thread::sleep_for(std::chrono::microseconds(50000));
+        sleepMs(50);
         readFromDevice("");
     }
     else if(args == "mess")
@@ -571,7 +430,7 @@ void TerminalWindow::testDevice(const std::string& args)
 
         //after setup set to auto 1
         writeToDevice("++auto 1");
-        std::this_thread::sleep_for(std::chrono::microseconds(200000));
+        sleepMs(200);
         sendToDevice("CALC:MARK1:Y?");
         sendToDevice("CALC:MARK1:X?");
 
@@ -590,29 +449,29 @@ void TerminalWindow::testDevice(const std::string& args)
         writeToDevice("FORM:DATA REAL,32");
         writeToDevice("FORM:BORD NORM");
         writeToDevice("SWE:TIME AUTO");
-        std::this_thread::sleep_for(std::chrono::microseconds(200'000));
+        sleepMs(200);
         writeToDevice("SWE:TIME?");
         wxString swpTime = sendToDevice("++read");
 
         //float muS = std::stof(swpTime.c_str())*100;
         writeToDevice("INIT:IMM"); //Messung starten
         writeToDevice("*WAI");
-        std::this_thread::sleep_for(std::chrono::microseconds(100*15000));
+        sleepMs(300);
 
         wxString responce;
         int i = 0;
         while ((responce.substr(0,1) != "1") || (i == 20))
         {
             writeToDevice("*OPC?");
-            std::this_thread::sleep_for(std::chrono::microseconds(100'000));
+            sleepMs(100);
             responce = sendToDevice("++read eoi");
             i++;
         }
 
-        writeToDevice("TRAC1:DATA?");
+        writeToDevice("TRAC:DATA? TRACE1");
         writeToDevice("++read eoi");
 
-        std::this_thread::sleep_for(std::chrono::microseconds(300'000));
+        sleepMs(100);
         readFromDevice();
 
         writeToDevice("INIT:CONT ON"); //Dauerhafter sweep an
@@ -645,7 +504,7 @@ void TerminalWindow::testDevice(const std::string& args)
         wxLogDebug("manual read write");
         writeToDevice(args);
         writeToDevice("++read eos");
-        std::this_thread::sleep_for(std::chrono::microseconds(50000));
+        sleepMs(50);
         readFromDevice("");
     }
 
@@ -866,6 +725,7 @@ void FunctionWindow::OnUsbConfig(wxCommandEvent& event)
 }
 //-----Function Window Methodes End -----
 
+//-----Settings Window--------
 SettingsWindow::SettingsWindow(wxWindow *parent)
     : wxDialog(parent, wxID_ANY, "Settings", wxDefaultPosition, wxSize(500,750))
 {
@@ -896,7 +756,7 @@ SettingsWindow::SettingsWindow(wxWindow *parent)
     mainPanel->SetSizer(sizer);
     
 }
-
+//-----settings window subtabs------
 SettingsTabDisplay::SettingsTabDisplay(wxNotebook *parent, const wxString &label)
     : wxPanel(parent, wxID_ANY)
 {
@@ -914,3 +774,4 @@ SettingsTabGeneral::SettingsTabGeneral(wxNotebook *parent, const wxString &label
 {
     new wxStaticText(this, wxID_ANY, label, wxPoint(10,10));   
 }
+//------Settings window subtab end-----

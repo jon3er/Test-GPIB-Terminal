@@ -45,6 +45,7 @@ std::string GpibDevice::read(int forceReadBytes)
         wxLogDebug("No Device to send too");
         Text = "Failed to Connect to a Device\n";
     }
+
     return std::string(Text.ToUTF8());
 }
 
@@ -201,6 +202,21 @@ FT_HANDLE GpibDevice::getHandle()
 bool GpibDevice::getConnected()
 {
     return Connected;
+}
+
+std::string GpibDevice::getLastMsgReseived()
+{
+    return lastMsgReceived;
+}
+
+int GpibDevice::getBaudrate()
+{
+    return BaudRate;
+}
+
+void GpibDevice::setBaudrate(int BaudrateNew)
+{
+    BaudRate = BaudrateNew;
 }
 
 wxString terminalTimestampOutput(wxString Text)
