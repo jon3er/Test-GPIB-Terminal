@@ -15,7 +15,7 @@ std::string GpibDevice::read(int forceReadBytes)
 {
     wxString Text;
 
-    if (Connected && configFin)
+    if (Connected)
     {
         std::vector<char> BigBuffer;
         DWORD BufferSize;
@@ -43,7 +43,7 @@ std::string GpibDevice::read(int forceReadBytes)
     else
     {
         wxLogDebug("No Device to send too");
-        Text = "Failed to Connected to a Device\n";
+        Text = "Failed to Connect to a Device\n";
     }
     return std::string(Text.ToUTF8());
 }
@@ -108,6 +108,12 @@ void GpibDevice::connect(std::string args)
         ftStatus = FT_Open(numDev,&ftHandle);
         printErr(ftStatus,"Failed to Connect");
         write("SYST:DISP:UDP ON"); //Turn on monitor
+
+        if (ftStatus == FT_OK)
+        {
+            wxLogDebug("Connected to %i", numDev);
+            Connected = true;
+        }
     }
 }
 void GpibDevice::disconnect(std::string args)
@@ -122,6 +128,11 @@ void GpibDevice::disconnect(std::string args)
 
     ftStatus = FT_Close(ftHandle);
     printErr(ftStatus,"Failed to Disconnect");
+    if (ftStatus == FT_OK)
+    {
+        wxLogDebug("Connected to %i", numDev);
+        Connected = false;
+    }
 }
 void GpibDevice::config()
 {
@@ -174,6 +185,10 @@ FT_HANDLE GpibDevice::getHandle()
     return ftHandle;
 }
 
+bool GpibDevice::getConnected()
+{
+    return Connected;
+}
 
 wxString terminalTimestampOutput(wxString Text)
 {

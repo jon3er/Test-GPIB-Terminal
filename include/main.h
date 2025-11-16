@@ -93,4 +93,7 @@ private:
     bool configFin = false;
     bool Connected = false;
     FT_HANDLE ftHandle = NULL;
+
+    //device Class
+    GpibDevice Adapter;
 };

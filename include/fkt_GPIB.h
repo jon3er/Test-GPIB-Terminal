@@ -23,6 +23,9 @@ public:
 
     FT_STATUS getStatus();
     FT_HANDLE getHandle();
+    bool getConnected();
+    
+    void setConnected();
     
 private:
     FT_HANDLE ftHandle = NULL;

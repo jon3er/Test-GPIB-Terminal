@@ -735,22 +735,13 @@ FunctionWindow::FunctionWindow(wxWindow *parent)
     sizerFunc->Add(discFuncOutput, 0, wxEXPAND | wxALL , 10);
     sizerFunc->Add(textFuncOutput, 0, wxEXPAND | wxALL , 10);
     panelfunc->SetSizerAndFit(sizerFunc);
+
+    
 }
 //-----Function Window Destructor-----
 FunctionWindow::~FunctionWindow()
 {
-    if (Connected)
-    {
-        FT_STATUS ftStatus = FT_Close(ftHandle);
-        printErr(ftStatus,"Failed to Disconnect");
-
-        if (ftStatus == FT_OK)
-        {
-            textFuncOutput->AppendText(terminalTimestampOutput("Disconnected from a device\n"));
-            wxLogDebug("Disconnected");
-            Connected = false;
-        }
-    }
+    Adapter.disconnect();
 }
 //-----Function Window Methodes-----
 void FunctionWindow::OnUsbScan(wxCommandEvent& event)
@@ -774,214 +765,76 @@ void FunctionWindow::OnUsbScan(wxCommandEvent& event)
 
 void FunctionWindow::OnConDisconGpib(wxCommandEvent& event)
 {
-    FT_STATUS ftStatus;
-    int dev = 0;
-
-    if (!Connected)
+    if (Adapter.getConnected() == false)
     {
-        ftStatus = FT_Open(dev,&ftHandle);
-        printErr(ftStatus,"Failed to Connect");
+       Adapter.connect();
 
-        ftStatus = FT_Purge(ftHandle, FT_PURGE_RX | FT_PURGE_TX);
-        printErr(ftStatus,"Purge Failed");
-
-        if (ftStatus == FT_OK)
+        if (Adapter.getStatus() == FT_OK)
         {
             textFuncOutput->AppendText(terminalTimestampOutput("Connected to a device\n"));
-            wxLogDebug("Connected to %i", dev);
-            Connected = true;
         }
     }
     else
     {
-        ftStatus = FT_Close(ftHandle);
-        printErr(ftStatus,"Failed to Disconnect");
+        Adapter.disconnect();
 
-        if (ftStatus == FT_OK)
+        if (Adapter.getStatus() == FT_OK)
         {
             textFuncOutput->AppendText(terminalTimestampOutput("Disconnected from a device\n"));
-            wxLogDebug("Connected to %i", dev);
-            Connected = false;
         }
     }
 }
 
 void FunctionWindow::OnWriteGpib(wxCommandEvent& event)
 {
-    wxString Text;
-
     wxLogDebug("Write Pressed!");
 
-    if (Connected)
-    {
-        DWORD bytesWritten;
-        wxString GPIBText = FunctionWindow::writeFuncInput->GetValue();
+    wxString GPIBText = FunctionWindow::writeFuncInput->GetValue();
+    FunctionWindow::writeFuncInput->SetValue("");
 
-        FunctionWindow::writeFuncInput->SetValue("");
-
-        std::string CheckText(GPIBText.ToUTF8());
-        std::vector<char> charArrWriteGpib = checkAscii(CheckText);
-
-        wxLogDebug("Trying to write to Device... %s", std::string(charArrWriteGpib.begin(),charArrWriteGpib.end()));
-
-        FT_STATUS ftStatus =writeUsbDev(ftHandle, charArrWriteGpib, bytesWritten);
-
-        if (ftStatus == FT_OK)
-        {
-            Text = GPIBText;
-            Text = "Msg sent: " + Text + " ; " + std::to_string(bytesWritten) + " Bytes Written to GPIB Device\n";
-            FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
-        }
-        else
-        {
-            Text = "Failed to send Data\n";
-            FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
-        }
-
-    }
-    else
-    {
-        wxLogDebug("No Connection");
-        Text = "Failed to Connect\n";
-        FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
-    }
-
+    std::string CheckText(GPIBText.ToUTF8());
+    
+    wxString Text = Adapter.write(CheckText);
+    
+    FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
 }
 
 void FunctionWindow::OnReadGpib(wxCommandEvent& event)
 {
-    wxString Text;
-
     wxLogDebug("On Read Pressed");
 
-    if (FunctionWindow::Connected)
-    {
-        std::vector<char> BigBuffer;
-        DWORD BufferSize;
-        FT_STATUS ftStatus;
+    wxString Text = Adapter.read();
 
-        wxLogDebug("Reading from Device...");
-
-        ftStatus = readUsbDev(ftHandle, BigBuffer,BufferSize);
-
-        if (ftStatus == FT_OK)
-        {
-            Text = std::string(BigBuffer.data(),BigBuffer.size());
-            Text = "Msg received: " + Text + "\n";
-
-            if (BigBuffer.size() == 0)
-            {
-                Text = "No Message to Read\n";
-            }
-
-            FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
-        }
-        else
-        {
-            Text = "Failed to Receive Data - TimeOut after 5s\n";
-            FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
-        }
-
-    }
-    else
-    {
-        wxLogDebug("No Device to send too");
-        Text = "Failed to Connect to a Device\n";
-        FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
-    }
+    FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
 }
 
 void FunctionWindow::OnReadWriteGpib(wxCommandEvent& event)
 {
-    wxString Text;
+    wxLogDebug("Read / Write Pressed!");
 
-    wxLogDebug("On Write / Read Pressed");
+    wxLogDebug("Writing to device...");
 
-    if (Connected && configFin)
-    {
-        DWORD bytesWritten;
-        wxString GPIBText = FunctionWindow::writeFuncInput->GetValue();
+    wxString GPIBText = FunctionWindow::writeFuncInput->GetValue();
+    FunctionWindow::writeFuncInput->SetValue("");
 
-        std::string CheckText(GPIBText.ToUTF8());
-        std::vector<char> charArrWriteGpib = checkAscii(CheckText);
+    std::string CheckText(GPIBText.ToUTF8());
+    
+    wxString Text = Adapter.write(CheckText);
+    
+    FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
 
-        wxLogDebug("Trying to write to Device... %s", std::string(charArrWriteGpib.begin(),charArrWriteGpib.end()));
-        FT_STATUS ftStatus =writeUsbDev(ftHandle, charArrWriteGpib, bytesWritten);
+    sleepMs(100);
 
-        if (ftStatus == FT_OK)
-        {
-            Text = std::string(charArrWriteGpib.begin(),charArrWriteGpib.end());
-            Text = "Msg sent: " + Text + " ; " + std::to_string(bytesWritten) + " Bytes Written to GPIB Device\n";
-            FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
-        }
-        else
-        {
-            Text = "Failed to send Data\n";
-            FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
-        }
+    wxLogDebug("Reading from device...");
 
-        //read
-        std::this_thread::sleep_for(std::chrono::microseconds(50000));
+    Text = Adapter.read();
 
-        std::vector<char> BigBuffer;
-        DWORD BufferSize;
-
-        wxLogDebug("Reading from Device...");
-
-        ftStatus = readUsbDev(ftHandle, BigBuffer,BufferSize);
-
-        if (ftStatus == FT_OK)
-        {
-            Text = std::string(BigBuffer.data(),BigBuffer.size());
-            Text = "Msg received:\n" + Text + "\n";
-
-            if (BigBuffer.size() == 0)
-            {
-                Text = "No Message to Read\n";
-            }
-
-            FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
-        }
-        else
-        {
-            Text = "Failed to Receive Data - TimeOut after 5s\n";
-            FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
-        }
-
-    }
-    else
-    {
-        wxLogDebug("No Device to send too");
-        Text = "Failed to Connect to a Device";
-        FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
-    }
-
+    FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
 }
 
 void FunctionWindow::OnUsbConfig(wxCommandEvent& event)
 {
-    DWORD numDev = 0;
-    int BaudRate = 921600;
-    wxString Text;
-
-    FT_STATUS Status = configUsbDev(numDev, ftHandle, BaudRate);
-
-    if (Status == FT_OK)
-    {
-        Text = "Set Device BaudRate to " + std::to_string(BaudRate) + "\n";
-        FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
-
-        wxLogDebug("Baudrate set to: %s", std::to_string(BaudRate));
-
-        configFin = true;
-    }
-    else
-    {
-        Text = "Failed to config device check if run as SU";
-        FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
-
-        configFin = false;
-    }
+    Adapter.config();
 }
 //-----Function Window Methodes End -----
 
