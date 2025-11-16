@@ -63,12 +63,6 @@ private:
     //Terminal Output
     wxTextCtrl* TerminalDisplay;
 
-    //com default settings
-    int BaudRate = 921600;
-    //Device Handle
-    FT_HANDLE ftHandle = NULL;
-    bool Connected = false;
-    bool configFin = false;
     //device Class
     GpibDevice Adapter;
 };
@@ -91,11 +85,6 @@ private:
     //Text Boxes
     wxTextCtrl* textFuncOutput;
     wxTextCtrl* writeFuncInput;
-
-    //Class Variables
-    bool configFin = false;
-    bool Connected = false;
-    FT_HANDLE ftHandle = NULL;
 
     //device Class
     GpibDevice Adapter;

@@ -188,9 +188,9 @@ TerminalWindow::TerminalWindow(wxWindow *parent)
 //-----Terminal window Destructor -----
 TerminalWindow::~TerminalWindow()
 {
-    if (Connected)
+    if (Adapter.getConnected() == true)
     {
-        disconnectDevice(" ");
+        Adapter.disconnect();
     }
     wxLogDebug("Terminal Window Closed");
 }
@@ -208,7 +208,7 @@ void TerminalWindow::setupCmds()
     cmds["test"]        = [this](const std::string& args) { this->testDevice(args); };
 }
 
-void TerminalWindow::scanDevices(const std::string& args)
+void TerminalWindow::scanDevices(const std::string& args = "")
 {
     DWORD devNum = scanUsbDev();
     wxString Text = "Number of devices: " + std::to_string(devNum) + "\n";
@@ -216,12 +216,12 @@ void TerminalWindow::scanDevices(const std::string& args)
     TerminalDisplay->AppendText(terminalTimestampOutput(Text));
 }
 
-void TerminalWindow::statusDevice(const std::string& args)
+void TerminalWindow::statusDevice(const std::string& args = "")
 {
     TerminalDisplay->AppendText(terminalTimestampOutput(Adapter.statusText()));
 }
 
-void TerminalWindow::connectDevice(const std::string& args)
+void TerminalWindow::connectDevice(const std::string& args = "")
 {
     int dev = 0;
 
@@ -257,7 +257,7 @@ void TerminalWindow::connectDevice(const std::string& args)
             TerminalDisplay->AppendText(terminalTimestampOutput("Couldnt connect to a device\n Is programm running as SU?\n Is the FTDI_SIO Driver unloaded?\n"));
         }
 
-        FT_STATUS ftStatus = FT_Purge(ftHandle, FT_PURGE_RX | FT_PURGE_TX);
+        FT_STATUS ftStatus = FT_Purge(Adapter.getHandle(), FT_PURGE_RX | FT_PURGE_TX);
         printErr(ftStatus,"Purge Failed");
 
     }
@@ -267,10 +267,8 @@ void TerminalWindow::connectDevice(const std::string& args)
     }
 }
 
-void TerminalWindow::disconnectDevice(const std::string& args)
+void TerminalWindow::disconnectDevice(const std::string& args = "")
 {
-    FT_STATUS ftStatus;
-
     wxLogDebug("Command entered: disconnect with arg: %s", args);
 
     Adapter.disconnect();
@@ -314,7 +312,7 @@ wxString TerminalWindow::readFromDevice(const std::string& args = "")
 
     wxLogDebug("command read entered with args: %s", args);
 
-    std::string Text = Adapter.read();
+    wxString Text = Adapter.read();
 
     TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
     
@@ -323,39 +321,36 @@ wxString TerminalWindow::readFromDevice(const std::string& args = "")
 
 void TerminalWindow::writeToDevice(const std::string& args)
 {
-    wxString Text;
-
     wxLogDebug("Write Command Entered");
 
-    Text = Adapter.write(args);
+    wxString Text = Adapter.write(args);
 
     TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
-    
 }
 
-void TerminalWindow::configDevice(const std::string& args)
+void TerminalWindow::configDevice(const std::string& args = "")
 {
     wxString Text;
 
     if (args != "")
     {
-        if (std::stoi(args) == std::clamp(std::stoi(args), 1, 1000000))
+        if (std::stoi(args) == std::clamp(std::stoi(args), 1, 1'000'000))
         {
-            BaudRate = std::stoi(args);
-            wxLogDebug("Set Baudrate to %i", BaudRate);
+            int BaudRate = std::stoi(args);
+            Adapter.setBaudrate(BaudRate);
+            wxLogDebug("Set Baudrate to %i", Adapter.getBaudrate());
+            
         }
         else
         {
-            wxLogDebug("Using Default Baudrate: %i",BaudRate);
+            wxLogDebug("Using Default Baudrate: %i",Adapter.getBaudrate());
         }
     }
     else
     {
-        wxLogDebug("Using Default Baudrate: %i",BaudRate);
+        wxLogDebug("Using Default Baudrate: %i",Adapter.getBaudrate());
     }
     
-    Adapter.setBaudrate(BaudRate);
-
     Adapter.config();
 
     if (Adapter.getStatus() == FT_OK)
@@ -363,23 +358,20 @@ void TerminalWindow::configDevice(const std::string& args)
         Text = "Set Device BaudRate to " + std::to_string(Adapter.getBaudrate()) + "\n";
         TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
         wxLogDebug("Baudrate set to: %s", std::to_string(Adapter.getBaudrate()));
-        //wxLogDebug(std::to_string(ftHandle);
-        configFin = true;
     }
     else
     {
         Text = "Failed to config device check if run as SU\n";
         TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
-        configFin = false;
     }
 }
 
-void TerminalWindow::testDevice(const std::string& args)
+void TerminalWindow::testDevice(const std::string& args = "")
 {
     if (args == "")
     {
-        connectDevice("");
-        configDevice("");
+        connectDevice();
+        configDevice();
 
 
         writeToDevice("++clr");
@@ -410,7 +402,7 @@ void TerminalWindow::testDevice(const std::string& args)
         writeToDevice("*IDE?");
         writeToDevice("++read eoi");
         sleepMs(50);
-        readFromDevice("");
+        readFromDevice();
     }
     else if(args == "mess")
     {
@@ -505,7 +497,7 @@ void TerminalWindow::testDevice(const std::string& args)
         writeToDevice(args);
         writeToDevice("++read eos");
         sleepMs(50);
-        readFromDevice("");
+        readFromDevice();
     }
 
 }
@@ -630,12 +622,10 @@ void FunctionWindow::OnUsbScan(wxCommandEvent& event)
     if (devices <= 0)
     {
         textFuncOutput->AppendText(terminalTimestampOutput("no device found \n"));
-        configFin = false;
     }
     else
     {
         textFuncOutput->AppendText(terminalTimestampOutput(deviceNumString));
-        configFin = true;
     }
 }
 
