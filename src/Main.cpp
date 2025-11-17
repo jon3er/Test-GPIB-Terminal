@@ -66,6 +66,14 @@ MainWinFrame::MainWinFrame() : wxFrame(nullptr, wxID_ANY, "Main Window", wxDefau
     wxButton *scanUsbButton = new wxButton(panelMain, wxID_ANY, "Scan USB Devices",wxPoint(10,0));
     scanUsbButton->Bind(wxEVT_BUTTON, &MainWinFrame::OnScanUsb,this);
 
+    //Create Button "Plot"
+    wxButton *plotButton = new wxButton(panelMain, wxID_ANY, "Plot",wxPoint(10,0));
+    plotButton->Bind(wxEVT_BUTTON, &MainWinFrame::OnOpenPlot,this);
+
+    //Create Button "Upload GPIB Skript file"
+    wxButton *uploadScriptButton = new wxButton(panelMain, wxID_ANY, "Upload GPIB Skript file",wxPoint(10,0));
+    uploadScriptButton->Bind(wxEVT_BUTTON, &MainWinFrame::OnOpenUploadScript,this);
+
     //Create Button "Settings"
     wxButton *settingsButton = new wxButton(panelMain, wxID_ANY, "Settings",wxPoint(10,0));
     settingsButton->Bind(wxEVT_BUTTON, &MainWinFrame::OnOpenSettings,this);
@@ -83,6 +91,8 @@ MainWinFrame::MainWinFrame() : wxFrame(nullptr, wxID_ANY, "Main Window", wxDefau
     sizerMain->Add(ScanUsbDisplay, 0, wxEXPAND | wxALL, 10);
     sizerMain->Add(scanUsbButton, 0, wxALL | wxALIGN_RIGHT, 10);
     sizerMain->Add(testfunctionButton, 0, wxEXPAND | wxALL, 10);
+    sizerMain->Add(plotButton, 0, wxEXPAND | wxALL, 10);
+    sizerMain->Add(uploadScriptButton, 0, wxEXPAND | wxALL, 10);
     sizerMain->Add(settingsButton,0 , wxEXPAND | wxALL,10);
     panelMain->SetSizerAndFit(sizerMain);
 }
@@ -140,6 +150,26 @@ void MainWinFrame::OnScanUsb(wxCommandEvent& event)
     }
 }
 
+void MainWinFrame::OnOpenPlot(wxCommandEvent& event)
+{
+    //Create new sub window
+    //SettingsWindow *SettingsWin = new SettingsWindow(this);
+    //open Window Pauses Main Window
+    //SettingsWin->ShowModal();
+    //Close Window
+    //SettingsWin->Destroy();
+}
+
+void MainWinFrame::OnOpenUploadScript(wxCommandEvent& event)
+{
+    //Create new sub window
+    //SettingsWindow *SettingsWin = new SettingsWindow(this);
+    //open Window Pauses Main Window
+    //SettingsWin->ShowModal();
+    //Close Window
+    //SettingsWin->Destroy();
+}
+
 void MainWinFrame::OnOpenSettings(wxCommandEvent& event)
 {
     //Create new sub window
@@ -149,7 +179,6 @@ void MainWinFrame::OnOpenSettings(wxCommandEvent& event)
     //Close Window
     SettingsWin->Destroy();
 }
-
 //-----MainWinFrame Methodes End -----
 
 //----- Terminal Window Constructor -----
@@ -461,6 +490,7 @@ void TerminalWindow::testDevice(const std::string& args = "")
         }
 
         writeToDevice("TRAC:DATA? TRACE1");
+        writeToDevice("TRAC1:DATA?");
         writeToDevice("++read eoi");
 
         sleepMs(100);
@@ -471,25 +501,25 @@ void TerminalWindow::testDevice(const std::string& args = "")
     else if ("swp")
     {
 
-    writeToDevice("++auto 0");
-    writeToDevice("*RST");
-    writeToDevice("INIT:CONT OFF");                 //single sweep
-    writeToDevice("SYST:DISP:UDP ON");              //Bildschrim an
-    //Frequenzeinstellung
-    writeToDevice("FREQ:STAR 85MHz;STOP 125MHz");   //Frequenz bereich
-    //Pegeleinstellen
-    writeToDevice("DISP:WIND:TRAC:Y:RLEV -20dBm"); //referenzpegel
-    writeToDevice("INIT;*WAI");                     //sweep durchführen mit sync
-    //TOI messen
-    writeToDevice("CALC:MARK:PEXC 6DB");
-    writeToDevice("CALC:MARK:FUNC:TOI ON");         //TOI messung an
+        writeToDevice("++auto 0");
+        writeToDevice("*RST");
+        writeToDevice("INIT:CONT OFF");                 //single sweep
+        writeToDevice("SYST:DISP:UDP ON");              //Bildschrim an
+        //Frequenzeinstellung
+        writeToDevice("FREQ:STAR 85MHz;STOP 125MHz");   //Frequenz bereich
+        //Pegeleinstellen
+        writeToDevice("DISP:WIND:TRAC:Y:RLEV -20dBm"); //referenzpegel
+        writeToDevice("INIT;*WAI");                     //sweep durchführen mit sync
+        //TOI messen
+        writeToDevice("CALC:MARK:PEXC 6DB");
+        writeToDevice("CALC:MARK:FUNC:TOI ON");         //TOI messung an
 
-    writeToDevice("CALC:MARK:FUNC:TOI:RES?");       //Ergebniss auslesen
+        writeToDevice("CALC:MARK:FUNC:TOI:RES?");       //Ergebniss auslesen
 
-    writeToDevice("++read eos");
-    readFromDevice();
+        writeToDevice("++read eos");
+        readFromDevice();
 
-    writeToDevice("++auto 1");
+        writeToDevice("++auto 1");
     }
     else
     {
@@ -750,7 +780,149 @@ SettingsWindow::SettingsWindow(wxWindow *parent)
 SettingsTabDisplay::SettingsTabDisplay(wxNotebook *parent, const wxString &label)
     : wxPanel(parent, wxID_ANY)
 {
-    new wxStaticText(this, wxID_ANY, label, wxPoint(10,10));   
+    wxArrayString freqEinheiten;
+    freqEinheiten.Add("mHz");
+    freqEinheiten.Add("Hz");
+    freqEinheiten.Add("kHz");
+    freqEinheiten.Add("MHz");
+    freqEinheiten.Add("GHz");
+
+    wxArrayString pegelEinheiten;
+    pegelEinheiten.Add("DBM");
+    pegelEinheiten.Add("V");
+    pegelEinheiten.Add("A");
+    pegelEinheiten.Add("W");
+    pegelEinheiten.Add("DBPW");
+    pegelEinheiten.Add("DBUV");
+    pegelEinheiten.Add("DBUA");
+
+    wxArrayString scalingY;
+    scalingY.Add("Logarthmmic");
+    scalingY.Add("Linear");
+
+    wxStaticText* labelText = new wxStaticText(this, wxID_ANY, label, wxPoint(10,10));   
+
+    //Start-Ende Elemente-----Start
+    wxCheckBox* startEndeCheck = new wxCheckBox(this, wxID_ANY, "Start - Ende Nutzen");
+    wxStaticText* descriptionText_1 = new wxStaticText(this, wxID_ANY, "Start-Frequenz:", wxPoint(10,10));
+    wxTextCtrl* inputText_1 = new wxTextCtrl(this, wxID_ANY, "75");
+    wxChoice* freqEinheitAuswahl_1 = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, freqEinheiten);
+    freqEinheitAuswahl_1->SetSelection(3);
+
+    wxStaticText* descriptionText_2 = new wxStaticText(this, wxID_ANY, "End-Frequenz:", wxPoint(10,10));
+    wxTextCtrl* inputText_2 = new wxTextCtrl(this, wxID_ANY,"125");
+    wxChoice* freqEinheitAuswahl_2 = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, freqEinheiten);
+    freqEinheitAuswahl_2->SetSelection(3);
+    //Start-Ende Elemente-----Ende
+
+    //Center-Spanne Elemente-----Start
+    wxCheckBox* centerSpanCheck = new wxCheckBox(this, wxID_ANY, "Center - Spanne Nutzen");
+    wxStaticText* descriptionText_3 = new wxStaticText(this, wxID_ANY, "Center-Frequenz:", wxPoint(10,10));
+    wxTextCtrl* inputText_3 = new wxTextCtrl(this, wxID_ANY,"100");
+    wxChoice* freqEinheitAuswahl_3 = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, freqEinheiten);
+    freqEinheitAuswahl_3->SetSelection(3);
+
+    wxStaticText* descriptionText_4 = new wxStaticText(this, wxID_ANY, "Span-Frequenz:", wxPoint(10,10));
+    wxTextCtrl* inputText_4 = new wxTextCtrl(this, wxID_ANY, "50");
+    wxChoice* freqEinheitAuswahl_4 = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, freqEinheiten);
+    freqEinheitAuswahl_4->SetSelection(3);
+    //Center-Spanne Elemente-----Ende
+
+    //Y-Achsen Elemente-----Start
+    wxStaticText* descriptionText_5 = new wxStaticText(this, wxID_ANY, "Y-Scaling:", wxPoint(10,10));
+    wxTextCtrl* inputText_5 = new wxTextCtrl(this, wxID_ANY,"100");
+    wxChoice* pegelEinheitAuswahl = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, pegelEinheiten);
+    pegelEinheitAuswahl->SetSelection(0);
+
+    wxStaticText* descriptionText_6 = new wxStaticText(this, wxID_ANY, "Y-Scale Spacing:", wxPoint(10,10));
+    wxChoice* yScalingAuswahl = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, scalingY);
+    yScalingAuswahl->SetSelection(0);
+
+    wxStaticText* descriptionText_7 = new wxStaticText(this, wxID_ANY, "Referenzpegel in dB:", wxPoint(10,10));
+    wxTextCtrl* inputText_7 = new wxTextCtrl(this, wxID_ANY, "-20");
+    //Y-Achsen Elemente-----Ende
+
+    //Knöpfe START
+    wxButton* anwendenButton = new wxButton(this, wxID_ANY, "Anwenden");
+
+    wxButton* getCurrentButton = new wxButton(this, wxID_ANY, wxString::FromUTF8("Messgerät Einstellungen Laden"));
+    //knöpfe ENDE
+
+
+    //Start-Ende Sizer-----START
+    wxBoxSizer* sizerHorizontal_1 = new wxBoxSizer(wxHORIZONTAL);
+    sizerHorizontal_1->Add(descriptionText_1, 1, wxALL , 5);
+    sizerHorizontal_1->Add(inputText_1, 1, wxALL , 5);
+    sizerHorizontal_1->Add(freqEinheitAuswahl_1, 1, wxALL, 5);
+
+    wxBoxSizer* sizerHorizontal_2 = new wxBoxSizer(wxHORIZONTAL);
+    sizerHorizontal_2->Add(descriptionText_2, 1, wxALL , 5);
+    sizerHorizontal_2->Add(inputText_2, 1, wxALL , 5);
+    sizerHorizontal_2->Add(freqEinheitAuswahl_2, 1, wxALL, 5);
+
+    //Rahmen um den abschnitt
+    wxStaticBoxSizer* staticSizer_1 = new wxStaticBoxSizer(wxVERTICAL, this, "Anzeigebereich Start-Ende Frequenz");
+    staticSizer_1->Add(startEndeCheck,0,wxALL | wxEXPAND,5);
+    staticSizer_1->Add(sizerHorizontal_1,0, wxALL | wxEXPAND, 5);
+    staticSizer_1->Add(sizerHorizontal_2,0, wxALL | wxEXPAND, 5);
+    //Start-Ende Sizer-----ENDE
+
+    //Center-Spann Sizer-----START
+    wxBoxSizer* sizerHorizontal_3 = new wxBoxSizer(wxHORIZONTAL);
+    sizerHorizontal_3->Add(descriptionText_3, 1, wxALL , 5);
+    sizerHorizontal_3->Add(inputText_3, 1, wxALL , 5);
+    sizerHorizontal_3->Add(freqEinheitAuswahl_3, 1, wxALL, 5);
+
+    wxBoxSizer* sizerHorizontal_4 = new wxBoxSizer(wxHORIZONTAL);
+    sizerHorizontal_4->Add(descriptionText_4, 1, wxALL , 5);
+    sizerHorizontal_4->Add(inputText_4, 1, wxALL , 5);
+    sizerHorizontal_4->Add(freqEinheitAuswahl_4, 1, wxALL, 5);
+
+    //Rahmen um den abschnitt
+    wxStaticBoxSizer* staticSizer_2 = new wxStaticBoxSizer(wxVERTICAL, this, "Anzeigebereich Center-Span Frequenz");
+    staticSizer_2->Add(centerSpanCheck,0,wxALL | wxEXPAND,5);
+    staticSizer_2->Add(sizerHorizontal_3,0, wxALL | wxEXPAND, 5);
+    staticSizer_2->Add(sizerHorizontal_4,0, wxALL | wxEXPAND, 5);
+    //Center-Spann Sizer-----ENDE
+
+    //y-achsen einstellung Sizer-----START
+    wxBoxSizer* sizerHorizontal_5 = new wxBoxSizer(wxHORIZONTAL);
+    sizerHorizontal_5->Add(descriptionText_5, 1, wxALL | wxEXPAND , 5);
+    sizerHorizontal_5->Add(inputText_5, 1, wxALL | wxEXPAND , 5);
+    sizerHorizontal_5->Add(pegelEinheitAuswahl, 1, wxALL | wxEXPAND, 5);
+
+    wxBoxSizer* sizerHorizontal_6 = new wxBoxSizer(wxHORIZONTAL);
+    sizerHorizontal_6->Add(descriptionText_6,2,  wxALL | wxEXPAND,5);
+    sizerHorizontal_6->Add(yScalingAuswahl,1,  wxALL | wxEXPAND,5);
+
+    wxBoxSizer* sizerHorizontal_7 = new wxBoxSizer(wxHORIZONTAL);
+    sizerHorizontal_7->Add(descriptionText_7,2 ,   wxALL | wxEXPAND,5);
+    sizerHorizontal_7->Add(inputText_7,1 ,  wxALL | wxEXPAND,5);
+
+    //Rahmen um den abschnitt
+    wxStaticBoxSizer* staticSizer_3 = new wxStaticBoxSizer(wxVERTICAL, this, "Anzeigebereich Pegel-Skalierung");
+    staticSizer_3->Add(sizerHorizontal_6,0, wxALL | wxEXPAND, 5);
+    staticSizer_3->Add(sizerHorizontal_5,0, wxALL | wxEXPAND, 5);
+    staticSizer_3->Add(sizerHorizontal_7,0, wxALL | wxEXPAND, 5);
+
+    //y-achsen einstellung Sizer-----ENDE
+
+    //Knöpfe
+    wxBoxSizer* sizerHorizontal_8 = new wxBoxSizer(wxHORIZONTAL);
+    sizerHorizontal_8->Add(getCurrentButton,1, wxALL | wxEXPAND, 5);
+    sizerHorizontal_8->Add(anwendenButton,1, wxALL | wxEXPAND, 5);
+    
+    //knöpfe ENDE
+
+    //Verticaler Sizer
+    wxBoxSizer* sizerVertical = new wxBoxSizer(wxVERTICAL);
+    sizerVertical->Add(labelText ,0 ,  wxALL | wxEXPAND, 5);
+    sizerVertical->Add(staticSizer_1 ,0 , wxALL | wxEXPAND, 5);
+    sizerVertical->Add(staticSizer_2 ,0 , wxALL | wxEXPAND, 5);
+    sizerVertical->Add(staticSizer_3 ,0 , wxALL | wxEXPAND, 5);
+    sizerVertical->Add(sizerHorizontal_8 ,0 , wxALL | wxEXPAND, 5);
+
+    this->SetSizerAndFit(sizerVertical);
 }
 
 SettingsTabAdapter::SettingsTabAdapter(wxNotebook *parent, const wxString &label)

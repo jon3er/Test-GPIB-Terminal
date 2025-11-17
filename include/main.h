@@ -33,6 +33,8 @@ private:
     void OnOpenTerminal(wxCommandEvent& event);
     void OnScanUsb(wxCommandEvent& event);
     void OnOpenFunctionTest(wxCommandEvent& event);
+    void OnOpenPlot(wxCommandEvent& event);
+    void OnOpenUploadScript(wxCommandEvent& event);
     void OnOpenSettings(wxCommandEvent& event);
 };
 
