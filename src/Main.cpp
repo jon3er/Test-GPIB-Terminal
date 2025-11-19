@@ -1,5 +1,6 @@
 #include <wx/wx.h>
 #include <wx/notebook.h>
+#include <wx/valtext.h>
 #include <map>
 #include <thread>
 #include "fkt_GPIB.h"
@@ -153,11 +154,17 @@ void MainWinFrame::OnScanUsb(wxCommandEvent& event)
 void MainWinFrame::OnOpenPlot(wxCommandEvent& event)
 {
     //Create new sub window
-    //SettingsWindow *SettingsWin = new SettingsWindow(this);
+    PlotWindow *PlotWin = new PlotWindow(this);
     //open Window Pauses Main Window
-    //SettingsWin->ShowModal();
+    PlotWin->ShowModal();
     //Close Window
-    //SettingsWin->Destroy();
+    PlotWin->Destroy();
+}
+
+PlotWindow::PlotWindow(wxWindow *parent) : wxDialog(parent, wxID_ANY, "Plot Window", wxDefaultPosition, wxSize(500,750))
+{
+    wxPanel* panelPlot = new wxPanel(this);
+
 }
 
 void MainWinFrame::OnOpenUploadScript(wxCommandEvent& event)
@@ -781,7 +788,6 @@ SettingsTabDisplay::SettingsTabDisplay(wxNotebook *parent, const wxString &label
     : wxPanel(parent, wxID_ANY)
 {
     wxArrayString freqEinheiten;
-    freqEinheiten.Add("mHz");
     freqEinheiten.Add("Hz");
     freqEinheiten.Add("kHz");
     freqEinheiten.Add("MHz");
@@ -789,63 +795,75 @@ SettingsTabDisplay::SettingsTabDisplay(wxNotebook *parent, const wxString &label
 
     wxArrayString pegelEinheiten;
     pegelEinheiten.Add("DBM");
-    pegelEinheiten.Add("V");
-    pegelEinheiten.Add("A");
-    pegelEinheiten.Add("W");
-    pegelEinheiten.Add("DBPW");
+    pegelEinheiten.Add("DBMU");
     pegelEinheiten.Add("DBUV");
     pegelEinheiten.Add("DBUA");
+    pegelEinheiten.Add("DBPW");
+    pegelEinheiten.Add("VOLT");
+    pegelEinheiten.Add("AMPERE");
+    pegelEinheiten.Add("WATT");
+    
 
     wxArrayString scalingY;
     scalingY.Add("Logarthmmic");
     scalingY.Add("Linear");
 
+    wxTextValidator val(wxFILTER_NUMERIC); 
+
     wxStaticText* labelText = new wxStaticText(this, wxID_ANY, label, wxPoint(10,10));   
 
     //Start-Ende Elemente-----Start
-    wxCheckBox* startEndeCheck = new wxCheckBox(this, wxID_ANY, "Start - Ende Nutzen");
+    startEndeCheck = new wxCheckBox(this, wxID_ANY, "Start - Ende Nutzen");
     wxStaticText* descriptionText_1 = new wxStaticText(this, wxID_ANY, "Start-Frequenz:", wxPoint(10,10));
-    wxTextCtrl* inputText_1 = new wxTextCtrl(this, wxID_ANY, "75");
-    wxChoice* freqEinheitAuswahl_1 = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, freqEinheiten);
-    freqEinheitAuswahl_1->SetSelection(3);
+    inputText_1 = new wxTextCtrl(this, wxID_ANY, "75");
+    freqEinheitAuswahl_1 = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, freqEinheiten);
+    inputText_1->SetValidator(val);
+    freqEinheitAuswahl_1->SetSelection(2);
 
     wxStaticText* descriptionText_2 = new wxStaticText(this, wxID_ANY, "End-Frequenz:", wxPoint(10,10));
-    wxTextCtrl* inputText_2 = new wxTextCtrl(this, wxID_ANY,"125");
-    wxChoice* freqEinheitAuswahl_2 = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, freqEinheiten);
-    freqEinheitAuswahl_2->SetSelection(3);
+    inputText_2 = new wxTextCtrl(this, wxID_ANY,"125");
+    freqEinheitAuswahl_2 = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, freqEinheiten);
+    inputText_2->SetValidator(val);
+    freqEinheitAuswahl_2->SetSelection(2);
     //Start-Ende Elemente-----Ende
 
     //Center-Spanne Elemente-----Start
-    wxCheckBox* centerSpanCheck = new wxCheckBox(this, wxID_ANY, "Center - Spanne Nutzen");
+    centerSpanCheck = new wxCheckBox(this, wxID_ANY, "Center - Spanne Nutzen");
     wxStaticText* descriptionText_3 = new wxStaticText(this, wxID_ANY, "Center-Frequenz:", wxPoint(10,10));
-    wxTextCtrl* inputText_3 = new wxTextCtrl(this, wxID_ANY,"100");
-    wxChoice* freqEinheitAuswahl_3 = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, freqEinheiten);
-    freqEinheitAuswahl_3->SetSelection(3);
+    inputText_3 = new wxTextCtrl(this, wxID_ANY,"100");
+    freqEinheitAuswahl_3 = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, freqEinheiten);
+    inputText_3->SetValidator(val);
+    freqEinheitAuswahl_3->SetSelection(2);
 
     wxStaticText* descriptionText_4 = new wxStaticText(this, wxID_ANY, "Span-Frequenz:", wxPoint(10,10));
-    wxTextCtrl* inputText_4 = new wxTextCtrl(this, wxID_ANY, "50");
-    wxChoice* freqEinheitAuswahl_4 = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, freqEinheiten);
-    freqEinheitAuswahl_4->SetSelection(3);
+    inputText_4 = new wxTextCtrl(this, wxID_ANY, "50");
+    freqEinheitAuswahl_4 = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, freqEinheiten);
+    inputText_4->SetValidator(val);
+    freqEinheitAuswahl_4->SetSelection(2);
     //Center-Spanne Elemente-----Ende
 
     //Y-Achsen Elemente-----Start
     wxStaticText* descriptionText_5 = new wxStaticText(this, wxID_ANY, "Y-Scaling:", wxPoint(10,10));
-    wxTextCtrl* inputText_5 = new wxTextCtrl(this, wxID_ANY,"100");
-    wxChoice* pegelEinheitAuswahl = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, pegelEinheiten);
+    inputText_5 = new wxTextCtrl(this, wxID_ANY,"100");
+    pegelEinheitAuswahl = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, pegelEinheiten);
+    inputText_5->SetValidator(val);
     pegelEinheitAuswahl->SetSelection(0);
 
     wxStaticText* descriptionText_6 = new wxStaticText(this, wxID_ANY, "Y-Scale Spacing:", wxPoint(10,10));
-    wxChoice* yScalingAuswahl = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, scalingY);
+    yScalingAuswahl = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, scalingY);
     yScalingAuswahl->SetSelection(0);
 
     wxStaticText* descriptionText_7 = new wxStaticText(this, wxID_ANY, "Referenzpegel in dB:", wxPoint(10,10));
-    wxTextCtrl* inputText_7 = new wxTextCtrl(this, wxID_ANY, "-20");
+    inputText_7 = new wxTextCtrl(this, wxID_ANY, "-20");
+    inputText_7->SetValidator(val);
     //Y-Achsen Elemente-----Ende
 
     //Knöpfe START
     wxButton* anwendenButton = new wxButton(this, wxID_ANY, "Anwenden");
+    anwendenButton->Bind(wxEVT_BUTTON, &SettingsTabDisplay::anwendenButton,this);
 
     wxButton* getCurrentButton = new wxButton(this, wxID_ANY, wxString::FromUTF8("Messgerät Einstellungen Laden"));
+    getCurrentButton->Bind(wxEVT_BUTTON, &SettingsTabDisplay::getCurrentButton, this);
     //knöpfe ENDE
 
 
@@ -924,6 +942,83 @@ SettingsTabDisplay::SettingsTabDisplay(wxNotebook *parent, const wxString &label
 
     this->SetSizerAndFit(sizerVertical);
 }
+void SettingsTabDisplay::anwendenButton(wxCommandEvent& event)
+{
+    std::string cmdText;
+    getValues();
+    if (Adapter.getConnected())
+    {
+        cmdText = "FREQ:STAR " + FreqStartSet + FreqStartSetUnit;
+        Adapter.write(cmdText);
+        cmdText = "FREQ:STOP " + FreqEndeSet + FreqEndeSetUnit;
+        Adapter.write(cmdText);
+        cmdText = "FREQ:CENT " + FreqCenterSet + FreqCenterSetUnit;
+        Adapter.write(cmdText);
+        cmdText = "FREQ:SPAN " + FreqSpanSet + FreqSpanSetUnit;
+        Adapter.write(cmdText);
+        cmdText = "UNIT:POW " + pegelSet + pegelSetUnit;
+        Adapter.write(cmdText);
+        cmdText = "DISP:TRAC:Y:RLEV " + refPegelSet;
+        Adapter.write(cmdText);
+        cmdText = "DISP:TRAC:Y:SPAC " + refPegelSet;
+        Adapter.write(cmdText);
+    }
+}
+
+void SettingsTabDisplay::getCurrentButton(wxCommandEvent& event)
+{
+    if (Adapter.getConnected())
+    {
+        FreqStartSet    = Adapter.send("FREQ:STAR?");
+        FreqStartSet    = Adapter.send("FREQ:STOP?");
+        FreqEndeSet     = Adapter.send("FREQ:CENT?");
+        FreqCenterSet   = Adapter.send("FREQ:SPAN?");
+        FreqSpanSet     = Adapter.send("FREQ:POW?");
+        pegelSet        = Adapter.send("DISP:TRAC:Y:RLEV?");
+        refPegelSet     = Adapter.send("DISP:TRAC:Y:SPAC?");
+        
+        setValues();
+    }
+}
+void SettingsTabDisplay::getValues()
+{
+    FreqStartSetUnit    = freqEinheitAuswahl_1->GetStringSelection();
+    FreqEndeSetUnit     = freqEinheitAuswahl_2->GetStringSelection();
+    FreqCenterSetUnit   = freqEinheitAuswahl_3->GetStringSelection();
+    FreqSpanSetUnit     = freqEinheitAuswahl_4->GetStringSelection();
+    pegelSetUnit        = pegelEinheitAuswahl->GetStringSelection();
+    scalingYSetUnit     = yScalingAuswahl->GetStringSelection();
+
+    FreqStartSet        = inputText_1->GetValue();
+    FreqEndeSet         = inputText_2->GetValue();
+    FreqCenterSet       = inputText_3->GetValue();
+    FreqSpanSet         = inputText_4->GetValue();
+    pegelSet            = inputText_5->GetValue();
+    refPegelSet         = inputText_7->GetValue();
+
+    useStartEnde        = startEndeCheck->GetValue();
+    useCenterSpan       = centerSpanCheck->GetValue();
+}
+void SettingsTabDisplay::setValues()
+{
+    freqEinheitAuswahl_1->SetStringSelection(FreqStartSetUnit);
+    freqEinheitAuswahl_2->SetStringSelection(FreqEndeSetUnit);
+    freqEinheitAuswahl_3->SetStringSelection(FreqCenterSetUnit);
+    freqEinheitAuswahl_4->SetStringSelection(FreqSpanSetUnit);
+    pegelEinheitAuswahl ->SetStringSelection(pegelSetUnit);
+    yScalingAuswahl     ->SetStringSelection(scalingYSetUnit);
+
+    inputText_1         ->SetValue(FreqStartSet);
+    inputText_2         ->SetValue(FreqEndeSet);
+    inputText_3         ->SetValue(FreqCenterSet);
+    inputText_4         ->SetValue(FreqSpanSet);
+    inputText_5         ->SetValue(pegelSet);
+    inputText_7         ->SetValue(refPegelSet);
+
+    startEndeCheck      ->SetValue(useStartEnde);
+    centerSpanCheck     ->SetValue(useCenterSpan); 
+}
+
 
 SettingsTabAdapter::SettingsTabAdapter(wxNotebook *parent, const wxString &label)
     : wxPanel(parent, wxID_ANY)

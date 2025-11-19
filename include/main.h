@@ -69,6 +69,15 @@ private:
     GpibDevice Adapter;
 };
 
+class PlotWindow : public wxDialog
+{
+public:
+    PlotWindow(wxWindow *parent);
+private:
+
+};
+
+
 class FunctionWindow : public wxDialog
 {
 public:
@@ -108,6 +117,51 @@ class SettingsTabDisplay : public wxPanel
 public:
     SettingsTabDisplay(wxNotebook *parent, const wxString &label);
     
+private:
+    void anwendenButton(wxCommandEvent& event);
+    void getCurrentButton(wxCommandEvent& event);
+    void getValues();
+    void setValues();
+    std::string getGpibCmdFreq(wxString NumVal, wxString Selection);
+    std::string getGpibCmdPegel(wxString NumVal, wxString Selection);
+    //Adapter
+    GpibDevice Adapter;
+    //Units
+    wxString FreqStartSetUnit;
+    wxString FreqEndeSetUnit; 
+    wxString FreqCenterSetUnit; 
+    wxString FreqSpanSetUnit; 
+    wxString pegelSetUnit;
+    wxString scalingYSetUnit;
+    //Text Input
+    wxString FreqStartSet;
+    wxString FreqEndeSet; 
+    wxString FreqCenterSet; 
+    wxString FreqSpanSet; 
+    wxString pegelSet;
+    wxString refPegelSet;
+    //Bool
+    bool useStartEnde;
+    bool useCenterSpan;
+
+    //Elemente
+    wxCheckBox* startEndeCheck;
+    wxCheckBox* centerSpanCheck;
+
+    wxChoice* freqEinheitAuswahl_1;
+    wxChoice* freqEinheitAuswahl_2;
+    wxChoice* freqEinheitAuswahl_3;
+    wxChoice* freqEinheitAuswahl_4;
+    wxChoice* pegelEinheitAuswahl;
+    wxChoice* yScalingAuswahl;
+
+    wxTextCtrl* inputText_1;
+    wxTextCtrl* inputText_2;
+    wxTextCtrl* inputText_3;
+    wxTextCtrl* inputText_4;
+    wxTextCtrl* inputText_5;
+    wxTextCtrl* inputText_7;
+
 };
 
 class SettingsTabAdapter : public wxPanel
