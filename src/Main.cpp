@@ -814,6 +814,7 @@ SettingsTabDisplay::SettingsTabDisplay(wxNotebook *parent, const wxString &label
 
     //Start-Ende Elemente-----Start
     startEndeCheck = new wxCheckBox(this, wxID_ANY, "Start - Ende Nutzen");
+    startEndeCheck->Bind(wxEVT_CHECKBOX, &SettingsTabDisplay::toggleSelectionEvent, this);
     wxStaticText* descriptionText_1 = new wxStaticText(this, wxID_ANY, "Start-Frequenz:", wxPoint(10,10));
     inputText_1 = new wxTextCtrl(this, wxID_ANY, "75");
     freqEinheitAuswahl_1 = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, freqEinheiten);
@@ -829,6 +830,7 @@ SettingsTabDisplay::SettingsTabDisplay(wxNotebook *parent, const wxString &label
 
     //Center-Spanne Elemente-----Start
     centerSpanCheck = new wxCheckBox(this, wxID_ANY, "Center - Spanne Nutzen");
+    centerSpanCheck->Bind(wxEVT_CHECKBOX, &SettingsTabDisplay::toggleSelectionEvent, this);
     wxStaticText* descriptionText_3 = new wxStaticText(this, wxID_ANY, "Center-Frequenz:", wxPoint(10,10));
     inputText_3 = new wxTextCtrl(this, wxID_ANY,"100");
     freqEinheitAuswahl_3 = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, freqEinheiten);
@@ -941,6 +943,8 @@ SettingsTabDisplay::SettingsTabDisplay(wxNotebook *parent, const wxString &label
     sizerVertical->Add(sizerHorizontal_8 ,0 , wxALL | wxEXPAND, 5);
 
     this->SetSizerAndFit(sizerVertical);
+
+    toggleSelection(); //anfangszustand herstellen
 }
 void SettingsTabDisplay::anwendenButton(wxCommandEvent& event)
 {
@@ -980,6 +984,10 @@ void SettingsTabDisplay::getCurrentButton(wxCommandEvent& event)
         setValues();
     }
 }
+void SettingsTabDisplay::toggleSelectionEvent(wxCommandEvent& event)
+{
+    toggleSelection();
+}
 void SettingsTabDisplay::getValues()
 {
     FreqStartSetUnit    = freqEinheitAuswahl_1->GetStringSelection();
@@ -1017,6 +1025,50 @@ void SettingsTabDisplay::setValues()
 
     startEndeCheck      ->SetValue(useStartEnde);
     centerSpanCheck     ->SetValue(useCenterSpan); 
+}
+void SettingsTabDisplay::toggleSelection()
+{
+    if (!useStartEnde && !useCenterSpan)
+    {   //für setup
+        centerSpanCheck->SetValue(false);
+        startEndeCheck->SetValue(true);
+        inputText_1->Enable(true);
+        inputText_2->Enable(true);
+        inputText_3->Enable(false);
+        inputText_4->Enable(false);
+        freqEinheitAuswahl_1->Enable(true);
+        freqEinheitAuswahl_2->Enable(true);
+        freqEinheitAuswahl_3->Enable(false);
+        freqEinheitAuswahl_4->Enable(false);
+    } 
+    else if(!useStartEnde && useCenterSpan)
+    {
+        startEndeCheck->SetValue(true);
+        centerSpanCheck->SetValue(false);
+        inputText_1->Enable(true);
+        inputText_2->Enable(true);
+        inputText_3->Enable(false);
+        inputText_4->Enable(false);
+        freqEinheitAuswahl_1->Enable(true);
+        freqEinheitAuswahl_2->Enable(true);
+        freqEinheitAuswahl_3->Enable(false);
+        freqEinheitAuswahl_4->Enable(false);
+    }
+    else if (!useCenterSpan && useStartEnde)
+    { 
+        startEndeCheck->SetValue(false);
+        centerSpanCheck->SetValue(true);
+        inputText_1->Enable(false);
+        inputText_2->Enable(false);
+        inputText_3->Enable(true);
+        inputText_4->Enable(true);
+        freqEinheitAuswahl_1->Enable(false);
+        freqEinheitAuswahl_2->Enable(false);
+        freqEinheitAuswahl_3->Enable(true);
+        freqEinheitAuswahl_4->Enable(true);
+    }
+
+    getValues();
 }
 
 

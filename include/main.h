@@ -120,8 +120,11 @@ public:
 private:
     void anwendenButton(wxCommandEvent& event);
     void getCurrentButton(wxCommandEvent& event);
+    void toggleSelectionEvent(wxCommandEvent& event);
+    void toggleSelection();
     void getValues();
     void setValues();
+    
     std::string getGpibCmdFreq(wxString NumVal, wxString Selection);
     std::string getGpibCmdPegel(wxString NumVal, wxString Selection);
     //Adapter
@@ -141,8 +144,8 @@ private:
     wxString pegelSet;
     wxString refPegelSet;
     //Bool
-    bool useStartEnde;
-    bool useCenterSpan;
+    bool useStartEnde = false;
+    bool useCenterSpan = false;
 
     //Elemente
     wxCheckBox* startEndeCheck;
