@@ -1,0 +1,9 @@
+# Test Script to read and execute GPIB commands
+# send, write or read Prefix only needed for Adapter Commands GPIB commands should just work
+send ++ver
+write ++help
+
+# wait for responce
+wait 200
+# Test read
+read

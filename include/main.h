@@ -73,8 +73,20 @@ class PlotWindow : public wxDialog
 {
 public:
     PlotWindow(wxWindow *parent);
+    virtual ~PlotWindow();
 private:
 
+    wxString filePath = "D:\\CodeProjects\\VSCode\\projects\\Diplom\\Test-GPIB-Terminal\\GpibScripts\\";
+    wxArrayString fileNames;
+
+    void getFileNames(const wxString& dirPath, wxArrayString& files);
+    void readScriptFile(const wxString& dirPath, const wxString& file, wxArrayString& logAdapterReceived);
+    void executeScriptEvent(wxCommandEvent& event);
+
+    wxChoice* selectMesurement;
+
+    //device Class
+    GpibDevice Adapter;
 };
 
 

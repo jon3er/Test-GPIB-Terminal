@@ -1,11 +1,17 @@
 #include <wx/wx.h>
 #include <wx/notebook.h>
 #include <wx/valtext.h>
+#include <wx/string.h>
+#include <wx/dir.h>
+#include <wx/textfile.h>
+#include <wx/msgdlg.h>
 #include <map>
 #include <thread>
 #include "fkt_GPIB.h"
 #include "fkt_d2xx.h"
 #include "main.h"
+#include "mathplot.h"
+
 
 wxIMPLEMENT_APP(MainWin);
 
@@ -161,11 +167,6 @@ void MainWinFrame::OnOpenPlot(wxCommandEvent& event)
     PlotWin->Destroy();
 }
 
-PlotWindow::PlotWindow(wxWindow *parent) : wxDialog(parent, wxID_ANY, "Plot Window", wxDefaultPosition, wxSize(500,750))
-{
-    wxPanel* panelPlot = new wxPanel(this);
-
-}
 
 void MainWinFrame::OnOpenUploadScript(wxCommandEvent& event)
 {
@@ -583,6 +584,172 @@ void TerminalWindow::OnEnterTerminal(wxCommandEvent& event)
 }
 //-----Terminal Window Methodes End -----
 
+//-----Plot Window BEGIN--------
+PlotWindow::PlotWindow(wxWindow *parent) : wxDialog(parent, wxID_ANY, "Plot Window", wxDefaultPosition, wxSize(1000,750))
+{
+    getFileNames(filePath, fileNames);
+
+    wxButton* executeMesurment = new wxButton(this, wxID_ANY, "Execute Mesurement");
+    executeMesurment->Bind(wxEVT_BUTTON, &PlotWindow::executeScriptEvent,this);
+    selectMesurement = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, fileNames);
+    selectMesurement->SetSelection(0);
+    // 1. mpWindow (Zeichenfläche) erstellen
+    mpWindow* plot = new mpWindow(this, wxID_ANY);
+    
+    // Farbeinstellungen (Optional)
+    plot->SetMargins(30, 30, 50, 50);
+
+    // 2. Achsen als Layer hinzufügen
+    // mpScaleX(Name, Ausrichtung, Ticks anzeigen, Typ)
+    mpScaleX* xAxis = new mpScaleX("X-Achse", mpALIGN_BORDER_BOTTOM, true, mpX_NORMAL);
+    mpScaleY* yAxis = new mpScaleY("Y-Achse", mpALIGN_BORDER_LEFT, true);
+    plot->AddLayer(xAxis);
+    plot->AddLayer(yAxis);
+
+    // 3. Daten vorbereiten (std::vector laut Header Definition von mpFXYVector)
+    std::vector<double> x = {0.0, 1.0, 2.0, 3.0, 4.0, 5.0 };
+    std::vector<double> y = {0.0, 1.0, 4.0, 2.0, 5.0, 3.0 };
+
+    // 4. Vektor-Layer erstellen
+    mpFXYVector* vectorLayer = new mpFXYVector("Messdaten");
+    vectorLayer->SetData(x, y);
+    vectorLayer->SetContinuity(true); // True = Linie zeichnen
+    vectorLayer->SetPen(wxPen(*wxBLUE, 2, wxPENSTYLE_SOLID));
+    vectorLayer->ShowName(true);      // Wichtig für die Legende
+
+    plot->AddLayer(vectorLayer);
+
+    // 5. Legende hinzufügen (mpInfoLegend ist ein Layer)
+    // wxRect definiert Startposition und ungefähre Größe
+    mpInfoLegend* legend = new mpInfoLegend(wxRect(20, 20, 10, 10), wxTRANSPARENT_BRUSH);
+    legend->SetItemMode(mpLEGEND_LINE); // Zeigt Linie statt Quadrat in der Legende
+    plot->AddLayer(legend);
+
+    // 6. Layout-Management
+    wxBoxSizer* sizerButtons = new wxBoxSizer(wxHORIZONTAL);
+    sizerButtons->Add(executeMesurment, 0, wxEXPAND | wxALL);
+    sizerButtons->Add(selectMesurement, 0, wxEXPAND | wxALL);
+
+    wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
+    sizer->Add(plot, 1, wxEXPAND | wxALL, 5);
+    sizer->Add(sizerButtons, 0, wxEXPAND| wxALL , 5);
+    this->SetSizer(sizer);
+    this->Layout();
+    // 7. Zoom auf Daten anpassen
+    plot->Fit();
+    
+}
+PlotWindow::~PlotWindow()
+{
+    Adapter.disconnect();
+}
+
+void PlotWindow::getFileNames(const wxString& dirPath, wxArrayString& files)
+{
+    wxDir dir(dirPath);
+
+    if (!dir.IsOpened())
+    {
+        return;
+    }
+
+    wxString filename;
+    bool cont = dir.GetFirst(&filename, "*.txt", wxDIR_FILES);
+
+    while (cont) {
+
+        files.Add(filename);
+        cont = dir.GetNext(&filename);
+    }
+}
+void PlotWindow::readScriptFile(const wxString& dirPath, const wxString& file, wxArrayString& logAdapterReceived)
+{
+    wxTextFile textFile;
+
+
+
+    if (textFile.Open(dirPath + file))
+    {
+        if (!Adapter.getConnected())
+        {
+            Adapter.connect();
+            Adapter.config();
+        }
+
+
+        for (size_t i = 0; i < textFile.GetLineCount(); i++)
+        {
+            wxString line = textFile.GetLine(i);
+            if(line.IsEmpty())
+            {
+                wxLogDebug("line %i: Empty", (int)i, line);
+            }
+            else if (line.substr(0,1) == "#")
+            {
+                wxLogDebug("line %i: Kommentar: %s", (int)i, line.substr(1));
+            }
+            else if (line.substr(0,5) == "wait ")
+            {
+                int wait;
+                wxString strWait = line.substr(5);
+                if (strWait.ToInt(&wait))
+                {
+                    wxLogDebug("wait for %ims", wait);
+                    sleepMs(wait);
+                }
+                else
+                {
+                    wxLogDebug("Invalid wait Time input: %s", strWait);
+                }
+            }
+            else if (line.substr(0,5) == "send ")
+            {
+                wxLogDebug("line %i: manuell send: %s", (int)i, line);
+                line = line.substr(5);
+                logAdapterReceived.Add(Adapter.send(std::string(line.ToUTF8())));
+                wxLogDebug("responce: %s", logAdapterReceived.Last());
+            }
+            else if (line.substr(0,6) == "write ")
+            {
+                wxLogDebug("line %i: manuell write: %s", (int)i, line);
+                line = line.substr(6);
+                Adapter.write(std::string(line.ToUTF8()));
+            }
+            else if (line.substr(0,4) == "read")
+            {
+                wxLogDebug("line %i: manuell read", (int)i);
+                logAdapterReceived.Add(Adapter.read());
+                wxLogDebug("responce: %s", logAdapterReceived.Last());
+            }
+            else if(line.Contains("?"))
+            {
+                wxLogDebug("line %i: send: %s", (int)i, line);
+                logAdapterReceived.Add(Adapter.send(std::string(line.ToUTF8())));
+                wxLogDebug("responce: %s", logAdapterReceived.Last());
+            }
+            else
+            {
+                wxLogDebug("line %i: write: %s", (int)i, line);
+                Adapter.write(std::string(line.ToUTF8()));
+            }
+        }
+    }
+}
+void PlotWindow::executeScriptEvent(wxCommandEvent& event)
+{
+    wxArrayString logAdapterReceived;
+    wxString fileName = selectMesurement->GetStringSelection();
+
+    wxLogDebug("Reading Scriptfile...");
+    readScriptFile(filePath, fileName, logAdapterReceived);
+    
+    //output received msg
+    for (size_t i = 0; i < logAdapterReceived.GetCount(); i++)
+    {
+        wxLogDebug(logAdapterReceived[i]);
+    }
+}
+//-----Plot Window ENDE--------
 
 //-----Function Window Constructor-----
 FunctionWindow::FunctionWindow(wxWindow *parent)
@@ -968,7 +1135,6 @@ void SettingsTabDisplay::anwendenButton(wxCommandEvent& event)
         Adapter.write(cmdText);
     }
 }
-
 void SettingsTabDisplay::getCurrentButton(wxCommandEvent& event)
 {
     if (Adapter.getConnected())
