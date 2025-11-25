@@ -23,7 +23,7 @@ public:
     void config();
     void readScriptFile(const wxString& dirPath, const wxString& file, wxArrayString& logAdapterReceived);
     void seperateDataBlock(const wxString& receivedString, std::vector<double>& x);
-    void calcYdata(double startY, double endY);
+    void calcYdata(double startY, double endY); //TODO umbennen ist eigendlich x und ich erhalte vom gerät nur Y die amplitude.
 
     FT_STATUS getStatus();
     FT_HANDLE getHandle();
