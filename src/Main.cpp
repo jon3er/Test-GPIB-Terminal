@@ -690,17 +690,20 @@ void PlotWindow::executeScriptEvent(wxCommandEvent& event)
     {
         wxLogDebug(logAdapterReceived[i]);
     }
+    y = Adapter.x_Data; //zum test vertauscht
+    x = Adapter.y_Data;
     //test
     updatePlotData();
 }
 void PlotWindow::updatePlotData()
 {
-    x = {1.0, 1.0, 2.0, 3.0, 4.0, 5.0 ,10.0, 10.0, 20.0, 30.0, 40.0, 50.0};
-    y = {1.0, 1.0, 2.0, 3.0, 4.0, 4.0, 10.0, 10.0, 20.0, 30.0, 40.0, 40.0 };
+    //x = {1.0, 1.0, 2.0, 3.0, 4.0, 5.0 ,10.0, 10.0, 20.0, 30.0, 40.0, 50.0};
+    //y = {1.0, 1.0, 2.0, 3.0, 4.0, 4.0, 10.0, 10.0, 20.0, 30.0, 40.0, 40.0 };
 
     vectorLayer->SetData(x, y);
     plot->Fit();
 }
+
 //-----Plot Window ENDE--------
 
 //-----Function Window Constructor-----
@@ -1074,14 +1077,21 @@ void SettingsTabDisplay::anwendenButton(wxCommandEvent& event)
     getValues();
     if (Adapter.getConnected())
     {
-        cmdText = "FREQ:STAR " + FreqStartSet + FreqStartSetUnit;
-        Adapter.write(cmdText);
-        cmdText = "FREQ:STOP " + FreqEndeSet + FreqEndeSetUnit;
-        Adapter.write(cmdText);
-        cmdText = "FREQ:CENT " + FreqCenterSet + FreqCenterSetUnit;
-        Adapter.write(cmdText);
-        cmdText = "FREQ:SPAN " + FreqSpanSet + FreqSpanSetUnit;
-        Adapter.write(cmdText);
+        if (!useCenterSpan)
+        {
+            cmdText = "FREQ:STAR " + FreqStartSet + FreqStartSetUnit;
+            Adapter.write(cmdText);
+            cmdText = "FREQ:STOP " + FreqEndeSet + FreqEndeSetUnit;
+            Adapter.write(cmdText);
+        }
+        else if (!useStartEnde)
+        {
+            cmdText = "FREQ:CENT " + FreqCenterSet + FreqCenterSetUnit;
+            Adapter.write(cmdText);
+            cmdText = "FREQ:SPAN " + FreqSpanSet + FreqSpanSetUnit;
+            Adapter.write(cmdText);
+        }
+
         cmdText = "UNIT:POW " + pegelSet + pegelSetUnit;
         Adapter.write(cmdText);
         cmdText = "DISP:TRAC:Y:RLEV " + refPegelSet;
@@ -1092,6 +1102,7 @@ void SettingsTabDisplay::anwendenButton(wxCommandEvent& event)
 }
 void SettingsTabDisplay::getCurrentButton(wxCommandEvent& event)
 {
+
     if (Adapter.getConnected())
     {
         FreqStartSet    = Adapter.send("FREQ:STAR?");

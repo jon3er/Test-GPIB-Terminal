@@ -22,7 +22,8 @@ public:
     void disconnect(std::string args = "");
     void config();
     void readScriptFile(const wxString& dirPath, const wxString& file, wxArrayString& logAdapterReceived);
-    void seperateDataBlock(const wxString& receivedString, std::vector<double> x);
+    void seperateDataBlock(const wxString& receivedString, std::vector<double>& x);
+    void calcYdata(double startY, double endY);
 
     FT_STATUS getStatus();
     FT_HANDLE getHandle();
@@ -32,8 +33,11 @@ public:
 
     void setBaudrate(int BaudrateNew);
 
+    std::vector<double> x_Data = {0};
+    std::vector<double> y_Data = {0};
+
 private:
-    FT_HANDLE ftHandle;
+    FT_HANDLE ftHandle = NULL;
     FT_STATUS ftStatus = FT_OK;
     DWORD numDev = 0;
     int BaudRate = 921600;
@@ -41,7 +45,6 @@ private:
     bool configFin = false;
     int sendDelayMs = 100;
     std::string lastMsgReceived = "";
-
     DWORD BytesToRead = 0;
 };
 
