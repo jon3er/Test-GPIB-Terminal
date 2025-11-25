@@ -37,7 +37,7 @@ std::string GpibDevice::read(int forceReadBytes)
         }
         else
         {
-            Text = "Failed to Receive Data - TimeOut after 5s\n"; 
+            Text = "Failed to Receive Data - TimeOut after 5s\n";
         }
     }
     else
@@ -233,7 +233,28 @@ void GpibDevice::readScriptFile(const wxString& dirPath, const wxString& file, w
         }
     }
 }
+void GpibDevice::seperateDataBlock(const wxString& receivedString, std::vector<double> x)
+{
+    wxArrayString seperatedStrings = wxStringTokenize(receivedString, ",");
 
+    double value;
+    wxString data;
+
+    for (long unsigned int i = 0; i < seperatedStrings.Count(); i++)
+    {
+        data = seperatedStrings[i];
+
+        if(data.ToCDouble(&value))
+        {
+             x.push_back(value);
+             wxLogDebug("seperated value: %3f", value);
+        }
+        else
+        {
+            wxLogDebug("Failed to convert");
+        }
+    }
+}
 std::string GpibDevice::statusText()
 {
     std::string Text;

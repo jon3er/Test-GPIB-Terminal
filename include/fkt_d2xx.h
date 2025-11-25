@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <wx/wx.h>
+#include <wx/tokenzr.h>
 
 #include "ftd2xx.h"
 

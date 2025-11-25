@@ -84,7 +84,7 @@ MainWinFrame::MainWinFrame() : wxFrame(nullptr, wxID_ANY, "Main Window", wxDefau
     //Create Button "Settings"
     wxButton *settingsButton = new wxButton(panelMain, wxID_ANY, "Settings",wxPoint(10,0));
     settingsButton->Bind(wxEVT_BUTTON, &MainWinFrame::OnOpenSettings,this);
-   
+
 
     //Display Found Devices
     ScanUsbDisplay = new wxTextCtrl(panelMain,wxID_ANY,"Scan for avalible Devices...",wxDefaultPosition,wxSize(100, 40));
@@ -328,11 +328,11 @@ wxString TerminalWindow::sendToDevice(const std::string& args)
 
     wxString GPIBText = args;
     std::string CheckText(GPIBText.ToUTF8());
-    
+
     wxString Text = Adapter.write(CheckText);
-    
+
     TerminalDisplay->AppendText(terminalTimestampOutput(Text));
-    
+
     sleepMs(100);   //wait for responce
 
     wxLogDebug("Reading from device...");
@@ -352,7 +352,7 @@ wxString TerminalWindow::readFromDevice(const std::string& args = "")
     wxString Text = Adapter.read();
 
     TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
-    
+
     return Adapter.getLastMsgReseived();
 }
 
@@ -376,7 +376,7 @@ void TerminalWindow::configDevice(const std::string& args = "")
             int BaudRate = std::stoi(args);
             Adapter.setBaudrate(BaudRate);
             wxLogDebug("Set Baudrate to %i", Adapter.getBaudrate());
-            
+
         }
         else
         {
@@ -387,7 +387,7 @@ void TerminalWindow::configDevice(const std::string& args = "")
     {
         wxLogDebug("Using Default Baudrate: %i",Adapter.getBaudrate());
     }
-    
+
     Adapter.config();
 
     if (Adapter.getStatus() == FT_OK)
@@ -470,12 +470,12 @@ void TerminalWindow::testDevice(const std::string& args = "")
 
         writeToDevice("++auto 0");
         writeToDevice("INIT:CONT OFF"); //Dauerhafter sweep aus
-        writeToDevice("SWE:POIN 100"); //100 messpunkte über messbereich aufnehmen
+        writeToDevice("SWE:POIN 10"); //100 messpunkte über messbereich aufnehmen
         writeToDevice("FREQ:STAR 80 MHZ");
         writeToDevice("FREQ:STOP 120 MHZ");
         writeToDevice("BAND:RES 100 KHZ ");
 
-        writeToDevice("FORM:DATA REAL,32");
+        writeToDevice("FORM:DATA ASC");
         writeToDevice("FORM:BORD NORM");
         writeToDevice("SWE:TIME AUTO");
         sleepMs(200);
@@ -498,11 +498,26 @@ void TerminalWindow::testDevice(const std::string& args = "")
         }
 
         writeToDevice("TRAC:DATA? TRACE1");
-        writeToDevice("TRAC1:DATA?");
+        //writeToDevice("TRAC1:DATA?");
         writeToDevice("++read eoi");
 
         sleepMs(100);
-        readFromDevice();
+        wxString Trace = readFromDevice();
+        std::vector<double> x_werte;
+
+        Adapter.seperateDataBlock(Trace,x_werte);
+
+        wxFile file;
+
+        // wxFile::write_append zum Anhängen oder wxFile::write zum Überschreiben
+        if (file.Open("/home/jon3r/Documents/Code/CodeBlocks/Test_GPIB_Terminal/GpibScripts/Z_Log.txt", wxFile::write_append)) {
+            file.Write(Trace + "\n");
+            file.Close();
+        } else {
+            wxLogError("Konnte Datei nicht schreiben!");
+        }
+
+        wxLogDebug("Received Trace: %s", Trace);
 
         writeToDevice("INIT:CONT ON"); //Dauerhafter sweep an
     }
@@ -595,7 +610,7 @@ PlotWindow::PlotWindow(wxWindow *parent) : wxDialog(parent, wxID_ANY, "Plot Wind
     selectMesurement->SetSelection(0);
     // 1. mpWindow (Zeichenfläche) erstellen
     plot = new mpWindow(this, wxID_ANY);
-    
+
     // Farbeinstellungen (Optional)
     plot->SetMargins(30, 30, 50, 50);
 
@@ -637,7 +652,7 @@ PlotWindow::PlotWindow(wxWindow *parent) : wxDialog(parent, wxID_ANY, "Plot Wind
     this->Layout();
     // 7. Zoom auf Daten anpassen
     plot->Fit();
-    
+
 }
 PlotWindow::~PlotWindow()
 {
@@ -669,7 +684,7 @@ void PlotWindow::executeScriptEvent(wxCommandEvent& event)
 
     wxLogDebug("Reading Scriptfile...");
     Adapter.readScriptFile(filePath, fileName, logAdapterReceived);
-    
+
     //output received msg
     for (size_t i = 0; i < logAdapterReceived.GetCount(); i++)
     {
@@ -745,7 +760,7 @@ FunctionWindow::FunctionWindow(wxWindow *parent)
     sizerFunc->Add(textFuncOutput, 0, wxEXPAND | wxALL , 10);
     panelfunc->SetSizerAndFit(sizerFunc);
 
-    
+
 }
 //-----Function Window Destructor-----
 FunctionWindow::~FunctionWindow()
@@ -800,9 +815,9 @@ void FunctionWindow::OnWriteGpib(wxCommandEvent& event)
     FunctionWindow::writeFuncInput->SetValue("");
 
     std::string CheckText(GPIBText.ToUTF8());
-    
+
     wxString Text = Adapter.write(CheckText);
-    
+
     FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
 }
 
@@ -825,11 +840,11 @@ void FunctionWindow::OnReadWriteGpib(wxCommandEvent& event)
     std::string CheckText(GPIBText.ToUTF8());
 
     FunctionWindow::writeFuncInput->SetValue("");
-    
+
     wxString Text = Adapter.write(CheckText);
-    
+
     FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
-    
+
     sleepMs(100);   //wait for responce
 
     wxLogDebug("Reading from device...");
@@ -876,16 +891,16 @@ SettingsWindow::SettingsWindow(wxWindow *parent)
     notebook->AddPage(adapterTab, "Adapter");
     notebook->AddPage(generalTab, "General");
 
-    
+
 
     // 5. Layout-Management (Sizer) verwenden, damit das Notebook
     //    das Hauptfenster ausfüllt
     wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
-    sizer->Add(infoText, 1, wxEXPAND | wxALL, 5);  
+    sizer->Add(infoText, 1, wxEXPAND | wxALL, 5);
     sizer->Add(notebook, 18, wxEXPAND | wxALL, 5); // 1 = dehnbar, wxEXPAND = ausfüllen
     sizer->Add(resetButton,1 ,wxEXPAND | wxALL, 5);
     mainPanel->SetSizer(sizer);
-    
+
 }
 //-----settings window subtabs------
 SettingsTabDisplay::SettingsTabDisplay(wxNotebook *parent, const wxString &label)
@@ -906,15 +921,15 @@ SettingsTabDisplay::SettingsTabDisplay(wxNotebook *parent, const wxString &label
     pegelEinheiten.Add("VOLT");
     pegelEinheiten.Add("AMPERE");
     pegelEinheiten.Add("WATT");
-    
+
 
     wxArrayString scalingY;
     scalingY.Add("Logarthmmic");
     scalingY.Add("Linear");
 
-    wxTextValidator val(wxFILTER_NUMERIC); 
+    wxTextValidator val(wxFILTER_NUMERIC);
 
-    wxStaticText* labelText = new wxStaticText(this, wxID_ANY, label, wxPoint(10,10));   
+    wxStaticText* labelText = new wxStaticText(this, wxID_ANY, label, wxPoint(10,10));
 
     //Start-Ende Elemente-----Start
     startEndeCheck = new wxCheckBox(this, wxID_ANY, "Start - Ende Nutzen");
@@ -1035,7 +1050,7 @@ SettingsTabDisplay::SettingsTabDisplay(wxNotebook *parent, const wxString &label
     wxBoxSizer* sizerHorizontal_8 = new wxBoxSizer(wxHORIZONTAL);
     sizerHorizontal_8->Add(getCurrentButton,1, wxALL | wxEXPAND, 5);
     sizerHorizontal_8->Add(anwendenButton,1, wxALL | wxEXPAND, 5);
-    
+
     //knöpfe ENDE
 
     //Verticaler Sizer
@@ -1049,6 +1064,9 @@ SettingsTabDisplay::SettingsTabDisplay(wxNotebook *parent, const wxString &label
     this->SetSizerAndFit(sizerVertical);
 
     toggleSelection(); //anfangszustand herstellen
+
+    Adapter.connect();
+    Adapter.config();
 }
 void SettingsTabDisplay::anwendenButton(wxCommandEvent& event)
 {
@@ -1083,7 +1101,7 @@ void SettingsTabDisplay::getCurrentButton(wxCommandEvent& event)
         FreqSpanSet     = Adapter.send("FREQ:POW?");
         pegelSet        = Adapter.send("DISP:TRAC:Y:RLEV?");
         refPegelSet     = Adapter.send("DISP:TRAC:Y:SPAC?");
-        
+
         setValues();
     }
 }
@@ -1127,7 +1145,7 @@ void SettingsTabDisplay::setValues()
     inputText_7         ->SetValue(refPegelSet);
 
     startEndeCheck      ->SetValue(useStartEnde);
-    centerSpanCheck     ->SetValue(useCenterSpan); 
+    centerSpanCheck     ->SetValue(useCenterSpan);
 }
 void SettingsTabDisplay::toggleSelection()
 {
@@ -1143,7 +1161,7 @@ void SettingsTabDisplay::toggleSelection()
         freqEinheitAuswahl_2->Enable(true);
         freqEinheitAuswahl_3->Enable(false);
         freqEinheitAuswahl_4->Enable(false);
-    } 
+    }
     else if(!useStartEnde && useCenterSpan)
     {
         startEndeCheck->SetValue(true);
@@ -1158,7 +1176,7 @@ void SettingsTabDisplay::toggleSelection()
         freqEinheitAuswahl_4->Enable(false);
     }
     else if (!useCenterSpan && useStartEnde)
-    { 
+    {
         startEndeCheck->SetValue(false);
         centerSpanCheck->SetValue(true);
         inputText_1->Enable(false);
@@ -1178,12 +1196,12 @@ void SettingsTabDisplay::toggleSelection()
 SettingsTabAdapter::SettingsTabAdapter(wxNotebook *parent, const wxString &label)
     : wxPanel(parent, wxID_ANY)
 {
-    new wxStaticText(this, wxID_ANY, label, wxPoint(10,10));   
+    new wxStaticText(this, wxID_ANY, label, wxPoint(10,10));
 }
 
 SettingsTabGeneral::SettingsTabGeneral(wxNotebook *parent, const wxString &label)
     : wxPanel(parent, wxID_ANY)
 {
-    new wxStaticText(this, wxID_ANY, label, wxPoint(10,10));   
+    new wxStaticText(this, wxID_ANY, label, wxPoint(10,10));
 }
 //------Settings window subtab end-----
