@@ -163,6 +163,77 @@ void GpibDevice::config()
         configFin = false;
     }
 }
+void GpibDevice::readScriptFile(const wxString& dirPath, const wxString& file, wxArrayString& logAdapterReceived)
+{
+    wxTextFile textFile;
+
+    if (textFile.Open(dirPath + file))
+    {
+        if (!getConnected())
+        {
+            connect();
+            config();
+        }
+
+        for (size_t i = 0; i < textFile.GetLineCount(); i++)
+        {
+            wxString line = textFile.GetLine(i);
+            if(line.IsEmpty())
+            {
+                wxLogDebug("line %i: Empty", (int)i, line);
+            }
+            else if (line.substr(0,1) == "#")
+            {
+                wxLogDebug("line %i: Kommentar: %s", (int)i, line.substr(1));
+            }
+            else if (line.substr(0,5) == "wait ")
+            {
+                int wait;
+                wxString strWait = line.substr(5);
+                if (strWait.ToInt(&wait))
+                {
+                    wxLogDebug("wait for %ims", wait);
+                    sleepMs(wait);
+                }
+                else
+                {
+                    wxLogDebug("Invalid wait Time input: %s", strWait);
+                }
+            }
+            else if (line.substr(0,5) == "send ")
+            {
+                wxLogDebug("line %i: manuell send: %s", (int)i, line);
+                line = line.substr(5);
+                logAdapterReceived.Add(send(std::string(line.ToUTF8())));
+                wxLogDebug("responce: %s", logAdapterReceived.Last());
+            }
+            else if (line.substr(0,6) == "write ")
+            {
+                wxLogDebug("line %i: manuell write: %s", (int)i, line);
+                line = line.substr(6);
+                write(std::string(line.ToUTF8()));
+            }
+            else if (line.substr(0,4) == "read")
+            {
+                wxLogDebug("line %i: manuell read", (int)i);
+                logAdapterReceived.Add(read());
+                wxLogDebug("responce: %s", logAdapterReceived.Last());
+            }
+            else if(line.Contains("?"))
+            {
+                wxLogDebug("line %i: send: %s", (int)i, line);
+                logAdapterReceived.Add(send(std::string(line.ToUTF8())));
+                wxLogDebug("responce: %s", logAdapterReceived.Last());
+            }
+            else
+            {
+                wxLogDebug("line %i: write: %s", (int)i, line);
+                write(std::string(line.ToUTF8()));
+            }
+        }
+    }
+}
+
 std::string GpibDevice::statusText()
 {
     std::string Text;

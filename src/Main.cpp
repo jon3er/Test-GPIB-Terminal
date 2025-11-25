@@ -594,7 +594,7 @@ PlotWindow::PlotWindow(wxWindow *parent) : wxDialog(parent, wxID_ANY, "Plot Wind
     selectMesurement = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, fileNames);
     selectMesurement->SetSelection(0);
     // 1. mpWindow (Zeichenfläche) erstellen
-    mpWindow* plot = new mpWindow(this, wxID_ANY);
+    plot = new mpWindow(this, wxID_ANY);
     
     // Farbeinstellungen (Optional)
     plot->SetMargins(30, 30, 50, 50);
@@ -607,11 +607,11 @@ PlotWindow::PlotWindow(wxWindow *parent) : wxDialog(parent, wxID_ANY, "Plot Wind
     plot->AddLayer(yAxis);
 
     // 3. Daten vorbereiten (std::vector laut Header Definition von mpFXYVector)
-    std::vector<double> x = {0.0, 1.0, 2.0, 3.0, 4.0, 5.0 };
-    std::vector<double> y = {0.0, 1.0, 4.0, 2.0, 5.0, 3.0 };
+    x = {0.0, 1.0, 2.0, 3.0, 4.0, 5.0 };
+    y = {0.0, 1.0, 4.0, 2.0, 5.0, 3.0 };
 
     // 4. Vektor-Layer erstellen
-    mpFXYVector* vectorLayer = new mpFXYVector("Messdaten");
+    vectorLayer = new mpFXYVector("Messdaten");
     vectorLayer->SetData(x, y);
     vectorLayer->SetContinuity(true); // True = Linie zeichnen
     vectorLayer->SetPen(wxPen(*wxBLUE, 2, wxPENSTYLE_SOLID));
@@ -662,92 +662,29 @@ void PlotWindow::getFileNames(const wxString& dirPath, wxArrayString& files)
         cont = dir.GetNext(&filename);
     }
 }
-void PlotWindow::readScriptFile(const wxString& dirPath, const wxString& file, wxArrayString& logAdapterReceived)
-{
-    wxTextFile textFile;
-
-
-
-    if (textFile.Open(dirPath + file))
-    {
-        if (!Adapter.getConnected())
-        {
-            Adapter.connect();
-            Adapter.config();
-        }
-
-
-        for (size_t i = 0; i < textFile.GetLineCount(); i++)
-        {
-            wxString line = textFile.GetLine(i);
-            if(line.IsEmpty())
-            {
-                wxLogDebug("line %i: Empty", (int)i, line);
-            }
-            else if (line.substr(0,1) == "#")
-            {
-                wxLogDebug("line %i: Kommentar: %s", (int)i, line.substr(1));
-            }
-            else if (line.substr(0,5) == "wait ")
-            {
-                int wait;
-                wxString strWait = line.substr(5);
-                if (strWait.ToInt(&wait))
-                {
-                    wxLogDebug("wait for %ims", wait);
-                    sleepMs(wait);
-                }
-                else
-                {
-                    wxLogDebug("Invalid wait Time input: %s", strWait);
-                }
-            }
-            else if (line.substr(0,5) == "send ")
-            {
-                wxLogDebug("line %i: manuell send: %s", (int)i, line);
-                line = line.substr(5);
-                logAdapterReceived.Add(Adapter.send(std::string(line.ToUTF8())));
-                wxLogDebug("responce: %s", logAdapterReceived.Last());
-            }
-            else if (line.substr(0,6) == "write ")
-            {
-                wxLogDebug("line %i: manuell write: %s", (int)i, line);
-                line = line.substr(6);
-                Adapter.write(std::string(line.ToUTF8()));
-            }
-            else if (line.substr(0,4) == "read")
-            {
-                wxLogDebug("line %i: manuell read", (int)i);
-                logAdapterReceived.Add(Adapter.read());
-                wxLogDebug("responce: %s", logAdapterReceived.Last());
-            }
-            else if(line.Contains("?"))
-            {
-                wxLogDebug("line %i: send: %s", (int)i, line);
-                logAdapterReceived.Add(Adapter.send(std::string(line.ToUTF8())));
-                wxLogDebug("responce: %s", logAdapterReceived.Last());
-            }
-            else
-            {
-                wxLogDebug("line %i: write: %s", (int)i, line);
-                Adapter.write(std::string(line.ToUTF8()));
-            }
-        }
-    }
-}
 void PlotWindow::executeScriptEvent(wxCommandEvent& event)
 {
     wxArrayString logAdapterReceived;
     wxString fileName = selectMesurement->GetStringSelection();
 
     wxLogDebug("Reading Scriptfile...");
-    readScriptFile(filePath, fileName, logAdapterReceived);
+    Adapter.readScriptFile(filePath, fileName, logAdapterReceived);
     
     //output received msg
     for (size_t i = 0; i < logAdapterReceived.GetCount(); i++)
     {
         wxLogDebug(logAdapterReceived[i]);
     }
+    //test
+    updatePlotData();
+}
+void PlotWindow::updatePlotData()
+{
+    x = {1.0, 1.0, 2.0, 3.0, 4.0, 5.0 ,10.0, 10.0, 20.0, 30.0, 40.0, 50.0};
+    y = {1.0, 1.0, 2.0, 3.0, 4.0, 4.0, 10.0, 10.0, 20.0, 30.0, 40.0, 40.0 };
+
+    vectorLayer->SetData(x, y);
+    plot->Fit();
 }
 //-----Plot Window ENDE--------
 

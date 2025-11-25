@@ -1,7 +1,7 @@
 #pragma once
 
 #include <wx/wx.h>
-
+#include "mathplot.h"
 
 enum
 {
@@ -80,11 +80,16 @@ private:
     wxArrayString fileNames;
 
     void getFileNames(const wxString& dirPath, wxArrayString& files);
-    void readScriptFile(const wxString& dirPath, const wxString& file, wxArrayString& logAdapterReceived);
     void executeScriptEvent(wxCommandEvent& event);
+    void updatePlotData();
 
     wxChoice* selectMesurement;
-
+    //Plot var
+    mpWindow* plot;
+    mpFXYVector* vectorLayer;
+    std::vector<double> x;
+    std::vector<double> y;
+    
     //device Class
     GpibDevice Adapter;
 };
