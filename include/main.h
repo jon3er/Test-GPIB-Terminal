@@ -37,6 +37,11 @@ enum
     ID_Main_Help_About = 61
 };
 
+//-----Global Varibles Start------
+GpibDevice Adapter;
+
+//-----Global Varibles Ende----
+
 //-----Main Programm Window
 class MainProgrammWin : public wxFrame
 {
@@ -138,7 +143,7 @@ private:
     wxTextCtrl* TerminalDisplay;
 
     //device Class
-    GpibDevice Adapter;
+    //GpibDevice Adapter;
 };
 
 class PlotWindow : public wxDialog
@@ -163,7 +168,7 @@ private:
     std::vector<double> y;
 
     //device Class
-    GpibDevice Adapter;
+    //GpibDevice Adapter;
 };
 
 
@@ -187,7 +192,7 @@ private:
     wxTextCtrl* writeFuncInput;
 
     //device Class
-    GpibDevice Adapter;
+    //GpibDevice Adapter;
 };
 //-----Settings Window-----
 class SettingsWindow : public wxDialog
@@ -217,7 +222,7 @@ private:
     std::string getGpibCmdFreq(wxString NumVal, wxString Selection);
     std::string getGpibCmdPegel(wxString NumVal, wxString Selection);
     //Adapter
-    GpibDevice Adapter;
+    //GpibDevice Adapter;
     //Units
     wxString FreqStartSetUnit;
     wxString FreqEndeSetUnit;

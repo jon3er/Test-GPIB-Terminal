@@ -15,6 +15,19 @@
 
 wxIMPLEMENT_APP(MainWin);
 
+//-----MainWin Methodes-----
+bool MainWin::OnInit()
+{
+    //Enable Debug output window
+    wxLog::SetActiveTarget(new wxLogStderr());
+
+    MainProgrammWin *frame = new MainProgrammWin(nullptr);
+    frame->Show();
+
+    return true;
+}
+//-----MainWin Methodes ende-----
+
 //-----Main Programm Window-----
 MainProgrammWin::MainProgrammWin( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxFrame( parent, id, title, pos, size, style )
 {
@@ -33,7 +46,9 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, wxWindowID id, const wxStrin
 
 
 	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
-	
+
+    this->SetBackgroundColour(*wxLIGHT_GREY);
+
 	m_menubarMainProg = new wxMenuBar( 0 );
 	m_menu_File = new wxMenu();
 	wxMenuItem* m_menuFile_Item_Open;
@@ -106,7 +121,7 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, wxWindowID id, const wxStrin
 	wxBoxSizer* bSizerMainProgH1;
 	bSizerMainProgH1 = new wxBoxSizer( wxHORIZONTAL );
 	
-	m_staticText1 = new wxStaticText( this, wxID_ANY, wxT("GPIB Adapter Status: "), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText1 = new wxStaticText( this, wxID_ANY, wxT("GPIB Adapter: "), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText1->Wrap( -1 );
 	bSizerMainProgH1->Add( m_staticText1, 1, wxALL, 5 );
 	
@@ -135,7 +150,7 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, wxWindowID id, const wxStrin
 	
 	m_button1 = new wxButton( this, wxID_ANY, wxT("Refresh"), wxDefaultPosition, wxDefaultSize, 0 );
 	bSizerMainProgV1->Add( m_button1, 0, wxALIGN_RIGHT|wxALL, 10 );
-	
+	m_button1->Bind(wxEVT_BUTTON, &MainProgrammWin::ButtonRefresh, this);
 	
 	this->SetSizer( bSizerMainProgV1 );
 	this->Layout();
@@ -144,13 +159,47 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, wxWindowID id, const wxStrin
 }
 MainProgrammWin::~MainProgrammWin()
 {
-    
+
 }
 
 // Button functions
 void MainProgrammWin::ButtonRefresh(wxCommandEvent& event)
 {
+    wxString Text = "";
+    m_textCtrlAdapterStatus->SetValue(Text);
+    m_textCtrlDeviceStatus->SetValue(Text);
 
+    if (!Adapter.getConnected())
+    {
+        Adapter.connect();
+    }
+
+    if (Adapter.getConnected())
+    {
+        
+        Text = Adapter.send("++ver");
+        if (Text.substr(0,6) == "Failed")
+        {
+            m_textCtrlAdapterStatus->SetValue("Error Check Connection");
+        }
+        else
+        {
+            m_textCtrlAdapterStatus->SetValue(Text.substr(14));
+        }
+
+        Text = Adapter.send("*IDN?");
+        if (Text == "No Message to Read\n")
+        {
+            Text = "No GPIB Device Found Check Connection";
+        }
+
+        m_textCtrlDeviceStatus->SetValue(Text);
+    }
+    else
+    {
+        m_textCtrlAdapterStatus->SetValue("No GPIB Adapter Found!");
+        m_textCtrlDeviceStatus->SetValue("");
+    }
 }
 // MenuBar functions
 
@@ -210,20 +259,6 @@ void MainProgrammWin::MenuHelpAbout(wxCommandEvent& event)
 {
 
 }
-
-
-//-----MainWin Methodes-----
-bool MainWin::OnInit()
-{
-    //Enable Debug output window
-    wxLog::SetActiveTarget(new wxLogStderr());
-
-    MainProgrammWin *frame = new MainProgrammWin(nullptr);
-    frame->Show();
-
-    return true;
-}
-//-----MainWin Methodes ende-----
 
 /*
 //-----MainWinFrame + Methodes-----

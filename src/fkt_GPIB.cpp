@@ -38,12 +38,14 @@ std::string GpibDevice::read(int forceReadBytes)
         else
         {
             Text = "Failed to Receive Data - TimeOut after 5s\n";
+            Connected = false;
         }
     }
     else
     {
         wxLogDebug("No Device to send too");
         Text = "Failed to Connect to a Device\n";
+        Connected = false;
     }
 
     return std::string(Text.ToUTF8());
