@@ -91,29 +91,6 @@ class MainWin : public wxApp
 public:
     bool OnInit() override; //overrides function of Base Classe wxApp Function OnInit()
 };
-/*
-//-----MainWinFrame-----
-class MainWinFrame : public wxFrame
-{
-public:
-    MainWinFrame();
-
-private:
-    wxTextCtrl* ScanUsbDisplay;
-
-    //menubar methodes
-    void OnHello(wxCommandEvent& event);
-    void OnExit(wxCommandEvent& event);
-    void OnAbout(wxCommandEvent& event);
-    //buttons methodes
-    void OnOpenTerminal(wxCommandEvent& event);
-    void OnScanUsb(wxCommandEvent& event);
-    void OnOpenFunctionTest(wxCommandEvent& event);
-    void OnOpenPlot(wxCommandEvent& event);
-    void OnOpenUploadScript(wxCommandEvent& event);
-    void OnOpenSettings(wxCommandEvent& event);
-};
-*/
 
 //-----Terminal-----
 class TerminalWindow : public wxDialog
