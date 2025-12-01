@@ -37,7 +37,7 @@ std::string GpibDevice::read(int forceReadBytes)
         }
         else
         {
-            Text = "Failed to Receive Data - TimeOut after 5s\n"; 
+            Text = "Failed to Receive Data - TimeOut after 5s\n";
         }
     }
     else
@@ -219,6 +219,19 @@ void GpibDevice::readScriptFile(const wxString& dirPath, const wxString& file, w
                 logAdapterReceived.Add(read());
                 wxLogDebug("responce: %s", logAdapterReceived.Last());
             }
+            else if(line.Contains("?") && line.substr(0,4) == "TRAC")
+            {
+                wxLogDebug("line %i: send: %s", (int)i, line);
+
+                write(std::string(line.ToUTF8()));
+                write("++read eoi");
+                sleepMs(300);
+                logAdapterReceived.Add(read());
+                wxLogDebug("responce: %s", logAdapterReceived.Last());
+                seperateDataBlock(logAdapterReceived.Last(),x_Data);
+                calcYdata(75'000'000, 125'000'000); //start und end frequenz angeben
+
+            }
             else if(line.Contains("?"))
             {
                 wxLogDebug("line %i: send: %s", (int)i, line);
@@ -233,7 +246,48 @@ void GpibDevice::readScriptFile(const wxString& dirPath, const wxString& file, w
         }
     }
 }
+void GpibDevice::seperateDataBlock(const wxString& receivedString, std::vector<double>& x)
+{
+    wxArrayString seperatedStrings = wxStringTokenize(receivedString, ",");
 
+    double value;
+    wxString data;
+    x.clear();
+
+    for (long unsigned int i = 0; i < seperatedStrings.Count(); i++)
+    {
+        data = seperatedStrings[i];
+
+        if(data.ToCDouble(&value))
+        {
+             x.push_back(value);
+             wxLogDebug("seperated value: %3f", value);
+        }
+        else
+        {
+            wxLogDebug("Failed to convert");
+        }
+    }
+}
+void GpibDevice::calcYdata(double startY, double endY)
+{
+    int totalPoints = x_Data.size();
+    y_Data.clear();
+
+    wxLogDebug("Total points: %i", totalPoints);
+    double range = endY-startY;
+
+    double step = range/totalPoints;
+    wxLogDebug("Range: %3f   Step: %3f",range,step);
+    double newYPoint = startY;
+
+    for(int i = 0; i < totalPoints; i++)
+    {
+        newYPoint = newYPoint + step;
+        y_Data.push_back(newYPoint);
+        wxLogDebug("Y Berechnet: %f", y_Data[i]);
+    }
+}
 std::string GpibDevice::statusText()
 {
     std::string Text;

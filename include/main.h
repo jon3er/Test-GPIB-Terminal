@@ -3,6 +3,13 @@
 #include <wx/wx.h>
 #include "mathplot.h"
 
+#if defined(_WIN32)
+    wxString filePathSytem = "D:\\CodeProjects\\VSCode\\projects\\Diplom\\Test-GPIB-Terminal\\GpibScripts\\";
+#elif defined(__linux__)
+    wxString filePathSytem = "/home/jon3r/Documents/Code/CodeBlocks/Test_GPIB_Terminal/GpibScripts/";
+#endif
+
+
 enum
 {
     ID_Hello = 01,
@@ -141,7 +148,7 @@ public:
     virtual ~PlotWindow();
 private:
 
-    wxString filePath = "D:\\CodeProjects\\VSCode\\projects\\Diplom\\Test-GPIB-Terminal\\GpibScripts\\";
+    wxString filePath = filePathSytem;
     wxArrayString fileNames;
 
     void getFileNames(const wxString& dirPath, wxArrayString& files);
@@ -154,7 +161,7 @@ private:
     mpFXYVector* vectorLayer;
     std::vector<double> x;
     std::vector<double> y;
-    
+
     //device Class
     GpibDevice Adapter;
 };
@@ -198,7 +205,7 @@ class SettingsTabDisplay : public wxPanel
 {
 public:
     SettingsTabDisplay(wxNotebook *parent, const wxString &label);
-    
+
 private:
     void anwendenButton(wxCommandEvent& event);
     void getCurrentButton(wxCommandEvent& event);
@@ -206,23 +213,23 @@ private:
     void toggleSelection();
     void getValues();
     void setValues();
-    
+
     std::string getGpibCmdFreq(wxString NumVal, wxString Selection);
     std::string getGpibCmdPegel(wxString NumVal, wxString Selection);
     //Adapter
     GpibDevice Adapter;
     //Units
     wxString FreqStartSetUnit;
-    wxString FreqEndeSetUnit; 
-    wxString FreqCenterSetUnit; 
-    wxString FreqSpanSetUnit; 
+    wxString FreqEndeSetUnit;
+    wxString FreqCenterSetUnit;
+    wxString FreqSpanSetUnit;
     wxString pegelSetUnit;
     wxString scalingYSetUnit;
     //Text Input
     wxString FreqStartSet;
-    wxString FreqEndeSet; 
-    wxString FreqCenterSet; 
-    wxString FreqSpanSet; 
+    wxString FreqEndeSet;
+    wxString FreqCenterSet;
+    wxString FreqSpanSet;
     wxString pegelSet;
     wxString refPegelSet;
     //Bool
@@ -253,13 +260,13 @@ class SettingsTabAdapter : public wxPanel
 {
 public:
     SettingsTabAdapter(wxNotebook *parent, const wxString &label);
-    
+
 };
 
 class SettingsTabGeneral : public wxPanel
 {
 public:
     SettingsTabGeneral(wxNotebook *parent, const wxString &label);
-    
+
 };
 //-----end Subtabs-----

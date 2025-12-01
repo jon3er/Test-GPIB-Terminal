@@ -17,11 +17,13 @@ public:
     std::string send(std::string msg, int DelayMs = 100);
     DWORD quaryBuffer();
     std::string statusText();
-    
+
     void connect(std::string args = "");
     void disconnect(std::string args = "");
     void config();
     void readScriptFile(const wxString& dirPath, const wxString& file, wxArrayString& logAdapterReceived);
+    void seperateDataBlock(const wxString& receivedString, std::vector<double>& x);
+    void calcYdata(double startY, double endY); //TODO umbennen ist eigendlich x und ich erhalte vom gerät nur Y die amplitude.
 
     FT_STATUS getStatus();
     FT_HANDLE getHandle();
@@ -30,7 +32,10 @@ public:
     int getBaudrate();
 
     void setBaudrate(int BaudrateNew);
-    
+
+    std::vector<double> x_Data = {0};
+    std::vector<double> y_Data = {0};
+
 private:
     FT_HANDLE ftHandle = NULL;
     FT_STATUS ftStatus = FT_OK;
@@ -40,7 +45,6 @@ private:
     bool configFin = false;
     int sendDelayMs = 100;
     std::string lastMsgReceived = "";
-
     DWORD BytesToRead = 0;
 };
 
