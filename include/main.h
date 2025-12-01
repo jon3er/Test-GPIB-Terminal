@@ -5,9 +5,73 @@
 
 enum
 {
-    ID_Hello = 1,
-    ID_OpenTerminal = 2
+    ID_Hello = 01,
+    ID_OpenTerminal = 02,
+
+    ID_Main_File = 10,
+    ID_Main_File_Open = 11,
+    ID_Main_File_Save = 12,
+    ID_Main_File_Close = 13,
+
+    ID_Main_Simulation = 20,
+
+    ID_Main_Mesurement = 30,
+    ID_Main_Mesurement_New = 31,
+    ID_Main_Mesurement_Load = 32,
+    ID_Main_Mesurement_Settings = 33,
+
+    ID_Main_Processing = 40,
+
+    ID_Main_Test = 50,
+    ID_Main_Test_Terminal = 51,
+    ID_Main_Test_Func = 52,
+
+    ID_Main_Help = 60,
+    ID_Main_Help_About = 61
 };
+
+//-----Main Programm Window
+class MainProgrammWin : public wxFrame
+{
+private:
+
+protected:
+	wxMenuBar* m_menubarMainProg;
+	wxMenu* m_menu_File;
+	wxMenu* m_menu_Sim;
+	wxMenu* m_menu_Mesurement;
+	wxMenu* m_menu_Processing;
+	wxMenu* m_menu_Test;
+	wxMenu* m_menu_Help;
+	wxPanel* m_panel21;
+	wxStaticText* m_staticText1;
+	wxTextCtrl* m_textCtrlAdapterStatus;
+	wxStaticText* m_staticText11;
+	wxTextCtrl* m_textCtrlDeviceStatus;
+	wxPanel* m_panel2;
+	wxButton* m_button1;
+
+public:
+	
+	MainProgrammWin( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("GPIB Messurement"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 814,454 ), long style = wxDEFAULT_FRAME_STYLE|wxTAB_TRAVERSAL );
+	~MainProgrammWin();
+    // Button func
+    void ButtonRefresh(wxCommandEvent& event);    
+    // Menubar items
+    void MenuFileOpen(wxCommandEvent& event);
+    void MenuFileSave(wxCommandEvent& event);
+    void MenuFileClose(wxCommandEvent& event);
+
+    void MenuMesurementNew(wxCommandEvent& event);
+	void MenuMesurementLoad(wxCommandEvent& event);
+    void MenuMesurementSettings(wxCommandEvent& event);
+
+    void MenuTestTerminal(wxCommandEvent& event);
+    void MenuTestFunc(wxCommandEvent& event);
+
+    void MenuHelpAbout(wxCommandEvent& event);
+};
+
 
 //-----MainWin-----
 class MainWin : public wxApp
@@ -15,7 +79,7 @@ class MainWin : public wxApp
 public:
     bool OnInit() override; //overrides function of Base Classe wxApp Function OnInit()
 };
-
+/*
 //-----MainWinFrame-----
 class MainWinFrame : public wxFrame
 {
@@ -37,6 +101,7 @@ private:
     void OnOpenUploadScript(wxCommandEvent& event);
     void OnOpenSettings(wxCommandEvent& event);
 };
+*/
 
 //-----Terminal-----
 class TerminalWindow : public wxDialog

@@ -15,20 +15,217 @@
 
 wxIMPLEMENT_APP(MainWin);
 
+//-----Main Programm Window-----
+MainProgrammWin::MainProgrammWin( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxFrame( parent, id, title, pos, size, style )
+{
+    Bind(wxEVT_MENU, &MainProgrammWin::MenuFileOpen, this, ID_Main_File_Open);
+    Bind(wxEVT_MENU, &MainProgrammWin::MenuFileSave, this, ID_Main_File_Save);
+    Bind(wxEVT_MENU, &MainProgrammWin::MenuFileClose, this, ID_Main_File_Close);
+
+    Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementNew, this, ID_Main_Mesurement_New);
+    Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementLoad, this, ID_Main_Mesurement_Load);
+    Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementSettings, this, ID_Main_Mesurement_Settings);
+
+    Bind(wxEVT_MENU, &MainProgrammWin::MenuTestTerminal, this, ID_Main_Test_Terminal);
+    Bind(wxEVT_MENU, &MainProgrammWin::MenuTestFunc, this, ID_Main_Test_Func);
+
+    Bind(wxEVT_MENU, &MainProgrammWin::MenuHelpAbout, this, ID_Main_Help_About);
+
+
+	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
+	
+	m_menubarMainProg = new wxMenuBar( 0 );
+	m_menu_File = new wxMenu();
+	wxMenuItem* m_menuFile_Item_Open;
+	m_menuFile_Item_Open = new wxMenuItem( m_menu_File, ID_Main_File_Open, wxString( wxT("Open") ) + wxT('\t') + wxT("CTRL + O"), wxEmptyString, wxITEM_NORMAL );
+	m_menu_File->Append( m_menuFile_Item_Open );
+	
+	wxMenuItem* m_menuFile_Item_Save;
+	m_menuFile_Item_Save = new wxMenuItem( m_menu_File, ID_Main_File_Save, wxString( wxT("Save") ) + wxT('\t') + wxT("CTRL + S"), wxEmptyString, wxITEM_NORMAL );
+	m_menu_File->Append( m_menuFile_Item_Save );
+	
+	m_menu_File->AppendSeparator();
+	
+	wxMenuItem* m_menuFile_Item_Close;
+	m_menuFile_Item_Close = new wxMenuItem( m_menu_File, ID_Main_File_Close, wxString( wxT("Close") ) , wxEmptyString, wxITEM_NORMAL );
+	m_menu_File->Append( m_menuFile_Item_Close );
+	
+	m_menubarMainProg->Append( m_menu_File, wxT("File") ); 
+	
+	m_menu_Sim = new wxMenu();
+	m_menubarMainProg->Append( m_menu_Sim, wxT("Simulation") ); 
+	
+	m_menu_Mesurement = new wxMenu();
+	wxMenuItem* m_menuMesure_Item_New;
+	m_menuMesure_Item_New = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_New, wxString( wxT("New Mesurement") ) , wxEmptyString, wxITEM_NORMAL );
+	m_menu_Mesurement->Append( m_menuMesure_Item_New );
+	
+	m_menu_Mesurement->AppendSeparator();
+	
+	wxMenuItem* m_menuMesure_Item_Load;
+	m_menuMesure_Item_Load = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_Load, wxString( wxT("Load config") ) , wxEmptyString, wxITEM_NORMAL );
+	m_menu_Mesurement->Append( m_menuMesure_Item_Load );
+	
+	m_menu_Mesurement->AppendSeparator();
+	
+	wxMenuItem* m_menuMesure_Item_Settings;
+	m_menuMesure_Item_Settings = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_Settings, wxString( wxT("Settings") ) , wxEmptyString, wxITEM_NORMAL );
+	m_menu_Mesurement->Append( m_menuMesure_Item_Settings );
+	
+	m_menubarMainProg->Append( m_menu_Mesurement, wxT("Mesurement") ); 
+	
+	m_menu_Processing = new wxMenu();
+	m_menubarMainProg->Append( m_menu_Processing, wxT("Processing") ); 
+	
+	m_menu_Test = new wxMenu();
+	wxMenuItem* m_menuTest_Item_Terminal;
+	m_menuTest_Item_Terminal = new wxMenuItem( m_menu_Test, ID_Main_Test_Terminal, wxString( wxT("Terminal") ) + wxT('\t') + wxT("CTRL + SHIFT +T"), wxEmptyString, wxITEM_NORMAL );
+	m_menu_Test->Append( m_menuTest_Item_Terminal );
+	
+	wxMenuItem* m_menuTest_Item_Func;
+	m_menuTest_Item_Func = new wxMenuItem( m_menu_Test, ID_Main_Test_Func, wxString( wxT("Function Test") ) + wxT('\t') + wxT("F1"), wxEmptyString, wxITEM_NORMAL );
+	m_menu_Test->Append( m_menuTest_Item_Func );
+	
+	m_menubarMainProg->Append( m_menu_Test, wxT("Test") ); 
+	
+	m_menu_Help = new wxMenu();
+	wxMenuItem* m_menuHelp_Item_About;
+	m_menuHelp_Item_About = new wxMenuItem( m_menu_Help, ID_Main_Help_About, wxString( wxT("About") ) , wxEmptyString, wxITEM_NORMAL );
+	m_menu_Help->Append( m_menuHelp_Item_About );
+	
+	m_menubarMainProg->Append( m_menu_Help, wxT("Help") ); 
+	
+	this->SetMenuBar( m_menubarMainProg );
+	
+	wxBoxSizer* bSizerMainProgV1;
+	bSizerMainProgV1 = new wxBoxSizer( wxVERTICAL );
+	
+	m_panel21 = new wxPanel( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	bSizerMainProgV1->Add( m_panel21, 1, wxEXPAND | wxALL, 5 );
+	
+	wxBoxSizer* bSizerMainProgH1;
+	bSizerMainProgH1 = new wxBoxSizer( wxHORIZONTAL );
+	
+	m_staticText1 = new wxStaticText( this, wxID_ANY, wxT("GPIB Adapter Status: "), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText1->Wrap( -1 );
+	bSizerMainProgH1->Add( m_staticText1, 1, wxALL, 5 );
+	
+	m_textCtrlAdapterStatus = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	bSizerMainProgH1->Add( m_textCtrlAdapterStatus, 2, wxALL, 5 );
+	
+	
+	bSizerMainProgV1->Add( bSizerMainProgH1, 2, wxEXPAND, 5 );
+	
+	wxBoxSizer* bSizerMainProgH2;
+	bSizerMainProgH2 = new wxBoxSizer( wxHORIZONTAL );
+	
+	bSizerMainProgH2->SetMinSize( wxSize( 0,0 ) ); 
+	m_staticText11 = new wxStaticText( this, wxID_ANY, wxT("GPIB Device: "), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText11->Wrap( -1 );
+	bSizerMainProgH2->Add( m_staticText11, 1, wxALL, 5 );
+	
+	m_textCtrlDeviceStatus = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	bSizerMainProgH2->Add( m_textCtrlDeviceStatus, 2, wxALL, 5 );
+	
+	
+	bSizerMainProgV1->Add( bSizerMainProgH2, 2, wxEXPAND, 5 );
+	
+	m_panel2 = new wxPanel( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
+	bSizerMainProgV1->Add( m_panel2, 2, wxEXPAND | wxALL, 5 );
+	
+	m_button1 = new wxButton( this, wxID_ANY, wxT("Refresh"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizerMainProgV1->Add( m_button1, 0, wxALIGN_RIGHT|wxALL, 10 );
+	
+	
+	this->SetSizer( bSizerMainProgV1 );
+	this->Layout();
+	
+	this->Centre( wxBOTH );
+}
+MainProgrammWin::~MainProgrammWin()
+{
+    
+}
+
+// Button functions
+void MainProgrammWin::ButtonRefresh(wxCommandEvent& event)
+{
+
+}
+// MenuBar functions
+
+void MainProgrammWin::MenuFileOpen(wxCommandEvent& event)
+{
+    wxLogMessage("Open File");
+}
+void MainProgrammWin::MenuFileSave(wxCommandEvent& event)
+{
+
+}
+void MainProgrammWin::MenuFileClose(wxCommandEvent& event)
+{
+
+}
+void MainProgrammWin::MenuMesurementNew(wxCommandEvent& event)
+{
+    //Create new sub window
+    PlotWindow *PlotWin = new PlotWindow(this);
+    //open Window Pauses Main Window
+    PlotWin->ShowModal();
+    //Close Window
+    PlotWin->Destroy();
+}
+void MainProgrammWin::MenuMesurementLoad(wxCommandEvent& event)
+{
+
+}
+void MainProgrammWin::MenuMesurementSettings(wxCommandEvent& event)
+{
+    //Create new sub window
+    SettingsWindow *SettingsWin = new SettingsWindow(this);
+    //open Window Pauses Main Window
+    SettingsWin->ShowModal();
+    //Close Window
+    SettingsWin->Destroy();
+}
+void MainProgrammWin::MenuTestTerminal(wxCommandEvent& event)
+{
+    //Create new sub window
+    TerminalWindow *TWin = new TerminalWindow(this);
+    //open Window Pauses Main Window
+    TWin->ShowModal();
+    //Close Window
+    TWin->Destroy();
+}
+void MainProgrammWin::MenuTestFunc(wxCommandEvent& event)
+{
+    //Create new sub window
+    FunctionWindow *FuncWin = new FunctionWindow(this);
+    //open Window Pauses Main Window
+    FuncWin->ShowModal();
+    //Close Window
+    FuncWin->Destroy();
+}
+void MainProgrammWin::MenuHelpAbout(wxCommandEvent& event)
+{
+
+}
+
+
 //-----MainWin Methodes-----
 bool MainWin::OnInit()
 {
     //Enable Debug output window
     wxLog::SetActiveTarget(new wxLogStderr());
 
-    MainWinFrame *frame = new MainWinFrame();
+    MainProgrammWin *frame = new MainProgrammWin(nullptr);
     frame->Show();
 
     return true;
 }
 //-----MainWin Methodes ende-----
 
-
+/*
 //-----MainWinFrame + Methodes-----
 MainWinFrame::MainWinFrame() : wxFrame(nullptr, wxID_ANY, "Main Window", wxDefaultPosition, wxSize(500,600))
 {
@@ -188,6 +385,7 @@ void MainWinFrame::OnOpenSettings(wxCommandEvent& event)
     SettingsWin->Destroy();
 }
 //-----MainWinFrame Methodes End -----
+*/
 
 //----- Terminal Window Constructor -----
 TerminalWindow::TerminalWindow(wxWindow *parent)
