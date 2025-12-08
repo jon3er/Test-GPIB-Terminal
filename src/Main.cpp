@@ -812,6 +812,11 @@ FunctionWindow::FunctionWindow(wxWindow *parent)
     wxButton* connectDevGpibButton = new wxButton(panelfunc, wxID_ANY, "Connected / Disconnect",wxPoint(10,0));
     connectDevGpibButton->Bind(wxEVT_BUTTON, &FunctionWindow::OnConDisconGpib,this);
 
+    //Create Button "Test Save File"
+    wxButton* TestSaveFileButton = new wxButton(panelfunc, wxID_ANY, "Test Save File",wxPoint(10,0));
+    TestSaveFileButton->Bind(wxEVT_BUTTON, &FunctionWindow::OnTestSaveFile,this);
+
+
     //Funtion Output Lable
     wxStaticText* discFuncOutput = new wxStaticText(panelfunc,wxID_ANY,"Function output: ");
     //Funtion Output Text Box
@@ -827,6 +832,7 @@ FunctionWindow::FunctionWindow(wxWindow *parent)
     sizerFunc->Add(writeGpibButton, 0, wxEXPAND | wxALL , 10);
     sizerFunc->Add(readGpibButton, 0, wxEXPAND | wxALL , 10);
     sizerFunc->Add(readWriteGpibButton, 0, wxEXPAND | wxALL , 10);
+    sizerFunc->Add(TestSaveFileButton, 0, wxEXPAND | wxALL , 10);
     sizerFunc->Add(discFuncOutput, 0, wxEXPAND | wxALL , 10);
     sizerFunc->Add(textFuncOutput, 0, wxEXPAND | wxALL , 10);
     panelfunc->SetSizerAndFit(sizerFunc);
@@ -876,6 +882,19 @@ void FunctionWindow::OnConDisconGpib(wxCommandEvent& event)
             textFuncOutput->AppendText(terminalTimestampOutput("Disconnected from a device\n"));
         }
     }
+}
+
+void FunctionWindow::OnTestSaveFile(wxCommandEvent& event)
+{
+    wxLogDebug("Pressed Test Save File");
+    sData TestObjekt;
+
+    TestObjekt.setTimeAndDate();
+    sData::sParam* TestData = new sData::sParam;
+    TestData = TestObjekt.GetParameter();
+
+    wxLogDebug("Zeit: %s",TestData->Time);
+
 }
 
 void FunctionWindow::OnWriteGpib(wxCommandEvent& event)

@@ -1,5 +1,7 @@
 #include <fstream>
 #include <iomanip>
+#include <format>
+#include <chrono>
 #include "fkt_GPIB.h"
 
 //TODO Create Device Class and Create new read read and write funtions
@@ -374,26 +376,29 @@ void fsuMesurement::setFreqStartEnd(double FreqS, double FreqE)
     FreqStart = FreqS;
     FreqEnd = FreqE;
 }
+/*
 sData::sParam fsuMesurement::getMesurmentData()
 {
     sData::sParam *tempOld = tempData.GetParameter();
     return *tempOld;
 
 }
-
+*/
 
 //------fsuMesurement Ende-----
 
 //------sData Beginn------
 sData::sData(const char* type, unsigned int NoPoints)
 {
+    dsParam = new sParam;
     dsParam->Type = type;
-    dsParam->NoPoints_x = NoPoints;
+    dsParam->NoPoints_X = NoPoints;
 }
 sData::~sData()
 {
-
+    delete dsParam;
 }
+/*
 int sData::SetData(sParam *par, std::vector<double> re, std::vector<double> im)
 {   try
 {
@@ -414,6 +419,126 @@ void sData::GetData(std::vector<double>& re, std::vector<double>& im)
     re = dsR;
     im = dsI;
 }
+*/
+bool sData::setFileName(wxString Name)
+{
+    try
+    {
+        dsParam->File = Name;
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+        return false;
+    }
+
+    return true;
+}
+bool sData::setFileType(wxString Type)
+{
+    try
+    {
+        dsParam->Type = Type;
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+        return false;
+    }
+    
+    return true;
+}
+bool sData::setNumberOfPts_X(unsigned int NumbPtsX)
+{
+        try
+    {
+        dsParam->NoPoints_X = NumbPtsX;
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+        return false;
+    }
+    
+    return true;
+}
+bool sData::setNumberOfPts_Y(unsigned int NumbPtsY)
+{
+        try
+    {
+        dsParam->NoPoints_Y = NumbPtsY;
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+        return false;
+    }
+    
+    return true;
+}
+bool sData::setAmpUnit(wxString Unit)
+{
+    try
+    {
+        dsParam->ampUnit = Unit;
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+        return false;
+    }
+    
+    return true; 
+}
+bool sData::setStartFreq(unsigned int StartFreq)
+{
+    try
+    {
+        dsParam->startFreq = StartFreq;
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+        return false;
+    }
+    
+    return true; 
+}
+bool sData::setEndFreq(unsigned int EndFreq)
+{
+    try
+    {
+        dsParam->endFreq = EndFreq;
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+        return false;
+    }
+    
+    return true; 
+}
+
+bool sData::setTimeAndDate()
+{
+    try
+    {
+        wxDateTime zeitJetzt = wxDateTime::Now();
+        wxString timestamp = zeitJetzt.Format("%H:%M:%S");
+        dsParam->Time = timestamp;
+
+        wxString dateStamp = zeitJetzt.Format("%Y:%m:%d");
+        dsParam->Date = dateStamp;
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+        return false;
+    }
+    
+    return true;
+}
+
 bool sData::saveToCsvFile(wxString& filename)
 {
     bool setImgToZero = false;
@@ -438,7 +563,7 @@ bool sData::saveToCsvFile(wxString& filename)
     file << "Date,"      << dsParam->Date.ToStdString() << "\n";
     file << "Time,"      << dsParam->Time.ToStdString() << "\n";
     file << "Type,"      << dsParam->Type.ToStdString() << "\n";
-    file << "Number Points X,"  << dsParam->NoPoints_x << "\n";
+    file << "Number Points X,"  << dsParam->NoPoints_X << "\n";
     file << "Number Points Y,"  << dsParam->NoPoints_Y << "\n";
     
     file << "\n";

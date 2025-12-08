@@ -164,6 +164,7 @@ private:
     void OnUsbScan(wxCommandEvent& event);
     void OnUsbConfig(wxCommandEvent& event);
     void OnConDisconGpib(wxCommandEvent& event);
+    void OnTestSaveFile(wxCommandEvent& event);
 
     //Text Boxes
     wxTextCtrl* textFuncOutput;

@@ -16,7 +16,7 @@ public:
         wxString        Date;
         wxString        Time;
         wxString        Type;
-        unsigned int    NoPoints_x;
+        unsigned int    NoPoints_X;
         unsigned int    NoPoints_Y;
       //unsigned int  NoPoints_Z;
       //unsigned int  NoScans;
@@ -31,11 +31,23 @@ public:
     sData(const char* type = "empty", unsigned int NoPoints = 0);
     //Destruktor
     ~sData();
-
+    /*
     int SetData(sParam *par, std::vector<double> re, std::vector<double> im);
     sParam* GetParameter() { return(dsParam); };
     void GetData(std::vector<double>& re, std::vector<double>& im);
+    */
+    sParam* GetParameter() { return(dsParam); };
+
+    bool setFileName(wxString Name);
+    bool setFileType(wxString Type);
+    bool setNumberOfPts_X(unsigned int NumbPtsX);
+    bool setNumberOfPts_Y(unsigned int NumbPtsY);
+    bool setAmpUnit(wxString Unit);
+    bool setStartFreq(unsigned int StartFreq);
+    bool setEndFreq(unsigned int EndFreq);
+    bool setTimeAndDate();
     bool saveToCsvFile(wxString& Filename);
+    
     //virtual bool LoadFile(const wxString &name);
 
 private:
@@ -57,7 +69,7 @@ public:
     std::vector<double> getY_Data() {return y_Data; };
     unsigned int getNoPoints_x() { return NoPoints_x; };
     unsigned int getNoPoints_y() { return NoPoints_y; };
-    sData::sParam getMesurmentData();
+    //sData::sParam getMesurmentData();
 
     void setFreqStartEnd(double FreqS, double FreqE);
 
@@ -70,7 +82,7 @@ private:
     unsigned int NoPoints_x;
     unsigned int NoPoints_y;
 
-    sData tempData;
+    //sData tempData;
 };
 
 class GpibDevice
