@@ -576,7 +576,7 @@ void TerminalWindow::testDevice(const std::string& args = "")
         wxString Trace = readFromDevice();
         std::vector<double> x_werte;
 
-        Adapter.seperateDataBlock(Trace,x_werte);
+        Messung.seperateDataBlock(Trace);
 
         wxFile file;
 
@@ -761,16 +761,13 @@ void PlotWindow::executeScriptEvent(wxCommandEvent& event)
     {
         wxLogDebug(logAdapterReceived[i]);
     }
-    y = Adapter.x_Data; //zum test vertauscht
-    x = Adapter.y_Data;
+    y = Messung.getX_Data(); //zum test vertauscht
+    x = Messung.getY_Data();
     //test
     updatePlotData();
 }
 void PlotWindow::updatePlotData()
 {
-    //x = {1.0, 1.0, 2.0, 3.0, 4.0, 5.0 ,10.0, 10.0, 20.0, 30.0, 40.0, 50.0};
-    //y = {1.0, 1.0, 2.0, 3.0, 4.0, 4.0, 10.0, 10.0, 20.0, 30.0, 40.0, 40.0 };
-
     vectorLayer->SetData(x, y);
     plot->Fit();
 }

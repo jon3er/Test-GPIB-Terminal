@@ -1,3 +1,5 @@
+#include <fstream>
+#include <iomanip>
 #include "fkt_GPIB.h"
 
 //TODO Create Device Class and Create new read read and write funtions
@@ -230,8 +232,9 @@ void GpibDevice::readScriptFile(const wxString& dirPath, const wxString& file, w
                 sleepMs(300);
                 logAdapterReceived.Add(read());
                 wxLogDebug("responce: %s", logAdapterReceived.Last());
-                seperateDataBlock(logAdapterReceived.Last(),x_Data);
-                calcYdata(75'000'000, 125'000'000); //start und end frequenz angeben
+                Messung.seperateDataBlock(logAdapterReceived.Last());
+                Messung.setFreqStartEnd(75'000'000,125'000'000);
+                Messung.calcYdata(); //start und end frequenz angeben
 
             }
             else if(line.Contains("?"))
@@ -248,48 +251,7 @@ void GpibDevice::readScriptFile(const wxString& dirPath, const wxString& file, w
         }
     }
 }
-void GpibDevice::seperateDataBlock(const wxString& receivedString, std::vector<double>& x)
-{
-    wxArrayString seperatedStrings = wxStringTokenize(receivedString, ",");
 
-    double value;
-    wxString data;
-    x.clear();
-
-    for (long unsigned int i = 0; i < seperatedStrings.Count(); i++)
-    {
-        data = seperatedStrings[i];
-
-        if(data.ToCDouble(&value))
-        {
-             x.push_back(value);
-             wxLogDebug("seperated value: %3f", value);
-        }
-        else
-        {
-            wxLogDebug("Failed to convert");
-        }
-    }
-}
-void GpibDevice::calcYdata(double startY, double endY)
-{
-    int totalPoints = x_Data.size();
-    y_Data.clear();
-
-    wxLogDebug("Total points: %i", totalPoints);
-    double range = endY-startY;
-
-    double step = range/totalPoints;
-    wxLogDebug("Range: %3f   Step: %3f",range,step);
-    double newYPoint = startY;
-
-    for(int i = 0; i < totalPoints; i++)
-    {
-        newYPoint = newYPoint + step;
-        y_Data.push_back(newYPoint);
-        wxLogDebug("Y Berechnet: %f", y_Data[i]);
-    }
-}
 std::string GpibDevice::statusText()
 {
     std::string Text;
@@ -345,6 +307,169 @@ void GpibDevice::setBaudrate(int BaudrateNew)
 {
     BaudRate = BaudrateNew;
 }
+//------fsuMesurement Beginn-----
+fsuMesurement::fsuMesurement()
+{
+    x_Data = {0};
+    y_Data = {0};
+
+    FreqStart = 75'000'000;
+    FreqEnd = 125'000'000;
+
+    NoPoints_x = 0;
+    NoPoints_y = 0;
+}
+void fsuMesurement::seperateDataBlock(const wxString& receivedString)
+{
+    wxArrayString seperatedStrings = wxStringTokenize(receivedString, ",");
+
+    double value;
+    wxString data;
+    std::vector<double> x;
+
+    for (long unsigned int i = 0; i < seperatedStrings.Count(); i++)
+    {
+        data = seperatedStrings[i];
+
+        if(data.ToCDouble(&value))
+        {
+             x.push_back(value);
+             wxLogDebug("seperated value: %3f", value);
+        }
+        else
+        {
+            wxLogDebug("Failed to convert");
+        }
+    }
+
+    x_Data.resize(x.size());
+    x_Data=x;
+}
+std::vector<double> fsuMesurement::calcYdata()
+{
+    int totalPoints = x_Data.size();
+    NoPoints_x = totalPoints;
+    y_Data.clear();
+
+    wxLogDebug("Total points: %i", totalPoints);
+    double range = FreqEnd-FreqStart;
+
+    double step = range/totalPoints;
+    wxLogDebug("Range: %3f   Step: %3f",range,step);
+    double newYPoint = FreqStart;
+
+    for(int i = 0; i < totalPoints; i++)
+    {
+        newYPoint = newYPoint + step;
+        y_Data.push_back(newYPoint);
+        wxLogDebug("Y Berechnet: %f", y_Data[i]);
+    }
+
+    NoPoints_y = y_Data.size();
+
+    return y_Data;
+}
+void fsuMesurement::setFreqStartEnd(double FreqS, double FreqE)
+{
+    FreqStart = FreqS;
+    FreqEnd = FreqE;
+}
+sData::sParam fsuMesurement::getMesurmentData()
+{
+    sData::sParam *tempOld = tempData.GetParameter();
+    return *tempOld;
+
+}
+
+
+//------fsuMesurement Ende-----
+
+//------sData Beginn------
+sData::sData(const char* type, unsigned int NoPoints)
+{
+    dsParam->Type = type;
+    dsParam->NoPoints_x = NoPoints;
+}
+sData::~sData()
+{
+
+}
+int sData::SetData(sParam *par, std::vector<double> re, std::vector<double> im)
+{   try
+{
+    dsParam = par;
+    dsR = re;
+    dsI = im;
+}
+catch(const std::exception& e)
+{
+    std::cerr << e.what() << '\n';
+    return 1;
+}
+    return 0;
+    
+}
+void sData::GetData(std::vector<double>& re, std::vector<double>& im)
+{
+    re = dsR;
+    im = dsI;
+}
+bool sData::saveToCsvFile(wxString& filename)
+{
+    bool setImgToZero = false;
+
+    if (!dsParam) {
+
+        return false;
+    }
+
+    if (dsR.size() != dsI.size()) 
+    {
+        setImgToZero = true;
+    }
+
+    std::ofstream file(filename.ToStdString());
+
+    if (!file.is_open()) {
+        return false; 
+    }
+
+    file << "File Name," << dsParam->File.ToStdString() << "\n";
+    file << "Date,"      << dsParam->Date.ToStdString() << "\n";
+    file << "Time,"      << dsParam->Time.ToStdString() << "\n";
+    file << "Type,"      << dsParam->Type.ToStdString() << "\n";
+    file << "Number Points X,"  << dsParam->NoPoints_x << "\n";
+    file << "Number Points Y,"  << dsParam->NoPoints_Y << "\n";
+    
+    file << "\n";
+
+    file << "Index,Real,Imaginary\n";
+
+    file << std::fixed << std::setprecision(15);
+
+    size_t count = dsR.size();
+    for (size_t i = 0; i < count; ++i)
+    {
+        if (!setImgToZero)
+        {
+            file << i << "," 
+             << dsR[i] << "," 
+             << dsI[i] << "\n";
+        }
+        else
+        {
+            file << i << "," 
+             << dsR[i] << "," 
+             << 0 << "\n";
+        }
+        
+    }
+
+    file.close();
+
+    return true;
+}
+//------sData Ende------
 
 wxString terminalTimestampOutput(wxString Text)
 {

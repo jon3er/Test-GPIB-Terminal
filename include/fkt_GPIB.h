@@ -6,6 +6,73 @@
 #include "ftd2xx.h"
 #include <wx/textfile.h>
 
+class sData
+{
+public:
+    //Struktur für ein Datenobjekt
+    struct sParam                                   //structure for 1D and 3D dataset parameters
+    {
+        wxString        File;
+        wxString        Date;
+        wxString        Time;
+        wxString        Type;
+        unsigned int    NoPoints_x;
+        unsigned int    NoPoints_Y;
+      //unsigned int  NoPoints_Z;
+      //unsigned int  NoScans;
+        wxString        ampUnit;
+        unsigned int    startFreq;
+        unsigned int    endFreq;
+
+    };
+
+    //Konstruktor
+    
+    sData(const char* type = "empty", unsigned int NoPoints = 0);
+    //Destruktor
+    ~sData();
+
+    int SetData(sParam *par, std::vector<double> re, std::vector<double> im);
+    sParam* GetParameter() { return(dsParam); };
+    void GetData(std::vector<double>& re, std::vector<double>& im);
+    bool saveToCsvFile(wxString& Filename);
+    //virtual bool LoadFile(const wxString &name);
+
+private:
+    sParam*                 dsParam;                            //parameters
+    std::vector<double>     dsR;                                //data
+    std::vector<double>     dsI;
+
+};
+
+class fsuMesurement
+{
+public:
+    fsuMesurement();
+    void seperateDataBlock(const wxString& receivedString);
+    std::vector<double> calcYdata(); //TODO umbennen ist eigendlich x und ich erhalte vom gerät nur Y die amplitude.
+
+    wxString getMesurmentTime() { return lastMesurementTime; };
+    std::vector<double> getX_Data() {return x_Data; };
+    std::vector<double> getY_Data() {return y_Data; };
+    unsigned int getNoPoints_x() { return NoPoints_x; };
+    unsigned int getNoPoints_y() { return NoPoints_y; };
+    sData::sParam getMesurmentData();
+
+    void setFreqStartEnd(double FreqS, double FreqE);
+
+private:
+    std::vector<double> x_Data;
+    std::vector<double> y_Data;
+    double FreqStart;
+    double FreqEnd; 
+    wxString lastMesurementTime;
+    unsigned int NoPoints_x;
+    unsigned int NoPoints_y;
+
+    sData tempData;
+};
+
 class GpibDevice
 {
 public:
@@ -22,20 +89,15 @@ public:
     void disconnect(std::string args = "");
     void config();
     void readScriptFile(const wxString& dirPath, const wxString& file, wxArrayString& logAdapterReceived);
-    void seperateDataBlock(const wxString& receivedString, std::vector<double>& x);
-    void calcYdata(double startY, double endY); //TODO umbennen ist eigendlich x und ich erhalte vom gerät nur Y die amplitude.
-
+ 
     FT_STATUS getStatus();
     FT_HANDLE getHandle();
     bool getConnected();
     std::string getLastMsgReseived();
     int getBaudrate();
+    fsuMesurement getMesurement() { return Messung; };
 
     void setBaudrate(int BaudrateNew);
-
-    std::vector<double> x_Data = {0};
-    std::vector<double> y_Data = {0};
-
 private:
     FT_HANDLE ftHandle = NULL;
     FT_STATUS ftStatus = FT_OK;
@@ -46,7 +108,10 @@ private:
     int sendDelayMs = 100;
     std::string lastMsgReceived = "";
     DWORD BytesToRead = 0;
+
+    fsuMesurement Messung;
 };
+
 
 wxString terminalTimestampOutput(wxString Text);
 

@@ -39,6 +39,7 @@ enum
 
 //-----Global Varibles Start------
 GpibDevice Adapter;
+fsuMesurement Messung;
 
 //-----Global Varibles Ende----
 
