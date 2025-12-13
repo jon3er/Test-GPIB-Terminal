@@ -31,11 +31,11 @@ public:
     sData(const char* type = "empty", unsigned int NoPoints = 0);
     //Destruktor
     ~sData();
-    /*
-    int SetData(sParam *par, std::vector<double> re, std::vector<double> im);
-    sParam* GetParameter() { return(dsParam); };
-    void GetData(std::vector<double>& re, std::vector<double>& im);
-    */
+    
+    bool SetData(sParam *par, std::vector<double> re, std::vector<double> im);
+
+    bool GetData(sParam *par,std::vector<double>& re, std::vector<double>& im);
+
     sParam* GetParameter() { return(dsParam); };
 
     bool setFileName(wxString Name);

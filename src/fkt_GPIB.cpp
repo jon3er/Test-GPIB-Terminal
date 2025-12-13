@@ -390,36 +390,60 @@ sData::sParam fsuMesurement::getMesurmentData()
 //------sData Beginn------
 sData::sData(const char* type, unsigned int NoPoints)
 {
+    //init Struct
     dsParam = new sParam;
+    dsParam->File = "Empty";
+    dsParam->Date = "Empty";
+    dsParam->Time = "Empty";
     dsParam->Type = type;
     dsParam->NoPoints_X = NoPoints;
+    dsParam->NoPoints_Y = 0;
+    dsParam->ampUnit = "DB";
+    dsParam->startFreq = 0;
+    dsParam->endFreq = 100000;
+
+    //test values
+    dsR = {0,1,2,3,4};
+    dsI = {0,1,2,3,4};
 }
 sData::~sData()
 {
     delete dsParam;
 }
-/*
-int sData::SetData(sParam *par, std::vector<double> re, std::vector<double> im)
-{   try
-{
-    dsParam = par;
-    dsR = re;
-    dsI = im;
-}
-catch(const std::exception& e)
-{
-    std::cerr << e.what() << '\n';
-    return 1;
-}
-    return 0;
+
+bool sData::SetData(sParam *par, std::vector<double> re, std::vector<double> im)
+{   
+    try
+    {
+        dsParam = par;
+        dsR = re;
+        dsI = im;
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+        return false;
+    }
+    return true;
     
 }
-void sData::GetData(std::vector<double>& re, std::vector<double>& im)
+bool sData::GetData(sParam *par,std::vector<double>& re, std::vector<double>& im)
 {
-    re = dsR;
-    im = dsI;
+    try
+    {
+        par = dsParam;
+        re = dsR;
+        im = dsI;
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+        return false;
+    }
+    return true;
+    
 }
-*/
+
 bool sData::setFileName(wxString Name)
 {
     try
@@ -552,6 +576,13 @@ bool sData::saveToCsvFile(wxString& filename)
     {
         setImgToZero = true;
     }
+
+    wxDateTime zeitJetzt = wxDateTime::Now();
+    wxString timestamp = zeitJetzt.Format("%H:%M");
+        
+
+    //filename.Append(timestamp);
+    filename.Append(".csv");
 
     std::ofstream file(filename.ToStdString());
 

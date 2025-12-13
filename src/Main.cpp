@@ -12,7 +12,6 @@
 #include "main.h"
 #include "mathplot.h"
 
-
 wxIMPLEMENT_APP(MainWin);
 
 //-----MainWin Methodes-----
@@ -31,25 +30,35 @@ bool MainWin::OnInit()
 //-----Main Programm Window-----
 MainProgrammWin::MainProgrammWin( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxFrame( parent, id, title, pos, size, style )
 {
+    //TODO set new Functions
+
+    //File Main binds
     Bind(wxEVT_MENU, &MainProgrammWin::MenuFileOpen, this, ID_Main_File_Open);
     Bind(wxEVT_MENU, &MainProgrammWin::MenuFileSave, this, ID_Main_File_Save);
-    Bind(wxEVT_MENU, &MainProgrammWin::MenuFileClose, this, ID_Main_File_Close);
-
+    Bind(wxEVT_MENU, &MainProgrammWin::MenuFileSave, this, ID_Main_File_SaveAs);
+    Bind(wxEVT_MENU, &MainProgrammWin::MenuFileClose, this, ID_Main_File_Exit);
+    //Mesurement Menu binds
     Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementNew, this, ID_Main_Mesurement_New);
+    Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementLoad, this, ID_Main_Mesurement_Open);
     Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementLoad, this, ID_Main_Mesurement_Load);
+    Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementLoad, this, ID_Main_Mesurement_Preset_1);
+    Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementLoad, this, ID_Main_Mesurement_Preset_2);
+    Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementLoad, this, ID_Main_Mesurement_Preset_3);
+    Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementSetMarker, this, ID_Main_Mesurement_SetMarker);
     Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementSettings, this, ID_Main_Mesurement_Settings);
-
+    //Test Menu binds
     Bind(wxEVT_MENU, &MainProgrammWin::MenuTestTerminal, this, ID_Main_Test_Terminal);
     Bind(wxEVT_MENU, &MainProgrammWin::MenuTestFunc, this, ID_Main_Test_Func);
-
+    //Help Menu binds
     Bind(wxEVT_MENU, &MainProgrammWin::MenuHelpAbout, this, ID_Main_Help_About);
 
 
 	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
 
-    this->SetBackgroundColour(*wxLIGHT_GREY);
+    //this->SetBackgroundColour(*wxLIGHT_GREY);
 
 	m_menubarMainProg = new wxMenuBar( 0 );
+    //file menu elements
 	m_menu_File = new wxMenu();
 	wxMenuItem* m_menuFile_Item_Open;
 	m_menuFile_Item_Open = new wxMenuItem( m_menu_File, ID_Main_File_Open, wxString( wxT("Open") ) + wxT('\t') + wxT("CTRL + O"), wxEmptyString, wxITEM_NORMAL );
@@ -59,27 +68,61 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, wxWindowID id, const wxStrin
 	m_menuFile_Item_Save = new wxMenuItem( m_menu_File, ID_Main_File_Save, wxString( wxT("Save") ) + wxT('\t') + wxT("CTRL + S"), wxEmptyString, wxITEM_NORMAL );
 	m_menu_File->Append( m_menuFile_Item_Save );
 	
+    wxMenuItem* m_menuFile_Item_SaveAs;
+	m_menuFile_Item_SaveAs = new wxMenuItem( m_menu_File, ID_Main_File_Exit, wxString( wxT("Save as ...") ) , wxEmptyString, wxITEM_NORMAL );
+	m_menu_File->Append( m_menuFile_Item_SaveAs );
+
 	m_menu_File->AppendSeparator();
-	
-	wxMenuItem* m_menuFile_Item_Close;
-	m_menuFile_Item_Close = new wxMenuItem( m_menu_File, ID_Main_File_Close, wxString( wxT("Close") ) , wxEmptyString, wxITEM_NORMAL );
-	m_menu_File->Append( m_menuFile_Item_Close );
-	
+
+	wxMenuItem* m_menuFile_Item_Exit;
+	m_menuFile_Item_Exit = new wxMenuItem( m_menu_File, ID_Main_File_Exit, wxString( wxT("Exit") ) , wxEmptyString, wxITEM_NORMAL );
+	m_menu_File->Append( m_menuFile_Item_Exit );
+
+    
+
+	//File Menu
 	m_menubarMainProg->Append( m_menu_File, wxT("File") ); 
 	
+    //Simutatuion menu elements
 	m_menu_Sim = new wxMenu();
+
+    //Simutatuin menu
 	m_menubarMainProg->Append( m_menu_Sim, wxT("Simulation") ); 
 	
+    //Mesurement menu elements
 	m_menu_Mesurement = new wxMenu();
 	wxMenuItem* m_menuMesure_Item_New;
 	m_menuMesure_Item_New = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_New, wxString( wxT("New Mesurement") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menu_Mesurement->Append( m_menuMesure_Item_New );
 	
 	m_menu_Mesurement->AppendSeparator();
+
+
+    wxMenuItem* m_menuMesure_Item_Open;
+	m_menuMesure_Item_Open = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_Open, wxString( wxT("Open Saved Mesurement") ) , wxEmptyString, wxITEM_NORMAL );
+	m_menu_Mesurement->Append( m_menuMesure_Item_Open );
+	
+	m_menu_Mesurement->AppendSeparator();
 	
 	wxMenuItem* m_menuMesure_Item_Load;
 	m_menuMesure_Item_Load = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_Load, wxString( wxT("Load config") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menu_Mesurement->Append( m_menuMesure_Item_Load );
+
+    wxMenuItem* m_menuMesure_Item_Preset_1;
+	m_menuMesure_Item_Preset_1 = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_Preset_1, wxString( wxT("Preset 1") ) , wxEmptyString, wxITEM_NORMAL );
+	m_menu_Mesurement->Append( m_menuMesure_Item_Preset_1 );
+
+    wxMenuItem* m_menuMesure_Item_Preset_2;
+	m_menuMesure_Item_Preset_2 = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_Preset_2, wxString( wxT("Preset 2") ) , wxEmptyString, wxITEM_NORMAL );
+	m_menu_Mesurement->Append( m_menuMesure_Item_Preset_2 );
+
+    wxMenuItem* m_menuMesure_Item_Preset_3;
+	m_menuMesure_Item_Preset_3 = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_Preset_3, wxString( wxT("Preset 3") ) , wxEmptyString, wxITEM_NORMAL );
+	m_menu_Mesurement->Append( m_menuMesure_Item_Preset_3 );
+
+    wxMenuItem* m_menuMesure_Item_SetMarker;
+	m_menuMesure_Item_SetMarker = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_SetMarker, wxString( wxT("Set Marker") ) , wxEmptyString, wxITEM_NORMAL );
+	m_menu_Mesurement->Append( m_menuMesure_Item_SetMarker );
 	
 	m_menu_Mesurement->AppendSeparator();
 	
@@ -87,11 +130,16 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, wxWindowID id, const wxStrin
 	m_menuMesure_Item_Settings = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_Settings, wxString( wxT("Settings") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menu_Mesurement->Append( m_menuMesure_Item_Settings );
 	
+    //Mesurement menu
 	m_menubarMainProg->Append( m_menu_Mesurement, wxT("Mesurement") ); 
 	
+    //Processing menu elements
 	m_menu_Processing = new wxMenu();
+
+    //Processing menu
 	m_menubarMainProg->Append( m_menu_Processing, wxT("Processing") ); 
 	
+    //Test menu elements
 	m_menu_Test = new wxMenu();
 	wxMenuItem* m_menuTest_Item_Terminal;
 	m_menuTest_Item_Terminal = new wxMenuItem( m_menu_Test, ID_Main_Test_Terminal, wxString( wxT("Terminal") ) + wxT('\t') + wxT("CTRL + SHIFT +T"), wxEmptyString, wxITEM_NORMAL );
@@ -101,13 +149,15 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, wxWindowID id, const wxStrin
 	m_menuTest_Item_Func = new wxMenuItem( m_menu_Test, ID_Main_Test_Func, wxString( wxT("Function Test") ) + wxT('\t') + wxT("F1"), wxEmptyString, wxITEM_NORMAL );
 	m_menu_Test->Append( m_menuTest_Item_Func );
 	
+    //Test menu 
 	m_menubarMainProg->Append( m_menu_Test, wxT("Test") ); 
 	
+    //Help menu elements
 	m_menu_Help = new wxMenu();
 	wxMenuItem* m_menuHelp_Item_About;
 	m_menuHelp_Item_About = new wxMenuItem( m_menu_Help, ID_Main_Help_About, wxString( wxT("About") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menu_Help->Append( m_menuHelp_Item_About );
-	
+	//Help menu
 	m_menubarMainProg->Append( m_menu_Help, wxT("Help") ); 
 	
 	this->SetMenuBar( m_menubarMainProg );
@@ -255,6 +305,16 @@ void MainProgrammWin::MenuTestFunc(wxCommandEvent& event)
     //Close Window
     FuncWin->Destroy();
 }
+void MainProgrammWin::MenuMesurementSetMarker(wxCommandEvent& event)
+{
+    //Create new sub window
+    PlotWindowSetMarker *PlotWinMarker = new PlotWindowSetMarker(this);
+    //open Window Pauses Main Window
+    PlotWinMarker->ShowModal();
+    //Close Window
+    PlotWinMarker->Destroy();
+}
+
 void MainProgrammWin::MenuHelpAbout(wxCommandEvent& event)
 {
 
@@ -774,6 +834,98 @@ void PlotWindow::updatePlotData()
 
 //-----Plot Window ENDE--------
 
+//-----Plot Window Set Marker-------
+PlotWindowSetMarker::PlotWindowSetMarker( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
+{
+	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
+	
+	wxBoxSizer* bSizer1;
+	bSizer1 = new wxBoxSizer( wxVERTICAL );
+	
+	wxStaticBoxSizer* sbSizer1;
+	sbSizer1 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, wxT("Marker 1") ), wxVERTICAL );
+	
+	wxBoxSizer* bSizer2;
+	bSizer2 = new wxBoxSizer( wxHORIZONTAL );
+	
+	m_checkBox1 = new wxCheckBox( sbSizer1->GetStaticBox(), wxID_ANY, wxT("Set to Frequency"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer2->Add( m_checkBox1, 1, wxALL, 5 );
+	
+	m_textCtrl1 = new wxTextCtrl( sbSizer1->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer2->Add( m_textCtrl1, 1, wxALL, 5 );
+	
+	wxArrayString m_choice1Choices;
+	m_choice1 = new wxChoice( sbSizer1->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, m_choice1Choices, 0 );
+	m_choice1->SetSelection( 0 );
+	bSizer2->Add( m_choice1, 1, wxALL, 5 );
+	
+	
+	sbSizer1->Add( bSizer2, 1, wxEXPAND, 5 );
+	
+	wxBoxSizer* bSizer6;
+	bSizer6 = new wxBoxSizer( wxVERTICAL );
+	
+	m_checkBox4 = new wxCheckBox( sbSizer1->GetStaticBox(), wxID_ANY, wxT("Set top Highest"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer6->Add( m_checkBox4, 0, wxALL, 5 );
+	
+	
+	sbSizer1->Add( bSizer6, 1, wxEXPAND, 5 );
+	
+	m_button1 = new wxButton( sbSizer1->GetStaticBox(), wxID_ANY, wxT("Set"), wxDefaultPosition, wxDefaultSize, 0 );
+	sbSizer1->Add( m_button1, 1, wxALL, 5 );
+	
+	
+	bSizer1->Add( sbSizer1, 1, wxEXPAND, 5 );
+	
+	wxStaticBoxSizer* sbSizer11;
+	sbSizer11 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, wxT("Marker 2") ), wxVERTICAL );
+	
+	wxBoxSizer* bSizer21;
+	bSizer21 = new wxBoxSizer( wxHORIZONTAL );
+	
+	m_checkBox11 = new wxCheckBox( sbSizer11->GetStaticBox(), wxID_ANY, wxT("Set to Frequency"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer21->Add( m_checkBox11, 1, wxALL, 5 );
+	
+	m_textCtrl11 = new wxTextCtrl( sbSizer11->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer21->Add( m_textCtrl11, 1, wxALL, 5 );
+	
+	wxArrayString m_choice11Choices;
+	m_choice11 = new wxChoice( sbSizer11->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, m_choice11Choices, 0 );
+	m_choice11->SetSelection( 0 );
+	bSizer21->Add( m_choice11, 1, wxALL, 5 );
+	
+	
+	sbSizer11->Add( bSizer21, 1, wxEXPAND, 5 );
+	
+	wxBoxSizer* bSizer5;
+	bSizer5 = new wxBoxSizer( wxVERTICAL );
+	
+	m_checkBox5 = new wxCheckBox( sbSizer11->GetStaticBox(), wxID_ANY, wxT("Set to highest Freq"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer5->Add( m_checkBox5, 1, wxALL, 5 );
+	
+	
+	sbSizer11->Add( bSizer5, 1, wxEXPAND, 5 );
+	
+	m_button11 = new wxButton( sbSizer11->GetStaticBox(), wxID_ANY, wxT("Set"), wxDefaultPosition, wxDefaultSize, 0 );
+	sbSizer11->Add( m_button11, 1, wxALL, 5 );
+	
+	
+	bSizer1->Add( sbSizer11, 1, wxEXPAND, 5 );
+	
+	
+	this->SetSizer( bSizer1 );
+	this->Layout();
+	
+	this->Centre( wxBOTH );
+}
+
+PlotWindowSetMarker::~PlotWindowSetMarker()
+{
+}
+
+//-----Plot Window Set Marker ENDE-------
+
+
 //-----Function Window Constructor-----
 FunctionWindow::FunctionWindow(wxWindow *parent)
     : wxDialog(parent, wxID_ANY, "Function Test Window", wxDefaultPosition, wxSize(500,750))
@@ -895,6 +1047,10 @@ void FunctionWindow::OnTestSaveFile(wxCommandEvent& event)
 
     wxLogDebug("Zeit: %s",TestData->Time);
 
+    wxLogDebug("Schreib daten in CSV");
+
+    wxString Dateiname = "D:\\CodeProjects\\VSCode\\projects\\Diplom\\Test-GPIB-Terminal\\LogFiles\\TestCSV";
+    TestObjekt.saveToCsvFile(Dateiname);
 }
 
 void FunctionWindow::OnWriteGpib(wxCommandEvent& event)

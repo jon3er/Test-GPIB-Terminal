@@ -18,14 +18,20 @@ enum
     ID_Main_File = 10,
     ID_Main_File_Open = 11,
     ID_Main_File_Save = 12,
-    ID_Main_File_Close = 13,
+    ID_Main_File_SaveAs = 13,
+    ID_Main_File_Exit = 14,
 
     ID_Main_Simulation = 20,
 
     ID_Main_Mesurement = 30,
     ID_Main_Mesurement_New = 31,
-    ID_Main_Mesurement_Load = 32,
-    ID_Main_Mesurement_Settings = 33,
+    ID_Main_Mesurement_Open = 32,
+    ID_Main_Mesurement_Load = 33,
+    ID_Main_Mesurement_Preset_1 = 34,
+    ID_Main_Mesurement_Preset_2 = 35,
+    ID_Main_Mesurement_Preset_3 = 36,
+    ID_Main_Mesurement_SetMarker = 37,
+    ID_Main_Mesurement_Settings = 38,
 
     ID_Main_Processing = 40,
 
@@ -42,6 +48,14 @@ GpibDevice Adapter;
 fsuMesurement Messung;
 
 //-----Global Varibles Ende----
+
+//-----MainWin-----
+class MainWin : public wxApp
+{
+public:
+    bool OnInit() override; //overrides function of Base Classe wxApp Function OnInit()
+};
+
 
 //-----Main Programm Window
 class MainProgrammWin : public wxFrame
@@ -77,20 +91,13 @@ public:
 
     void MenuMesurementNew(wxCommandEvent& event);
 	void MenuMesurementLoad(wxCommandEvent& event);
+    void MenuMesurementSetMarker(wxCommandEvent& event);
     void MenuMesurementSettings(wxCommandEvent& event);
 
     void MenuTestTerminal(wxCommandEvent& event);
     void MenuTestFunc(wxCommandEvent& event);
 
     void MenuHelpAbout(wxCommandEvent& event);
-};
-
-
-//-----MainWin-----
-class MainWin : public wxApp
-{
-public:
-    bool OnInit() override; //overrides function of Base Classe wxApp Function OnInit()
 };
 
 //-----Terminal-----
@@ -149,6 +156,29 @@ private:
     //GpibDevice Adapter;
 };
 
+class PlotWindowSetMarker : public wxDialog 
+{
+	private:
+	
+	protected:
+		wxCheckBox* m_checkBox1;
+		wxTextCtrl* m_textCtrl1;
+		wxChoice* m_choice1;
+		wxCheckBox* m_checkBox4;
+		wxButton* m_button1;
+		wxCheckBox* m_checkBox11;
+		wxTextCtrl* m_textCtrl11;
+		wxChoice* m_choice11;
+		wxCheckBox* m_checkBox5;
+		wxButton* m_button11;
+	
+	public:
+		
+		PlotWindowSetMarker( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Set Marker"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 417,300 ), long style = wxDEFAULT_FRAME_STYLE|wxTAB_TRAVERSAL );
+		
+		~PlotWindowSetMarker();
+	
+};
 
 class FunctionWindow : public wxDialog
 {
