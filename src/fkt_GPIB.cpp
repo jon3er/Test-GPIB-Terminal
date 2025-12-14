@@ -582,7 +582,12 @@ bool sData::saveToCsvFile(wxString& filename)
         
 
     //filename.Append(timestamp);
-    filename.Append(".csv");
+    if (!(filename.substr(strlen(filename)-4) == ".csv"))
+    {
+        filename.Append(".csv");
+    }
+    
+    
 
     std::ofstream file(filename.ToStdString());
 
@@ -625,6 +630,79 @@ bool sData::saveToCsvFile(wxString& filename)
 
     return true;
 }
+bool sData::openCsvFile(wxString& filename)
+{
+    // 1. Parameter-Objekt prüfen
+    if (!dsParam) {
+        return false;
+    }
+
+    // 2. Datei mit wxTextFile öffnen (liest Zeilen in den Speicher)
+    wxTextFile file;
+    if (!file.Open(filename)) {
+        return false;
+    }
+
+    dsR.clear();
+    dsI.clear();
+
+    size_t lineCount = file.GetLineCount();
+
+    // Minimale Zeilenanzahl prüfen (Header + min. 1 Datenzeile)
+    if (lineCount < 9) {
+        file.Close();
+        return false;
+    }
+
+    // 3. Header Metadaten parsen (Zeilen 0-5)
+    // AfterFirst(',') extrahiert den Wert nach dem Komma
+    dsParam->File = file.GetLine(0).AfterFirst(',').Trim(false).Trim();
+    dsParam->Date = file.GetLine(1).AfterFirst(',').Trim(false).Trim();
+    dsParam->Time = file.GetLine(2).AfterFirst(',').Trim(false).Trim();
+    dsParam->Type = file.GetLine(3).AfterFirst(',').Trim(false).Trim();
+
+    long lVal;
+    if (file.GetLine(4).AfterFirst(',').ToLong(&lVal)) dsParam->NoPoints_X = lVal;
+    if (file.GetLine(5).AfterFirst(',').ToLong(&lVal)) dsParam->NoPoints_Y = lVal;
+
+    // Zeile 6 ist leer, Zeile 7 ist Header ("Index,Real,Imaginary") -> Überspringen
+
+    // 4. Datenpunkte einlesen (ab Zeile 8)
+    for (size_t i = 8; i < lineCount; ++i)
+    {
+        wxString line = file.GetLine(i);
+        
+        // Leere Zeilen ignorieren
+        if (line.IsEmpty()) continue;
+
+        // Zerlegen der Zeile am Komma
+        wxStringTokenizer tokenizer(line, ",");
+
+        // Erwartet: Index, Real, Imaginary
+        if (tokenizer.CountTokens() >= 3)
+        {
+            tokenizer.GetNextToken(); // Index verwerfen
+            
+            wxString sReal = tokenizer.GetNextToken();
+            wxString sImag = tokenizer.GetNextToken();
+
+            double dReal = 0.0;
+            double dImag = 0.0;
+
+            // ToCDouble erwartet Punkt als Dezimaltrenner (Standard in CSV/C++)
+            // Falls dein System Komma erwartet, nutze ToDouble()
+            if (sReal.ToCDouble(&dReal) && sImag.ToCDouble(&dImag))
+            {
+                dsR.push_back(dReal);
+                dsI.push_back(dImag);
+            }
+        }
+    }
+
+    file.Close();
+    return true;
+}
+
 //------sData Ende------
 
 wxString terminalTimestampOutput(wxString Text)

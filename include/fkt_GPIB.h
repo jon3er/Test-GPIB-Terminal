@@ -47,6 +47,7 @@ public:
     bool setEndFreq(unsigned int EndFreq);
     bool setTimeAndDate();
     bool saveToCsvFile(wxString& Filename);
+    bool openCsvFile(wxString& filename);
     
     //virtual bool LoadFile(const wxString &name);
 

@@ -5,8 +5,10 @@
 
 #if defined(_WIN32)
     wxString filePathSytem = "D:\\CodeProjects\\VSCode\\projects\\Diplom\\Test-GPIB-Terminal\\GpibScripts\\";
+    wxString filePathRoot = "D:\\CodeProjects\\VSCode\\projects\\Diplom\\Test-GPIB-Terminal\\";
 #elif defined(__linux__)
     wxString filePathSytem = "/home/jon3r/Documents/Code/CodeBlocks/Test_GPIB_Terminal/GpibScripts/";
+    wxString filePathRoot = "/home/jon3r/Documents/Code/CodeBlocks/Test_GPIB_Terminal/";
 #endif
 
 
@@ -61,7 +63,9 @@ public:
 class MainProgrammWin : public wxFrame
 {
 private:
-
+    wxString filePathCurrentFile;
+    sData OpendData;
+    bool fileOpen;
 protected:
 	wxMenuBar* m_menubarMainProg;
 	wxMenu* m_menu_File;
@@ -87,6 +91,7 @@ public:
     // Menubar items
     void MenuFileOpen(wxCommandEvent& event);
     void MenuFileSave(wxCommandEvent& event);
+    void MenuFileSaveAs(wxCommandEvent& event);
     void MenuFileClose(wxCommandEvent& event);
 
     void MenuMesurementNew(wxCommandEvent& event);
@@ -125,6 +130,7 @@ private:
     void testDevice(const std::string& args);
 
     //Terminal Output
+protected:
     wxTextCtrl* TerminalDisplay;
 
     //device Class
@@ -136,6 +142,11 @@ class PlotWindow : public wxDialog
 public:
     PlotWindow(wxWindow *parent);
     virtual ~PlotWindow();
+protected:
+    wxChoice* selectMesurement;
+    //Plot var
+    mpWindow* plot;
+    mpFXYVector* vectorLayer;
 private:
 
     wxString filePath = filePathSytem;
@@ -145,10 +156,6 @@ private:
     void executeScriptEvent(wxCommandEvent& event);
     void updatePlotData();
 
-    wxChoice* selectMesurement;
-    //Plot var
-    mpWindow* plot;
-    mpFXYVector* vectorLayer;
     std::vector<double> x;
     std::vector<double> y;
 

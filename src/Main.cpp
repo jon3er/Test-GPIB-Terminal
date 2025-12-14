@@ -28,7 +28,8 @@ bool MainWin::OnInit()
 //-----MainWin Methodes ende-----
 
 //-----Main Programm Window-----
-MainProgrammWin::MainProgrammWin( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxFrame( parent, id, title, pos, size, style )
+MainProgrammWin::MainProgrammWin( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) 
+    : wxFrame( parent, id, title, pos, size, style )
 {
     //TODO set new Functions
 
@@ -63,6 +64,8 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, wxWindowID id, const wxStrin
 	wxMenuItem* m_menuFile_Item_Open;
 	m_menuFile_Item_Open = new wxMenuItem( m_menu_File, ID_Main_File_Open, wxString( wxT("Open") ) + wxT('\t') + wxT("CTRL + O"), wxEmptyString, wxITEM_NORMAL );
 	m_menu_File->Append( m_menuFile_Item_Open );
+
+    m_menu_File->AppendSeparator();
 	
 	wxMenuItem* m_menuFile_Item_Save;
 	m_menuFile_Item_Save = new wxMenuItem( m_menu_File, ID_Main_File_Save, wxString( wxT("Save") ) + wxT('\t') + wxT("CTRL + S"), wxEmptyString, wxITEM_NORMAL );
@@ -119,6 +122,8 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, wxWindowID id, const wxStrin
     wxMenuItem* m_menuMesure_Item_Preset_3;
 	m_menuMesure_Item_Preset_3 = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_Preset_3, wxString( wxT("Preset 3") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menu_Mesurement->Append( m_menuMesure_Item_Preset_3 );
+
+    m_menu_Mesurement->AppendSeparator();
 
     wxMenuItem* m_menuMesure_Item_SetMarker;
 	m_menuMesure_Item_SetMarker = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_SetMarker, wxString( wxT("Set Marker") ) , wxEmptyString, wxITEM_NORMAL );
@@ -256,14 +261,77 @@ void MainProgrammWin::ButtonRefresh(wxCommandEvent& event)
 void MainProgrammWin::MenuFileOpen(wxCommandEvent& event)
 {
     wxLogMessage("Open File");
+
+    wxFileDialog openFileDialog(this, _("Open File"), 
+        filePathRoot,
+        "", 
+        "CSV Files (*.csv)|*.csv|All Files (*.*)|*.*",
+        wxFD_OPEN);
+
+    if (openFileDialog.ShowModal()== wxID_CANCEL)
+    {
+        return;
+    }
+
+    filePathCurrentFile = openFileDialog.GetPath();
+
+    if (OpendData.openCsvFile(filePathCurrentFile))
+    {
+        fileOpen = true;
+    }
+    else
+    {
+        fileOpen = false;
+    }
+
+    wxLogDebug(filePathCurrentFile);    
 }
 void MainProgrammWin::MenuFileSave(wxCommandEvent& event)
 {
-
+    if (fileOpen)
+    {
+        OpendData.saveToCsvFile(filePathCurrentFile);
+    }
+    else
+    {
+        MenuFileSaveAs(event);
+    }
 }
+void MainProgrammWin::MenuFileSaveAs(wxCommandEvent& event)
+{
+    wxFileDialog saveAsFileDialog(nullptr, _("File Save As..."), 
+        "",//filePathRoot,
+        "", 
+        "CSV Files (*.csv)|*.csv|All Files (*.*)|*.*",
+        wxFD_SAVE);
+
+    if (saveAsFileDialog.ShowModal()== wxID_CANCEL)
+    {
+        return;
+    }
+
+    filePathCurrentFile = saveAsFileDialog.GetPath();
+    if (!OpendData.saveToCsvFile(filePathCurrentFile))
+    {
+        wxLogDebug("failed to save");
+        fileOpen = false;
+        return;
+    }
+    else
+    {
+        fileOpen = true;
+    }
+
+    wxLogDebug(filePathCurrentFile);
+    wxLogDebug("saved data");
+}
+
 void MainProgrammWin::MenuFileClose(wxCommandEvent& event)
 {
-
+    fileOpen = false;
+    sData OpendDataTemp;
+    OpendData = OpendDataTemp;
+    OpendDataTemp.~sData();
 }
 void MainProgrammWin::MenuMesurementNew(wxCommandEvent& event)
 {
@@ -652,38 +720,6 @@ void TerminalWindow::testDevice(const std::string& args = "")
 
         writeToDevice("INIT:CONT ON"); //Dauerhafter sweep an
     }
-    else if ("swp")
-    {
-
-        writeToDevice("++auto 0");
-        writeToDevice("*RST");
-        writeToDevice("INIT:CONT OFF");                 //single sweep
-        writeToDevice("SYST:DISP:UDP ON");              //Bildschrim an
-        //Frequenzeinstellung
-        writeToDevice("FREQ:STAR 85MHz;STOP 125MHz");   //Frequenz bereich
-        //Pegeleinstellen
-        writeToDevice("DISP:WIND:TRAC:Y:RLEV -20dBm"); //referenzpegel
-        writeToDevice("INIT;*WAI");                     //sweep durchführen mit sync
-        //TOI messen
-        writeToDevice("CALC:MARK:PEXC 6DB");
-        writeToDevice("CALC:MARK:FUNC:TOI ON");         //TOI messung an
-
-        writeToDevice("CALC:MARK:FUNC:TOI:RES?");       //Ergebniss auslesen
-
-        writeToDevice("++read eos");
-        readFromDevice();
-
-        writeToDevice("++auto 1");
-    }
-    else
-    {
-        wxLogDebug("manual read write");
-        writeToDevice(args);
-        writeToDevice("++read eos");
-        sleepMs(50);
-        readFromDevice();
-    }
-
 }
 
 void TerminalWindow::OnEnterTerminal(wxCommandEvent& event)
@@ -1459,3 +1495,6 @@ SettingsTabGeneral::SettingsTabGeneral(wxNotebook *parent, const wxString &label
     new wxStaticText(this, wxID_ANY, label, wxPoint(10,10));
 }
 //------Settings window subtab end-----
+
+
+//Helper Functions
