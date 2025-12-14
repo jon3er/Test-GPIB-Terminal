@@ -58,6 +58,26 @@ private:
 
 };
 
+class sData3D : sData
+{
+ public:
+
+ private:
+    sParam* dsParam;
+    int width = 1;
+    int height = 1;
+    /*
+    std::vector<std::vector<std::vector<double>>> dsR3D(
+        width,
+        std::vector<double> (hight)
+    );
+    std::vector<std::vector<std::vector<double>>> dsI3D(
+        width,
+        std::vector<double> (hight)
+    );
+    */
+};
+
 class fsuMesurement
 {
 public:

@@ -32,8 +32,9 @@ enum
     ID_Main_Mesurement_Preset_1 = 34,
     ID_Main_Mesurement_Preset_2 = 35,
     ID_Main_Mesurement_Preset_3 = 36,
-    ID_Main_Mesurement_SetMarker = 37,
-    ID_Main_Mesurement_Settings = 38,
+    ID_Main_Mesurement_2D_Mess = 37,
+    ID_Main_Mesurement_SetMarker = 38,
+    ID_Main_Mesurement_Settings = 39,
 
     ID_Main_Processing = 40,
 
@@ -97,6 +98,7 @@ public:
     void MenuMesurementNew(wxCommandEvent& event);
 	void MenuMesurementLoad(wxCommandEvent& event);
     void MenuMesurementSetMarker(wxCommandEvent& event);
+    void MenuMesurement2DMess(wxCommandEvent& event);
     void MenuMesurementSettings(wxCommandEvent& event);
 
     void MenuTestTerminal(wxCommandEvent& event);
@@ -166,25 +168,80 @@ private:
 class PlotWindowSetMarker : public wxDialog 
 {
 	private:
-	
+
+        bool Marker1FreqSet = false;
+        bool Marker1MaxSet = false;
+
+        wxString Marker1Freq;
+        wxString Marker1Unit;
+        wxString FreqMarker1Raw;
+
+        bool Marker2FreqSet = false;
+        bool Marker2MaxSet = false;
+
+        wxString Marker2Freq;
+        wxString Marker2Unit;
+        wxString FreqMarker2Raw;
+
 	protected:
 		wxCheckBox* m_checkBox1;
 		wxTextCtrl* m_textCtrl1;
 		wxChoice* m_choice1;
-		wxCheckBox* m_checkBox4;
+		wxCheckBox* m_checkBox2;
 		wxButton* m_button1;
-		wxCheckBox* m_checkBox11;
-		wxTextCtrl* m_textCtrl11;
-		wxChoice* m_choice11;
-		wxCheckBox* m_checkBox5;
-		wxButton* m_button11;
+		wxCheckBox* m_checkBox3;
+		wxTextCtrl* m_textCtrl2;
+		wxChoice* m_choice2;
+		wxCheckBox* m_checkBox4;
+		wxButton* m_button2;
 	
 	public:
-		
 		PlotWindowSetMarker( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Set Marker"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 417,300 ), long style = wxDEFAULT_FRAME_STYLE|wxTAB_TRAVERSAL );
-		
 		~PlotWindowSetMarker();
+
+        void toggleSelection1(wxCommandEvent& event);
+        void toggleSelection2(wxCommandEvent& event);
+        void SetSelection1(wxCommandEvent& event);
+        void SetSelection2(wxCommandEvent& event);
+        void toggleSelection1fkt();
+        void toggleSelection2fkt();
+        void GetSelectedValue1();
+        void GetSelectedValue2();
+        
+        void GetValues();
 	
+};
+
+class Mesurement2D : public wxDialog 
+{
+	private:
+	
+	protected:
+		wxStaticText* m_staticText1;
+		wxStaticText* m_staticText2;
+		wxSlider* m_slider1;
+		wxStaticText* m_staticText3;
+		wxSlider* m_slider2;
+		wxStaticText* m_staticText4;
+		wxSlider* m_slider3;
+		wxStaticText* m_staticText5;
+		wxChoice* m_choice1;
+		wxButton* m_button2;
+		wxButton* m_button1;
+		wxStaticText* m_staticText6;
+		wxStaticText* m_staticText7;
+		wxGauge* m_gauge1;
+		wxButton* m_button3;
+		wxButton* m_button4;
+		wxButton* m_button5;
+	
+	public:
+		void GetValues();
+		Mesurement2D( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("2D Mesurement"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 421,345 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+		~Mesurement2D();
+        
+        void GetValues();
+
 };
 
 class FunctionWindow : public wxDialog

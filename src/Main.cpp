@@ -45,6 +45,7 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, wxWindowID id, const wxStrin
     Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementLoad, this, ID_Main_Mesurement_Preset_1);
     Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementLoad, this, ID_Main_Mesurement_Preset_2);
     Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementLoad, this, ID_Main_Mesurement_Preset_3);
+    Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurement2DMess, this, ID_Main_Mesurement_2D_Mess);
     Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementSetMarker, this, ID_Main_Mesurement_SetMarker);
     Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementSettings, this, ID_Main_Mesurement_Settings);
     //Test Menu binds
@@ -122,6 +123,14 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, wxWindowID id, const wxStrin
     wxMenuItem* m_menuMesure_Item_Preset_3;
 	m_menuMesure_Item_Preset_3 = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_Preset_3, wxString( wxT("Preset 3") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menu_Mesurement->Append( m_menuMesure_Item_Preset_3 );
+
+    m_menu_Mesurement->AppendSeparator();
+
+    wxMenuItem* m_menuMesure_Item_2DMesurment;
+	m_menuMesure_Item_2DMesurment = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_2D_Mess, wxString( wxT("2D Plot Mesurment") ) , wxEmptyString, wxITEM_NORMAL );
+	m_menu_Mesurement->Append( m_menuMesure_Item_2DMesurment );
+	
+	
 
     m_menu_Mesurement->AppendSeparator();
 
@@ -381,6 +390,14 @@ void MainProgrammWin::MenuMesurementSetMarker(wxCommandEvent& event)
     PlotWinMarker->ShowModal();
     //Close Window
     PlotWinMarker->Destroy();
+}
+void MainProgrammWin::MenuMesurement2DMess(wxCommandEvent& event)
+{
+    Mesurement2D *Mesurement2DWindow = new Mesurement2D(this);
+
+    Mesurement2DWindow->ShowModal();
+
+    Mesurement2DWindow->Destroy();
 }
 
 void MainProgrammWin::MenuHelpAbout(wxCommandEvent& event)
@@ -873,6 +890,12 @@ void PlotWindow::updatePlotData()
 //-----Plot Window Set Marker-------
 PlotWindowSetMarker::PlotWindowSetMarker( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
 {
+    wxArrayString freqEinheiten;
+    freqEinheiten.Add("Hz");
+    freqEinheiten.Add("kHz");
+    freqEinheiten.Add("MHz");
+    freqEinheiten.Add("GHz");
+
 	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
 	
 	wxBoxSizer* bSizer1;
@@ -885,13 +908,13 @@ PlotWindowSetMarker::PlotWindowSetMarker( wxWindow* parent, wxWindowID id, const
 	bSizer2 = new wxBoxSizer( wxHORIZONTAL );
 	
 	m_checkBox1 = new wxCheckBox( sbSizer1->GetStaticBox(), wxID_ANY, wxT("Set to Frequency"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer2->Add( m_checkBox1, 1, wxALL, 5 );
+	m_checkBox1->Bind(wxEVT_CHECKBOX, &PlotWindowSetMarker::toggleSelection1, this);
+    bSizer2->Add( m_checkBox1, 1, wxALL, 5 );
 	
 	m_textCtrl1 = new wxTextCtrl( sbSizer1->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
 	bSizer2->Add( m_textCtrl1, 1, wxALL, 5 );
 	
-	wxArrayString m_choice1Choices;
-	m_choice1 = new wxChoice( sbSizer1->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, m_choice1Choices, 0 );
+	m_choice1 = new wxChoice( sbSizer1->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, freqEinheiten, 0 );
 	m_choice1->SetSelection( 0 );
 	bSizer2->Add( m_choice1, 1, wxALL, 5 );
 	
@@ -901,14 +924,16 @@ PlotWindowSetMarker::PlotWindowSetMarker( wxWindow* parent, wxWindowID id, const
 	wxBoxSizer* bSizer6;
 	bSizer6 = new wxBoxSizer( wxVERTICAL );
 	
-	m_checkBox4 = new wxCheckBox( sbSizer1->GetStaticBox(), wxID_ANY, wxT("Set top Highest"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer6->Add( m_checkBox4, 0, wxALL, 5 );
+	m_checkBox2 = new wxCheckBox( sbSizer1->GetStaticBox(), wxID_ANY, wxT("Set to highest freq"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_checkBox2->Bind(wxEVT_CHECKBOX, &PlotWindowSetMarker::toggleSelection1, this);
+    bSizer6->Add( m_checkBox2, 0, wxALL, 5 );
 	
 	
 	sbSizer1->Add( bSizer6, 1, wxEXPAND, 5 );
 	
 	m_button1 = new wxButton( sbSizer1->GetStaticBox(), wxID_ANY, wxT("Set"), wxDefaultPosition, wxDefaultSize, 0 );
-	sbSizer1->Add( m_button1, 1, wxALL, 5 );
+	m_button1->Bind(wxEVT_BUTTON, &PlotWindowSetMarker::SetSelection1, this);
+    sbSizer1->Add( m_button1, 1, wxALL, 5 );
 	
 	
 	bSizer1->Add( sbSizer1, 1, wxEXPAND, 5 );
@@ -919,16 +944,17 @@ PlotWindowSetMarker::PlotWindowSetMarker( wxWindow* parent, wxWindowID id, const
 	wxBoxSizer* bSizer21;
 	bSizer21 = new wxBoxSizer( wxHORIZONTAL );
 	
-	m_checkBox11 = new wxCheckBox( sbSizer11->GetStaticBox(), wxID_ANY, wxT("Set to Frequency"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer21->Add( m_checkBox11, 1, wxALL, 5 );
+	m_checkBox3 = new wxCheckBox( sbSizer11->GetStaticBox(), wxID_ANY, wxT("Set to Frequency"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_checkBox3->Bind(wxEVT_CHECKBOX, &PlotWindowSetMarker::toggleSelection2, this);
+    bSizer21->Add( m_checkBox3, 1, wxALL, 5 );
 	
-	m_textCtrl11 = new wxTextCtrl( sbSizer11->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer21->Add( m_textCtrl11, 1, wxALL, 5 );
+	m_textCtrl2 = new wxTextCtrl( sbSizer11->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer21->Add( m_textCtrl2, 1, wxALL, 5 );
 	
-	wxArrayString m_choice11Choices;
-	m_choice11 = new wxChoice( sbSizer11->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, m_choice11Choices, 0 );
-	m_choice11->SetSelection( 0 );
-	bSizer21->Add( m_choice11, 1, wxALL, 5 );
+	
+	m_choice2 = new wxChoice( sbSizer11->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, freqEinheiten, 0 );
+	m_choice2->SetSelection( 0 );
+	bSizer21->Add( m_choice2, 1, wxALL, 5 );
 	
 	
 	sbSizer11->Add( bSizer21, 1, wxEXPAND, 5 );
@@ -936,14 +962,16 @@ PlotWindowSetMarker::PlotWindowSetMarker( wxWindow* parent, wxWindowID id, const
 	wxBoxSizer* bSizer5;
 	bSizer5 = new wxBoxSizer( wxVERTICAL );
 	
-	m_checkBox5 = new wxCheckBox( sbSizer11->GetStaticBox(), wxID_ANY, wxT("Set to highest Freq"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer5->Add( m_checkBox5, 1, wxALL, 5 );
+	m_checkBox4 = new wxCheckBox( sbSizer11->GetStaticBox(), wxID_ANY, wxT("Set to highest Freq"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_checkBox4->Bind(wxEVT_CHECKBOX, &PlotWindowSetMarker::toggleSelection2, this);
+    bSizer5->Add( m_checkBox4, 1, wxALL, 5 );
 	
 	
 	sbSizer11->Add( bSizer5, 1, wxEXPAND, 5 );
 	
-	m_button11 = new wxButton( sbSizer11->GetStaticBox(), wxID_ANY, wxT("Set"), wxDefaultPosition, wxDefaultSize, 0 );
-	sbSizer11->Add( m_button11, 1, wxALL, 5 );
+	m_button2 = new wxButton( sbSizer11->GetStaticBox(), wxID_ANY, wxT("Set"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_button2->Bind(wxEVT_BUTTON, &PlotWindowSetMarker::SetSelection2, this);
+    sbSizer11->Add( m_button2, 1, wxALL, 5 );
 	
 	
 	bSizer1->Add( sbSizer11, 1, wxEXPAND, 5 );
@@ -953,11 +981,321 @@ PlotWindowSetMarker::PlotWindowSetMarker( wxWindow* parent, wxWindowID id, const
 	this->Layout();
 	
 	this->Centre( wxBOTH );
-}
 
+    GetValues();
+    toggleSelection1fkt();
+    toggleSelection2fkt();
+
+}
 PlotWindowSetMarker::~PlotWindowSetMarker()
 {
 }
+
+void PlotWindowSetMarker::GetValues()
+{
+    Marker1FreqSet      = m_checkBox1->GetValue();
+    Marker1MaxSet       = m_checkBox2->GetValue();
+
+    Marker2FreqSet      = m_checkBox3->GetValue();
+    Marker2MaxSet       = m_checkBox4->GetValue();
+
+    Marker1Freq         = m_textCtrl1->GetValue();
+    Marker1Unit         = m_choice1->GetStringSelection();
+    Marker2Freq         = m_textCtrl2->GetValue();
+    Marker2Unit         = m_choice2->GetStringSelection();
+
+}
+
+void PlotWindowSetMarker::toggleSelection1fkt()
+{
+    if (!Marker1FreqSet && !Marker1MaxSet)
+    {
+        m_checkBox1->SetValue(true);
+        m_checkBox2->SetValue(false);
+        m_textCtrl1->Enable(true);
+        m_choice1->Enable(true);
+    }
+    else if (!Marker1FreqSet && Marker1MaxSet)
+    {
+        m_checkBox1->SetValue(true);
+        m_checkBox2->SetValue(false);
+        m_textCtrl1->Enable(true);
+        m_choice1->Enable(true);
+    }
+    else if (Marker1FreqSet && !Marker1MaxSet)
+    {
+        m_checkBox1->SetValue(false);
+        m_checkBox2->SetValue(true);
+        m_textCtrl1->Enable(false);
+        m_choice1->Enable(false);
+    }
+
+    GetValues();
+}
+void PlotWindowSetMarker::toggleSelection1(wxCommandEvent& event)
+{
+    toggleSelection1fkt();
+}
+
+void PlotWindowSetMarker::toggleSelection2fkt()
+{
+    if (!Marker2FreqSet && !Marker2MaxSet)
+    {
+        m_checkBox3->SetValue(true);
+        m_checkBox4->SetValue(false);
+        m_textCtrl2->Enable(true);
+        m_choice2->Enable(true);
+    }
+    else if (!Marker2FreqSet && Marker2MaxSet)
+    {
+        m_checkBox3->SetValue(true);
+        m_checkBox4->SetValue(false);
+        m_textCtrl2->Enable(true);
+        m_choice2->Enable(true);
+    }
+    else if (Marker2FreqSet && !Marker2MaxSet)
+    {
+        m_checkBox3->SetValue(false);
+        m_checkBox4->SetValue(true);
+        m_textCtrl2->Enable(false);
+        m_choice2->Enable(false);
+    }
+
+    GetValues();
+}
+void PlotWindowSetMarker::toggleSelection2(wxCommandEvent& event)
+{
+    toggleSelection2fkt();
+}
+void PlotWindowSetMarker::GetSelectedValue1()
+{
+    const double multipliers[] = { 
+    1.0,        // Index 0: Hz
+    1000.0,     // Index 1: kHz
+    1.0e6,      // Index 2: MHz
+    1.0e9       // Index 3: GHz
+    };
+
+    int selection = m_choice1->GetSelection();
+    double val;
+
+    if (!Marker1Freq.ToDouble(&val))
+    {
+        wxLogDebug("Failed to convert input");
+        return;
+    }
+
+    if (selection != wxNOT_FOUND) {
+        double factor = multipliers[selection];
+        double frequencyHz =  val * factor;
+        FreqMarker1Raw = wxString::FromCDouble(frequencyHz);
+    }
+}
+void PlotWindowSetMarker::GetSelectedValue2()
+{
+    GetValues();
+
+    const double multipliers[] = { 
+    1.0,        // Index 0: Hz
+    1000.0,     // Index 1: kHz
+    1.0e6,      // Index 2: MHz
+    1.0e9       // Index 3: GHz
+    };
+
+    int selection = m_choice2->GetSelection();
+    double val;
+
+    if (!Marker1Freq.ToDouble(&val))
+    {
+        wxLogDebug("Failed to convert input");
+        return;
+    }
+
+    if (selection != wxNOT_FOUND) {
+        double factor = multipliers[selection];
+        double frequencyHz =  val * factor;
+        FreqMarker2Raw = wxString::FromCDouble(frequencyHz);
+    }
+}
+void PlotWindowSetMarker::SetSelection1(wxCommandEvent& event)
+{
+    GetValues();    
+
+    if (Marker1MaxSet)
+    {
+        std::string Text = "CALC:MARK:MAX";
+        Adapter.write(Text);
+    }
+    else if (Marker1FreqSet && (!FreqMarker1Raw.IsNumber()));
+    {
+        GetSelectedValue1();
+
+        std::string Text = "CALC:MARK:MAX " + FreqMarker1Raw;
+        Adapter.write(Text);
+    }
+    //TODO Get X Y From Device and display in the Menu
+}
+void PlotWindowSetMarker::SetSelection2(wxCommandEvent& event)
+{
+    GetValues();    
+
+    if (Marker2MaxSet)
+    {
+        std::string Text = "CALC:MARK2:MAX";
+        Adapter.write(Text);
+    }
+    else if (Marker2FreqSet && (!FreqMarker2Raw.IsNumber()))
+    {
+        GetSelectedValue1();
+
+        std::string Text = "CALC:MARK2:MAX " + FreqMarker1Raw;
+        Adapter.write(Text);
+    }
+    //TODO Get X Y From Device and display in the Menu
+}
+
+Mesurement2D::Mesurement2D( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
+{
+	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
+	
+	wxBoxSizer* bSizer1;
+	bSizer1 = new wxBoxSizer( wxVERTICAL );
+	
+	wxStaticBoxSizer* sbSizer1;
+	sbSizer1 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, wxT("Mesurment Settings") ), wxVERTICAL );
+	
+	m_staticText1 = new wxStaticText( sbSizer1->GetStaticBox(), wxID_ANY, wxT("Mesurement Points:"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText1->Wrap( -1 );
+	sbSizer1->Add( m_staticText1, 0, wxALL, 5 );
+	
+	wxBoxSizer* bSizer2;
+	bSizer2 = new wxBoxSizer( wxHORIZONTAL );
+	
+	m_staticText2 = new wxStaticText( sbSizer1->GetStaticBox(), wxID_ANY, wxT("Y Points:"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText2->Wrap( -1 );
+	bSizer2->Add( m_staticText2, 1, wxALL, 5 );
+	
+	m_slider1 = new wxSlider( sbSizer1->GetStaticBox(), wxID_ANY, 10, 1, 100, wxDefaultPosition, wxDefaultSize, wxSL_HORIZONTAL );
+	bSizer2->Add( m_slider1, 1, wxALL, 5 );
+	
+	
+	sbSizer1->Add( bSizer2, 1, wxEXPAND, 5 );
+	
+	wxBoxSizer* bSizer21;
+	bSizer21 = new wxBoxSizer( wxHORIZONTAL );
+	
+	m_staticText3 = new wxStaticText( sbSizer1->GetStaticBox(), wxID_ANY, wxT("X Points:"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText3->Wrap( -1 );
+	bSizer21->Add( m_staticText3, 1, wxALL, 5 );
+	
+	m_slider2 = new wxSlider( sbSizer1->GetStaticBox(), wxID_ANY, 10, 1, 100, wxDefaultPosition, wxDefaultSize, wxSL_HORIZONTAL );
+	bSizer21->Add( m_slider2, 1, wxALL, 5 );
+	
+	
+	sbSizer1->Add( bSizer21, 1, wxEXPAND, 5 );
+	
+	wxBoxSizer* bSizer211;
+	bSizer211 = new wxBoxSizer( wxHORIZONTAL );
+	
+	m_staticText4 = new wxStaticText( sbSizer1->GetStaticBox(), wxID_ANY, wxT("Scale:"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText4->Wrap( -1 );
+	bSizer211->Add( m_staticText4, 1, wxALL, 5 );
+	
+	m_slider3 = new wxSlider( sbSizer1->GetStaticBox(), wxID_ANY, 100, 1, 100, wxDefaultPosition, wxDefaultSize, wxSL_HORIZONTAL );
+	bSizer211->Add( m_slider3, 1, wxALL, 5 );
+	
+	
+	sbSizer1->Add( bSizer211, 1, wxEXPAND, 5 );
+	
+	wxBoxSizer* bSizer9;
+	bSizer9 = new wxBoxSizer( wxHORIZONTAL );
+	
+	m_staticText5 = new wxStaticText( sbSizer1->GetStaticBox(), wxID_ANY, wxT("Orientation point:"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText5->Wrap( -1 );
+	bSizer9->Add( m_staticText5, 1, wxALL, 5 );
+	
+	wxArrayString StartPosition;
+    StartPosition.Add("Center");
+    StartPosition.Add("Top Left");
+    StartPosition.Add("Top Right");
+    StartPosition.Add("Bottom Right");
+    StartPosition.Add("Bottom Left");
+
+	m_choice1 = new wxChoice( sbSizer1->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, StartPosition, 0 );
+	m_choice1->SetSelection( 1 );
+	bSizer9->Add( m_choice1, 1, wxALL, 5 );
+	
+	
+	sbSizer1->Add( bSizer9, 1, wxEXPAND, 5 );
+	
+	wxBoxSizer* bSizer10;
+	bSizer10 = new wxBoxSizer( wxHORIZONTAL );
+	
+	m_button2 = new wxButton( sbSizer1->GetStaticBox(), wxID_ANY, wxT("Reset"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer10->Add( m_button2, 1, wxALL, 5 );
+	
+	m_button1 = new wxButton( sbSizer1->GetStaticBox(), wxID_ANY, wxT("Open Device settings"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer10->Add( m_button1, 1, wxALIGN_RIGHT|wxALL, 5 );
+	
+	
+	sbSizer1->Add( bSizer10, 1, wxEXPAND, 5 );
+	
+	
+	bSizer1->Add( sbSizer1, 1, wxEXPAND, 5 );
+	
+	wxStaticBoxSizer* sbSizer2;
+	sbSizer2 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, wxT("Mesurment") ), wxVERTICAL );
+	
+	wxBoxSizer* bSizer14;
+	bSizer14 = new wxBoxSizer( wxHORIZONTAL );
+	
+	m_staticText6 = new wxStaticText( sbSizer2->GetStaticBox(), wxID_ANY, wxT("Progress:"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText6->Wrap( -1 );
+	bSizer14->Add( m_staticText6, 1, wxALL, 5 );
+	
+	m_staticText7 = new wxStaticText( sbSizer2->GetStaticBox(), wxID_ANY, wxT("0/100"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText7->Wrap( -1 );
+	bSizer14->Add( m_staticText7, 1, wxALL, 5 );
+	
+	m_gauge1 = new wxGauge( sbSizer2->GetStaticBox(), wxID_ANY, 100, wxDefaultPosition, wxDefaultSize, wxGA_HORIZONTAL );
+	m_gauge1->SetValue( 0 ); 
+	bSizer14->Add( m_gauge1, 5, wxALL, 5 );
+	
+	
+	sbSizer2->Add( bSizer14, 1, wxEXPAND, 5 );
+	
+	wxBoxSizer* bSizer15;
+	bSizer15 = new wxBoxSizer( wxHORIZONTAL );
+	
+	m_button3 = new wxButton( sbSizer2->GetStaticBox(), wxID_ANY, wxT("Start"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer15->Add( m_button3, 1, wxALL, 5 );
+	
+	m_button4 = new wxButton( sbSizer2->GetStaticBox(), wxID_ANY, wxT("Stop"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer15->Add( m_button4, 1, wxALL, 5 );
+	
+	m_button5 = new wxButton( sbSizer2->GetStaticBox(), wxID_ANY, wxT("Restart"), wxDefaultPosition, wxDefaultSize, 0 );
+	bSizer15->Add( m_button5, 1, wxALL, 5 );
+	
+	
+	sbSizer2->Add( bSizer15, 1, wxEXPAND, 5 );
+	
+	
+	bSizer1->Add( sbSizer2, 1, wxEXPAND, 5 );
+	
+	
+	this->SetSizer( bSizer1 );
+	this->Layout();
+	
+	this->Centre( wxBOTH );
+}
+void Mesurement2D::GetValues()
+{
+
+}
+Mesurement2D::~Mesurement2D()
+{
+}
+
 
 //-----Plot Window Set Marker ENDE-------
 
@@ -1049,7 +1387,6 @@ void FunctionWindow::OnUsbScan(wxCommandEvent& event)
         textFuncOutput->AppendText(terminalTimestampOutput(deviceNumString));
     }
 }
-
 void FunctionWindow::OnConDisconGpib(wxCommandEvent& event)
 {
     if (Adapter.getConnected() == false)
@@ -1071,7 +1408,6 @@ void FunctionWindow::OnConDisconGpib(wxCommandEvent& event)
         }
     }
 }
-
 void FunctionWindow::OnTestSaveFile(wxCommandEvent& event)
 {
     wxLogDebug("Pressed Test Save File");
@@ -1088,7 +1424,6 @@ void FunctionWindow::OnTestSaveFile(wxCommandEvent& event)
     wxString Dateiname = "D:\\CodeProjects\\VSCode\\projects\\Diplom\\Test-GPIB-Terminal\\LogFiles\\TestCSV";
     TestObjekt.saveToCsvFile(Dateiname);
 }
-
 void FunctionWindow::OnWriteGpib(wxCommandEvent& event)
 {
     wxLogDebug("Write Pressed!");
@@ -1102,7 +1437,6 @@ void FunctionWindow::OnWriteGpib(wxCommandEvent& event)
 
     FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
 }
-
 void FunctionWindow::OnReadGpib(wxCommandEvent& event)
 {
     wxLogDebug("On Read Pressed");
@@ -1111,7 +1445,6 @@ void FunctionWindow::OnReadGpib(wxCommandEvent& event)
 
     FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
 }
-
 void FunctionWindow::OnReadWriteGpib(wxCommandEvent& event)
 {
     wxLogDebug("Read / Write Pressed!");
@@ -1135,7 +1468,6 @@ void FunctionWindow::OnReadWriteGpib(wxCommandEvent& event)
 
     FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
 }
-
 void FunctionWindow::OnUsbConfig(wxCommandEvent& event)
 {
     Adapter.config();
