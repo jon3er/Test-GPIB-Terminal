@@ -84,11 +84,11 @@ protected:
 	wxButton* m_button1;
 
 public:
-	
+
 	MainProgrammWin( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("GPIB Messurement"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 814,454 ), long style = wxDEFAULT_FRAME_STYLE|wxTAB_TRAVERSAL );
 	~MainProgrammWin();
     // Button func
-    void ButtonRefresh(wxCommandEvent& event);    
+    void ButtonRefresh(wxCommandEvent& event);
     // Menubar items
     void MenuFileOpen(wxCommandEvent& event);
     void MenuFileSave(wxCommandEvent& event);
@@ -165,7 +165,7 @@ private:
     //GpibDevice Adapter;
 };
 
-class PlotWindowSetMarker : public wxDialog 
+class PlotWindowSetMarker : public wxDialog
 {
 	private:
 
@@ -194,7 +194,7 @@ class PlotWindowSetMarker : public wxDialog
 		wxChoice* m_choice2;
 		wxCheckBox* m_checkBox4;
 		wxButton* m_button2;
-	
+
 	public:
 		PlotWindowSetMarker( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Set Marker"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 417,300 ), long style = wxDEFAULT_FRAME_STYLE|wxTAB_TRAVERSAL );
 		~PlotWindowSetMarker();
@@ -207,15 +207,15 @@ class PlotWindowSetMarker : public wxDialog
         void toggleSelection2fkt();
         void GetSelectedValue1();
         void GetSelectedValue2();
-        
+
         void GetValues();
-	
+
 };
 
-class Mesurement2D : public wxDialog 
+class Mesurement2D : public wxDialog
 {
 	private:
-	
+
 	protected:
 		wxStaticText* m_staticText1;
 		wxStaticText* m_staticText2;
@@ -234,12 +234,12 @@ class Mesurement2D : public wxDialog
 		wxButton* m_button3;
 		wxButton* m_button4;
 		wxButton* m_button5;
-	
+
 	public:
-		void GetValues();
-		Mesurement2D( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("2D Mesurement"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 421,345 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+
+		Mesurement2D( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("2D Mesurement"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 421,345 ), long style = wxDEFAULT_DIALOG_STYLE );
 		~Mesurement2D();
-        
+
         void GetValues();
 
 };
