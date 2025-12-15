@@ -215,7 +215,12 @@ class PlotWindowSetMarker : public wxDialog
 class Mesurement2D : public wxDialog
 {
 	private:
-
+        int sliderY;
+        int sliderX;
+        int sliderScale;
+        int progressbar;
+        int currentMesurmentPoint;
+        int totalMesurmentPoints;
 	protected:
 		wxStaticText* m_staticText1;
 		wxStaticText* m_staticText2;
@@ -239,9 +244,26 @@ class Mesurement2D : public wxDialog
 
 		Mesurement2D( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("2D Mesurement"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 421,345 ), long style = wxDEFAULT_DIALOG_STYLE );
 		~Mesurement2D();
-
+        //Gui Event Functions
+        void OnSliderUpdate(wxCommandEvent& event);
+        void OnReset(wxCommandEvent& event);
+        void OnSettings(wxCommandEvent& event);
+        void OnStart(wxCommandEvent& event);
+        void OnRestart(wxCommandEvent& event);
+        void OnStop(wxCommandEvent& event);
+        //Gui Helper Functions
         void GetValues();
+        void SetValues();
+        void GetTotalMesurements();
+        void incrementCurrentMesurmentPoint();
+        void updateProgressBar();
+        void resetProgressBar();
+        void SetSliderValues();
+        void resetGuiValues();
 
+        //Mesurement Functions
+        void singleMesurement();
+        
 };
 
 class FunctionWindow : public wxDialog

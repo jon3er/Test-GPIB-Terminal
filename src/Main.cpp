@@ -28,7 +28,7 @@ bool MainWin::OnInit()
 //-----MainWin Methodes ende-----
 
 //-----Main Programm Window-----
-MainProgrammWin::MainProgrammWin( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style )
+MainProgrammWin::MainProgrammWin( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) 
     : wxFrame( parent, id, title, pos, size, style )
 {
     //TODO set new Functions
@@ -67,11 +67,11 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, wxWindowID id, const wxStrin
 	m_menu_File->Append( m_menuFile_Item_Open );
 
     m_menu_File->AppendSeparator();
-
+	
 	wxMenuItem* m_menuFile_Item_Save;
 	m_menuFile_Item_Save = new wxMenuItem( m_menu_File, ID_Main_File_Save, wxString( wxT("Save") ) + wxT('\t') + wxT("CTRL + S"), wxEmptyString, wxITEM_NORMAL );
 	m_menu_File->Append( m_menuFile_Item_Save );
-
+	
     wxMenuItem* m_menuFile_Item_SaveAs;
 	m_menuFile_Item_SaveAs = new wxMenuItem( m_menu_File, ID_Main_File_Exit, wxString( wxT("Save as ...") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menu_File->Append( m_menuFile_Item_SaveAs );
@@ -82,32 +82,32 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, wxWindowID id, const wxStrin
 	m_menuFile_Item_Exit = new wxMenuItem( m_menu_File, ID_Main_File_Exit, wxString( wxT("Exit") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menu_File->Append( m_menuFile_Item_Exit );
 
-
+    
 
 	//File Menu
-	m_menubarMainProg->Append( m_menu_File, wxT("File") );
-
+	m_menubarMainProg->Append( m_menu_File, wxT("File") ); 
+	
     //Simutatuion menu elements
 	m_menu_Sim = new wxMenu();
 
     //Simutatuin menu
-	m_menubarMainProg->Append( m_menu_Sim, wxT("Simulation") );
-
+	m_menubarMainProg->Append( m_menu_Sim, wxT("Simulation") ); 
+	
     //Mesurement menu elements
 	m_menu_Mesurement = new wxMenu();
 	wxMenuItem* m_menuMesure_Item_New;
 	m_menuMesure_Item_New = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_New, wxString( wxT("New Mesurement") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menu_Mesurement->Append( m_menuMesure_Item_New );
-
+	
 	m_menu_Mesurement->AppendSeparator();
 
 
     wxMenuItem* m_menuMesure_Item_Open;
 	m_menuMesure_Item_Open = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_Open, wxString( wxT("Open Saved Mesurement") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menu_Mesurement->Append( m_menuMesure_Item_Open );
-
+	
 	m_menu_Mesurement->AppendSeparator();
-
+	
 	wxMenuItem* m_menuMesure_Item_Load;
 	m_menuMesure_Item_Load = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_Load, wxString( wxT("Load config") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menu_Mesurement->Append( m_menuMesure_Item_Load );
@@ -129,96 +129,96 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, wxWindowID id, const wxStrin
     wxMenuItem* m_menuMesure_Item_2DMesurment;
 	m_menuMesure_Item_2DMesurment = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_2D_Mess, wxString( wxT("2D Plot Mesurment") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menu_Mesurement->Append( m_menuMesure_Item_2DMesurment );
-
-
+	
+	
 
     m_menu_Mesurement->AppendSeparator();
 
     wxMenuItem* m_menuMesure_Item_SetMarker;
 	m_menuMesure_Item_SetMarker = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_SetMarker, wxString( wxT("Set Marker") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menu_Mesurement->Append( m_menuMesure_Item_SetMarker );
-
+	
 	m_menu_Mesurement->AppendSeparator();
-
+	
 	wxMenuItem* m_menuMesure_Item_Settings;
 	m_menuMesure_Item_Settings = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_Settings, wxString( wxT("Settings") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menu_Mesurement->Append( m_menuMesure_Item_Settings );
-
+	
     //Mesurement menu
-	m_menubarMainProg->Append( m_menu_Mesurement, wxT("Mesurement") );
-
+	m_menubarMainProg->Append( m_menu_Mesurement, wxT("Mesurement") ); 
+	
     //Processing menu elements
 	m_menu_Processing = new wxMenu();
 
     //Processing menu
-	m_menubarMainProg->Append( m_menu_Processing, wxT("Processing") );
-
+	m_menubarMainProg->Append( m_menu_Processing, wxT("Processing") ); 
+	
     //Test menu elements
 	m_menu_Test = new wxMenu();
 	wxMenuItem* m_menuTest_Item_Terminal;
 	m_menuTest_Item_Terminal = new wxMenuItem( m_menu_Test, ID_Main_Test_Terminal, wxString( wxT("Terminal") ) + wxT('\t') + wxT("CTRL + SHIFT +T"), wxEmptyString, wxITEM_NORMAL );
 	m_menu_Test->Append( m_menuTest_Item_Terminal );
-
+	
 	wxMenuItem* m_menuTest_Item_Func;
 	m_menuTest_Item_Func = new wxMenuItem( m_menu_Test, ID_Main_Test_Func, wxString( wxT("Function Test") ) + wxT('\t') + wxT("F1"), wxEmptyString, wxITEM_NORMAL );
 	m_menu_Test->Append( m_menuTest_Item_Func );
-
-    //Test menu
-	m_menubarMainProg->Append( m_menu_Test, wxT("Test") );
-
+	
+    //Test menu 
+	m_menubarMainProg->Append( m_menu_Test, wxT("Test") ); 
+	
     //Help menu elements
 	m_menu_Help = new wxMenu();
 	wxMenuItem* m_menuHelp_Item_About;
 	m_menuHelp_Item_About = new wxMenuItem( m_menu_Help, ID_Main_Help_About, wxString( wxT("About") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menu_Help->Append( m_menuHelp_Item_About );
 	//Help menu
-	m_menubarMainProg->Append( m_menu_Help, wxT("Help") );
-
+	m_menubarMainProg->Append( m_menu_Help, wxT("Help") ); 
+	
 	this->SetMenuBar( m_menubarMainProg );
-
+	
 	wxBoxSizer* bSizerMainProgV1;
 	bSizerMainProgV1 = new wxBoxSizer( wxVERTICAL );
-
+	
 	m_panel21 = new wxPanel( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	bSizerMainProgV1->Add( m_panel21, 1, wxEXPAND | wxALL, 5 );
-
+	
 	wxBoxSizer* bSizerMainProgH1;
 	bSizerMainProgH1 = new wxBoxSizer( wxHORIZONTAL );
-
+	
 	m_staticText1 = new wxStaticText( this, wxID_ANY, wxT("GPIB Adapter: "), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText1->Wrap( -1 );
 	bSizerMainProgH1->Add( m_staticText1, 1, wxALL, 5 );
-
+	
 	m_textCtrlAdapterStatus = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
 	bSizerMainProgH1->Add( m_textCtrlAdapterStatus, 2, wxALL, 5 );
-
-
+	
+	
 	bSizerMainProgV1->Add( bSizerMainProgH1, 2, wxEXPAND, 5 );
-
+	
 	wxBoxSizer* bSizerMainProgH2;
 	bSizerMainProgH2 = new wxBoxSizer( wxHORIZONTAL );
-
-	bSizerMainProgH2->SetMinSize( wxSize( 0,0 ) );
+	
+	bSizerMainProgH2->SetMinSize( wxSize( 0,0 ) ); 
 	m_staticText11 = new wxStaticText( this, wxID_ANY, wxT("GPIB Device: "), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText11->Wrap( -1 );
 	bSizerMainProgH2->Add( m_staticText11, 1, wxALL, 5 );
-
+	
 	m_textCtrlDeviceStatus = new wxTextCtrl( this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
 	bSizerMainProgH2->Add( m_textCtrlDeviceStatus, 2, wxALL, 5 );
-
-
+	
+	
 	bSizerMainProgV1->Add( bSizerMainProgH2, 2, wxEXPAND, 5 );
-
+	
 	m_panel2 = new wxPanel( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	bSizerMainProgV1->Add( m_panel2, 2, wxEXPAND | wxALL, 5 );
-
+	
 	m_button1 = new wxButton( this, wxID_ANY, wxT("Refresh"), wxDefaultPosition, wxDefaultSize, 0 );
 	bSizerMainProgV1->Add( m_button1, 0, wxALIGN_RIGHT|wxALL, 10 );
 	m_button1->Bind(wxEVT_BUTTON, &MainProgrammWin::ButtonRefresh, this);
-
+	
 	this->SetSizer( bSizerMainProgV1 );
 	this->Layout();
-
+	
 	this->Centre( wxBOTH );
 }
 MainProgrammWin::~MainProgrammWin()
@@ -240,7 +240,7 @@ void MainProgrammWin::ButtonRefresh(wxCommandEvent& event)
 
     if (Adapter.getConnected())
     {
-
+        
         Text = Adapter.send("++ver");
         if (Text.substr(0,6) == "Failed")
         {
@@ -271,9 +271,9 @@ void MainProgrammWin::MenuFileOpen(wxCommandEvent& event)
 {
     wxLogMessage("Open File");
 
-    wxFileDialog openFileDialog(this, _("Open File"),
+    wxFileDialog openFileDialog(this, _("Open File"), 
         filePathRoot,
-        "",
+        "", 
         "CSV Files (*.csv)|*.csv|All Files (*.*)|*.*",
         wxFD_OPEN);
 
@@ -293,7 +293,7 @@ void MainProgrammWin::MenuFileOpen(wxCommandEvent& event)
         fileOpen = false;
     }
 
-    wxLogDebug(filePathCurrentFile);
+    wxLogDebug(filePathCurrentFile);    
 }
 void MainProgrammWin::MenuFileSave(wxCommandEvent& event)
 {
@@ -308,9 +308,9 @@ void MainProgrammWin::MenuFileSave(wxCommandEvent& event)
 }
 void MainProgrammWin::MenuFileSaveAs(wxCommandEvent& event)
 {
-    wxFileDialog saveAsFileDialog(nullptr, _("File Save As..."),
+    wxFileDialog saveAsFileDialog(nullptr, _("File Save As..."), 
         "",//filePathRoot,
-        "",
+        "", 
         "CSV Files (*.csv)|*.csv|All Files (*.*)|*.*",
         wxFD_SAVE);
 
@@ -897,89 +897,89 @@ PlotWindowSetMarker::PlotWindowSetMarker( wxWindow* parent, wxWindowID id, const
     freqEinheiten.Add("GHz");
 
 	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
-
+	
 	wxBoxSizer* bSizer1;
 	bSizer1 = new wxBoxSizer( wxVERTICAL );
-
+	
 	wxStaticBoxSizer* sbSizer1;
 	sbSizer1 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, wxT("Marker 1") ), wxVERTICAL );
-
+	
 	wxBoxSizer* bSizer2;
 	bSizer2 = new wxBoxSizer( wxHORIZONTAL );
-
+	
 	m_checkBox1 = new wxCheckBox( sbSizer1->GetStaticBox(), wxID_ANY, wxT("Set to Frequency"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_checkBox1->Bind(wxEVT_CHECKBOX, &PlotWindowSetMarker::toggleSelection1, this);
     bSizer2->Add( m_checkBox1, 1, wxALL, 5 );
-
+	
 	m_textCtrl1 = new wxTextCtrl( sbSizer1->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
 	bSizer2->Add( m_textCtrl1, 1, wxALL, 5 );
-
+	
 	m_choice1 = new wxChoice( sbSizer1->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, freqEinheiten, 0 );
 	m_choice1->SetSelection( 0 );
 	bSizer2->Add( m_choice1, 1, wxALL, 5 );
-
-
+	
+	
 	sbSizer1->Add( bSizer2, 1, wxEXPAND, 5 );
-
+	
 	wxBoxSizer* bSizer6;
 	bSizer6 = new wxBoxSizer( wxVERTICAL );
-
+	
 	m_checkBox2 = new wxCheckBox( sbSizer1->GetStaticBox(), wxID_ANY, wxT("Set to highest freq"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_checkBox2->Bind(wxEVT_CHECKBOX, &PlotWindowSetMarker::toggleSelection1, this);
     bSizer6->Add( m_checkBox2, 0, wxALL, 5 );
-
-
+	
+	
 	sbSizer1->Add( bSizer6, 1, wxEXPAND, 5 );
-
+	
 	m_button1 = new wxButton( sbSizer1->GetStaticBox(), wxID_ANY, wxT("Set"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_button1->Bind(wxEVT_BUTTON, &PlotWindowSetMarker::SetSelection1, this);
     sbSizer1->Add( m_button1, 1, wxALL, 5 );
-
-
+	
+	
 	bSizer1->Add( sbSizer1, 1, wxEXPAND, 5 );
-
+	
 	wxStaticBoxSizer* sbSizer11;
 	sbSizer11 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, wxT("Marker 2") ), wxVERTICAL );
-
+	
 	wxBoxSizer* bSizer21;
 	bSizer21 = new wxBoxSizer( wxHORIZONTAL );
-
+	
 	m_checkBox3 = new wxCheckBox( sbSizer11->GetStaticBox(), wxID_ANY, wxT("Set to Frequency"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_checkBox3->Bind(wxEVT_CHECKBOX, &PlotWindowSetMarker::toggleSelection2, this);
     bSizer21->Add( m_checkBox3, 1, wxALL, 5 );
-
+	
 	m_textCtrl2 = new wxTextCtrl( sbSizer11->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
 	bSizer21->Add( m_textCtrl2, 1, wxALL, 5 );
-
-
+	
+	
 	m_choice2 = new wxChoice( sbSizer11->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, freqEinheiten, 0 );
 	m_choice2->SetSelection( 0 );
 	bSizer21->Add( m_choice2, 1, wxALL, 5 );
-
-
+	
+	
 	sbSizer11->Add( bSizer21, 1, wxEXPAND, 5 );
-
+	
 	wxBoxSizer* bSizer5;
 	bSizer5 = new wxBoxSizer( wxVERTICAL );
-
+	
 	m_checkBox4 = new wxCheckBox( sbSizer11->GetStaticBox(), wxID_ANY, wxT("Set to highest Freq"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_checkBox4->Bind(wxEVT_CHECKBOX, &PlotWindowSetMarker::toggleSelection2, this);
     bSizer5->Add( m_checkBox4, 1, wxALL, 5 );
-
-
+	
+	
 	sbSizer11->Add( bSizer5, 1, wxEXPAND, 5 );
-
+	
 	m_button2 = new wxButton( sbSizer11->GetStaticBox(), wxID_ANY, wxT("Set"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_button2->Bind(wxEVT_BUTTON, &PlotWindowSetMarker::SetSelection2, this);
     sbSizer11->Add( m_button2, 1, wxALL, 5 );
-
-
+	
+	
 	bSizer1->Add( sbSizer11, 1, wxEXPAND, 5 );
-
-
+	
+	
 	this->SetSizer( bSizer1 );
 	this->Layout();
-
+	
 	this->Centre( wxBOTH );
 
     GetValues();
@@ -1069,7 +1069,7 @@ void PlotWindowSetMarker::toggleSelection2(wxCommandEvent& event)
 }
 void PlotWindowSetMarker::GetSelectedValue1()
 {
-    const double multipliers[] = {
+    const double multipliers[] = { 
     1.0,        // Index 0: Hz
     1000.0,     // Index 1: kHz
     1.0e6,      // Index 2: MHz
@@ -1095,7 +1095,7 @@ void PlotWindowSetMarker::GetSelectedValue2()
 {
     GetValues();
 
-    const double multipliers[] = {
+    const double multipliers[] = { 
     1.0,        // Index 0: Hz
     1000.0,     // Index 1: kHz
     1.0e6,      // Index 2: MHz
@@ -1119,7 +1119,7 @@ void PlotWindowSetMarker::GetSelectedValue2()
 }
 void PlotWindowSetMarker::SetSelection1(wxCommandEvent& event)
 {
-    GetValues();
+    GetValues();    
 
     if (Marker1MaxSet)
     {
@@ -1130,14 +1130,14 @@ void PlotWindowSetMarker::SetSelection1(wxCommandEvent& event)
     {
         GetSelectedValue1();
 
-        std::string Text = "CALC:MARK:MAX " + std::string(FreqMarker1Raw.ToUTF8());
+        std::string Text = "CALC:MARK:MAX " + std::string(FreqMarker1Raw.ToUTF8());;
         Adapter.write(Text);
     }
     //TODO Get X Y From Device and display in the Menu
 }
 void PlotWindowSetMarker::SetSelection2(wxCommandEvent& event)
 {
-    GetValues();
+    GetValues();    
 
     if (Marker2MaxSet)
     {
@@ -1148,7 +1148,7 @@ void PlotWindowSetMarker::SetSelection2(wxCommandEvent& event)
     {
         GetSelectedValue1();
 
-        std::string Text = "CALC:MARK2:MAX " + std::string(FreqMarker1Raw.ToUTF8());
+        std::string Text = "CALC:MARK2:MAX " + std::string(FreqMarker2Raw.ToUTF8());;
         Adapter.write(Text);
     }
     //TODO Get X Y From Device and display in the Menu
@@ -1157,63 +1157,67 @@ void PlotWindowSetMarker::SetSelection2(wxCommandEvent& event)
 Mesurement2D::Mesurement2D( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
 {
 	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
-
+	
 	wxBoxSizer* bSizer1;
 	bSizer1 = new wxBoxSizer( wxVERTICAL );
-
+	
 	wxStaticBoxSizer* sbSizer1;
 	sbSizer1 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, wxT("Mesurment Settings") ), wxVERTICAL );
-
+	
 	m_staticText1 = new wxStaticText( sbSizer1->GetStaticBox(), wxID_ANY, wxT("Mesurement Points:"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText1->Wrap( -1 );
 	sbSizer1->Add( m_staticText1, 0, wxALL, 5 );
-
+	
 	wxBoxSizer* bSizer2;
 	bSizer2 = new wxBoxSizer( wxHORIZONTAL );
-
+	
 	m_staticText2 = new wxStaticText( sbSizer1->GetStaticBox(), wxID_ANY, wxT("Y Points:"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText2->Wrap( -1 );
 	bSizer2->Add( m_staticText2, 1, wxALL, 5 );
+	
 
 	m_slider1 = new wxSlider( sbSizer1->GetStaticBox(), wxID_ANY, 10, 1, 100, wxDefaultPosition, wxDefaultSize, wxSL_HORIZONTAL );
-	bSizer2->Add( m_slider1, 1, wxALL, 5 );
-
-
+	m_slider1->Bind(wxEVT_SLIDER, &Mesurement2D::OnSliderUpdate, this);
+    bSizer2->Add( m_slider1, 1, wxALL, 5 );
+	
+	
 	sbSizer1->Add( bSizer2, 1, wxEXPAND, 5 );
-
+	
 	wxBoxSizer* bSizer21;
 	bSizer21 = new wxBoxSizer( wxHORIZONTAL );
-
+	
 	m_staticText3 = new wxStaticText( sbSizer1->GetStaticBox(), wxID_ANY, wxT("X Points:"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText3->Wrap( -1 );
 	bSizer21->Add( m_staticText3, 1, wxALL, 5 );
-
+	
 	m_slider2 = new wxSlider( sbSizer1->GetStaticBox(), wxID_ANY, 10, 1, 100, wxDefaultPosition, wxDefaultSize, wxSL_HORIZONTAL );
-	bSizer21->Add( m_slider2, 1, wxALL, 5 );
-
-
+	m_slider2->Bind(wxEVT_SLIDER, &Mesurement2D::OnSliderUpdate, this);
+    bSizer21->Add( m_slider2, 1, wxALL, 5 );
+	
+	
 	sbSizer1->Add( bSizer21, 1, wxEXPAND, 5 );
-
+	
 	wxBoxSizer* bSizer211;
 	bSizer211 = new wxBoxSizer( wxHORIZONTAL );
-
+	
 	m_staticText4 = new wxStaticText( sbSizer1->GetStaticBox(), wxID_ANY, wxT("Scale:"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText4->Wrap( -1 );
 	bSizer211->Add( m_staticText4, 1, wxALL, 5 );
-
+	
 	m_slider3 = new wxSlider( sbSizer1->GetStaticBox(), wxID_ANY, 100, 1, 100, wxDefaultPosition, wxDefaultSize, wxSL_HORIZONTAL );
-	bSizer211->Add( m_slider3, 1, wxALL, 5 );
-
-
+	m_slider3->Bind(wxEVT_SLIDER, &Mesurement2D::OnSliderUpdate, this);
+    bSizer211->Add( m_slider3, 1, wxALL, 5 );
+	
+	
 	sbSizer1->Add( bSizer211, 1, wxEXPAND, 5 );
-
+	
 	wxBoxSizer* bSizer9;
 	bSizer9 = new wxBoxSizer( wxHORIZONTAL );
-
+	
 	m_staticText5 = new wxStaticText( sbSizer1->GetStaticBox(), wxID_ANY, wxT("Orientation point:"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText5->Wrap( -1 );
 	bSizer9->Add( m_staticText5, 1, wxALL, 5 );
-
+	
 	wxArrayString StartPosition;
     StartPosition.Add("Center");
     StartPosition.Add("Top Left");
@@ -1222,76 +1226,192 @@ Mesurement2D::Mesurement2D( wxWindow* parent, wxWindowID id, const wxString& tit
     StartPosition.Add("Bottom Left");
 
 	m_choice1 = new wxChoice( sbSizer1->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, StartPosition, 0 );
-	m_choice1->SetSelection( 1 );
+	m_choice1->SetSelection( 0 );
 	bSizer9->Add( m_choice1, 1, wxALL, 5 );
-
-
+	
+	
 	sbSizer1->Add( bSizer9, 1, wxEXPAND, 5 );
-
+	
 	wxBoxSizer* bSizer10;
 	bSizer10 = new wxBoxSizer( wxHORIZONTAL );
-
+	
 	m_button2 = new wxButton( sbSizer1->GetStaticBox(), wxID_ANY, wxT("Reset"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer10->Add( m_button2, 1, wxALL, 5 );
-
+	m_button2->Bind(wxEVT_BUTTON, &Mesurement2D::OnReset, this);
+    bSizer10->Add( m_button2, 1, wxALL, 5 );
+	
 	m_button1 = new wxButton( sbSizer1->GetStaticBox(), wxID_ANY, wxT("Open Device settings"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer10->Add( m_button1, 1, wxALL, 5 );
-
-
+	m_button1->Bind(wxEVT_BUTTON, &Mesurement2D::OnSettings, this);
+    bSizer10->Add( m_button1, 1, wxALL, 5 );
+	
+	
 	sbSizer1->Add( bSizer10, 1, wxEXPAND, 5 );
-
-
+	
+	
 	bSizer1->Add( sbSizer1, 1, wxEXPAND, 5 );
-
+	
 	wxStaticBoxSizer* sbSizer2;
 	sbSizer2 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, wxT("Mesurment") ), wxVERTICAL );
-
+	
 	wxBoxSizer* bSizer14;
 	bSizer14 = new wxBoxSizer( wxHORIZONTAL );
-
+	
 	m_staticText6 = new wxStaticText( sbSizer2->GetStaticBox(), wxID_ANY, wxT("Progress:"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText6->Wrap( -1 );
 	bSizer14->Add( m_staticText6, 1, wxALL, 5 );
-
+	
 	m_staticText7 = new wxStaticText( sbSizer2->GetStaticBox(), wxID_ANY, wxT("0/100"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText7->Wrap( -1 );
 	bSizer14->Add( m_staticText7, 1, wxALL, 5 );
-
+	
 	m_gauge1 = new wxGauge( sbSizer2->GetStaticBox(), wxID_ANY, 100, wxDefaultPosition, wxDefaultSize, wxGA_HORIZONTAL );
-	m_gauge1->SetValue( 0 );
+	m_gauge1->SetValue( 0 ); 
 	bSizer14->Add( m_gauge1, 5, wxALL, 5 );
-
-
+	
+	
 	sbSizer2->Add( bSizer14, 1, wxEXPAND, 5 );
-
+	
 	wxBoxSizer* bSizer15;
 	bSizer15 = new wxBoxSizer( wxHORIZONTAL );
-
+	
 	m_button3 = new wxButton( sbSizer2->GetStaticBox(), wxID_ANY, wxT("Start"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer15->Add( m_button3, 1, wxALL, 5 );
-
+	m_button3->Bind(wxEVT_BUTTON, &Mesurement2D::OnStart, this);
+    bSizer15->Add( m_button3, 1, wxALL, 5 );
+	
 	m_button4 = new wxButton( sbSizer2->GetStaticBox(), wxID_ANY, wxT("Stop"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer15->Add( m_button4, 1, wxALL, 5 );
-
+	m_button4->Bind(wxEVT_BUTTON, &Mesurement2D::OnStop, this);
+    bSizer15->Add( m_button4, 1, wxALL, 5 );
+	
 	m_button5 = new wxButton( sbSizer2->GetStaticBox(), wxID_ANY, wxT("Restart"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer15->Add( m_button5, 1, wxALL, 5 );
-
-
+	m_button5->Bind(wxEVT_BUTTON, &Mesurement2D::OnRestart, this);
+    bSizer15->Add( m_button5, 1, wxALL, 5 );
+	
+	
 	sbSizer2->Add( bSizer15, 1, wxEXPAND, 5 );
-
-
+	
+	
 	bSizer1->Add( sbSizer2, 1, wxEXPAND, 5 );
-
-
+	
+	
 	this->SetSizer( bSizer1 );
 	this->Layout();
-
+	
 	this->Centre( wxBOTH );
+
+    resetGuiValues();
+    GetValues();
+    GetTotalMesurements();
+    updateProgressBar();
+    SetSliderValues();
+
 }
+void Mesurement2D::OnReset(wxCommandEvent& event)
+{
+    resetGuiValues();
+    SetSliderValues();
+    updateProgressBar();  
+
+}
+void Mesurement2D::OnSettings(wxCommandEvent& event)
+{
+    //Create new sub window
+    SettingsWindow *SettingsWin = new SettingsWindow(this);
+    //open Window Pauses Main Window
+    SettingsWin->ShowModal();
+    //Close Window
+    SettingsWin->Destroy();
+}
+void Mesurement2D::OnStart(wxCommandEvent& event)
+{
+    GetTotalMesurements();
+    updateProgressBar();
+}
+void Mesurement2D::OnStop(wxCommandEvent& event)
+{
+    incrementCurrentMesurmentPoint();
+    updateProgressBar();
+}
+void Mesurement2D::OnRestart(wxCommandEvent& event)
+{
+    resetProgressBar();
+    SetSliderValues();
+    updateProgressBar();    
+}
+
+void Mesurement2D::OnSliderUpdate(wxCommandEvent& event)
+{
+    SetSliderValues();
+}
+
 void Mesurement2D::GetValues()
 {
+    sliderY         = m_slider1->GetValue();
+    sliderX         = m_slider2->GetValue();
+    sliderScale     = m_slider3->GetValue();
 
+    progressbar     = m_gauge1->GetValue();
 }
+void Mesurement2D::SetValues()
+{
+    m_slider1->SetValue(sliderY);
+    m_slider2->SetValue(sliderX);
+    m_slider3->SetValue(sliderScale);
+
+    m_gauge1->SetValue(progressbar);
+}
+void Mesurement2D::GetTotalMesurements()
+{
+    GetValues();
+
+    totalMesurmentPoints = sliderX * sliderY;
+}
+void Mesurement2D::incrementCurrentMesurmentPoint()
+{
+    currentMesurmentPoint++;
+}
+void Mesurement2D::updateProgressBar()
+{
+    if (currentMesurmentPoint <= totalMesurmentPoints)
+    {
+        int Progress = currentMesurmentPoint * 100 / totalMesurmentPoints;
+
+        wxString Text = wxString::Format("%d",currentMesurmentPoint) + "/" + wxString::Format("%d",totalMesurmentPoints);
+        m_staticText7->SetLabel(Text);
+
+        m_gauge1->SetValue(Progress);
+    }
+}
+void Mesurement2D::resetProgressBar()
+{
+    currentMesurmentPoint = 0;
+    updateProgressBar();
+}
+void Mesurement2D::SetSliderValues()
+{
+    GetValues();
+    wxString Text = "Y Points:    " + wxString::Format("%d", sliderY);
+    m_staticText2->SetLabel(Text);
+    
+    Text = "X Points:    " + wxString::Format("%d", sliderX);
+    m_staticText3->SetLabel(Text);
+
+    Text = "Scale:       " + wxString::Format("%d", sliderScale);
+    m_staticText4->SetLabel(Text);
+}
+void Mesurement2D::resetGuiValues()
+{
+    sliderY = 10;
+    sliderX = 10;
+    sliderScale = 100;
+    progressbar = 0;
+    currentMesurmentPoint = 0;
+
+    SetValues();
+    GetTotalMesurements();
+    SetSliderValues();
+    updateProgressBar();
+}
+
+
 Mesurement2D::~Mesurement2D()
 {
 }
