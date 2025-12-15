@@ -6,9 +6,11 @@
 #if defined(_WIN32)
     wxString filePathSytem = "D:\\CodeProjects\\VSCode\\projects\\Diplom\\Test-GPIB-Terminal\\GpibScripts\\";
     wxString filePathRoot = "D:\\CodeProjects\\VSCode\\projects\\Diplom\\Test-GPIB-Terminal\\";
+    wxString fileSystemSlash = "\\";
 #elif defined(__linux__)
     wxString filePathSytem = "/home/jon3r/Documents/Code/CodeBlocks/Test_GPIB_Terminal/GpibScripts/";
     wxString filePathRoot = "/home/jon3r/Documents/Code/CodeBlocks/Test_GPIB_Terminal/";
+    wxString fileSystemSlash = "/";
 #endif
 
 
@@ -19,9 +21,10 @@ enum
 
     ID_Main_File = 10,
     ID_Main_File_Open = 11,
-    ID_Main_File_Save = 12,
-    ID_Main_File_SaveAs = 13,
-    ID_Main_File_Exit = 14,
+    ID_Main_File_Close = 12,
+    ID_Main_File_Save = 13,
+    ID_Main_File_SaveAs = 14,
+    ID_Main_File_Exit = 15,
 
     ID_Main_Simulation = 20,
 
@@ -87,13 +90,18 @@ public:
 
 	MainProgrammWin( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("GPIB Messurement"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 814,454 ), long style = wxDEFAULT_FRAME_STYLE|wxTAB_TRAVERSAL );
 	~MainProgrammWin();
+    //PassData
+    sData returnOpendData() { return OpendData; };
+    bool isFileOpen() { return fileOpen; };
     // Button func
     void ButtonRefresh(wxCommandEvent& event);
     // Menubar items
     void MenuFileOpen(wxCommandEvent& event);
+    void MenuFileClose(wxCommandEvent& event);
     void MenuFileSave(wxCommandEvent& event);
     void MenuFileSaveAs(wxCommandEvent& event);
-    void MenuFileClose(wxCommandEvent& event);
+    void MenuFileExit(wxCommandEvent& event);
+
 
     void MenuMesurementNew(wxCommandEvent& event);
 	void MenuMesurementLoad(wxCommandEvent& event);

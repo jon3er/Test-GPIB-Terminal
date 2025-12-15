@@ -20,8 +20,8 @@ bool MainWin::OnInit()
     //Enable Debug output window
     wxLog::SetActiveTarget(new wxLogStderr());
 
-    MainProgrammWin *frame = new MainProgrammWin(nullptr);
-    frame->Show();
+    MainProgrammWin *MainProgFrame = new MainProgrammWin(nullptr);
+    MainProgFrame->Show();
 
     return true;
 }
@@ -35,9 +35,10 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, wxWindowID id, const wxStrin
 
     //File Main binds
     Bind(wxEVT_MENU, &MainProgrammWin::MenuFileOpen, this, ID_Main_File_Open);
+    Bind(wxEVT_MENU, &MainProgrammWin::MenuFileClose, this, ID_Main_File_Close);
     Bind(wxEVT_MENU, &MainProgrammWin::MenuFileSave, this, ID_Main_File_Save);
     Bind(wxEVT_MENU, &MainProgrammWin::MenuFileSave, this, ID_Main_File_SaveAs);
-    Bind(wxEVT_MENU, &MainProgrammWin::MenuFileClose, this, ID_Main_File_Exit);
+    Bind(wxEVT_MENU, &MainProgrammWin::MenuFileExit, this, ID_Main_File_Exit);
     //Mesurement Menu binds
     Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementNew, this, ID_Main_Mesurement_New);
     Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementLoad, this, ID_Main_Mesurement_Open);
@@ -65,6 +66,12 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, wxWindowID id, const wxStrin
 	wxMenuItem* m_menuFile_Item_Open;
 	m_menuFile_Item_Open = new wxMenuItem( m_menu_File, ID_Main_File_Open, wxString( wxT("Open") ) + wxT('\t') + wxT("CTRL + O"), wxEmptyString, wxITEM_NORMAL );
 	m_menu_File->Append( m_menuFile_Item_Open );
+
+    m_menu_File->AppendSeparator();
+
+    wxMenuItem* m_menuFile_Item_Close;
+	m_menuFile_Item_Close = new wxMenuItem( m_menu_File, ID_Main_File_Close, wxString( wxT("Close") ) , wxEmptyString, wxITEM_NORMAL );
+	m_menu_File->Append( m_menuFile_Item_Close);
 
     m_menu_File->AppendSeparator();
 	
@@ -225,7 +232,6 @@ MainProgrammWin::~MainProgrammWin()
 {
 
 }
-
 // Button functions
 void MainProgrammWin::ButtonRefresh(wxCommandEvent& event)
 {
@@ -295,6 +301,7 @@ void MainProgrammWin::MenuFileOpen(wxCommandEvent& event)
 
     wxLogDebug(filePathCurrentFile);    
 }
+
 void MainProgrammWin::MenuFileSave(wxCommandEvent& event)
 {
     if (fileOpen)
@@ -340,8 +347,12 @@ void MainProgrammWin::MenuFileClose(wxCommandEvent& event)
     fileOpen = false;
     sData OpendDataTemp;
     OpendData = OpendDataTemp;
-    OpendDataTemp.~sData();
 }
+void MainProgrammWin::MenuFileExit(wxCommandEvent& event)
+{
+    this->Destroy();
+}
+
 void MainProgrammWin::MenuMesurementNew(wxCommandEvent& event)
 {
     //Create new sub window
@@ -802,12 +813,28 @@ PlotWindow::PlotWindow(wxWindow *parent) : wxDialog(parent, wxID_ANY, "Plot Wind
     // mpScaleX(Name, Ausrichtung, Ticks anzeigen, Typ)
     mpScaleX* xAxis = new mpScaleX("X-Achse", mpALIGN_BORDER_BOTTOM, true, mpX_NORMAL);
     mpScaleY* yAxis = new mpScaleY("Y-Achse", mpALIGN_BORDER_LEFT, true);
+    
     plot->AddLayer(xAxis);
     plot->AddLayer(yAxis);
 
-    // 3. Daten vorbereiten (std::vector laut Header Definition von mpFXYVector)
     x = {0.0, 1.0, 2.0, 3.0, 4.0, 5.0 };
     y = {0.0, 1.0, 4.0, 2.0, 5.0, 3.0 };
+
+    // 3. Daten vorbereiten (std::vector laut Header Definition von mpFXYVector)
+
+    //Holt in dem Haupt menu geladene daten
+    MainProgrammWin* MainFrame = dynamic_cast<MainProgrammWin*>(parent);
+    if (MainFrame != nullptr)
+    {
+        if (MainFrame->isFileOpen())
+        {
+            sData temp = MainFrame->returnOpendData();
+            sData::sParam *tempStruct = temp.GetParameter();
+            temp.GetData(tempStruct, x,y);
+        }   
+    }
+    
+
 
     // 4. Vektor-Layer erstellen
     vectorLayer = new mpFXYVector("Messdaten");
@@ -874,8 +901,19 @@ void PlotWindow::executeScriptEvent(wxCommandEvent& event)
     {
         wxLogDebug(logAdapterReceived[i]);
     }
+    sData MessErgebnisse;
+    sData::sParam *MessInfo;
+    wxDateTime now = wxDateTime::Now();
+    MessInfo->File = fileName;
+    MessInfo->Date = now.FormatISODate();
+    MessInfo->Time = now.FormatISOTime();
+
     y = Messung.getX_Data(); //zum test vertauscht
     x = Messung.getY_Data();
+    
+    MessErgebnisse.SetData(MessInfo, y, x);
+    wxString filePathSave = filePathRoot + fileSystemSlash + "LogFiles" + fileSystemSlash + fileName;
+    MessErgebnisse.saveToCsvFile(filePathSave);
     //test
     updatePlotData();
 }
