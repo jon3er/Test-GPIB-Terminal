@@ -566,6 +566,12 @@ bool sData::setTimeAndDate()
 bool sData::saveToCsvFile(wxString& filename)
 {
     bool setImgToZero = false;
+    //Mussen noch in header mit rein Für eine messung erstmal alles auf 1
+    
+    int X_Cord = 1;
+    int Y_Cord = 1;
+    int countMess = X_Cord * Y_Cord; // anzahl der messungen
+
 
     if (!dsParam) {
 
@@ -587,8 +593,6 @@ bool sData::saveToCsvFile(wxString& filename)
         filename.Append(".csv");
     }
     
-    
-
     std::ofstream file(filename.ToStdString());
 
     if (!file.is_open()) {
@@ -604,26 +608,36 @@ bool sData::saveToCsvFile(wxString& filename)
     
     file << "\n";
 
-    file << "Index,Real,Imaginary\n";
+    file << "ID";
+
+    //Array länge bestimmen
+    size_t count = dsR.size();
+
+    // Messwert ID
+    for (size_t i = 0; i < count; i++)
+    {
+        file << "," << i ;
+    }
+    
 
     file << std::fixed << std::setprecision(15);
 
-    size_t count = dsR.size();
-    for (size_t i = 0; i < count; ++i)
+    for (size_t i = 0; i < countMess; i++)
     {
-        if (!setImgToZero)
+        // ID Für Real Nummern einfügen
+        file << "\n" << "[" << X_Cord << ";" << Y_Cord << "] Real";
+        // Daten für Real anfügen
+        for (size_t i = 0; i < count; i++)
         {
-            file << i << "," 
-             << dsR[i] << "," 
-             << dsI[i] << "\n";
-        }
-        else
-        {
-            file << i << "," 
-             << dsR[i] << "," 
-             << 0 << "\n";
+            file << "," << dsR[i]; // Mehr dimisonales array einfügen und X-Y_Cord einfügen
         }
         
+        // ID Für Imagh Zahlen einfügen
+        file << "\n" << "[" << X_Cord << ";" << Y_Cord << "] Imag";
+        for (size_t i = 0; i < count; i++)
+        {
+            file << "," << dsI[i];
+        }
     }
 
     file.close();
@@ -686,41 +700,51 @@ bool sData::openCsvFile(wxString& filename)
 
     for (size_t i = HeaderEnd + 2; i < lineCount; ++i)
     {
-        
-
-    }
-
-
-    // 4. Datenpunkte einlesen (ab Zeile 8)
-    for (size_t i = HeaderEnd + 2; i < lineCount; ++i)
-    {
         wxString line = file.GetLine(i);
         
         // Leere Zeilen ignorieren
         if (line.IsEmpty()) continue;
 
-        // Zerlegen der Zeile am Komma
-        wxStringTokenizer tokenizer(line, ",");
+        // Zerlegen der Zeile am Komma Real
+        wxStringTokenizer tokenizerReal(line, ",");
 
-        // Erwartet: Index, Real, Imaginary
-        if (tokenizer.CountTokens() >= 3)
+        // ID Entfernen
+        if (tokenizerReal.HasMoreTokens()) 
         {
-            tokenizer.GetNextToken(); // Index verwerfen
-            
-            wxString sReal = tokenizer.GetNextToken();
-            wxString sImag = tokenizer.GetNextToken();
+            tokenizerReal.GetNextToken(); 
+        }
 
-            double dReal = 0.0;
-            double dImag = 0.0;
-
-            // ToCDouble erwartet Punkt als Dezimaltrenner (Standard in CSV/C++)
-            // Falls dein System Komma erwartet, nutze ToDouble()
-            if (sReal.ToCDouble(&dReal) && sImag.ToCDouble(&dImag))
+        // Restliche Token parsen
+        while (tokenizerReal.HasMoreTokens()) 
+        {
+            double val;
+            // ToDouble() gibt false zurück, wenn Konvertierung fehlschlägt
+            if (tokenizerReal.GetNextToken().ToDouble(&val)) 
             {
-                dsR.push_back(dReal);
-                dsI.push_back(dImag);
+                dsR.push_back(val);
             }
         }
+
+        // Zerlegen der Zeile am Komma Imag
+        wxStringTokenizer tokenizerImag(line, ",");
+
+        // ID Entfernen
+        if (tokenizerImag.HasMoreTokens()) 
+        {
+            tokenizerImag.GetNextToken(); 
+        }
+
+        // Restliche Token parsen
+        while (tokenizerImag.HasMoreTokens()) 
+        {
+            double val;
+            // ToDouble() gibt false zurück, wenn Konvertierung fehlschlägt
+            if (tokenizerImag.GetNextToken().ToDouble(&val)) 
+            {
+                dsI.push_back(val);
+            }
+        }
+
     }
 
     file.Close();
