@@ -48,6 +48,7 @@ public:
     bool setTimeAndDate();
     bool saveToCsvFile(wxString& Filename);
     bool openCsvFile(wxString& filename);
+    bool openCsvFileMultiline(wxString& filename);
     
     //virtual bool LoadFile(const wxString &name);
 

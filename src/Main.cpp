@@ -37,7 +37,7 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, wxWindowID id, const wxStrin
     Bind(wxEVT_MENU, &MainProgrammWin::MenuFileOpen, this, ID_Main_File_Open);
     Bind(wxEVT_MENU, &MainProgrammWin::MenuFileClose, this, ID_Main_File_Close);
     Bind(wxEVT_MENU, &MainProgrammWin::MenuFileSave, this, ID_Main_File_Save);
-    Bind(wxEVT_MENU, &MainProgrammWin::MenuFileSave, this, ID_Main_File_SaveAs);
+    Bind(wxEVT_MENU, &MainProgrammWin::MenuFileSaveAs, this, ID_Main_File_SaveAs);
     Bind(wxEVT_MENU, &MainProgrammWin::MenuFileExit, this, ID_Main_File_Exit);
     //Mesurement Menu binds
     Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementNew, this, ID_Main_Mesurement_New);
@@ -80,7 +80,7 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, wxWindowID id, const wxStrin
 	m_menu_File->Append( m_menuFile_Item_Save );
 
     wxMenuItem* m_menuFile_Item_SaveAs;
-	m_menuFile_Item_SaveAs = new wxMenuItem( m_menu_File, ID_Main_File_Exit, wxString( wxT("Save as ...") ) , wxEmptyString, wxITEM_NORMAL );
+	m_menuFile_Item_SaveAs = new wxMenuItem( m_menu_File, ID_Main_File_SaveAs, wxString( wxT("Save as ...") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menu_File->Append( m_menuFile_Item_SaveAs );
 
 	m_menu_File->AppendSeparator();
@@ -315,6 +315,8 @@ void MainProgrammWin::MenuFileSave(wxCommandEvent& event)
 }
 void MainProgrammWin::MenuFileSaveAs(wxCommandEvent& event)
 {
+    wxLogDebug("Try to Open save as dialog...");
+
     wxFileDialog saveAsFileDialog(nullptr, _("File Save As..."),
         "",//filePathRoot,
         "",
@@ -325,6 +327,8 @@ void MainProgrammWin::MenuFileSaveAs(wxCommandEvent& event)
     {
         return;
     }
+
+    wxLogDebug("Opend save as window");
 
     filePathCurrentFile = saveAsFileDialog.GetPath();
     if (!OpendData.saveToCsvFile(filePathCurrentFile))
