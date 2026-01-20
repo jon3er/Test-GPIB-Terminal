@@ -674,7 +674,7 @@ bool sData::openCsvFile(wxString& filename)
     //search for fist empty cell (Header end)
     for (int i = 0 ; i < lineCount; i++)
     {
-        if (file.GetLine(i).IsEmpty())
+        if (file.GetLine(i).IsEmpty() && file.GetLine( i+1 ).Contains("ID"))
         {
             HeaderEnd = i;
             wxLogDebug("Header Ende :%i", HeaderEnd);
@@ -694,57 +694,53 @@ bool sData::openCsvFile(wxString& filename)
     if (file.GetLine(4).AfterFirst(',').ToLong(&lVal)) dsParam->NoPoints_X = lVal;
     if (file.GetLine(5).AfterFirst(',').ToLong(&lVal)) dsParam->NoPoints_Y = lVal;
 
-    // Zeile 6 ist leer, Zeile 7 ist Header ("Index,Real,Imaginary") -> Überspringen
-
-
-
+    // Data
     for (size_t i = HeaderEnd + 2; i < lineCount; ++i)
     {
         wxString line = file.GetLine(i);
         
-        // Leere Zeilen ignorieren
         if (line.IsEmpty()) continue;
 
-        // Zerlegen der Zeile am Komma Real
-        wxStringTokenizer tokenizerReal(line, ",");
+        // Pointer auf den Zielvektor setzen
+        std::vector<double>* currentVec = nullptr;
 
-        // ID Entfernen
-        if (tokenizerReal.HasMoreTokens()) 
+        // Prüfen, ob es eine Real- oder Imag-Zeile ist (Case Insensitive)
+        if (line.Upper().Contains("REAL")) 
         {
-            tokenizerReal.GetNextToken(); 
+            currentVec = &dsR; // kopiert vector auf Real Addresse
+        } 
+        else if (line.Upper().Contains("IMAG")) 
+        {
+            currentVec = &dsI; // kopiert vector auf Imag Addresse
+        } 
+        else 
+        {
+            continue; 
         }
 
-        // Restliche Token parsen
-        while (tokenizerReal.HasMoreTokens()) 
-        {
-            double val;
-            // ToDouble() gibt false zurück, wenn Konvertierung fehlschlägt
-            if (tokenizerReal.GetNextToken().ToDouble(&val)) 
-            {
-                dsR.push_back(val);
-            }
+        // Tokenizer nur einmal für die aktuelle Zeile und den gewählten Vektor nutzen
+        wxStringTokenizer tokenizer(line, ",");
+
+        // 1. Token (Label/ID) entfernen: "[1;1] Real"
+        if (tokenizer.HasMoreTokens()) {
+            tokenizer.GetNextToken(); 
         }
 
-        // Zerlegen der Zeile am Komma Imag
-        wxStringTokenizer tokenizerImag(line, ",");
-
-        // ID Entfernen
-        if (tokenizerImag.HasMoreTokens()) 
-        {
-            tokenizerImag.GetNextToken(); 
-        }
-
-        // Restliche Token parsen
-        while (tokenizerImag.HasMoreTokens()) 
+        // Restliche Werte parsen
+        while (tokenizer.HasMoreTokens()) 
         {
             double val;
-            // ToDouble() gibt false zurück, wenn Konvertierung fehlschlägt
-            if (tokenizerImag.GetNextToken().ToDouble(&val)) 
+            if (tokenizer.GetNextToken().ToDouble(&val)) 
             {
-                dsI.push_back(val);
+                // Sicherstellen, dass currentVec gültig ist (sollte durch if oben gegeben sein)
+                if(currentVec) currentVec->push_back(val);
             }
         }
-
+    }
+    
+    // Optional: Validierung
+    if (dsR.size() != dsI.size()) {
+        wxLogDebug("Warnung: Real/Imag Vektoren ungleich lang!");
     }
 
     file.Close();
