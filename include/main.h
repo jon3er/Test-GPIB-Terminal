@@ -289,6 +289,7 @@ private:
     void OnUsbConfig(wxCommandEvent& event);
     void OnConDisconGpib(wxCommandEvent& event);
     void OnTestSaveFile(wxCommandEvent& event);
+    void OnTestMultiMess(wxCommandEvent& event);
 
     //Text Boxes
     wxTextCtrl* textFuncOutput;
@@ -378,3 +379,76 @@ public:
 
 };
 //-----end Subtabs-----
+
+class MultiMessWindow : public wxDialog 
+{
+	private:
+        //button functions
+        void startButton(wxCommandEvent& event);
+        void stopButton(wxCommandEvent& event);
+        void resetButton(wxCommandEvent& event);
+        void nextButton(wxCommandEvent& event);
+
+        //Helper functions
+        void GetValues();
+        void SetValues();
+        void UpdateProgressBar();
+
+        void testMessFunction();
+
+        // Set Default values
+        wxString X_Messpunkte = "1";
+        wxString Y_Messpunkte = "1";
+        wxString X_Cord = "0";
+        wxString Y_Cord = "0";
+        wxString X_MessAbstand = "10";
+        wxString Y_MessAbstand = "10";   
+
+        wxString startFreq = "50";
+        wxString startFreqUnit;
+        wxString stopFreq = "100";
+        wxString stopFreqUnit;
+        wxString AnzSweepMessPkt = "512";
+
+        int unsigned currentMesurmentPoint = 0;
+        int totalMesurmentPoints;
+
+        sData Data1D;
+        sData3D Data3D;
+
+	protected:
+		wxStaticText* m_staticTextXMess;
+		wxTextCtrl* m_textCtrlXMess;
+		wxStaticText* m_staticTextYMess;
+		wxTextCtrl* m_textCtrlYMess;
+		wxStaticText* m_staticTextXStartCord;
+		wxTextCtrl* m_textCtrlXStartCord;
+		wxStaticText* m_staticTextYStartCord;
+		wxTextCtrl* m_textCtrlYStartCord;
+		wxStaticText* m_staticTextXAbstand;
+		wxTextCtrl* m_textCtrlXAbstand;
+		wxStaticText* m_staticTextYAbstand;
+		wxTextCtrl* m_textCtrlYAbstand;
+		wxStaticText* m_staticTextStrtFreq;
+		wxTextCtrl* m_textCtrlStrtFreq;
+		wxChoice* m_choiceEinheitFreq1;
+		wxStaticText* m_staticTextEndFreq;
+		wxTextCtrl* m_textCtrlEndFreq;
+		wxChoice* m_choiceEinheitFreq2;
+		wxStaticText* m_staticTextAnzahlSweep;
+		wxTextCtrl* m_textCtrlAnzahlSweep;
+		wxButton* m_buttonStart;
+		wxButton* m_buttonStop;
+		wxButton* m_buttonReset;
+		wxStaticText* m_staticTextProgress;
+		wxGauge* m_gaugeProgress;
+		wxButton* m_buttonNext;
+	
+	public:
+		
+		MultiMessWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Multi Punkt Messung"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 621,563 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+		~MultiMessWindow();
+	
+};
+
+

@@ -59,24 +59,22 @@ private:
 
 };
 
-class sData3D : sData
+class sData3D
 {
- public:
+private:
+    int X_Messpunkte;
+    int Y_Messpunkte;
+    int Messpunkte;
 
- private:
-    sParam* dsParam;
-    int width = 1;
-    int height = 1;
-    /*
-    std::vector<std::vector<std::vector<double>>> dsR3D(
-        width,
-        std::vector<double> (hight)
-    );
-    std::vector<std::vector<std::vector<double>>> dsI3D(
-        width,
-        std::vector<double> (hight)
-    );
-    */
+    //Ein Großes array mit allen Messdaten hintereinander geschrieben
+    std::vector<double> dataArray;
+public:
+    sData3D(int x = 1, int y = 1, int Anzahl = 512);
+    
+    double& at(int x, int y, int dataIndex);
+ 
+    double* getDataPtr(int x, int y);
+
 };
 
 class fsuMesurement
@@ -96,6 +94,7 @@ public:
     void setFreqStartEnd(double FreqS, double FreqE);
 
 private:
+
     std::vector<double> x_Data;
     std::vector<double> y_Data;
     double FreqStart;

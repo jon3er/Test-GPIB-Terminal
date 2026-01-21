@@ -823,6 +823,28 @@ bool sData::openCsvFileMultiline(wxString& filename)
 
 //------sData Ende------
 
+//------sData3D------
+
+sData3D::sData3D(int x, int y, int Anzahl) : X_Messpunkte(x), Y_Messpunkte(y), Messpunkte(Anzahl)
+{
+    dataArray.resize(X_Messpunkte * Y_Messpunkte * Messpunkte, 0.0);
+}
+
+double& sData3D::at(int x, int y, int dataIndex)
+{
+    int index = (y*X_Messpunkte + x) * Messpunkte + dataIndex;
+    return dataArray[index];
+}
+
+double* sData3D::getDataPtr(int x, int y)
+{
+    int index = (y*X_Messpunkte + x) * Messpunkte;
+    return &dataArray[index];
+}
+
+
+
+
 wxString terminalTimestampOutput(wxString Text)
 {
     //Set Terminal Output Format
