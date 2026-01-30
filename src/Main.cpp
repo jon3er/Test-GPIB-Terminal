@@ -12,6 +12,8 @@
 #include "main.h"
 #include "mathplot.h"
 
+// Verion Wo Gui noch komplett in einer datei ist.
+
 wxIMPLEMENT_APP(MainWin);
 
 //-----MainWin Methodes-----
