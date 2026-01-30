@@ -22,9 +22,10 @@ set(wxMathplots_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third-party/wxMathplots)
 # --- 3. Create Your Executable ---
 # Add your source files here.
 add_executable(TEST-GPIB-Terminal
-    src/main.cpp
-    src/fkt_GPIB.cpp
-    src/fkt_d2XX.cpp
+    src/gui/main.cpp
+    src/gui/Mesurement.cpp
+    src/hardware/fkt_GPIB.cpp
+    src/hardware/fkt_d2XX.cpp
     # wxMathplots
     third-party/wxMathplots/mathplot.cpp
 )
@@ -42,7 +43,8 @@ target_include_directories(TEST-GPIB-Terminal PRIVATE ${wxMathplots_INCLUDE_DIR}
 
 # --- Add project include folder ---
 target_include_directories(TEST-GPIB-Terminal PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/hardware
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/data
 )
 
 # For wxWidgets on Windows, we need to add this

@@ -1,5 +1,8 @@
 #pragma once
 
+#include <fstream>
+#include <iomanip>
+#include <format>
 #include <wx/wx.h>
 #include <thread>
 #include "fkt_d2xx.h"
@@ -108,8 +111,22 @@ private:
 
 class GpibDevice
 {
-public:
+protected:
     GpibDevice();
+
+    
+public:
+    // Singelton pattern to prevent multiple calls
+    static GpibDevice& get_instance()
+    {
+        static GpibDevice instance;
+        return instance;
+    }
+    GpibDevice(const GpibDevice&) = delete;
+    GpibDevice(GpibDevice&&) = delete;
+    GpibDevice operator=(const GpibDevice&) = delete;
+    GpibDevice operator=(GpibDevice&&) = delete;
+
     ~GpibDevice();
 
     std::string read(int forceReadBytes = 0);

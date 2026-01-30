@@ -1,7 +1,4 @@
-#include <fstream>
-#include <iomanip>
-#include <format>
-#include <chrono>
+
 #include "fkt_GPIB.h"
 
 //TODO Create Device Class and Create new read read and write funtions
