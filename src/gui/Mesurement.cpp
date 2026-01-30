@@ -645,11 +645,11 @@ void Mesurement2D::SetSliderValues()
 }
 void Mesurement2D::resetGuiValues()
 {
-    sliderY = 10;
-    sliderX = 10;
-    sliderScale = 100;
-    progressbar = 0;
-    currentMesurmentPoint = 0;
+    sliderY                 = 10;
+    sliderX                 = 10;
+    sliderScale             = 100;
+    progressbar             = 0;
+    currentMesurmentPoint   = 0;
 
     SetValues();
     GetTotalMesurements();
@@ -681,188 +681,171 @@ MultiMessWindow::MultiMessWindow( wxWindow* parent, wxWindowID id, const wxStrin
 	wxBoxSizer* bSizerMain;
 	bSizerMain = new wxBoxSizer( wxVERTICAL );
 	
-	wxStaticBoxSizer* sbSizer1;
-	sbSizer1 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, wxT("Messpunkte") ), wxVERTICAL );
-	
-	wxBoxSizer* bSizerSub11;
-	bSizerSub11 = new wxBoxSizer( wxHORIZONTAL );
-	
-	m_staticTextXMess = new wxStaticText( sbSizer1->GetStaticBox(), wxID_ANY, wxT("X Messpunkte:"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticTextXMess->Wrap( -1 );
-	bSizerSub11->Add( m_staticTextXMess, 1, wxALL, 5 );
-	
-	m_textCtrlXMess = new wxTextCtrl( sbSizer1->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	bSizerSub11->Add( m_textCtrlXMess, 1, wxALL, 5 );
-	
-	
-	sbSizer1->Add( bSizerSub11, 1, wxEXPAND, 5 );
-	
-	wxBoxSizer* bSizerSub12;
-	bSizerSub12 = new wxBoxSizer( wxHORIZONTAL );
-	
-	m_staticTextYMess = new wxStaticText( sbSizer1->GetStaticBox(), wxID_ANY, wxT("Y Messpunkte:"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticTextYMess->Wrap( -1 );
-	bSizerSub12->Add( m_staticTextYMess, 1, wxALL, 5 );
-	
-	m_textCtrlYMess = new wxTextCtrl( sbSizer1->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	bSizerSub12->Add( m_textCtrlYMess, 1, wxALL, 5 );
-	
-	
-	sbSizer1->Add( bSizerSub12, 1, wxEXPAND, 5 );
-	
+    // ----- Messpunkte Sizerbox -----
+	    wxStaticBoxSizer* sbSizer1 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, wxT("Messpunkte") ), wxVERTICAL );
+
+            m_staticTextXMess   = new wxStaticText( sbSizer1->GetStaticBox(),   wxID_ANY, wxT("X Messpunkte:"), wxDefaultPosition, wxDefaultSize, 0 );
+            m_staticTextXMess->Wrap( -1 );
+            m_textCtrlXMess     = new wxTextCtrl( sbSizer1->GetStaticBox(),     wxID_ANY, wxEmptyString,        wxDefaultPosition, wxDefaultSize, 0 );
+            
+
+            wxBoxSizer* bSizerSub11 = new wxBoxSizer( wxHORIZONTAL );
+
+            bSizerSub11->Add( m_staticTextXMess,    1, wxALL, 5 );
+            bSizerSub11->Add( m_textCtrlXMess,      1, wxALL, 5 );
+
+            
+            m_staticTextYMess = new wxStaticText(   sbSizer1->GetStaticBox(), wxID_ANY, wxT("Y Messpunkte:"),   wxDefaultPosition, wxDefaultSize, 0 );
+            m_staticTextYMess->Wrap( -1 );
+            m_textCtrlYMess = new wxTextCtrl(       sbSizer1->GetStaticBox(), wxID_ANY, wxEmptyString,          wxDefaultPosition, wxDefaultSize, 0 );
+            
+            wxBoxSizer* bSizerSub12 = new wxBoxSizer( wxHORIZONTAL );
+            bSizerSub12->Add( m_staticTextYMess,    1, wxALL, 5 );
+            bSizerSub12->Add( m_textCtrlYMess,      1, wxALL, 5 );
+
+        sbSizer1->Add( bSizerSub11, 1, wxEXPAND, 5 );
+        sbSizer1->Add( bSizerSub12, 1, wxEXPAND, 5 );
 	
 	bSizerMain->Add( sbSizer1, 1, wxEXPAND, 5 );
-	
-	wxStaticBoxSizer* sbSizer2;
-	sbSizer2 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, wxT("Lage Parameter") ), wxVERTICAL );
-	
-	wxBoxSizer* bSizerSub21;
-	bSizerSub21 = new wxBoxSizer( wxVERTICAL );
-	
-	wxStaticBoxSizer* sbSizerSub211;
-	sbSizerSub211 = new wxStaticBoxSizer( new wxStaticBox( sbSizer2->GetStaticBox(), wxID_ANY, wxT("Messstartpunktkoordinaten [mm]") ), wxHORIZONTAL );
-	
-	m_staticTextXStartCord = new wxStaticText( sbSizerSub211->GetStaticBox(), wxID_ANY, wxT("X:"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticTextXStartCord->Wrap( -1 );
-	sbSizerSub211->Add( m_staticTextXStartCord, 1, wxALL, 5 );
-	
-	m_textCtrlXStartCord = new wxTextCtrl( sbSizerSub211->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	sbSizerSub211->Add( m_textCtrlXStartCord, 3, wxALL, 5 );
-	
-	m_staticTextYStartCord = new wxStaticText( sbSizerSub211->GetStaticBox(), wxID_ANY, wxT("Y:"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticTextYStartCord->Wrap( -1 );
-	sbSizerSub211->Add( m_staticTextYStartCord, 1, wxALL, 5 );
-	
-	m_textCtrlYStartCord = new wxTextCtrl( sbSizerSub211->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	sbSizerSub211->Add( m_textCtrlYStartCord, 3, wxALL, 5 );
-	
-	
-	bSizerSub21->Add( sbSizerSub211, 1, wxEXPAND, 5 );
-	
-	
-	sbSizer2->Add( bSizerSub21, 1, wxEXPAND, 5 );
-	
-	wxBoxSizer* bSizerSub22;
-	bSizerSub22 = new wxBoxSizer( wxHORIZONTAL );
-	
-	m_staticTextXAbstand = new wxStaticText( sbSizer2->GetStaticBox(), wxID_ANY, wxT("X-Messpunkt abstand  [mm]"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticTextXAbstand->Wrap( -1 );
-	bSizerSub22->Add( m_staticTextXAbstand, 1, wxALL, 5 );
-	
-	m_textCtrlXAbstand = new wxTextCtrl( sbSizer2->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	bSizerSub22->Add( m_textCtrlXAbstand, 1, wxALL, 5 );
-	
-	
-	sbSizer2->Add( bSizerSub22, 1, wxEXPAND, 5 );
-	
-	wxBoxSizer* bSizerSub23;
-	bSizerSub23 = new wxBoxSizer( wxHORIZONTAL );
-	
-	m_staticTextYAbstand = new wxStaticText( sbSizer2->GetStaticBox(), wxID_ANY, wxT("Y-Messpunkt abstand  [mm]"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticTextYAbstand->Wrap( -1 );
-	bSizerSub23->Add( m_staticTextYAbstand, 1, wxALL, 5 );
-	
-	m_textCtrlYAbstand = new wxTextCtrl( sbSizer2->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	bSizerSub23->Add( m_textCtrlYAbstand, 1, wxALL, 5 );
-	
-	
-	sbSizer2->Add( bSizerSub23, 1, wxEXPAND, 5 );
-	
+	// ----- Messpunkte Sizerbox ende-----
+
+    // ----- Lage Parameter Sizerbox -----
+            
+        wxStaticBoxSizer* sbSizer2      = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, wxT("Lage Parameter") ), wxVERTICAL );
+            
+            wxStaticBoxSizer* sbSizerSub211 = new wxStaticBoxSizer( new wxStaticBox( sbSizer2->GetStaticBox(), wxID_ANY, wxT("Messstartpunktkoordinaten [mm]") ), wxHORIZONTAL );
+            
+            m_staticTextXStartCord          = new wxStaticText( sbSizerSub211->GetStaticBox(), wxID_ANY, wxT("X:"),     wxDefaultPosition, wxDefaultSize, 0 );
+            m_staticTextXStartCord->Wrap( -1 );
+            m_textCtrlXStartCord            = new wxTextCtrl(   sbSizerSub211->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+            
+            m_staticTextYStartCord          = new wxStaticText( sbSizerSub211->GetStaticBox(), wxID_ANY, wxT("Y:"),     wxDefaultPosition, wxDefaultSize, 0 );
+            m_staticTextYStartCord->Wrap( -1 );
+            m_textCtrlYStartCord            = new wxTextCtrl(   sbSizerSub211->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+            
+            wxBoxSizer* bSizerSub21         = new wxBoxSizer( wxVERTICAL );
+            sbSizerSub211->Add( m_staticTextXStartCord, 1, wxALL, 5 );
+            sbSizerSub211->Add( m_textCtrlXStartCord,   3, wxALL, 5 );
+
+            sbSizerSub211->Add( m_staticTextYStartCord, 1, wxALL, 5 );
+            sbSizerSub211->Add( m_textCtrlYStartCord,   3, wxALL, 5 );
+            
+            bSizerSub21->Add( sbSizerSub211, 1, wxEXPAND, 5 );
+            
+            // ----- X Messpunkte Sizerbox -----
+            m_staticTextXAbstand    = new wxStaticText( sbSizer2->GetStaticBox(), wxID_ANY, wxT("X-Messpunkt abstand  [mm]"), wxDefaultPosition, wxDefaultSize, 0 );
+            m_staticTextXAbstand->Wrap( -1 );
+            m_textCtrlXAbstand      = new wxTextCtrl(   sbSizer2->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+            
+            wxBoxSizer* bSizerSub22 = new wxBoxSizer( wxHORIZONTAL );
+            bSizerSub22->Add( m_textCtrlXAbstand,   1, wxALL, 5 );
+            bSizerSub22->Add( m_staticTextXAbstand, 1, wxALL, 5 );
+
+            // ----- Y Messpunkte Sizerbox -----
+            m_staticTextYAbstand    = new wxStaticText( sbSizer2->GetStaticBox(), wxID_ANY, wxT("Y-Messpunkt abstand  [mm]"), wxDefaultPosition, wxDefaultSize, 0 );
+            m_staticTextYAbstand->Wrap( -1 );
+            m_textCtrlYAbstand      = new wxTextCtrl(   sbSizer2->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+            
+            
+            wxBoxSizer* bSizerSub23 = new wxBoxSizer( wxHORIZONTAL );
+            bSizerSub23->Add( m_staticTextYAbstand, 1, wxALL, 5 );
+            bSizerSub23->Add( m_textCtrlYAbstand,   1, wxALL, 5 );
+
+        // Textbox Sizer 2
+        sbSizer2->Add( bSizerSub21, 1, wxEXPAND, 5 );
+        sbSizer2->Add( bSizerSub22, 1, wxEXPAND, 5 );
+        sbSizer2->Add( bSizerSub23, 1, wxEXPAND, 5 );
 	
 	bSizerMain->Add( sbSizer2, 1, wxEXPAND, 5 );
-	
-	wxStaticBoxSizer* sbSizer3;
-	sbSizer3 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, wxT("Messeinstellungen") ), wxVERTICAL );
-	
-	wxBoxSizer* bSizerSub31;
-	bSizerSub31 = new wxBoxSizer( wxHORIZONTAL );
-	
-	m_staticTextStrtFreq = new wxStaticText( sbSizer3->GetStaticBox(), wxID_ANY, wxT("Start Frequenz:"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticTextStrtFreq->Wrap( -1 );
-	bSizerSub31->Add( m_staticTextStrtFreq, 2, wxALL, 5 );
-	
-	m_textCtrlStrtFreq = new wxTextCtrl( sbSizer3->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	bSizerSub31->Add( m_textCtrlStrtFreq, 1, wxALL, 5 );
-	
-	
-	m_choiceEinheitFreq1 = new wxChoice( sbSizer3->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, freqEinheiten, 0 );
-	m_choiceEinheitFreq1->SetSelection( 1 );
-	bSizerSub31->Add( m_choiceEinheitFreq1, 1, wxALL, 5 );
-	
-	
-	sbSizer3->Add( bSizerSub31, 1, wxEXPAND, 5 );
-	
-	wxBoxSizer* bSizerSub32;
-	bSizerSub32 = new wxBoxSizer( wxHORIZONTAL );
-	
-	m_staticTextEndFreq = new wxStaticText( sbSizer3->GetStaticBox(), wxID_ANY, wxT("End Frequenz:"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticTextEndFreq->Wrap( -1 );
-	bSizerSub32->Add( m_staticTextEndFreq, 2, wxALL, 5 );
-	
-	m_textCtrlEndFreq = new wxTextCtrl( sbSizer3->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	bSizerSub32->Add( m_textCtrlEndFreq, 1, wxALL, 5 );
-	
-	
-	m_choiceEinheitFreq2 = new wxChoice( sbSizer3->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, freqEinheiten, 0 );
-	m_choiceEinheitFreq2->SetSelection( 1 );
-	bSizerSub32->Add( m_choiceEinheitFreq2, 1, wxALL, 5 );
-	
-	
-	sbSizer3->Add( bSizerSub32, 1, wxEXPAND, 5 );
-	
-	wxBoxSizer* bSizerSub33;
-	bSizerSub33 = new wxBoxSizer( wxHORIZONTAL );
-	
-	m_staticTextAnzahlSweep = new wxStaticText( sbSizer3->GetStaticBox(), wxID_ANY, wxT("Anzahl der Sweep Messpunkte:"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticTextAnzahlSweep->Wrap( -1 );
-	bSizerSub33->Add( m_staticTextAnzahlSweep, 1, wxALL, 5 );
-	
-	m_textCtrlAnzahlSweep = new wxTextCtrl( sbSizer3->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	bSizerSub33->Add( m_textCtrlAnzahlSweep, 1, wxALL, 5 );
-	
-	
-	sbSizer3->Add( bSizerSub33, 1, wxEXPAND, 5 );
-	
+    // ----- Lage Parameter Sizerbox ende-----
+
+        // ----- Messeinstellungen Sizerbox -----
+        wxStaticBoxSizer* sbSizer3 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, wxT("Messeinstellungen") ), wxVERTICAL );
+            
+            // Start Frequenz
+            m_staticTextStrtFreq = new wxStaticText( sbSizer3->GetStaticBox(), wxID_ANY, wxT("Start Frequenz:"), wxDefaultPosition, wxDefaultSize, 0 );
+            m_staticTextStrtFreq->Wrap( -1 );
+            
+            m_textCtrlStrtFreq = new wxTextCtrl( sbSizer3->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+            
+            m_choiceEinheitFreq1 = new wxChoice( sbSizer3->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, freqEinheiten, 0 );
+            m_choiceEinheitFreq1->SetSelection( 1 );
+            
+            
+            wxBoxSizer* bSizerSub31 = new wxBoxSizer( wxHORIZONTAL );
+            bSizerSub31->Add( m_staticTextStrtFreq, 2, wxALL, 5 );
+            bSizerSub31->Add( m_textCtrlStrtFreq,   1, wxALL, 5 );
+            bSizerSub31->Add( m_choiceEinheitFreq1, 1, wxALL, 5 );
+            
+            // End Frequenz
+            m_staticTextEndFreq = new wxStaticText( sbSizer3->GetStaticBox(), wxID_ANY, wxT("End Frequenz:"), wxDefaultPosition, wxDefaultSize, 0 );
+            m_staticTextEndFreq->Wrap( -1 );
+            
+            m_textCtrlEndFreq = new wxTextCtrl( sbSizer3->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+            
+            m_choiceEinheitFreq2 = new wxChoice( sbSizer3->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, freqEinheiten, 0 );
+            m_choiceEinheitFreq2->SetSelection( 1 );
+
+            
+            wxBoxSizer* bSizerSub32 = new wxBoxSizer( wxHORIZONTAL );
+            bSizerSub32->Add( m_staticTextEndFreq,  2, wxALL, 5 );
+            bSizerSub32->Add( m_textCtrlEndFreq,    1, wxALL, 5 );
+            bSizerSub32->Add( m_choiceEinheitFreq2, 1, wxALL, 5 );
+
+            
+            
+            // Anz Messpunkte
+            m_staticTextAnzahlSweep = new wxStaticText( sbSizer3->GetStaticBox(), wxID_ANY, wxT("Anzahl der Sweep Messpunkte:"), wxDefaultPosition, wxDefaultSize, 0 );
+            m_staticTextAnzahlSweep->Wrap( -1 );
+
+            m_textCtrlAnzahlSweep = new wxTextCtrl( sbSizer3->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
+            
+            wxBoxSizer* bSizerSub33 = new wxBoxSizer( wxHORIZONTAL );
+            bSizerSub33->Add( m_staticTextAnzahlSweep,  1, wxALL, 5 );
+            bSizerSub33->Add( m_textCtrlAnzahlSweep,    1, wxALL, 5 );
+
+        // Textbox Sizer 3
+        sbSizer3->Add( bSizerSub31, 1, wxEXPAND, 5 );
+        sbSizer3->Add( bSizerSub32, 1, wxEXPAND, 5 );
+        sbSizer3->Add( bSizerSub33, 1, wxEXPAND, 5 );
 	
 	bSizerMain->Add( sbSizer3, 1, wxEXPAND, 5 );
 	
-	wxBoxSizer* bSizer4;
-	bSizer4 = new wxBoxSizer( wxHORIZONTAL );
 	
-	m_buttonStart = new wxButton( this, wxID_ANY, wxT("Start"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer4->Add( m_buttonStart, 1, wxALL, 5 );
-	
-	m_buttonStop = new wxButton( this, wxID_ANY, wxT("Stop"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer4->Add( m_buttonStop, 1, wxALL, 5 );
-	
-	m_buttonReset = new wxButton( this, wxID_ANY, wxT("Reset"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer4->Add( m_buttonReset, 1, wxALL, 5 );
-	
+        // ----- Buttons -----
+        m_buttonStart   = new wxButton( this, wxID_ANY, wxT("Start"),   wxDefaultPosition, wxDefaultSize, 0 );
+        m_buttonStop    = new wxButton( this, wxID_ANY, wxT("Stop"),    wxDefaultPosition, wxDefaultSize, 0 );
+        m_buttonReset   = new wxButton( this, wxID_ANY, wxT("Reset"),   wxDefaultPosition, wxDefaultSize, 0 );
+        
+        
+        wxBoxSizer* bSizer4 = new wxBoxSizer( wxHORIZONTAL );
+        bSizer4->Add( m_buttonStart,    1, wxALL, 5 );
+        bSizer4->Add( m_buttonStop,     1, wxALL, 5 );
+        bSizer4->Add( m_buttonReset,    1, wxALL, 5 );
 	
 	bSizerMain->Add( bSizer4, 1, wxEXPAND, 5 );
 	
-	wxStaticBoxSizer* sbSizer5;
-	sbSizer5 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, wxT("Test") ), wxVERTICAL );
-	
-	wxBoxSizer* bSizerSub51;
-	bSizerSub51 = new wxBoxSizer( wxHORIZONTAL );
-	
-	m_staticTextProgress = new wxStaticText( sbSizer5->GetStaticBox(), wxID_ANY, wxT("0 / 100"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticTextProgress->Wrap( -1 );
-	bSizerSub51->Add( m_staticTextProgress, 0, wxALL, 5 );
-	
-	m_gaugeProgress = new wxGauge( sbSizer5->GetStaticBox(), wxID_ANY, 100, wxDefaultPosition, wxDefaultSize, wxGA_HORIZONTAL );
-	m_gaugeProgress->SetValue( 0 ); 
-	bSizerSub51->Add( m_gaugeProgress, 0, wxALL, 5 );
-	
-	m_buttonNext = new wxButton( sbSizer5->GetStaticBox(), wxID_ANY, wxT("Next"), wxDefaultPosition, wxDefaultSize, 0 );
-	bSizerSub51->Add( m_buttonNext, 0, wxALL, 5 );
-	
-	
-	sbSizer5->Add( bSizerSub51, 1, wxEXPAND, 5 );
-	
+    // ----- Test -----
+        wxStaticBoxSizer* sbSizer5 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, wxT("Test") ), wxVERTICAL );
+        
+            m_staticTextProgress = new wxStaticText( sbSizer5->GetStaticBox(), wxID_ANY, wxT("0 / 100"), wxDefaultPosition, wxDefaultSize, 0 );
+            m_staticTextProgress->Wrap( -1 );
+            
+            m_gaugeProgress = new wxGauge( sbSizer5->GetStaticBox(), wxID_ANY, 100, wxDefaultPosition, wxDefaultSize, wxGA_HORIZONTAL );
+            m_gaugeProgress->SetValue( 0 ); 
+
+            m_buttonNext    = new wxButton(sbSizer5->GetStaticBox(), wxID_ANY, wxT("Next"), wxDefaultPosition, wxDefaultSize, 0 );
+            
+            
+            wxBoxSizer* bSizerSub51 = new wxBoxSizer( wxHORIZONTAL );
+            bSizerSub51->Add( m_staticTextProgress, 0, wxALL, 5 );
+            bSizerSub51->Add( m_gaugeProgress,      0, wxALL, 5 );
+            bSizerSub51->Add( m_buttonNext,         0, wxALL, 5 );
+        
+        sbSizer5->Add( bSizerSub51, 1, wxEXPAND, 5 );
 	
 	bSizerMain->Add( sbSizer5, 1, wxEXPAND, 5 );
+    // ----- Test Ende -----
 	
 	//Button function binds
     m_buttonStart   ->Bind(wxEVT_BUTTON, &MultiMessWindow::startButton, this);

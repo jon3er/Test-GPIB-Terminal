@@ -36,19 +36,22 @@ public:
     ~sData();
     
     bool SetData(sParam *par, std::vector<double> re, std::vector<double> im);
-
     bool GetData(sParam *par,std::vector<double>& re, std::vector<double>& im);
 
     sParam* GetParameter() { return(dsParam); };
 
+    // set File Var
     bool setFileName(wxString Name);
     bool setFileType(wxString Type);
+    // set Points
     bool setNumberOfPts_X(unsigned int NumbPtsX);
     bool setNumberOfPts_Y(unsigned int NumbPtsY);
+    // set Mesurement var
     bool setAmpUnit(wxString Unit);
     bool setStartFreq(unsigned int StartFreq);
     bool setEndFreq(unsigned int EndFreq);
     bool setTimeAndDate();
+    // file operations
     bool saveToCsvFile(wxString& Filename);
     bool openCsvFile(wxString& filename);
     bool openCsvFileMultiline(wxString& filename);
@@ -122,6 +125,7 @@ public:
         static GpibDevice instance;
         return instance;
     }
+    // Overload to prevent second two instance
     GpibDevice(const GpibDevice&) = delete;
     GpibDevice(GpibDevice&&) = delete;
     GpibDevice operator=(const GpibDevice&) = delete;
@@ -132,8 +136,9 @@ public:
     std::string read(int forceReadBytes = 0);
     std::string write(std::string msg);
     std::string send(std::string msg, int DelayMs = 100);
-    DWORD quaryBuffer();
     std::string statusText();
+    DWORD       quaryBuffer();
+    
 
     void connect(std::string args = "");
     void disconnect(std::string args = "");
@@ -142,22 +147,24 @@ public:
  
     FT_STATUS getStatus();
     FT_HANDLE getHandle();
+
     bool getConnected();
-    std::string getLastMsgReseived();
     int getBaudrate();
+    std::string getLastMsgReseived();
+    
     fsuMesurement getMesurement() { return Messung; };
 
     void setBaudrate(int BaudrateNew);
 private:
-    FT_HANDLE ftHandle = NULL;
-    FT_STATUS ftStatus = FT_OK;
-    DWORD numDev = 0;
-    int BaudRate = 921600;
-    bool Connected = false;
-    bool configFin = false;
-    int sendDelayMs = 100;
+    FT_HANDLE ftHandle  = NULL;
+    FT_STATUS ftStatus  = FT_OK;
+    DWORD numDev        = 0;
+    int BaudRate        = 921600;
+    bool Connected      = false;
+    bool configFin      = false;
+    int sendDelayMs     = 100;
     std::string lastMsgReceived = "";
-    DWORD BytesToRead = 0;
+    DWORD BytesToRead   = 0;
 
     fsuMesurement Messung;
 };

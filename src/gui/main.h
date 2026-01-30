@@ -121,27 +121,30 @@ public:
 
 private:
     void OnEnterTerminal(wxCommandEvent& event);
+
     //Map Functions
     void setupCmds();
     //Command Functions
     using CommandMap = std::map<std::string, std::function<void(const std::string&)>>;
     CommandMap cmds;
+
+    // Device managment
     void scanDevices(const std::string& args);
     void statusDevice(const std::string& args);
     void configDevice(const std::string& args);
+    // connection
     void connectDevice(const std::string& args);
     void disconnectDevice(const std::string& args);
+    // com
     wxString sendToDevice(const std::string& args);
     wxString readFromDevice(const std::string& args);
     void writeToDevice(const std::string& args);
+    // test
     void testDevice(const std::string& args);
 
-    //Terminal Output
 protected:
     wxTextCtrl* TerminalDisplay;
 
-    //device Class
-    //GpibDevice Adapter;
 };
 
 class FunctionWindow : public wxDialog
@@ -195,8 +198,7 @@ private:
 
     std::string getGpibCmdFreq(wxString NumVal, wxString Selection);
     std::string getGpibCmdPegel(wxString NumVal, wxString Selection);
-    //Adapter
-    //GpibDevice Adapter;
+
     //Units
     wxString FreqStartSetUnit;
     wxString FreqEndeSetUnit;

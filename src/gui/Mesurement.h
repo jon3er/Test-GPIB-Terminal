@@ -61,24 +61,27 @@ class PlotWindowSetMarker : public wxDialog
 
 	protected:
 		wxCheckBox* m_checkBox1;
+        wxCheckBox* m_checkBox2;
+        wxCheckBox* m_checkBox3;
+        wxCheckBox* m_checkBox4;
+
 		wxTextCtrl* m_textCtrl1;
+        wxTextCtrl* m_textCtrl2;
+
 		wxChoice* m_choice1;
-		wxCheckBox* m_checkBox2;
-		wxButton* m_button1;
-		wxCheckBox* m_checkBox3;
-		wxTextCtrl* m_textCtrl2;
 		wxChoice* m_choice2;
-		wxCheckBox* m_checkBox4;
+
+		wxButton* m_button1;
 		wxButton* m_button2;
 
 	public:
 		PlotWindowSetMarker( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Set Marker"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 417,300 ), long style = wxDEFAULT_FRAME_STYLE|wxTAB_TRAVERSAL );
 		~PlotWindowSetMarker();
 
-        void toggleSelection1(wxCommandEvent& event);
-        void toggleSelection2(wxCommandEvent& event);
-        void SetSelection1(wxCommandEvent& event);
-        void SetSelection2(wxCommandEvent& event);
+        void toggleSelection1(  wxCommandEvent& event);
+        void toggleSelection2(  wxCommandEvent& event);
+        void SetSelection1(     wxCommandEvent& event);
+        void SetSelection2(     wxCommandEvent& event);
         void toggleSelection1fkt();
         void toggleSelection2fkt();
         void GetSelectedValue1();
@@ -97,24 +100,30 @@ class Mesurement2D : public wxDialog
         int progressbar;
         int currentMesurmentPoint;
         int totalMesurmentPoints;
+
 	protected:
 		wxStaticText* m_staticText1;
 		wxStaticText* m_staticText2;
-		wxSlider* m_slider1;
-		wxStaticText* m_staticText3;
-		wxSlider* m_slider2;
-		wxStaticText* m_staticText4;
-		wxSlider* m_slider3;
-		wxStaticText* m_staticText5;
-		wxChoice* m_choice1;
-		wxButton* m_button2;
-		wxButton* m_button1;
-		wxStaticText* m_staticText6;
+        wxStaticText* m_staticText3;
+        wxStaticText* m_staticText4;
+        wxStaticText* m_staticText5;
+        wxStaticText* m_staticText6;
 		wxStaticText* m_staticText7;
-		wxGauge* m_gauge1;
+
+
+		wxSlider* m_slider1;
+		wxSlider* m_slider2;
+		wxSlider* m_slider3;
+		
+		wxChoice* m_choice1;
+
+        wxButton* m_button1;
+		wxButton* m_button2;
 		wxButton* m_button3;
 		wxButton* m_button4;
 		wxButton* m_button5;
+		
+		wxGauge* m_gauge1;
 
 	public:
 
@@ -122,11 +131,11 @@ class Mesurement2D : public wxDialog
 		~Mesurement2D();
         //Gui Event Functions
         void OnSliderUpdate(wxCommandEvent& event);
-        void OnReset(wxCommandEvent& event);
-        void OnSettings(wxCommandEvent& event);
-        void OnStart(wxCommandEvent& event);
-        void OnRestart(wxCommandEvent& event);
-        void OnStop(wxCommandEvent& event);
+        void OnReset(       wxCommandEvent& event);
+        void OnSettings(    wxCommandEvent& event);
+        void OnStart(       wxCommandEvent& event);
+        void OnRestart(     wxCommandEvent& event);
+        void OnStop(        wxCommandEvent& event);
         //Gui Helper Functions
         void GetValues();
         void SetValues();
@@ -147,10 +156,10 @@ class MultiMessWindow : public wxDialog
 {
 	private:
         //button functions
-        void startButton(wxCommandEvent& event);
-        void stopButton(wxCommandEvent& event);
-        void resetButton(wxCommandEvent& event);
-        void nextButton(wxCommandEvent& event);
+        void startButton(   wxCommandEvent& event);
+        void stopButton(    wxCommandEvent& event);
+        void resetButton(   wxCommandEvent& event);
+        void nextButton(    wxCommandEvent& event);
 
         //Helper functions
         void GetValues();
@@ -160,18 +169,18 @@ class MultiMessWindow : public wxDialog
         void testMessFunction();
 
         // Set Default values
-        wxString X_Messpunkte = "1";
-        wxString Y_Messpunkte = "1";
-        wxString X_Cord = "0";
-        wxString Y_Cord = "0";
-        wxString X_MessAbstand = "10";
-        wxString Y_MessAbstand = "10";   
+        wxString X_Messpunkte   = "1";
+        wxString Y_Messpunkte   = "1";
+        wxString X_Cord         = "0";
+        wxString Y_Cord         = "0";
+        wxString X_MessAbstand  = "10";
+        wxString Y_MessAbstand  = "10";   
 
-        wxString startFreq = "50";
+        wxString startFreq      = "50";
         wxString startFreqUnit;
-        wxString stopFreq = "100";
+        wxString stopFreq       = "100";
         wxString stopFreqUnit;
-        wxString AnzSweepMessPkt = "512";
+        wxString AnzSweepMessPkt= "512";
 
         int unsigned currentMesurmentPoint = 0;
         int totalMesurmentPoints;
@@ -180,32 +189,37 @@ class MultiMessWindow : public wxDialog
         //sData3D Data3D;
 
 	protected:
-		wxStaticText* m_staticTextXMess;
-		wxTextCtrl* m_textCtrlXMess;
-		wxStaticText* m_staticTextYMess;
-		wxTextCtrl* m_textCtrlYMess;
-		wxStaticText* m_staticTextXStartCord;
-		wxTextCtrl* m_textCtrlXStartCord;
-		wxStaticText* m_staticTextYStartCord;
-		wxTextCtrl* m_textCtrlYStartCord;
-		wxStaticText* m_staticTextXAbstand;
-		wxTextCtrl* m_textCtrlXAbstand;
-		wxStaticText* m_staticTextYAbstand;
-		wxTextCtrl* m_textCtrlYAbstand;
-		wxStaticText* m_staticTextStrtFreq;
-		wxTextCtrl* m_textCtrlStrtFreq;
-		wxChoice* m_choiceEinheitFreq1;
-		wxStaticText* m_staticTextEndFreq;
-		wxTextCtrl* m_textCtrlEndFreq;
-		wxChoice* m_choiceEinheitFreq2;
-		wxStaticText* m_staticTextAnzahlSweep;
-		wxTextCtrl* m_textCtrlAnzahlSweep;
-		wxButton* m_buttonStart;
-		wxButton* m_buttonStop;
-		wxButton* m_buttonReset;
-		wxStaticText* m_staticTextProgress;
-		wxGauge* m_gaugeProgress;
-		wxButton* m_buttonNext;
+        // Label text
+		wxStaticText*   m_staticTextXMess;
+        wxStaticText*   m_staticTextYMess;
+        wxStaticText*   m_staticTextXStartCord;
+        wxStaticText*   m_staticTextYStartCord;
+        wxStaticText*   m_staticTextXAbstand;
+        wxStaticText*   m_staticTextYAbstand;
+        wxStaticText*   m_staticTextStrtFreq;
+        wxStaticText*   m_staticTextEndFreq;
+        wxStaticText*   m_staticTextAnzahlSweep;
+        wxStaticText*   m_staticTextProgress;
+        // Text input
+		wxTextCtrl*     m_textCtrlXMess;
+        wxTextCtrl*     m_textCtrlYMess;
+		wxTextCtrl*     m_textCtrlXStartCord;
+		wxTextCtrl*     m_textCtrlYStartCord;
+		wxTextCtrl*     m_textCtrlXAbstand;
+		wxTextCtrl*     m_textCtrlYAbstand;
+		wxTextCtrl*     m_textCtrlStrtFreq;
+		wxTextCtrl*     m_textCtrlEndFreq;
+        wxTextCtrl*     m_textCtrlAnzahlSweep;
+        // Unit selection
+		wxChoice*       m_choiceEinheitFreq1;
+		wxChoice*       m_choiceEinheitFreq2;
+		// buttons
+		wxButton*       m_buttonStart;
+		wxButton*       m_buttonStop;
+		wxButton*       m_buttonReset;
+		wxButton*       m_buttonNext;
+        // Progressbar
+		wxGauge*        m_gaugeProgress;
 	
 	public:
 		
