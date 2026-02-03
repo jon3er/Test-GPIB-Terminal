@@ -271,7 +271,7 @@ void MainProgrammWin::MenuFileOpen(wxCommandEvent& event)
 
     filePathCurrentFile = openFileDialog.GetPath();
 
-    if (OpendData.openCsvFile(filePathCurrentFile))
+    if (openCsvFile(filePathCurrentFile, OpendData))
     {
         fileOpen = true;
     }
@@ -287,7 +287,7 @@ void MainProgrammWin::MenuFileSave(wxCommandEvent& event)
 {
     if (fileOpen)
     {
-        OpendData.saveToCsvFile(filePathCurrentFile);
+        saveToCsvFile(filePathCurrentFile, OpendData, 0);
     }
     else
     {
@@ -312,7 +312,7 @@ void MainProgrammWin::MenuFileSaveAs(wxCommandEvent& event)
     wxLogDebug("Opend save as window");
 
     filePathCurrentFile = saveAsFileDialog.GetPath();
-    if (!OpendData.saveToCsvFile(filePathCurrentFile))
+    if (!saveToCsvFile(filePathCurrentFile, OpendData, 0))
     {
         wxLogDebug("failed to save");
         fileOpen = false;
@@ -900,7 +900,7 @@ void FunctionWindow::OnTestSaveFile(wxCommandEvent& event)
     wxLogDebug("Schreib daten in CSV");
 
     wxString Dateiname = "D:\\CodeProjects\\VSCode\\projects\\Diplom\\Test-GPIB-Terminal\\LogFiles\\TestCSV";
-    TestObjekt.saveToCsvFile(Dateiname);
+    saveToCsvFile(Dateiname, TestObjekt, 0);
 }
 void FunctionWindow::OnWriteGpib(wxCommandEvent& event)
 {

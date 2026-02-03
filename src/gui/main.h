@@ -16,6 +16,8 @@
 // Gui header
 #include "mathplot.h"
 #include "Mesurement.h"
+// Data
+#include "dataManagement.h"
 // info header
 #include "systemInfo.h"
 #include "cmdGpib.h"

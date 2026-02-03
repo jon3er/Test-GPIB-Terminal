@@ -9,79 +9,7 @@
 #include "ftd2xx.h"
 #include <wx/textfile.h>
 
-class sData
-{
-public:
-    //Struktur für ein Datenobjekt
-    struct sParam                                   //structure for 1D and 3D dataset parameters
-    {
-        wxString        File;
-        wxString        Date;
-        wxString        Time;
-        wxString        Type;
-        unsigned int    NoPoints_X;
-        unsigned int    NoPoints_Y;
-      //unsigned int  NoPoints_Z;
-      //unsigned int  NoScans;
-        wxString        ampUnit;
-        unsigned int    startFreq;
-        unsigned int    endFreq;
 
-    };
-
-    //Konstruktor
-    
-    sData(const char* type = "empty", unsigned int NoPoints = 0);
-    //Destruktor
-    ~sData();
-    
-    bool SetData(sParam *par, std::vector<double> re, std::vector<double> im);
-    bool GetData(sParam *par,std::vector<double>& re, std::vector<double>& im);
-
-    sParam* GetParameter() { return(dsParam); };
-
-    // set File Var
-    bool setFileName(wxString Name);
-    bool setFileType(wxString Type);
-    // set Points
-    bool setNumberOfPts_X(unsigned int NumbPtsX);
-    bool setNumberOfPts_Y(unsigned int NumbPtsY);
-    // set Mesurement var
-    bool setAmpUnit(wxString Unit);
-    bool setStartFreq(unsigned int StartFreq);
-    bool setEndFreq(unsigned int EndFreq);
-    bool setTimeAndDate();
-    // file operations
-    bool saveToCsvFile(wxString& Filename);
-    bool openCsvFile(wxString& filename);
-    bool openCsvFileMultiline(wxString& filename);
-    
-    //virtual bool LoadFile(const wxString &name);
-
-private:
-    sParam*                 dsParam;                            //parameters
-    std::vector<double>     dsR;                                //data
-    std::vector<double>     dsI;
-
-};
-
-class sData3D
-{
-private:
-    int X_Messpunkte;
-    int Y_Messpunkte;
-    int Messpunkte;
-
-    //Ein Großes array mit allen Messdaten hintereinander geschrieben
-    std::vector<double> dataArray;
-public:
-    sData3D(int x = 1, int y = 1, int Anzahl = 512);
-    
-    double& at(int x, int y, int dataIndex);
- 
-    double* getDataPtr(int x, int y);
-
-};
 
 class fsuMesurement
 {

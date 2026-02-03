@@ -2,6 +2,8 @@
 
 #include <wx/wx.h>
 #include "mathplot.h"
+#include "dataManagement.h"
+#include "fkt_GPIB.h"
 
 // keyword inline um in den header definieren zu können
 namespace System 
@@ -25,35 +27,35 @@ namespace Global
 
 enum MainMenuBar
 {
-    ID_Hello = 01,
-    ID_OpenTerminal = 02,
+    ID_Hello            = 01,
+    ID_OpenTerminal     = 02,
 
-    ID_Main_File = 10,
-    ID_Main_File_Open = 11,
-    ID_Main_File_Close = 12,
-    ID_Main_File_Save = 13,
+    ID_Main_File        = 10,
+    ID_Main_File_Open   = 11,
+    ID_Main_File_Close  = 12,
+    ID_Main_File_Save   = 13,
     ID_Main_File_SaveAs = 14,
-    ID_Main_File_Exit = 15,
+    ID_Main_File_Exit   = 15,
 
-    ID_Main_Simulation = 20,
+    ID_Main_Simulation  = 20,
 
-    ID_Main_Mesurement = 30,
-    ID_Main_Mesurement_New = 31,
-    ID_Main_Mesurement_Open = 32,
-    ID_Main_Mesurement_Load = 33,
-    ID_Main_Mesurement_Preset_1 = 34,
-    ID_Main_Mesurement_Preset_2 = 35,
-    ID_Main_Mesurement_Preset_3 = 36,
-    ID_Main_Mesurement_2D_Mess = 37,
-    ID_Main_Mesurement_SetMarker = 38,
-    ID_Main_Mesurement_Settings = 39,
+    ID_Main_Mesurement              = 30,
+    ID_Main_Mesurement_New          = 31,
+    ID_Main_Mesurement_Open         = 32,
+    ID_Main_Mesurement_Load         = 33,
+    ID_Main_Mesurement_Preset_1     = 34,
+    ID_Main_Mesurement_Preset_2     = 35,
+    ID_Main_Mesurement_Preset_3     = 36,
+    ID_Main_Mesurement_2D_Mess      = 37,
+    ID_Main_Mesurement_SetMarker    = 38,
+    ID_Main_Mesurement_Settings     = 39,
 
-    ID_Main_Processing = 40,
+    ID_Main_Processing      = 40,
 
-    ID_Main_Test = 50,
-    ID_Main_Test_Terminal = 51,
-    ID_Main_Test_Func = 52,
+    ID_Main_Test            = 50,
+    ID_Main_Test_Terminal   = 51,
+    ID_Main_Test_Func       = 52,
 
-    ID_Main_Help = 60,
-    ID_Main_Help_About = 61
+    ID_Main_Help            = 60,
+    ID_Main_Help_About      = 61
 };

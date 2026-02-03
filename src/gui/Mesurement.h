@@ -8,6 +8,7 @@
 
 #include "systemInfo.h"
 #include "main.h"
+#include "dataManagement.h"
 #include "fkt_GPIB.h"
 #include "fkt_d2xx.h"
 

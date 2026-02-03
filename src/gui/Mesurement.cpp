@@ -1,5 +1,4 @@
-#include "main.h"
-
+#include "Mesurement.h"
 
 //-----Plot Window BEGIN--------
 PlotWindow::PlotWindow(wxWindow *parent) : wxDialog(parent, wxID_ANY, "Plot Window", wxDefaultPosition, wxSize(1000,750))
@@ -120,7 +119,7 @@ void PlotWindow::executeScriptEvent(wxCommandEvent& event)
 
     MessErgebnisse.SetData(MessInfo, y, x);
     wxString filePathSave = System::filePathRoot + System::fileSystemSlash + "LogFiles" + System::fileSystemSlash + fileName;
-    MessErgebnisse.saveToCsvFile(filePathSave);
+    saveToCsvFile(filePathSave, MessErgebnisse, 0);
     //test
     updatePlotData();
 }
