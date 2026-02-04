@@ -22,7 +22,7 @@ sData::sData(const char* type)
 }
 sData::~sData()
 {
-    delete dsParam;
+    //delete dsParam;
 }
 
 bool sData::SetData(sParam *par, std::vector<double> re, std::vector<double> im)
@@ -252,28 +252,41 @@ bool saveToCsvFile(wxString& filename, sData& data, int mesurementNumb)
 {
     std::vector<double> real;
     std::vector<double> imag;
+    
+    real = data.getRealArray();
+    imag = data.getImagArray();
 
-    sData::sParam *dsParam = data.GetParameter();
-    data.GetData(dsParam, real, imag); 
 
-    if (!dsParam) {
-
-        return false;
-    }
 
     //filename.Append(timestamp);
-    if (!(filename.substr(strlen(filename)-4) == ".csv"))
+    if (!filename.Lower().EndsWith(".csv"))
     {
         filename.Append(".csv");
     }
     
     wxTextFile file(filename.ToStdString());
+    //check if file Exists
+    if (mesurementNumb <= 1)
+    {
+        if (!file.Exists())
+        {
+            file.Create();
+        }
+        else
+        {
+            file.Clear();
+            file.Write();
+        }
+    }
+    file.Open();
 
-    if (!file.IsOpened()) {
+    if (!file.IsOpened()) 
+    {
+        wxLogDebug("Failed to open file");
         return false; 
     }
 
-    if (mesurementNumb == 0) // weiteren check hinzufügen
+    if (mesurementNumb == 1) // weiteren check hinzufügen
     {
         // Write header
         saveHeaderCsv(file, data);
@@ -285,10 +298,12 @@ bool saveToCsvFile(wxString& filename, sData& data, int mesurementNumb)
 
     if (data.GetType() == "Line")
     {
+        wxLogDebug("Linear mesurement");
         cont = false;
     }
     else
     {
+        wxLogDebug("Continuous mesurement");
         cont = true;
     }
 
@@ -296,22 +311,27 @@ bool saveToCsvFile(wxString& filename, sData& data, int mesurementNumb)
     wxString indexText = getIndexNumbers(data.getNumberOfPts_X(),data.getNumberOfPts_Y(), mesurementNumb, cont) + " Real";
 
     int lineNumber = findLineCsv(file, indexText);
+    wxLogDebug("found Line %d", lineNumber);
 
     int count = data.getNumberOfPts_Array();
 
     for (size_t i = 0; i < count; i++)
     {
-        file.GetLine(lineNumber).Append(",%d",real[i]);
+        file.GetLine(lineNumber) << ","<< real[i];
 
-        file.GetLine(lineNumber + 1).Append(",%d",imag[i]);
+        file.GetLine(lineNumber + 1) << "," << imag[i];
     }
+
+    file.Write();
+    file.Close();
 
     return true;
 }
 
-bool saveHeaderCsv(wxTextFile &file, sData data)
+bool saveHeaderCsv(wxTextFile &file, sData& data)
 {
     sData::sParam* dsParam = data.GetParameter(); 
+    data.setNumberofPts_Array();
 
     file.AddLine(wxString::Format("File Name,%s", dsParam->File));
     file.AddLine(wxString::Format("Date,%s", dsParam->Date));
@@ -319,18 +339,25 @@ bool saveHeaderCsv(wxTextFile &file, sData data)
     file.AddLine(wxString::Format("Type,%s", dsParam->Type));
     file.AddLine(wxString::Format("Number Points X,%d", dsParam->NoPoints_X));
     file.AddLine(wxString::Format("Number Points Y,%d", dsParam->NoPoints_Y));
-    file.AddLine(wxString::Format("Number Points per mesurement,%zu", dsParam->NoPoints_Array));
-    file.AddLine(wxString::Format("Start Frequency, %f%s", dsParam->startFreq, dsParam->ampUnit));
-    file.AddLine(wxString::Format("End Frequency, %f%s", dsParam->endFreq, dsParam->ampUnit));
+    file.AddLine(wxString::Format("Number Points per mesurement,%d", dsParam->NoPoints_Array));
+    file.AddLine(wxString::Format("Start Frequency, %d %s", dsParam->startFreq, dsParam->ampUnit.ToAscii()));
+    file.AddLine(wxString::Format("End Frequency, %d %s", dsParam->endFreq, dsParam->ampUnit.ToAscii()));
 
     file.AddLine(""); // Leerzeile
-    data.setNumberofPts_Array();
-
+    
     // Frequenz-Zeile zusammenbauen
-    wxString lineFreq = wxString::Format("f in %s", dsParam->ampUnit);
+    wxString lineFreq = wxString::Format("f in %s", dsParam->ampUnit.ToAscii());
     double startFreq = dsParam->startFreq;
     double endFreq = dsParam->endFreq;
-    double step = (endFreq - startFreq) / data.getNumberOfPts_Array();
+    double step = 1;
+    try
+    {
+        double step = (endFreq - startFreq) / data.getNumberOfPts_Array();
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+    }
     double freq = startFreq;
 
     for (size_t i = 0; i < dsParam->NoPoints_Array; i++)
@@ -448,22 +475,24 @@ std::string getIndexNumbers(int xPoints, int yPoints, int mesurementNumb, bool c
 int findLineCsv(wxTextFile& file, wxString findText)
 {
     int count = file.GetLineCount();
-
+    wxLogDebug("%s %i", findText.Upper(), count);
+    
     for (size_t i = 0; i < count; i++)
     {
-        if(file.GetLine(i).Upper().Contains(findText))
+        wxLogDebug("%s", file.GetLine(i).Upper());
+        if(file.GetLine(i).Upper().Contains(findText.Upper()))
         {
             return i;
         }
     }
-
+    wxLogDebug("Couldnt find text");
     return -1;
 }
 
 bool openCsvFile(wxString& filename, sData& data)
 {
     wxLogDebug("open CSV");
-    sData::sParam* dsParam;
+    sData::sParam* dsParam = new sData::sParam;;
     std::vector<double> dsR;
     std::vector<double> dsI;
     

@@ -892,6 +892,8 @@ void FunctionWindow::OnTestSaveFile(wxCommandEvent& event)
     sData TestObjekt;
 
     TestObjekt.setTimeAndDate();
+    TestObjekt.setNumberOfPts_X(10);
+    TestObjekt.setNumberOfPts_Y(10);
     sData::sParam* TestData = new sData::sParam;
     TestData = TestObjekt.GetParameter();
 
@@ -899,8 +901,16 @@ void FunctionWindow::OnTestSaveFile(wxCommandEvent& event)
 
     wxLogDebug("Schreib daten in CSV");
 
-    wxString Dateiname = "D:\\CodeProjects\\VSCode\\projects\\Diplom\\Test-GPIB-Terminal\\LogFiles\\TestCSV";
-    saveToCsvFile(Dateiname, TestObjekt, 0);
+    wxString Dateiname = "D:\\CodeProjects\\VSCode\\projects\\Diplom\\Test-GPIB-Terminal\\LogFiles\\TestCSVNeu";
+
+    //int messungen = TestObjekt.getNumberOfPts_X()* TestObjekt.getNumberOfPts_Y(); 
+    for (int i = 1; i < 100; i++)
+    {
+        if (!saveToCsvFile(Dateiname, TestObjekt, i))
+        {
+            wxLogDebug("Failed to save file");
+        }
+    }
 }
 void FunctionWindow::OnWriteGpib(wxCommandEvent& event)
 {

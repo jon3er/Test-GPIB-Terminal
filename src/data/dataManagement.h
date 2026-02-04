@@ -101,7 +101,7 @@ bool saveToCsvFile(wxString& Filename, sData& data, int mesurementNumb);
 
 //bool testSaveCsv(wxString& Filename, sData& data, int mesurementNumb);
 
-bool saveHeaderCsv(wxTextFile& file, sData data);
+bool saveHeaderCsv(wxTextFile& file, sData& data);
 
 bool saveDataCsv(wxTextFile& file, sData data, int xCord, int yCord);
 
