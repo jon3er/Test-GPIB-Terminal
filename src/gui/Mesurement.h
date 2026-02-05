@@ -115,7 +115,7 @@ class Mesurement2D : public wxDialog
 		wxSlider* m_slider1;
 		wxSlider* m_slider2;
 		wxSlider* m_slider3;
-		
+
 		wxChoice* m_choice1;
 
         wxButton* m_button1;
@@ -123,7 +123,7 @@ class Mesurement2D : public wxDialog
 		wxButton* m_button3;
 		wxButton* m_button4;
 		wxButton* m_button5;
-		
+
 		wxGauge* m_gauge1;
 
 	public:
@@ -149,11 +149,11 @@ class Mesurement2D : public wxDialog
 
         //Mesurement Functions
         void singleMesurement();
-        
+
 };
 
 
-class MultiMessWindow : public wxDialog 
+class MultiMessWindow : public wxDialog
 {
 	private:
         //button functions
@@ -175,7 +175,7 @@ class MultiMessWindow : public wxDialog
         wxString X_Cord         = "0";
         wxString Y_Cord         = "0";
         wxString X_MessAbstand  = "10";
-        wxString Y_MessAbstand  = "10";   
+        wxString Y_MessAbstand  = "10";
 
         wxString startFreq      = "50";
         wxString startFreqUnit;
@@ -184,7 +184,7 @@ class MultiMessWindow : public wxDialog
         wxString AnzSweepMessPkt= "512";
 
         int unsigned currentMesurmentPoint = 0;
-        int totalMesurmentPoints;
+        int unsigned totalMesurmentPoints;
 
         //sData Data1D;
         //sData3D Data3D;
@@ -221,10 +221,10 @@ class MultiMessWindow : public wxDialog
 		wxButton*       m_buttonNext;
         // Progressbar
 		wxGauge*        m_gaugeProgress;
-	
+
 	public:
-		
-		MultiMessWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Multi Punkt Messung"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 621,563 ), long style = wxDEFAULT_DIALOG_STYLE ); 
+
+		MultiMessWindow( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Multi Punkt Messung"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 621,563 ), long style = wxDEFAULT_DIALOG_STYLE );
 		~MultiMessWindow();
-	
+
 };

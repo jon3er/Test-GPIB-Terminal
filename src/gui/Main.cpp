@@ -52,17 +52,17 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, wxWindowID id, const wxStrin
 
     //------------------ Menubar --------------------
 	m_menubarMainProg = new wxMenuBar( 0 );
-    
+
     //------------------ file menu --------------------
 	m_menu_File = new wxMenu();
-	
+
     //file submenu
 	m_menuFile_Item_Open    = new wxMenuItem( m_menu_File, MainMenuBar::ID_Main_File_Open,      wxString( wxT("Open") ) + wxT('\t') + wxT("CTRL + O"), wxEmptyString, wxITEM_NORMAL );
 	m_menuFile_Item_Close   = new wxMenuItem( m_menu_File, MainMenuBar::ID_Main_File_Close,     wxString( wxT("Close") ) , wxEmptyString, wxITEM_NORMAL );
     m_menuFile_Item_Save    = new wxMenuItem( m_menu_File, MainMenuBar::ID_Main_File_Save,      wxString( wxT("Save") ) + wxT('\t') + wxT("CTRL + S"), wxEmptyString, wxITEM_NORMAL );
     m_menuFile_Item_SaveAs  = new wxMenuItem( m_menu_File, MainMenuBar::ID_Main_File_SaveAs,    wxString( wxT("Save as ...") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menuFile_Item_Exit    = new wxMenuItem( m_menu_File, MainMenuBar::ID_Main_File_Exit,      wxString( wxT("Exit") ) , wxEmptyString, wxITEM_NORMAL );
-	
+
     // set file submenu order
     m_menu_File->Append( m_menuFile_Item_Open );
     m_menu_File->AppendSeparator();
@@ -81,10 +81,10 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, wxWindowID id, const wxStrin
 
     // set submenu order
 
-    
+
     //------------------ Mesurement menu --------------------
 	m_menu_Mesurement = new wxMenu();
-	
+
     // create submenu elemets
 	m_menuMesure_Item_New           = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_New,        wxString( wxT("New Mesurement") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menuMesure_Item_Open          = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_Open,       wxString( wxT("Open Saved Mesurement") ) , wxEmptyString, wxITEM_NORMAL );
@@ -95,7 +95,7 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, wxWindowID id, const wxStrin
 	m_menuMesure_Item_2DMesurment   = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_2D_Mess,    wxString( wxT("2D Plot Mesurment") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menuMesure_Item_SetMarker     = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_SetMarker,  wxString( wxT("Set Marker") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menuMesure_Item_Settings      = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_Settings,   wxString( wxT("Settings") ) , wxEmptyString, wxITEM_NORMAL );
-	
+
     // set submenu order
     m_menu_Mesurement->Append( m_menuMesure_Item_New );
 	m_menu_Mesurement->AppendSeparator();
@@ -119,29 +119,29 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, wxWindowID id, const wxStrin
 
     // set submenu order
 
-	
+
     //------------------ Test menu --------------------
 	m_menu_Test = new wxMenu();
-	
+
     // create submenu elemets
 	m_menuTest_Item_Terminal    = new wxMenuItem( m_menu_Test, ID_Main_Test_Terminal, wxString( wxT("Terminal") ) + wxT('\t') + wxT("CTRL + SHIFT +T"), wxEmptyString, wxITEM_NORMAL );
 	m_menuTest_Item_Func        = new wxMenuItem( m_menu_Test, ID_Main_Test_Func, wxString( wxT("Function Test") ) + wxT('\t') + wxT("F1"), wxEmptyString, wxITEM_NORMAL );
-	
+
     // set submenu order
     m_menu_Test->Append( m_menuTest_Item_Terminal );
 	m_menu_Test->Append( m_menuTest_Item_Func );
 
     //------------------ Help menu --------------------
 	m_menu_Help = new wxMenu();
-	
+
     // create submenu elemets
 	m_menuHelp_Item_About = new wxMenuItem( m_menu_Help, ID_Main_Help_About, wxString( wxT("About") ) , wxEmptyString, wxITEM_NORMAL );
-	
+
     // set submenu order
     m_menu_Help->Append( m_menuHelp_Item_About );
 
 	//------------------  end Submenu --------------------
-    
+
 
     //------------------ set Menubar order --------------------
     m_menubarMainProg->Append( m_menu_File,         wxT("File") );
@@ -157,7 +157,7 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, wxWindowID id, const wxStrin
 
     //------------------  Sizers --------------------
     wxBoxSizer* bSizerMainProgV1 = new wxBoxSizer( wxVERTICAL );;
-    
+
     //----- 1. Horizontal Sizer -----
     wxBoxSizer* bSizerMainProgH1 = new wxBoxSizer( wxHORIZONTAL );;
 
@@ -203,7 +203,7 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, wxWindowID id, const wxStrin
 
 	bSizerMainProgV1->Add( m_panel2,            2, wxEXPAND | wxALL, 5 );
 	bSizerMainProgV1->Add( m_button1,           0, wxALIGN_RIGHT|wxALL, 10 );
-	
+
 	this->SetSizer( bSizerMainProgV1 );
 	this->Layout();
 
@@ -411,7 +411,7 @@ TerminalWindow::TerminalWindow(wxWindow *parent)
     TerminalDisplay = new wxTextCtrl(panelTerm,wxID_ANY,"",wxDefaultPosition,wxSize(1000, 200), wxTE_MULTILINE);
     //disable user input
     TerminalDisplay->SetEditable(false);
-    
+
     //text input
     wxTextCtrl* TerminalInput = new wxTextCtrl(panelTerm, wxID_ANY,"",wxDefaultPosition,wxSize(1000, 50), wxTE_MULTILINE | wxTE_PROCESS_ENTER);
     //set Cursor in input window
@@ -810,7 +810,7 @@ FunctionWindow::FunctionWindow(wxWindow *parent)
     wxButton* TestSaveFileButton    = new wxButton(panelfunc, wxID_ANY, "Test Save File",           wxPoint(10,0));
     //Create Button "Test Multi Mesurement"
     wxButton* TestMultiMessButton   = new wxButton(panelfunc, wxID_ANY, "Test Multi mesurement",    wxPoint(10,0));
-    
+
 
     //Funtion Output Lable
     wxStaticText* discFuncOutput = new wxStaticText(panelfunc,wxID_ANY,"Function output: ");
@@ -903,7 +903,7 @@ void FunctionWindow::OnTestSaveFile(wxCommandEvent& event)
 
     wxString Dateiname = "D:\\CodeProjects\\VSCode\\projects\\Diplom\\Test-GPIB-Terminal\\LogFiles\\TestCSVNeu";
 
-    //int messungen = TestObjekt.getNumberOfPts_X()* TestObjekt.getNumberOfPts_Y(); 
+    //int messungen = TestObjekt.getNumberOfPts_X()* TestObjekt.getNumberOfPts_Y();
     for (int i = 1; i < 100; i++)
     {
         if (!saveToCsvFile(Dateiname, TestObjekt, i))
@@ -1096,7 +1096,7 @@ SettingsTabDisplay::SettingsTabDisplay(wxNotebook *parent, const wxString &label
     yScalingAuswahl ->SetSelection(0);
 
     wxStaticText* descriptionText_7 = new wxStaticText(this, wxID_ANY, "Referenzpegel in dB:", wxPoint(10,10));
-    
+
     inputText_7 = new wxTextCtrl(this, wxID_ANY, "-20");
     inputText_7 ->SetValidator(val);
     //Y-Achsen Elemente-----Ende
@@ -1230,7 +1230,7 @@ void SettingsTabDisplay::getCurrentButton(wxCommandEvent& event)
         FreqStartSet    = Global::AdapterInstance.send("FREQ:STOP?");
         FreqEndeSet     = Global::AdapterInstance.send("FREQ:CENT?");
         FreqCenterSet   = Global::AdapterInstance.send("FREQ:SPAN?");
-        FreqSpanSet     = Global::AdapterInstance.send("FREQ:POW?");
+        FreqSpanSet     = Global::AdapterInstance.send("CALCulate:UNIT:POWer?");
         pegelSet        = Global::AdapterInstance.send("DISP:TRAC:Y:RLEV?");
         refPegelSet     = Global::AdapterInstance.send("DISP:TRAC:Y:SPAC?");
 

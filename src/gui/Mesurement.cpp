@@ -676,66 +676,66 @@ MultiMessWindow::MultiMessWindow( wxWindow* parent, wxWindowID id, const wxStrin
     freqEinheiten.Add("GHz");
 
 	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
-	
+
 	wxBoxSizer* bSizerMain;
 	bSizerMain = new wxBoxSizer( wxVERTICAL );
-	
+
     // ----- Messpunkte Sizerbox -----
 	    wxStaticBoxSizer* sbSizer1 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, wxT("Messpunkte") ), wxVERTICAL );
 
             m_staticTextXMess   = new wxStaticText( sbSizer1->GetStaticBox(),   wxID_ANY, wxT("X Messpunkte:"), wxDefaultPosition, wxDefaultSize, 0 );
             m_staticTextXMess->Wrap( -1 );
             m_textCtrlXMess     = new wxTextCtrl( sbSizer1->GetStaticBox(),     wxID_ANY, wxEmptyString,        wxDefaultPosition, wxDefaultSize, 0 );
-            
+
 
             wxBoxSizer* bSizerSub11 = new wxBoxSizer( wxHORIZONTAL );
 
             bSizerSub11->Add( m_staticTextXMess,    1, wxALL, 5 );
             bSizerSub11->Add( m_textCtrlXMess,      1, wxALL, 5 );
 
-            
+
             m_staticTextYMess = new wxStaticText(   sbSizer1->GetStaticBox(), wxID_ANY, wxT("Y Messpunkte:"),   wxDefaultPosition, wxDefaultSize, 0 );
             m_staticTextYMess->Wrap( -1 );
             m_textCtrlYMess = new wxTextCtrl(       sbSizer1->GetStaticBox(), wxID_ANY, wxEmptyString,          wxDefaultPosition, wxDefaultSize, 0 );
-            
+
             wxBoxSizer* bSizerSub12 = new wxBoxSizer( wxHORIZONTAL );
             bSizerSub12->Add( m_staticTextYMess,    1, wxALL, 5 );
             bSizerSub12->Add( m_textCtrlYMess,      1, wxALL, 5 );
 
         sbSizer1->Add( bSizerSub11, 1, wxEXPAND, 5 );
         sbSizer1->Add( bSizerSub12, 1, wxEXPAND, 5 );
-	
+
 	bSizerMain->Add( sbSizer1, 1, wxEXPAND, 5 );
 	// ----- Messpunkte Sizerbox ende-----
 
     // ----- Lage Parameter Sizerbox -----
-            
+
         wxStaticBoxSizer* sbSizer2      = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, wxT("Lage Parameter") ), wxVERTICAL );
-            
+
             wxStaticBoxSizer* sbSizerSub211 = new wxStaticBoxSizer( new wxStaticBox( sbSizer2->GetStaticBox(), wxID_ANY, wxT("Messstartpunktkoordinaten [mm]") ), wxHORIZONTAL );
-            
+
             m_staticTextXStartCord          = new wxStaticText( sbSizerSub211->GetStaticBox(), wxID_ANY, wxT("X:"),     wxDefaultPosition, wxDefaultSize, 0 );
             m_staticTextXStartCord->Wrap( -1 );
             m_textCtrlXStartCord            = new wxTextCtrl(   sbSizerSub211->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-            
+
             m_staticTextYStartCord          = new wxStaticText( sbSizerSub211->GetStaticBox(), wxID_ANY, wxT("Y:"),     wxDefaultPosition, wxDefaultSize, 0 );
             m_staticTextYStartCord->Wrap( -1 );
             m_textCtrlYStartCord            = new wxTextCtrl(   sbSizerSub211->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-            
+
             wxBoxSizer* bSizerSub21         = new wxBoxSizer( wxVERTICAL );
             sbSizerSub211->Add( m_staticTextXStartCord, 1, wxALL, 5 );
             sbSizerSub211->Add( m_textCtrlXStartCord,   3, wxALL, 5 );
 
             sbSizerSub211->Add( m_staticTextYStartCord, 1, wxALL, 5 );
             sbSizerSub211->Add( m_textCtrlYStartCord,   3, wxALL, 5 );
-            
+
             bSizerSub21->Add( sbSizerSub211, 1, wxEXPAND, 5 );
-            
+
             // ----- X Messpunkte Sizerbox -----
             m_staticTextXAbstand    = new wxStaticText( sbSizer2->GetStaticBox(), wxID_ANY, wxT("X-Messpunkt abstand  [mm]"), wxDefaultPosition, wxDefaultSize, 0 );
             m_staticTextXAbstand->Wrap( -1 );
             m_textCtrlXAbstand      = new wxTextCtrl(   sbSizer2->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-            
+
             wxBoxSizer* bSizerSub22 = new wxBoxSizer( wxHORIZONTAL );
             bSizerSub22->Add( m_textCtrlXAbstand,   1, wxALL, 5 );
             bSizerSub22->Add( m_staticTextXAbstand, 1, wxALL, 5 );
@@ -744,8 +744,8 @@ MultiMessWindow::MultiMessWindow( wxWindow* parent, wxWindowID id, const wxStrin
             m_staticTextYAbstand    = new wxStaticText( sbSizer2->GetStaticBox(), wxID_ANY, wxT("Y-Messpunkt abstand  [mm]"), wxDefaultPosition, wxDefaultSize, 0 );
             m_staticTextYAbstand->Wrap( -1 );
             m_textCtrlYAbstand      = new wxTextCtrl(   sbSizer2->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-            
-            
+
+
             wxBoxSizer* bSizerSub23 = new wxBoxSizer( wxHORIZONTAL );
             bSizerSub23->Add( m_staticTextYAbstand, 1, wxALL, 5 );
             bSizerSub23->Add( m_textCtrlYAbstand,   1, wxALL, 5 );
@@ -754,51 +754,51 @@ MultiMessWindow::MultiMessWindow( wxWindow* parent, wxWindowID id, const wxStrin
         sbSizer2->Add( bSizerSub21, 1, wxEXPAND, 5 );
         sbSizer2->Add( bSizerSub22, 1, wxEXPAND, 5 );
         sbSizer2->Add( bSizerSub23, 1, wxEXPAND, 5 );
-	
+
 	bSizerMain->Add( sbSizer2, 1, wxEXPAND, 5 );
     // ----- Lage Parameter Sizerbox ende-----
 
         // ----- Messeinstellungen Sizerbox -----
         wxStaticBoxSizer* sbSizer3 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, wxT("Messeinstellungen") ), wxVERTICAL );
-            
+
             // Start Frequenz
             m_staticTextStrtFreq = new wxStaticText( sbSizer3->GetStaticBox(), wxID_ANY, wxT("Start Frequenz:"), wxDefaultPosition, wxDefaultSize, 0 );
             m_staticTextStrtFreq->Wrap( -1 );
-            
+
             m_textCtrlStrtFreq = new wxTextCtrl( sbSizer3->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-            
+
             m_choiceEinheitFreq1 = new wxChoice( sbSizer3->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, freqEinheiten, 0 );
             m_choiceEinheitFreq1->SetSelection( 1 );
-            
-            
+
+
             wxBoxSizer* bSizerSub31 = new wxBoxSizer( wxHORIZONTAL );
             bSizerSub31->Add( m_staticTextStrtFreq, 2, wxALL, 5 );
             bSizerSub31->Add( m_textCtrlStrtFreq,   1, wxALL, 5 );
             bSizerSub31->Add( m_choiceEinheitFreq1, 1, wxALL, 5 );
-            
+
             // End Frequenz
             m_staticTextEndFreq = new wxStaticText( sbSizer3->GetStaticBox(), wxID_ANY, wxT("End Frequenz:"), wxDefaultPosition, wxDefaultSize, 0 );
             m_staticTextEndFreq->Wrap( -1 );
-            
+
             m_textCtrlEndFreq = new wxTextCtrl( sbSizer3->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-            
+
             m_choiceEinheitFreq2 = new wxChoice( sbSizer3->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, freqEinheiten, 0 );
             m_choiceEinheitFreq2->SetSelection( 1 );
 
-            
+
             wxBoxSizer* bSizerSub32 = new wxBoxSizer( wxHORIZONTAL );
             bSizerSub32->Add( m_staticTextEndFreq,  2, wxALL, 5 );
             bSizerSub32->Add( m_textCtrlEndFreq,    1, wxALL, 5 );
             bSizerSub32->Add( m_choiceEinheitFreq2, 1, wxALL, 5 );
 
-            
-            
+
+
             // Anz Messpunkte
             m_staticTextAnzahlSweep = new wxStaticText( sbSizer3->GetStaticBox(), wxID_ANY, wxT("Anzahl der Sweep Messpunkte:"), wxDefaultPosition, wxDefaultSize, 0 );
             m_staticTextAnzahlSweep->Wrap( -1 );
 
             m_textCtrlAnzahlSweep = new wxTextCtrl( sbSizer3->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-            
+
             wxBoxSizer* bSizerSub33 = new wxBoxSizer( wxHORIZONTAL );
             bSizerSub33->Add( m_staticTextAnzahlSweep,  1, wxALL, 5 );
             bSizerSub33->Add( m_textCtrlAnzahlSweep,    1, wxALL, 5 );
@@ -807,45 +807,45 @@ MultiMessWindow::MultiMessWindow( wxWindow* parent, wxWindowID id, const wxStrin
         sbSizer3->Add( bSizerSub31, 1, wxEXPAND, 5 );
         sbSizer3->Add( bSizerSub32, 1, wxEXPAND, 5 );
         sbSizer3->Add( bSizerSub33, 1, wxEXPAND, 5 );
-	
+
 	bSizerMain->Add( sbSizer3, 1, wxEXPAND, 5 );
-	
-	
+
+
         // ----- Buttons -----
         m_buttonStart   = new wxButton( this, wxID_ANY, wxT("Start"),   wxDefaultPosition, wxDefaultSize, 0 );
         m_buttonStop    = new wxButton( this, wxID_ANY, wxT("Stop"),    wxDefaultPosition, wxDefaultSize, 0 );
         m_buttonReset   = new wxButton( this, wxID_ANY, wxT("Reset"),   wxDefaultPosition, wxDefaultSize, 0 );
-        
-        
+
+
         wxBoxSizer* bSizer4 = new wxBoxSizer( wxHORIZONTAL );
         bSizer4->Add( m_buttonStart,    1, wxALL, 5 );
         bSizer4->Add( m_buttonStop,     1, wxALL, 5 );
         bSizer4->Add( m_buttonReset,    1, wxALL, 5 );
-	
+
 	bSizerMain->Add( bSizer4, 1, wxEXPAND, 5 );
-	
+
     // ----- Test -----
         wxStaticBoxSizer* sbSizer5 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, wxT("Test") ), wxVERTICAL );
-        
+
             m_staticTextProgress = new wxStaticText( sbSizer5->GetStaticBox(), wxID_ANY, wxT("0 / 100"), wxDefaultPosition, wxDefaultSize, 0 );
             m_staticTextProgress->Wrap( -1 );
-            
+
             m_gaugeProgress = new wxGauge( sbSizer5->GetStaticBox(), wxID_ANY, 100, wxDefaultPosition, wxDefaultSize, wxGA_HORIZONTAL );
-            m_gaugeProgress->SetValue( 0 ); 
+            m_gaugeProgress->SetValue( 0 );
 
             m_buttonNext    = new wxButton(sbSizer5->GetStaticBox(), wxID_ANY, wxT("Next"), wxDefaultPosition, wxDefaultSize, 0 );
-            
-            
+
+
             wxBoxSizer* bSizerSub51 = new wxBoxSizer( wxHORIZONTAL );
             bSizerSub51->Add( m_staticTextProgress, 0, wxALL, 5 );
             bSizerSub51->Add( m_gaugeProgress,      0, wxALL, 5 );
             bSizerSub51->Add( m_buttonNext,         0, wxALL, 5 );
-        
+
         sbSizer5->Add( bSizerSub51, 1, wxEXPAND, 5 );
-	
+
 	bSizerMain->Add( sbSizer5, 1, wxEXPAND, 5 );
     // ----- Test Ende -----
-	
+
 	//Button function binds
     m_buttonStart   ->Bind(wxEVT_BUTTON, &MultiMessWindow::startButton, this);
     m_buttonStop    ->Bind(wxEVT_BUTTON, &MultiMessWindow::stopButton,  this);
@@ -856,7 +856,7 @@ MultiMessWindow::MultiMessWindow( wxWindow* parent, wxWindowID id, const wxStrin
 
 	this->SetSizer( bSizerMain );
 	this->Layout();
-	
+
 	this->Centre( wxBOTH );
 }
 
@@ -871,7 +871,7 @@ void MultiMessWindow::startButton(wxCommandEvent& event)
     GetValues();
     //set total point in the test section
     totalMesurmentPoints = std::stoi(X_Messpunkte.ToStdString())*std::stoi(Y_Messpunkte.ToStdString());
-    
+
     UpdateProgressBar();
 
 }
@@ -880,11 +880,11 @@ void MultiMessWindow::stopButton(wxCommandEvent& event)
     GetValues();
     //set total point in the test section
     totalMesurmentPoints = std::stoi(X_Messpunkte.ToStdString())*std::stoi(Y_Messpunkte.ToStdString());
-    
+
     currentMesurmentPoint = 0;
-    
+
     UpdateProgressBar();
-    
+
 }
 void MultiMessWindow::resetButton(wxCommandEvent& event)
 {
@@ -903,9 +903,9 @@ void MultiMessWindow::resetButton(wxCommandEvent& event)
 
     totalMesurmentPoints = 1;
     currentMesurmentPoint = 0;
-    
+
     GetValues();
-    
+
     UpdateProgressBar();
 }
 void MultiMessWindow::nextButton(wxCommandEvent& event)
@@ -927,7 +927,7 @@ void MultiMessWindow::GetValues()
     X_Cord          = m_textCtrlXStartCord  ->GetValue();
     Y_Cord          = m_textCtrlYStartCord  ->GetValue();
     X_MessAbstand   = m_textCtrlXAbstand    ->GetValue();
-    Y_MessAbstand   = m_textCtrlYAbstand    ->GetValue();  
+    Y_MessAbstand   = m_textCtrlYAbstand    ->GetValue();
     startFreq       = m_textCtrlStrtFreq    ->GetValue();
     stopFreq        = m_textCtrlEndFreq     ->GetValue();
     AnzSweepMessPkt = m_textCtrlAnzahlSweep ->GetValue();
@@ -963,12 +963,12 @@ void MultiMessWindow::UpdateProgressBar()
 
 void MultiMessWindow::testMessFunction()
 {
-    if (currentMesurmentPoint = 0)
+    if (currentMesurmentPoint == 0)
     {
         //Adapter.send()
     }
 
-    if (totalMesurmentPoints = 1)
+    if (totalMesurmentPoints == 1)
     {
         Global::AdapterInstance.getMesurement();
     }

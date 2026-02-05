@@ -4,12 +4,36 @@
 #include <iomanip>
 #include <chrono>
 #include <format>
+#include <cstring>
 
 #include <wx/wx.h>
 #include <wx/textfile.h>
 #include <wx/tokenzr.h>
 
 
+// Class to save big Data blocks
+class sData3D
+{
+private:
+
+    int X_Messpunkte;
+    int Y_Messpunkte;
+    int Messpunkte;
+
+    //Ein Großes array mit allen Messdaten hintereinander geschrieben
+    // index fängt mit null an in beiden fällen
+    std::vector<double> dataArray;
+public:
+    sData3D(int x = 1, int y = 1, int Anzahl = 512);
+
+    void resize(int x, int y, int Anzahl);
+
+    double& at(int x, int y, int dataIndex);
+
+    double* getDataPtr(int x, int y);
+
+    std::vector<double> getSingleArray(int x, int y);
+};
 
 class sData
 {
@@ -30,11 +54,11 @@ public:
     };
 
     //Konstruktor
-    
+
     sData(const char* type = "Line" );
     //Destruktor
     ~sData();
-    
+
     bool SetData(sParam *par, std::vector<double> re, std::vector<double> im);
     bool GetData(sParam *par,std::vector<double>& re, std::vector<double>& im);
 
@@ -48,7 +72,7 @@ public:
     unsigned int getNumberOfPts_X() {return dsParam->NoPoints_X; };
     unsigned int getNumberOfPts_Y() {return dsParam->NoPoints_Y; };
     unsigned int getNumberOfPts_Array() {return dsParam->NoPoints_Array; };
-    
+
     std::vector<double> getRealArray(int index = 0) { return dsR; };
     std::vector<double> getImagArray(int index = 0) { return dsI; };
 
@@ -82,29 +106,6 @@ private:
 
 };
 
-// Class to save big Data blocks
-class sData3D
-{
-private:
-    
-    int X_Messpunkte;
-    int Y_Messpunkte;
-    int Messpunkte;
-
-    //Ein Großes array mit allen Messdaten hintereinander geschrieben
-    // index fängt mit null an in beiden fällen
-    std::vector<double> dataArray;
-public:
-    sData3D(int x = 1, int y = 1, int Anzahl = 512);
-
-    void resize(int x, int y, int Anzahl);
-    
-    double& at(int x, int y, int dataIndex);
- 
-    double* getDataPtr(int x, int y);
-
-    std::vector<double> getSingleArray(int x, int y);
-};
 
 // file operations
 bool saveToCsvFile(wxString& Filename, sData& data, int mesurementNumb);

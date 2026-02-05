@@ -6,14 +6,14 @@
 #include "fkt_GPIB.h"
 
 // keyword inline um in den header definieren zu können
-namespace System 
+namespace System
 {
 #if defined(_WIN32)
     inline wxString filePathSystem = "D:\\CodeProjects\\VSCode\\projects\\Diplom\\Test-GPIB-Terminal\\GpibScripts\\";
     inline wxString filePathRoot = "D:\\CodeProjects\\VSCode\\projects\\Diplom\\Test-GPIB-Terminal\\";
     inline wxString fileSystemSlash = "\\";
 #elif defined(__linux__)
-    inline wxString filePathSytem = "/home/jon3r/Documents/Code/CodeBlocks/Test_GPIB_Terminal/GpibScripts/";
+    inline wxString filePathSystem = "/home/jon3r/Documents/Code/CodeBlocks/Test_GPIB_Terminal/GpibScripts/";
     inline wxString filePathRoot = "/home/jon3r/Documents/Code/CodeBlocks/Test_GPIB_Terminal/";
     inline wxString fileSystemSlash = "/";
 #endif

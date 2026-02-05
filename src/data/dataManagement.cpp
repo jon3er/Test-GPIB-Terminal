@@ -27,7 +27,7 @@ sData::~sData()
 }
 
 bool sData::SetData(sParam *par, std::vector<double> re, std::vector<double> im)
-{   
+{
     try
     {
         dsParam = par;
@@ -40,7 +40,7 @@ bool sData::SetData(sParam *par, std::vector<double> re, std::vector<double> im)
         return false;
     }
     return true;
-    
+
 }
 bool sData::GetData(sParam *par,std::vector<double>& re, std::vector<double>& im)
 {
@@ -56,7 +56,7 @@ bool sData::GetData(sParam *par,std::vector<double>& re, std::vector<double>& im
         return false;
     }
     return true;
-    
+
 }
 
 bool sData::setFileName(wxString Name)
@@ -84,7 +84,7 @@ bool sData::setFileType(wxString Type)
         std::cerr << e.what() << '\n';
         return false;
     }
-    
+
     return true;
 }
 bool sData::setNumberOfPts_X(unsigned int NumbPtsX)
@@ -98,7 +98,7 @@ bool sData::setNumberOfPts_X(unsigned int NumbPtsX)
         std::cerr << e.what() << '\n';
         return false;
     }
-    
+
     return true;
 }
 bool sData::setNumberOfPts_Y(unsigned int NumbPtsY)
@@ -112,7 +112,7 @@ bool sData::setNumberOfPts_Y(unsigned int NumbPtsY)
         std::cerr << e.what() << '\n';
         return false;
     }
-    
+
     return true;
 }
 bool sData::setAmpUnit(wxString Unit)
@@ -126,8 +126,8 @@ bool sData::setAmpUnit(wxString Unit)
         std::cerr << e.what() << '\n';
         return false;
     }
-    
-    return true; 
+
+    return true;
 }
 bool sData::setStartFreq(unsigned int StartFreq)
 {
@@ -140,8 +140,8 @@ bool sData::setStartFreq(unsigned int StartFreq)
         std::cerr << e.what() << '\n';
         return false;
     }
-    
-    return true; 
+
+    return true;
 }
 bool sData::setEndFreq(unsigned int EndFreq)
 {
@@ -154,8 +154,8 @@ bool sData::setEndFreq(unsigned int EndFreq)
         std::cerr << e.what() << '\n';
         return false;
     }
-    
-    return true; 
+
+    return true;
 }
 
 bool sData::setTimeAndDate()
@@ -174,7 +174,7 @@ bool sData::setTimeAndDate()
         std::cerr << e.what() << '\n';
         return false;
     }
-    
+
     return true;
 }
 bool sData::set3DDataReal(std::vector<double> Array , int x, int y)
@@ -242,7 +242,7 @@ std::vector<double> sData3D::getSingleArray(int x, int y)
 {
     int index = (y*X_Messpunkte + x) * Messpunkte;
     std::vector<double> subVector(dataArray.begin() + index, dataArray.begin() + index + Messpunkte);
-    
+
     return subVector;
 }
 
@@ -250,7 +250,7 @@ bool saveToCsvFile(wxString& filename, sData& data, int mesurementNumb)
 {
     std::vector<double> real;
     std::vector<double> imag;
-    
+
     real = data.getRealArray();
     imag = data.getImagArray();
 
@@ -261,7 +261,7 @@ bool saveToCsvFile(wxString& filename, sData& data, int mesurementNumb)
     {
         filename.Append(".csv");
     }
-    
+
     wxTextFile file(filename.ToStdString());
     //check if file Exists
     if (mesurementNumb <= 1)
@@ -278,17 +278,17 @@ bool saveToCsvFile(wxString& filename, sData& data, int mesurementNumb)
     }
     file.Open();
 
-    if (!file.IsOpened()) 
+    if (!file.IsOpened())
     {
         wxLogDebug("Failed to open file");
-        return false; 
+        return false;
     }
 
     if (mesurementNumb == 1) // weiteren check hinzufügen
     {
         // Write header
         saveHeaderCsv(file, data);
-        // Write indexes 
+        // Write indexes
         writeMatrixIndexCsv(file, data);
     }
 
@@ -305,7 +305,7 @@ bool saveToCsvFile(wxString& filename, sData& data, int mesurementNumb)
         cont = true;
     }
 
-    // find line with current 
+    // find line with current
     wxString indexText = getIndexNumbers(data.getNumberOfPts_X(),data.getNumberOfPts_Y(), mesurementNumb, cont) + " Real";
 
     int lineNumber = findLineCsv(file, indexText);
@@ -313,7 +313,7 @@ bool saveToCsvFile(wxString& filename, sData& data, int mesurementNumb)
 
     int count = data.getNumberOfPts_Array();
 
-    for (size_t i = 0; i < count; i++)
+    for (int i = 0; i < count; i++)
     {
         file.GetLine(lineNumber) << ","<< real[i];
 
@@ -328,7 +328,7 @@ bool saveToCsvFile(wxString& filename, sData& data, int mesurementNumb)
 
 bool saveHeaderCsv(wxTextFile &file, sData& data)
 {
-    sData::sParam* dsParam = data.GetParameter(); 
+    sData::sParam* dsParam = data.GetParameter();
     data.setNumberofPts_Array();
 
     file.AddLine(wxString::Format("File Name,%s", dsParam->File));
@@ -342,7 +342,7 @@ bool saveHeaderCsv(wxTextFile &file, sData& data)
     file.AddLine(wxString::Format("End Frequency, %d %s", dsParam->endFreq, dsParam->ampUnit.ToAscii()));
 
     file.AddLine(""); // Leerzeile
-    
+
     // Frequenz-Zeile zusammenbauen
     wxString lineFreq = wxString::Format("f in %s", dsParam->ampUnit.ToAscii());
     double startFreq = dsParam->startFreq;
@@ -388,13 +388,13 @@ bool writeDataCsv(wxTextFile& file, sData data, int mesurementNumb)
 {
     std::vector<double> real = data.getRealArray();
     std::vector<double> imag = data.getImagArray();
-    int count = data.getNumberOfPts_Array();
+    size_t count = data.getNumberOfPts_Array();
 
     if (data.GetType() == "Line")
     {
         // ID Für Real Nummern einfügen
         std::string index = getIndexNumbers(data.getNumberOfPts_X(), data.getNumberOfPts_Y(), mesurementNumb);
-        
+
         wxString buffer = wxString::Format("%s Real", index);
         // Daten für Real anfügen
         for (size_t i = 0; i < count; i++)
@@ -403,7 +403,7 @@ bool writeDataCsv(wxTextFile& file, sData data, int mesurementNumb)
         }
         file.AddLine(buffer);
         // ID Für Imagh Zahlen einfügen
-       
+
         buffer = wxString::Format("%s Imag", index);
         for (size_t i = 0; i < count; i++)
         {
@@ -418,12 +418,12 @@ bool writeDataCsv(wxTextFile& file, sData data, int mesurementNumb)
 bool writeMatrixIndexCsv(wxTextFile& file, sData data)
 {
     // ID Für Real Nummern einfügen
-    int count = data.getNumberOfPts_X() * data.getNumberOfPts_Y(); 
+    size_t count = data.getNumberOfPts_X() * data.getNumberOfPts_Y();
 
     for (size_t i = 0; i < count; i++)
     {
         std::string index = getIndexNumbers(data.getNumberOfPts_X(), data.getNumberOfPts_Y(), i + 1);
-        
+
         file.AddLine(wxString::Format("%s Real", index));
 
         // ID Für Imagh Zahlen einfügen
@@ -449,12 +449,12 @@ std::string getIndexNumbers(int xPoints, int yPoints, int mesurementNumb, bool c
     // get position in matrix for normal test
     if (!continuous) // line by line
     {
-        xPosition = ((mesurementNumb  -1) / yPoints) + 1; 
+        xPosition = ((mesurementNumb  -1) / yPoints) + 1;
         yPosition = ((mesurementNumb - 1) % xPoints) + 1;
     }
-    else // snaking 
+    else // snaking
     {
-        xPosition = ((mesurementNumb - 1) / yPoints) + 1; 
+        xPosition = ((mesurementNumb - 1) / yPoints) + 1;
         if (xPosition % 2 == 0) // is even
         {
             yPosition = yPoints - ((mesurementNumb - 1) % xPoints) + 1;
@@ -472,9 +472,9 @@ std::string getIndexNumbers(int xPoints, int yPoints, int mesurementNumb, bool c
 
 int findLineCsv(wxTextFile& file, wxString findText)
 {
-    int count = file.GetLineCount();
+    size_t count = file.GetLineCount();
     wxLogDebug("%s %i", findText.Upper(), count);
-    
+
     for (size_t i = 0; i < count; i++)
     {
         wxLogDebug("%s", file.GetLine(i).Upper());
@@ -493,7 +493,7 @@ bool openCsvFile(wxString& filename, sData& data)
     sData::sParam* dsParam = new sData::sParam;;
     std::vector<double> dsR;
     std::vector<double> dsI;
-    
+
     data.GetData(dsParam, dsR, dsI);
     // 1. Parameter-Objekt prüfen
     if (!dsParam) {
@@ -520,7 +520,7 @@ bool openCsvFile(wxString& filename, sData& data)
     int HeaderEnd = 6; //Minimum header Size
 
     //search for fist empty cell (Header end)
-    for (int i = 0 ; i < lineCount; i++)
+    for (size_t i = 0 ; i < lineCount; i++)
     {
         if (file.GetLine(i).IsEmpty() && file.GetLine( i+1 ).Contains("ID"))
         {
@@ -546,24 +546,24 @@ bool openCsvFile(wxString& filename, sData& data)
     for (size_t i = HeaderEnd + 2; i < lineCount; ++i)
     {
         wxString line = file.GetLine(i);
-        
+
         if (line.IsEmpty()) continue;
 
         // Pointer auf den Zielvektor setzen
         std::vector<double>* currentVec = nullptr;
 
         // Prüfen, ob es eine Real- oder Imag-Zeile ist (Case Insensitive)
-        if (line.Upper().Contains("REAL")) 
+        if (line.Upper().Contains("REAL"))
         {
             currentVec = &dsR; // kopiert vector auf Real Addresse
-        } 
-        else if (line.Upper().Contains("IMAG")) 
+        }
+        else if (line.Upper().Contains("IMAG"))
         {
             currentVec = &dsI; // kopiert vector auf Imag Addresse
-        } 
-        else 
+        }
+        else
         {
-            continue; 
+            continue;
         }
 
         // Tokenizer nur einmal für die aktuelle Zeile und den gewählten Vektor nutzen
@@ -571,21 +571,21 @@ bool openCsvFile(wxString& filename, sData& data)
 
         // 1. Token (Label/ID) entfernen: "[1;1] Real"
         if (tokenizer.HasMoreTokens()) {
-            tokenizer.GetNextToken(); 
+            tokenizer.GetNextToken();
         }
 
         // Restliche Werte parsen
-        while (tokenizer.HasMoreTokens()) 
+        while (tokenizer.HasMoreTokens())
         {
             double val;
-            if (tokenizer.GetNextToken().ToDouble(&val)) 
+            if (tokenizer.GetNextToken().ToDouble(&val))
             {
                 // Sicherstellen, dass currentVec gültig ist (sollte durch if oben gegeben sein)
                 if(currentVec) currentVec->push_back(val);
             }
         }
     }
-    
+
     // Optional: Validierung
     if (dsR.size() != dsI.size()) {
         wxLogDebug("Warnung: Real/Imag Vektoren ungleich lang!");
@@ -640,7 +640,7 @@ bool openCsvFileMultiline(wxString& filename)
     for (size_t i = 8; i < lineCount; ++i)
     {
         wxString line = file.GetLine(i);
-        
+
         // Leere Zeilen ignorieren
         if (line.IsEmpty()) continue;
 
@@ -651,7 +651,7 @@ bool openCsvFileMultiline(wxString& filename)
         if (tokenizer.CountTokens() >= 3)
         {
             tokenizer.GetNextToken(); // Index verwerfen
-            
+
             wxString sReal = tokenizer.GetNextToken();
             wxString sImag = tokenizer.GetNextToken();
 
