@@ -66,15 +66,19 @@ public:
     bool setEndFreq(unsigned int EndFreq);
     bool setTimeAndDate();
 
-
-
-    
     //virtual bool LoadFile(const wxString &name);
+    bool set3DDataReal(std::vector<double> Array , int x, int y);
+    bool set3DDataImag(std::vector<double> Array , int x, int y);
+    std::vector<double> get3DDataReal(int x, int y);
+    std::vector<double> get3DDataImag(int x, int y);
 
 private:
     sParam*                 dsParam;                            //parameters
     std::vector<double>     dsR;                                //data
     std::vector<double>     dsI;
+
+    sData3D Real3D;
+    sData3D Imag3D;
 
 };
 
@@ -82,18 +86,24 @@ private:
 class sData3D
 {
 private:
+    
     int X_Messpunkte;
     int Y_Messpunkte;
     int Messpunkte;
 
     //Ein Großes array mit allen Messdaten hintereinander geschrieben
+    // index fängt mit null an in beiden fällen
     std::vector<double> dataArray;
 public:
     sData3D(int x = 1, int y = 1, int Anzahl = 512);
+
+    void resize(int x, int y, int Anzahl);
     
     double& at(int x, int y, int dataIndex);
  
     double* getDataPtr(int x, int y);
+
+    std::vector<double> getSingleArray(int x, int y);
 };
 
 // file operations

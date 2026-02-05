@@ -19,6 +19,7 @@ sData::sData(const char* type)
     //test values
     dsR = {0,1,2,3,4};
     dsI = {0,1,2,3,4};
+
 }
 sData::~sData()
 {
@@ -176,11 +177,51 @@ bool sData::setTimeAndDate()
     
     return true;
 }
+bool sData::set3DDataReal(std::vector<double> Array , int x, int y)
+{
+    try
+    {
+        std::memcpy(Real3D.getDataPtr(x,y), Array.data(), Array.size()* sizeof(double));
+        return true;
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+    }
+    return false;
+}
+std::vector<double> sData::get3DDataReal(int x, int y)
+{
+    return Real3D.getSingleArray(x,y);
+}
+
+bool sData::set3DDataImag(std::vector<double> Array , int x, int y)
+{
+    try
+    {
+        std::memcpy(Imag3D.getDataPtr(x,y), Array.data(), Array.size()* sizeof(double));
+        return true;
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+    }
+    return false;
+}
+std::vector<double> sData::get3DDataImag(int x, int y)
+{
+    return Imag3D.getSingleArray(x,y);
+}
 //------sData Ende------
 
 //------sData3D------
 
 sData3D::sData3D(int x, int y, int Anzahl) : X_Messpunkte(x), Y_Messpunkte(y), Messpunkte(Anzahl)
+{
+    resize(X_Messpunkte, Y_Messpunkte, Messpunkte);
+}
+
+void sData3D::resize(int x, int y, int Anzahl)
 {
     dataArray.resize(X_Messpunkte * Y_Messpunkte * Messpunkte, 0.0);
 }
@@ -197,56 +238,13 @@ double* sData3D::getDataPtr(int x, int y)
     return &dataArray[index];
 }
 
-/*
-bool saveToCsvFile(wxString& filename, sData data, int mesurementNumb)
+std::vector<double> sData3D::getSingleArray(int x, int y)
 {
-
-    std::vector<double> real;
-    std::vector<double> imag;
-
-    sData::sParam *dsParam = data.GetParameter();
-    data.GetData(dsParam, real, imag); 
-
-    bool setImgToZero = false;
-    //Mussen noch in header mit rein Für eine messung erstmal alles auf 1
+    int index = (y*X_Messpunkte + x) * Messpunkte;
+    std::vector<double> subVector(dataArray.begin() + index, dataArray.begin() + index + Messpunkte);
     
-    int X_Cord = 1;
-    int Y_Cord = 1;
-    int countMess = X_Cord * Y_Cord; // anzahl der messungen
-
-
-    if (!dsParam) {
-
-        return false;
-    }
-
-    //filename.Append(timestamp);
-    if (!(filename.substr(strlen(filename)-4) == ".csv"))
-    {
-        filename.Append(".csv");
-    }
-    
-    std::ofstream file(filename.ToStdString());
-
-    if (!file.is_open()) {
-        return false; 
-    }
-
-    if (mesurementNumb == 0) // weiteren check hinzufügen
-    {
-        saveHeaderCsv(file, data);
-    }
-    
-    
-    // TODO Einstellbar machen
-    file << std::fixed << std::setprecision(15);
-
-    writeDataCsv(file, data, mesurementNumb);
-
-    file.close();
-
-    return true;
-}*/
+    return subVector;
+}
 
 bool saveToCsvFile(wxString& filename, sData& data, int mesurementNumb)
 {
