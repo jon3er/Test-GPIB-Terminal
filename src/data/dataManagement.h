@@ -114,6 +114,8 @@ bool saveToCsvFile(wxString& Filename, sData& data, int mesurementNumb);
 
 bool saveHeaderCsv(wxTextFile& file, sData& data);
 
+bool readCsvHeader(wxString& filename, sData::sParam& dsParam);
+
 bool saveDataCsv(wxTextFile& file, sData data, int xCord, int yCord);
 
 std::string getIndexNumbers(int xPoints, int yPoints, int mesurementNumb, bool continuous = false);

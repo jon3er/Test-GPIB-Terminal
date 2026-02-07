@@ -379,6 +379,43 @@ bool saveHeaderCsv(wxTextFile &file, sData& data)
     return true;
 }
 
+bool readCsvHeader(wxTextFile &file, sData::sParam& dsParam)
+{
+    size_t lineCount = file.GetLineCount();
+
+    // Minimale Zeilenanzahl prüfen
+    if (lineCount < 9) {
+        file.Close();
+        wxLogDebug("File too short, insufficient header");
+        return false;
+    }
+
+    // Parse header metadata (lines 0-8)
+    dsParam.File = file.GetLine(0).AfterFirst(',').Trim(false).Trim();
+    dsParam.Date = file.GetLine(1).AfterFirst(',').Trim(false).Trim();
+    dsParam.Time = file.GetLine(2).AfterFirst(',').Trim(false).Trim();
+    dsParam.Type = file.GetLine(3).AfterFirst(',').Trim(false).Trim();
+
+    long lVal;
+    if (file.GetLine(4).AfterFirst(',').ToLong(&lVal)) 
+        dsParam.NoPoints_X = lVal;
+    if (file.GetLine(5).AfterFirst(',').ToLong(&lVal)) 
+        dsParam.NoPoints_Y = lVal;
+    if (file.GetLine(6).AfterFirst(',').ToLong(&lVal)) 
+        dsParam.NoPoints_Array = lVal;
+
+    // Parse frequency range
+    wxString startFreqStr = file.GetLine(7).AfterFirst(',').Trim(false).Trim().BeforeFirst(' ');
+    wxString endFreqStr = file.GetLine(8).AfterFirst(',').Trim(false).Trim().BeforeFirst(' ');
+    
+    long freqVal;
+    if (startFreqStr.ToLong(&freqVal)) dsParam.startFreq = freqVal;
+    if (endFreqStr.ToLong(&freqVal)) dsParam.endFreq = freqVal;
+
+    file.Close();
+    return true;
+}
+
 bool saveDataCsv(wxTextFile& file, sData data, int mesurementNumb)
 {
     return true;
@@ -410,6 +447,109 @@ bool writeDataCsv(wxTextFile& file, sData data, int mesurementNumb)
             buffer << "," << real[i];
         }
         file.AddLine(buffer);
+    }
+
+    return true;
+}
+
+bool readDataCsv(wxTextFile& file, sData& data)
+{
+    int xPoints = data.getNumberOfPts_X();
+    int yPoints = data.getNumberOfPts_Y();
+    int totalMeasurements = xPoints * yPoints;
+
+    bool continuous = (data.GetType() != "Line");
+
+    // Read all available measurements
+    for (int mesurementNumb = 1; mesurementNumb <= totalMeasurements; mesurementNumb++)
+    {
+        std::vector<double> real;
+        std::vector<double> imag;
+
+        // ID Für Real und Imag Nummern suchen
+        std::string index = getIndexNumbers(xPoints, yPoints, mesurementNumb, continuous);
+
+        wxString realLabel = wxString::Format("%s Real", index);
+        wxString imagLabel = wxString::Format("%s Imag", index);
+
+        // Find Real data line
+        int realLineNum = findLineCsv(file, realLabel);
+        if (realLineNum == -1)
+        {
+            wxLogDebug("Could not find Real data line for measurement %d", mesurementNumb);
+            continue;
+        }
+
+        // Find Imag data line
+        int imagLineNum = findLineCsv(file, imagLabel);
+        if (imagLineNum == -1)
+        {
+            wxLogDebug("Could not find Imag data line for measurement %d", mesurementNumb);
+            continue;
+        }
+
+        // Parse Real data
+        wxString realLine = file.GetLine(realLineNum);
+        wxStringTokenizer realTokenizer(realLine, ",");
+        if (realTokenizer.HasMoreTokens()) {
+            realTokenizer.GetNextToken(); // skip label
+        }
+        while (realTokenizer.HasMoreTokens())
+        {
+            double val;
+            if (realTokenizer.GetNextToken().ToDouble(&val))
+            {
+                real.push_back(val);
+            }
+        }
+
+        // Parse Imag data
+        wxString imagLine = file.GetLine(imagLineNum);
+        wxStringTokenizer imagTokenizer(imagLine, ",");
+        if (imagTokenizer.HasMoreTokens()) {
+            imagTokenizer.GetNextToken(); // skip label
+        }
+        while (imagTokenizer.HasMoreTokens())
+        {
+            double val;
+            if (imagTokenizer.GetNextToken().ToDouble(&val))
+            {
+                imag.push_back(val);
+            }
+        }
+
+        // Validate parsed data
+        if (real.size() != imag.size())
+        {
+            wxLogDebug("Warning: Real/Imag data arrays have different sizes for measurement %d!", mesurementNumb);
+            continue;
+        }
+
+        // Calculate x, y coordinates from measurement number
+        int xPos, yPos;
+        if (!continuous) // line by line
+        {
+            xPos = ((mesurementNumb - 1) / yPoints);
+            yPos = ((mesurementNumb - 1) % yPoints);
+        }
+        else // snaking
+        {
+            xPos = ((mesurementNumb - 1) / yPoints);
+            if (xPos % 2 == 0) // is even
+            {
+                yPos = yPoints - ((mesurementNumb - 1) % yPoints) - 1;
+            }
+            else
+            {
+                yPos = ((mesurementNumb - 1) % yPoints);
+            }
+        }
+
+        // Store data into 3D arrays
+        data.set3DDataReal(real, xPos, yPos);
+        data.set3DDataImag(imag, xPos, yPos);
+
+        wxLogDebug("Stored measurement %d at position [%d,%d]", mesurementNumb, xPos, yPos);
     }
 
     return true;
@@ -596,79 +736,4 @@ bool openCsvFile(wxString& filename, sData& data)
     file.Close();
     return true;
 }
-/*
-bool openCsvFileMultiline(wxString& filename)
-{
 
-
-    // 1. Parameter-Objekt prüfen
-    if (!dsParam) {
-        return false;
-    }
-
-    // 2. Datei mit wxTextFile öffnen (liest Zeilen in den Speicher)
-    wxTextFile file;
-    if (!file.Open(filename)) {
-        return false;
-    }
-
-    dsR.clear();
-    dsI.clear();
-
-    size_t lineCount = file.GetLineCount();
-
-    // Minimale Zeilenanzahl prüfen (Header + min. 1 Datenzeile)
-    if (lineCount < 9) {
-        file.Close();
-        return false;
-    }
-
-    // 3. Header Metadaten parsen (Zeilen 0-5)
-    // AfterFirst(',') extrahiert den Wert nach dem Komma
-    dsParam->File = file.GetLine(0).AfterFirst(',').Trim(false).Trim();
-    dsParam->Date = file.GetLine(1).AfterFirst(',').Trim(false).Trim();
-    dsParam->Time = file.GetLine(2).AfterFirst(',').Trim(false).Trim();
-    dsParam->Type = file.GetLine(3).AfterFirst(',').Trim(false).Trim();
-
-    long lVal;
-    if (file.GetLine(4).AfterFirst(',').ToLong(&lVal)) dsParam->NoPoints_X = lVal;
-    if (file.GetLine(5).AfterFirst(',').ToLong(&lVal)) dsParam->NoPoints_Y = lVal;
-
-    // Zeile 6 ist leer, Zeile 7 ist Header ("Index,Real,Imaginary") -> Überspringen
-
-    // 4. Datenpunkte einlesen (ab Zeile 8)
-    for (size_t i = 8; i < lineCount; ++i)
-    {
-        wxString line = file.GetLine(i);
-
-        // Leere Zeilen ignorieren
-        if (line.IsEmpty()) continue;
-
-        // Zerlegen der Zeile am Komma
-        wxStringTokenizer tokenizer(line, ",");
-
-        // Erwartet: Index, Real, Imaginary
-        if (tokenizer.CountTokens() >= 3)
-        {
-            tokenizer.GetNextToken(); // Index verwerfen
-
-            wxString sReal = tokenizer.GetNextToken();
-            wxString sImag = tokenizer.GetNextToken();
-
-            double dReal = 0.0;
-            double dImag = 0.0;
-
-            // ToCDouble erwartet Punkt als Dezimaltrenner (Standard in CSV/C++)
-            // Falls dein System Komma erwartet, nutze ToDouble()
-            if (sReal.ToCDouble(&dReal) && sImag.ToCDouble(&dImag))
-            {
-                dsR.push_back(dReal);
-                dsI.push_back(dImag);
-            }
-        }
-    }
-
-    file.Close();
-    return true;
-}
-*/
