@@ -280,7 +280,7 @@ bool saveToCsvFile(wxString& filename, sData& data, int mesurementNumb)
 
     if (!file.IsOpened())
     {
-        wxLogDebug("Failed to open file");
+        std::cout << "Failed to open file" << std::endl;
         return false;
     }
 
@@ -296,12 +296,12 @@ bool saveToCsvFile(wxString& filename, sData& data, int mesurementNumb)
 
     if (data.GetType() == "Line")
     {
-        wxLogDebug("Linear mesurement");
+        //wxLogDebug("Linear mesurement");
         cont = false;
     }
     else
     {
-        wxLogDebug("Continuous mesurement");
+        //wxLogDebug("Continuous mesurement");
         cont = true;
     }
 
@@ -309,7 +309,7 @@ bool saveToCsvFile(wxString& filename, sData& data, int mesurementNumb)
     wxString indexText = getIndexNumbers(data.getNumberOfPts_X(),data.getNumberOfPts_Y(), mesurementNumb, cont) + " Real";
 
     int lineNumber = findLineCsv(file, indexText);
-    wxLogDebug("found Line %d", lineNumber);
+    //wxLogDebug("found Line %d", lineNumber);
 
     int count = data.getNumberOfPts_Array();
 
@@ -386,7 +386,7 @@ bool readCsvHeader(wxTextFile &file, sData::sParam& dsParam)
     // Minimale Zeilenanzahl prüfen
     if (lineCount < 9) {
         file.Close();
-        wxLogDebug("File too short, insufficient header");
+        std::cerr << "File too short, insufficient header" << std::endl;
         return false;
     }
 
@@ -476,7 +476,7 @@ bool readDataCsv(wxTextFile& file, sData& data)
         int realLineNum = findLineCsv(file, realLabel);
         if (realLineNum == -1)
         {
-            wxLogDebug("Could not find Real data line for measurement %d", mesurementNumb);
+            std::cerr << "Could not find Real data line for measurement " << mesurementNumb << std::endl;
             continue;
         }
 
@@ -484,7 +484,7 @@ bool readDataCsv(wxTextFile& file, sData& data)
         int imagLineNum = findLineCsv(file, imagLabel);
         if (imagLineNum == -1)
         {
-            wxLogDebug("Could not find Imag data line for measurement %d", mesurementNumb);
+            std::cerr << "Could not find Imag data line for measurement " << mesurementNumb << std::endl;
             continue;
         }
 
@@ -521,7 +521,7 @@ bool readDataCsv(wxTextFile& file, sData& data)
         // Validate parsed data
         if (real.size() != imag.size())
         {
-            wxLogDebug("Warning: Real/Imag data arrays have different sizes for measurement %d!", mesurementNumb);
+            std::cerr << "Warning: Real/Imag data arrays have different sizes for measurement " << mesurementNumb << "!" << std::endl;
             continue;
         }
 
@@ -549,7 +549,7 @@ bool readDataCsv(wxTextFile& file, sData& data)
         data.set3DDataReal(real, xPos, yPos);
         data.set3DDataImag(imag, xPos, yPos);
 
-        wxLogDebug("Stored measurement %d at position [%d,%d]", mesurementNumb, xPos, yPos);
+        std::cerr << "Stored measurement " << mesurementNumb << " at position [" << xPos << "," << yPos << "]" << std::endl;
     }
 
     return true;
@@ -613,23 +613,24 @@ std::string getIndexNumbers(int xPoints, int yPoints, int mesurementNumb, bool c
 int findLineCsv(wxTextFile& file, wxString findText)
 {
     size_t count = file.GetLineCount();
-    wxLogDebug("%s %i", findText.Upper(), count);
+
+    std::cerr << findText.Upper() << " " << count << std::endl;
 
     for (size_t i = 0; i < count; i++)
     {
-        wxLogDebug("%s", file.GetLine(i).Upper());
+        std::cerr << file.GetLine(i).Upper() << std::endl;
         if(file.GetLine(i).Upper().Contains(findText.Upper()))
         {
             return i;
         }
     }
-    wxLogDebug("Couldnt find text");
+    std::cerr << "Couldnt find text" << std::endl;
     return -1;
 }
 
 bool openCsvFile(wxString& filename, sData& data)
 {
-    wxLogDebug("open CSV");
+    std::cerr << "open CSV" << std::endl;
     sData::sParam* dsParam = new sData::sParam;;
     std::vector<double> dsR;
     std::vector<double> dsI;
@@ -665,7 +666,7 @@ bool openCsvFile(wxString& filename, sData& data)
         if (file.GetLine(i).IsEmpty() && file.GetLine( i+1 ).Contains("ID"))
         {
             HeaderEnd = i;
-            wxLogDebug("Header Ende :%i", HeaderEnd);
+            std::cerr << "Header Ende :" << HeaderEnd << std::endl;
             break;
         }
     }
@@ -728,7 +729,7 @@ bool openCsvFile(wxString& filename, sData& data)
 
     // Optional: Validierung
     if (dsR.size() != dsI.size()) {
-        wxLogDebug("Warnung: Real/Imag Vektoren ungleich lang!");
+        std::cerr << "Warnung: Real/Imag Vektoren ungleich lang!" << std::endl;
     }
 
     data.SetData(dsParam, dsR, dsI);

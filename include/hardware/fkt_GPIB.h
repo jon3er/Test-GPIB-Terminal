@@ -5,6 +5,7 @@
 #include <format>
 #include <wx/wx.h>
 #include <thread>
+#include <atomic>
 #include "fkt_d2xx.h"
 #include "ftd2xx.h"
 #include <wx/textfile.h>
@@ -71,7 +72,7 @@ public:
     void connect(std::string args = "");
     void disconnect(std::string args = "");
     void config();
-    void readScriptFile(const wxString& dirPath, const wxString& file, wxArrayString& logAdapterReceived);
+    void readScriptFile(const wxString& dirPath, const wxString& file, wxArrayString& logAdapterReceived, const std::atomic<bool>* stopFlag = nullptr);
  
     FT_STATUS getStatus();
     FT_HANDLE getHandle();

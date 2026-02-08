@@ -3,6 +3,8 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <thread>
+#include <atomic>
 #include <wx/wx.h>
 #include <wx/tokenzr.h>
 
@@ -33,9 +35,14 @@ private:
     void getFileNames(const wxString& dirPath, wxArrayString& files);
     void executeScriptEvent(wxCommandEvent& event);
     void updatePlotData();
+    void MeasurementWorkerThread(const wxString& dirPath, const wxString& file);
 
     std::vector<double> x;
     std::vector<double> y;
+
+    // Threading members
+    std::thread m_measurementThread;
+    std::atomic<bool> m_stopMeasurement{false};
 
     //device Class
     //GpibDevice Adapter;

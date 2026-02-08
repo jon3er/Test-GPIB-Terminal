@@ -165,6 +165,7 @@ private:
     void OnConDisconGpib(wxCommandEvent& event);
     void OnTestSaveFile(wxCommandEvent& event);
     void OnTestMultiMess(wxCommandEvent& event);
+    void OnTest(wxCommandEvent& event);
 
     //Text Boxes
     wxTextCtrl* textFuncOutput;

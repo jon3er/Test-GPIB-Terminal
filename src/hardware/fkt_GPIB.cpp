@@ -22,7 +22,7 @@ std::string GpibDevice::read(int forceReadBytes)
         DWORD BufferSize;
         FT_STATUS ftStatus;
 
-        wxLogDebug("Reading from Device...");
+        std::cerr << "Reading from Device..." << std::endl;
 
         ftStatus = readUsbDev(ftHandle, BigBuffer, BufferSize, forceReadBytes);
 
@@ -44,7 +44,7 @@ std::string GpibDevice::read(int forceReadBytes)
     }
     else
     {
-        wxLogDebug("No Device to send too");
+        std::cerr << "No Device to send too" << std::endl;
         Text = "Failed to Connect to a Device\n";
         Connected = false;
     }
@@ -56,7 +56,7 @@ std::string GpibDevice::write(std::string msg)
 {
     std::string Text;
 
-    wxLogDebug("Write Command Entered");
+    std::cerr << "Write Command Entered" << std::endl;
 
     if (Connected)
     {
@@ -66,7 +66,7 @@ std::string GpibDevice::write(std::string msg)
         //Check String if Adapter or GPIB Command and check for ASCII 10, 13, 27, 43
         std::vector<char> charArrWriteGpib = checkAscii(CheckText);
 
-        wxLogDebug("Trying to write to Device... %s", std::string(charArrWriteGpib.begin(),charArrWriteGpib.end()));
+        std::cerr << "Trying to write to Device... " << std::string(charArrWriteGpib.begin(),charArrWriteGpib.end()) << std::endl;
 
         FT_STATUS ftStatus =writeUsbDev(ftHandle, charArrWriteGpib, bytesWritten);
 
@@ -82,7 +82,7 @@ std::string GpibDevice::write(std::string msg)
     }
     else
     {
-        wxLogDebug("No Connection");
+        std::cerr << "No Connection" << std::endl;
         Text = "Failed to Connect\n";
     }
     return Text;
@@ -101,7 +101,7 @@ DWORD GpibDevice::quaryBuffer()
 {
     //Get Number of bytes to read from receive queue
     ftStatus = FT_GetQueueStatus(ftHandle,&BytesToRead);
-    wxLogDebug("Bytes in Queue: %i", BytesToRead);
+    std::cerr << "Bytes in Queue: " << BytesToRead << std::endl;
     printErr(ftStatus,"Failed to Get Queue Status");
 
     return BytesToRead;
@@ -117,7 +117,7 @@ void GpibDevice::connect(std::string args)
 
         if (ftStatus == FT_OK)
         {
-            wxLogDebug("Connected to %i", numDev);
+            std::cerr << "Connected to " << numDev << std::endl;
             Connected = true;
         }
     }
@@ -136,7 +136,7 @@ void GpibDevice::disconnect(std::string args)
     printErr(ftStatus,"Failed to Disconnect");
     if (ftStatus == FT_OK)
     {
-        wxLogDebug("Connected to %i", numDev);
+        std::cerr << "Connected to " << numDev << std::endl;
         Connected = false;
     }
 }
@@ -155,7 +155,7 @@ void GpibDevice::config()
     ftStatus =  FT_SetTimeouts(ftHandle, 500,500);
     printErr(ftStatus,"Failed to set TimeOut");
 
-    wxLogDebug("FT-Config complete");
+    std::cerr << "FT-Config complete" << std::endl;
 
     if (ftStatus == FT_OK)
     {
@@ -166,7 +166,7 @@ void GpibDevice::config()
         configFin = false;
     }
 }
-void GpibDevice::readScriptFile(const wxString& dirPath, const wxString& file, wxArrayString& logAdapterReceived)
+void GpibDevice::readScriptFile(const wxString& dirPath, const wxString& file, wxArrayString& logAdapterReceived, const std::atomic<bool>* stopFlag)
 {
     wxTextFile textFile;
 
@@ -180,14 +180,21 @@ void GpibDevice::readScriptFile(const wxString& dirPath, const wxString& file, w
 
         for (size_t i = 0; i < textFile.GetLineCount(); i++)
         {
+            // Check for stop signal from calling thread
+            if (stopFlag && *stopFlag)
+            {
+                std::cout << "[GPIB] Measurement stopped by user" << std::endl;
+                break;
+            }
+
             wxString line = textFile.GetLine(i);
             if(line.IsEmpty())
             {
-                wxLogDebug("line %i: Empty", (int)i, line);
+                std::cerr << "line " << i << ": Empty" << std::endl;
             }
             else if (line.substr(0,1) == "#")
             {
-                wxLogDebug("line %i: Kommentar: %s", (int)i, line.substr(1));
+                std::cerr << "line " << i << ": Kommentar: " << line.substr(1) << std::endl;
             }
             else if (line.substr(0,5) == "wait ")
             {
@@ -195,42 +202,42 @@ void GpibDevice::readScriptFile(const wxString& dirPath, const wxString& file, w
                 wxString strWait = line.substr(5);
                 if (strWait.ToInt(&wait))
                 {
-                    wxLogDebug("wait for %ims", wait);
+                    std::cerr << "wait for " << wait << "ms" << std::endl;
                     sleepMs(wait);
                 }
                 else
                 {
-                    wxLogDebug("Invalid wait Time input: %s", strWait);
+                    std::cerr << "Invalid wait Time input: " << strWait << std::endl;
                 }
             }
             else if (line.substr(0,5) == "send ")
             {
-                wxLogDebug("line %i: manuell send: %s", (int)i, line);
+                std::cerr << "line " << i << ": manuell send: " << line << std::endl;
                 line = line.substr(5);
                 logAdapterReceived.Add(send(std::string(line.ToUTF8())));
-                wxLogDebug("responce: %s", logAdapterReceived.Last());
+                std::cerr << "responce: " << logAdapterReceived.Last() << std::endl;
             }
             else if (line.substr(0,6) == "write ")
             {
-                wxLogDebug("line %i: manuell write: %s", (int)i, line);
+                std::cerr << "line " << i << ": manuell write: " << line << std::endl;
                 line = line.substr(6);
                 write(std::string(line.ToUTF8()));
             }
             else if (line.substr(0,4) == "read")
             {
-                wxLogDebug("line %i: manuell read", (int)i);
+                std::cerr << "line " << i << ": manuell read" << std::endl;
                 logAdapterReceived.Add(read());
-                wxLogDebug("responce: %s", logAdapterReceived.Last());
+                std::cerr << "responce: " << logAdapterReceived.Last() << std::endl;
             }
             else if(line.Contains("?") && line.substr(0,4) == "TRAC")
             {
-                wxLogDebug("line %i: send: %s", (int)i, line);
+                std::cerr << "line " << i << ": send: " << line << std::endl;
 
                 write(std::string(line.ToUTF8()));
                 write("++read eoi");
                 sleepMs(300);
                 logAdapterReceived.Add(read());
-                wxLogDebug("responce: %s", logAdapterReceived.Last());
+                std::cerr << "responce: " << logAdapterReceived.Last() << std::endl;
                 Messung.seperateDataBlock(logAdapterReceived.Last());
                 Messung.setFreqStartEnd(75'000'000,125'000'000);
                 Messung.calcYdata(); //start und end frequenz angeben
@@ -238,13 +245,13 @@ void GpibDevice::readScriptFile(const wxString& dirPath, const wxString& file, w
             }
             else if(line.Contains("?"))
             {
-                wxLogDebug("line %i: send: %s", (int)i, line);
+                std::cerr << "line " << i << ": send: " << line << std::endl;
                 logAdapterReceived.Add(send(std::string(line.ToUTF8())));
-                wxLogDebug("responce: %s", logAdapterReceived.Last());
+                std::cerr << "responce: " << logAdapterReceived.Last() << std::endl;
             }
             else
             {
-                wxLogDebug("line %i: write: %s", (int)i, line);
+                std::cerr << "line " << i << ": write: " << line << std::endl;
                 write(std::string(line.ToUTF8()));
             }
         }
@@ -333,11 +340,11 @@ void fsuMesurement::seperateDataBlock(const wxString& receivedString)
         if(data.ToCDouble(&value))
         {
              x.push_back(value);
-             wxLogDebug("seperated value: %3f", value);
+             std::cerr << "seperated value: " << value << std::endl;
         }
         else
         {
-            wxLogDebug("Failed to convert");
+            std::cerr << "Failed to convert" << std::endl;
         }
     }
 
@@ -350,18 +357,18 @@ std::vector<double> fsuMesurement::calcYdata()
     NoPoints_x = totalPoints;
     y_Data.clear();
 
-    wxLogDebug("Total points: %i", totalPoints);
+    std::cerr << "Total points: " << totalPoints << std::endl;
     double range = FreqEnd-FreqStart;
 
     double step = range/totalPoints;
-    wxLogDebug("Range: %3f   Step: %3f",range,step);
+    std::cerr << "Range: " << range << "   Step: " << step << std::endl;
     double newYPoint = FreqStart;
 
     for(int i = 0; i < totalPoints; i++)
     {
         newYPoint = newYPoint + step;
         y_Data.push_back(newYPoint);
-        wxLogDebug("Y Berechnet: %f", y_Data[i]);
+        std::cerr << "Y Berechnet: " << y_Data[i] << std::endl;
     }
 
     NoPoints_y = y_Data.size();
@@ -401,8 +408,8 @@ std::vector<char> checkAscii(std::string input)
     const char* charInput = input.c_str();
     int DataSize = strlen(input.c_str());
 
-    wxLogDebug("Length in function:");
-    wxLogDebug("%s",std::to_string(DataSize));
+    std::cerr << "Length in function:" << std::endl;
+    std::cerr << std::to_string(DataSize) << std::endl;
 
     char* charInputBuffer = new char[input.length()+1];
     strcpy(charInputBuffer, charInput);
@@ -417,7 +424,7 @@ std::vector<char> checkAscii(std::string input)
         charOutputBuffer[BufferSize + 1] = '\0';
         std::vector<char> vCharOutputAdptr(charOutputBuffer,charOutputBuffer + strlen(charOutputBuffer));
 
-        wxLogDebug("Adapter Command: %s",std::string(vCharOutputAdptr.begin(),vCharOutputAdptr.end()));
+        std::cerr << "Adapter Command: " << std::string(vCharOutputAdptr.begin(),vCharOutputAdptr.end()) << std::endl;
 
         delete[] charInputBuffer;
         delete[] charOutputBuffer;
@@ -461,8 +468,8 @@ std::vector<char> checkAscii(std::string input)
     ModString = ModString + std::to_string(charOutputBuffer[j]) + " ";
     ModString = ModString + std::to_string(charOutputBuffer[j + 1]);
 
-    wxLogDebug("Input str in ascii: %s", OgString);
-    wxLogDebug("Output str in ascii: %s", ModString);
+    std::cerr << "Input str in ascii: " << OgString << std::endl;
+    std::cerr << "Output str in ascii: " << ModString << std::endl;
 
     std::vector<char> vCharOutputGpib(charOutputBuffer,charOutputBuffer + strlen(charOutputBuffer));
 

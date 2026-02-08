@@ -9,7 +9,7 @@ int printErr(FT_STATUS status, const std::string& msg) //Checks for Error and pr
     {
 
         wxString Text = "Error:" + msg + " (FT_Status Code: " + statusString(status) + ")";
-        wxLogDebug(Text);
+        std::cerr << Text << std::endl;
         return 1;
     }
 
@@ -22,7 +22,7 @@ DWORD scanUsbDev()  //Scans for USB Devices
 
     FT_STATUS ftStatus = FT_CreateDeviceInfoList(&numDevs);
 
-    wxLogDebug("Number of Devices Found: %i", numDevs);
+    std::cerr << "Number of Devices Found: " << numDevs << std::endl;
 
     printErr(ftStatus, "Create Info List");
 
@@ -46,7 +46,7 @@ FT_STATUS configUsbDev(DWORD numDev, FT_HANDLE &ftHandle,int BaudRate)  //Sets B
     ftStatus =  FT_SetTimeouts(ftHandle, 500,500);
     printErr(ftStatus,"Failed to set TimeOut");
 
-    wxLogDebug("FT-Config complete");
+    std::cerr << "FT-Config complete" << std::endl;
 
     return ftStatus;
 }
@@ -59,7 +59,7 @@ FT_STATUS writeUsbDev(FT_HANDLE ftHandle, std::vector<char> cmdText,DWORD& bytes
 
     char* charPtrCmdText = cmdText.data();
     DWORD dataSize = cmdText.size();
-    wxLogDebug("Write: %s \n strlen: %i",std::string(cmdText.begin(),cmdText.end()),(int)dataSize);
+    std::cerr << "Write: " << std::string(cmdText.begin(),cmdText.end()) << " strlen: " << dataSize << std::endl;
 
     ftStatus = FT_Write(ftHandle, charPtrCmdText, dataSize, &bytesWritten);
 
@@ -67,11 +67,11 @@ FT_STATUS writeUsbDev(FT_HANDLE ftHandle, std::vector<char> cmdText,DWORD& bytes
 
     if (bytesWritten != dataSize)
     {
-        wxLogDebug("Failed to write all data");
+        std::cerr << "Failed to write all data" << std::endl;
     }
     else
     {
-        wxLogDebug("Write Successful! Bytes Written: %d",(int)bytesWritten);
+        std::cerr << "Write Successful! Bytes Written: " << bytesWritten << std::endl;
     }
 
     return ftStatus;
@@ -98,11 +98,11 @@ FT_STATUS readUsbDev(FT_HANDLE ftHandle,std::vector<char>& RPBuffer,DWORD &Bytes
     RPBuffer.resize(BytesToRead);
     char* ptrRPBuffer = RPBuffer.data();
 
-    wxLogDebug("Bytes to read from queue: %s", std::to_string(BytesToRead));
+    std::cerr << "Bytes to read from queue: " << std::to_string(BytesToRead) << std::endl;
 
     if (BytesToRead <= 0)
     {
-        wxLogDebug("No Data to read bytes to read: %d", (int)BytesToRead);
+        std::cerr << "No Data to read bytes to read: " << BytesToRead << std::endl;
 
         return ftStatus;
     }
@@ -117,11 +117,11 @@ FT_STATUS readUsbDev(FT_HANDLE ftHandle,std::vector<char>& RPBuffer,DWORD &Bytes
     {
         printErr(ftStatus,"Failed to recive all of the Data");
 
-        wxLogDebug("Received data Size: %d \n Bytes Returned: %d",(int)dataSize,(int)BytesReturned);
+        std::cerr << "Received data Size: " << dataSize << " Bytes Returned: " << BytesReturned << std::endl;
     }
     else
     {
-        wxLogDebug("Read Successful %d Bytes read",(int)dataSize);
+        std::cerr << "Read Successful " << dataSize << " Bytes read" << std::endl;
     }
 
     return ftStatus;

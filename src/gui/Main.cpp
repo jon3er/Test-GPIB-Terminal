@@ -280,7 +280,7 @@ void MainProgrammWin::MenuFileOpen(wxCommandEvent& event)
         fileOpen = false;
     }
 
-    wxLogDebug(filePathCurrentFile);
+    std::cerr << filePathCurrentFile << std::endl;
 }
 
 void MainProgrammWin::MenuFileSave(wxCommandEvent& event)
@@ -296,7 +296,7 @@ void MainProgrammWin::MenuFileSave(wxCommandEvent& event)
 }
 void MainProgrammWin::MenuFileSaveAs(wxCommandEvent& event)
 {
-    wxLogDebug("Try to Open save as dialog...");
+    std::cerr << "Try to Open save as dialog..." << std::endl;
 
     wxFileDialog saveAsFileDialog(nullptr, _("File Save As..."),
         "",//filePathRoot,
@@ -309,12 +309,12 @@ void MainProgrammWin::MenuFileSaveAs(wxCommandEvent& event)
         return;
     }
 
-    wxLogDebug("Opend save as window");
+    std::cerr << "Opend save as window" << std::endl;
 
     filePathCurrentFile = saveAsFileDialog.GetPath();
     if (!saveToCsvFile(filePathCurrentFile, OpendData, 0))
     {
-        wxLogDebug("failed to save");
+        std::cerr << "failed to save" << std::endl;
         fileOpen = false;
         return;
     }
@@ -323,8 +323,8 @@ void MainProgrammWin::MenuFileSaveAs(wxCommandEvent& event)
         fileOpen = true;
     }
 
-    wxLogDebug(filePathCurrentFile);
-    wxLogDebug("saved data");
+    std::cerr << filePathCurrentFile << std::endl;
+    std::cerr << "saved data" << std::endl;
 }
 
 void MainProgrammWin::MenuFileClose(wxCommandEvent& event)
@@ -428,7 +428,7 @@ TerminalWindow::TerminalWindow(wxWindow *parent)
     panelTerm->SetSizerAndFit(sizer);
 
     //debug msg
-    wxLogDebug("Terminal Window Opened");
+    std::cerr << "Terminal Window Opened" << std::endl;
 
     TerminalInput->Bind(wxEVT_TEXT_ENTER, &TerminalWindow::OnEnterTerminal,this);
     //define Termianl Commands
@@ -441,7 +441,7 @@ TerminalWindow::~TerminalWindow()
     {
         Global::AdapterInstance.disconnect();
     }
-    wxLogDebug("Terminal Window Closed");
+    std::cerr << "Terminal Window Closed" << std::endl;
 }
 //-----Terminal Window Methodes -----
 void TerminalWindow::setupCmds()
@@ -474,19 +474,19 @@ void TerminalWindow::connectDevice(const std::string& args = "")
 {
     int dev = 0;
 
-    wxLogDebug("Command entered: connected with args: %s", args);
+    std::cerr << "Command entered: connected with args: " << args << std::endl;
 
     if (args != "")
     {
         dev = std::stoi(args);
         if (dev == std::clamp(dev, 1, 20))
         {
-            wxLogDebug("Valid dev number: %i", dev);
+            std::cerr << "Valid dev number: " << dev << std::endl;
             dev = dev - 1;
         }
         else
         {
-            wxLogDebug("Invalid dev number: %i", dev);
+            std::cerr << "Invalid dev number: " << dev << std::endl;
             dev = 0;
         }
     }
@@ -498,11 +498,11 @@ void TerminalWindow::connectDevice(const std::string& args = "")
         if (Global::AdapterInstance.getStatus() == FT_OK)
         {
             TerminalDisplay->AppendText(terminalTimestampOutput("Connected to a device\n"));
-            wxLogDebug("Connected to %i", dev);
+            std::cerr << "Connected to " << dev << std::endl;
         }
         else
         {
-            wxLogDebug("Couldnt connect");
+            std::cerr << "Couldnt connect" << std::endl;
             TerminalDisplay->AppendText(terminalTimestampOutput("Couldnt connect to a device\n Is programm running as SU?\n Is the FTDI_SIO Driver unloaded?\n"));
         }
 
@@ -518,14 +518,14 @@ void TerminalWindow::connectDevice(const std::string& args = "")
 
 void TerminalWindow::disconnectDevice(const std::string& args = "")
 {
-    wxLogDebug("Command entered: disconnect with arg: %s", args);
+    std::cerr << "Command entered: disconnect with arg: " << args << std::endl;
 
     Global::AdapterInstance.disconnect();
 
     if (Global::AdapterInstance.getStatus() == FT_OK)
     {
         TerminalDisplay->AppendText(terminalTimestampOutput("Disconnected from a device\n"));
-        wxLogDebug("disconnected from current device");
+        std::cerr << "disconnected from current device" << std::endl;
     }
     else
     {
@@ -536,7 +536,7 @@ void TerminalWindow::disconnectDevice(const std::string& args = "")
 
 wxString TerminalWindow::sendToDevice(const std::string& args)
 {
-    wxLogDebug("terminal Command send %s Entered",args);
+    std::cerr << "terminal Command send " << args << " Entered" << std::endl;
 
     wxString GPIBText = args;
     std::string CheckText(GPIBText.ToUTF8());
@@ -547,7 +547,7 @@ wxString TerminalWindow::sendToDevice(const std::string& args)
 
     sleepMs(100);   //wait for responce
 
-    wxLogDebug("Reading from device...");
+    std::cerr << "Reading from device..." << std::endl;
 
     Text = Global::AdapterInstance.read();
 
@@ -559,7 +559,7 @@ wxString TerminalWindow::sendToDevice(const std::string& args)
 wxString TerminalWindow::readFromDevice(const std::string& args = "")
 {
 
-    wxLogDebug("command read entered with args: %s", args);
+    std::cerr << "command read entered with args: " << args << std::endl;
 
     wxString Text = Global::AdapterInstance.read();
 
@@ -570,7 +570,7 @@ wxString TerminalWindow::readFromDevice(const std::string& args = "")
 
 void TerminalWindow::writeToDevice(const std::string& args)
 {
-    wxLogDebug("Write Command Entered");
+    std::cerr << "Write Command Entered" << std::endl;
 
     wxString Text = Global::AdapterInstance.write(args);
 
@@ -587,17 +587,17 @@ void TerminalWindow::configDevice(const std::string& args = "")
         {
             int BaudRate = std::stoi(args);
             Global::AdapterInstance.setBaudrate(BaudRate);
-            wxLogDebug("Set Baudrate to %i", Global::AdapterInstance.getBaudrate());
+            std::cerr << "Set Baudrate to " << Global::AdapterInstance.getBaudrate() << std::endl;
 
         }
         else
         {
-            wxLogDebug("Using Default Baudrate: %i",Global::AdapterInstance.getBaudrate());
+            std::cerr << "Using Default Baudrate: " << Global::AdapterInstance.getBaudrate() << std::endl;
         }
     }
     else
     {
-        wxLogDebug("Using Default Baudrate: %i",Global::AdapterInstance.getBaudrate());
+        std::cerr << "Using Default Baudrate: " << Global::AdapterInstance.getBaudrate() << std::endl;
     }
 
     Global::AdapterInstance.config();
@@ -606,7 +606,7 @@ void TerminalWindow::configDevice(const std::string& args = "")
     {
         Text = "Set Device BaudRate to " + std::to_string(Global::AdapterInstance.getBaudrate()) + "\n";
         TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
-        wxLogDebug("Baudrate set to: %s", std::to_string(Global::AdapterInstance.getBaudrate()));
+        std::cerr << "Baudrate set to: " << std::to_string(Global::AdapterInstance.getBaudrate()) << std::endl;
     }
     else
     {
@@ -729,7 +729,7 @@ void TerminalWindow::testDevice(const std::string& args = "")
             wxLogError("Konnte Datei nicht schreiben!");
         }
 
-        wxLogDebug("Received Trace: %s", Trace);
+        std::cerr << "Received Trace: " << Trace << std::endl;
 
         writeToDevice("INIT:CONT ON"); //Dauerhafter sweep an
     }
@@ -741,7 +741,7 @@ void TerminalWindow::OnEnterTerminal(wxCommandEvent& event)
     wxString TText = Terminal->GetValue();
     Terminal->SetValue("");
 
-    wxLogDebug("user entered: %s", TText.c_str());
+    std::cerr << "user entered: " << TText.c_str() << std::endl;
 
     //Output to terminal
     TerminalDisplay->AppendText(terminalTimestampOutput(TText + "\n"));
@@ -811,6 +811,8 @@ FunctionWindow::FunctionWindow(wxWindow *parent)
     //Create Button "Test Multi Mesurement"
     wxButton* TestMultiMessButton   = new wxButton(panelfunc, wxID_ANY, "Test Multi mesurement",    wxPoint(10,0));
 
+    wxButton* TestButton            = new wxButton(panelfunc, wxID_ANY, "Test Other",               wxPoint(10,0));
+
 
     //Funtion Output Lable
     wxStaticText* discFuncOutput = new wxStaticText(panelfunc,wxID_ANY,"Function output: ");
@@ -826,7 +828,7 @@ FunctionWindow::FunctionWindow(wxWindow *parent)
     connectDevGpibButton->Bind(wxEVT_BUTTON, &FunctionWindow::OnConDisconGpib,  this);
     TestSaveFileButton  ->Bind(wxEVT_BUTTON, &FunctionWindow::OnTestSaveFile,   this);
     TestMultiMessButton ->Bind(wxEVT_BUTTON, &FunctionWindow::OnTestMultiMess,  this);
-
+    TestButton          ->Bind(wxEVT_BUTTON, &FunctionWindow::OnTest,           this);
     //sizer     Set Window Layout
     wxBoxSizer* sizerFunc = new wxBoxSizer(wxVERTICAL);
     sizerFunc->Add(discFuncInput,       0, wxEXPAND | wxALL , 10);
@@ -839,6 +841,8 @@ FunctionWindow::FunctionWindow(wxWindow *parent)
     sizerFunc->Add(readWriteGpibButton, 0, wxEXPAND | wxALL , 10);
     sizerFunc->Add(TestSaveFileButton,  0, wxEXPAND | wxALL , 10);
     sizerFunc->Add(TestMultiMessButton, 0, wxEXPAND | wxALL , 10);
+    sizerFunc->Add(TestButton,          0, wxEXPAND | wxALL , 10);
+
     sizerFunc->Add(discFuncOutput,      0, wxEXPAND | wxALL , 10);
     sizerFunc->Add(textFuncOutput,      0, wxEXPAND | wxALL , 10);
     panelfunc->SetSizerAndFit(sizerFunc);
@@ -851,7 +855,7 @@ FunctionWindow::~FunctionWindow()
 //-----Function Window Methodes-----
 void FunctionWindow::OnUsbScan(wxCommandEvent& event)
 {
-    wxLogDebug("Scan USB Devices");
+    std::cerr << "Scan USB Devices" << std::endl;
 
     DWORD devices = scanUsbDev();
     wxString deviceNumString = std::to_string(devices) + " Devices Found" + "\n";
@@ -888,7 +892,7 @@ void FunctionWindow::OnConDisconGpib(wxCommandEvent& event)
 }
 void FunctionWindow::OnTestSaveFile(wxCommandEvent& event)
 {
-    wxLogDebug("Pressed Test Save File");
+    std::cerr << "Pressed Test Save File" << std::endl;
     sData TestObjekt;
 
     TestObjekt.setTimeAndDate();
@@ -897,9 +901,9 @@ void FunctionWindow::OnTestSaveFile(wxCommandEvent& event)
     sData::sParam* TestData = new sData::sParam;
     TestData = TestObjekt.GetParameter();
 
-    wxLogDebug("Zeit: %s",TestData->Time);
+    std::cerr << "Zeit: " << TestData->Time << std::endl;
 
-    wxLogDebug("Schreib daten in CSV");
+    std::cerr << "Schreib daten in CSV" << std::endl;
 
     wxString Dateiname = "D:\\CodeProjects\\VSCode\\projects\\Diplom\\Test-GPIB-Terminal\\LogFiles\\TestCSVNeu";
 
@@ -908,13 +912,13 @@ void FunctionWindow::OnTestSaveFile(wxCommandEvent& event)
     {
         if (!saveToCsvFile(Dateiname, TestObjekt, i))
         {
-            wxLogDebug("Failed to save file");
+            std::cerr << "Failed to save file" << std::endl;
         }
     }
 }
 void FunctionWindow::OnWriteGpib(wxCommandEvent& event)
 {
-    wxLogDebug("Write Pressed!");
+    std::cerr << "Write Pressed!" << std::endl;
 
     wxString GPIBText = FunctionWindow::writeFuncInput->GetValue();
     FunctionWindow::writeFuncInput->SetValue("");
@@ -927,7 +931,7 @@ void FunctionWindow::OnWriteGpib(wxCommandEvent& event)
 }
 void FunctionWindow::OnReadGpib(wxCommandEvent& event)
 {
-    wxLogDebug("On Read Pressed");
+    std::cerr << "On Read Pressed" << std::endl;
 
     wxString Text = Global::AdapterInstance.read();
 
@@ -935,9 +939,9 @@ void FunctionWindow::OnReadGpib(wxCommandEvent& event)
 }
 void FunctionWindow::OnReadWriteGpib(wxCommandEvent& event)
 {
-    wxLogDebug("Read / Write Pressed!");
+    std::cerr << "Read / Write Pressed!" << std::endl;
 
-    wxLogDebug("Writing to device...");
+    std::cerr << "Writing to device..." << std::endl;
 
     wxString GPIBText = FunctionWindow::writeFuncInput->GetValue();
     std::string CheckText(GPIBText.ToUTF8());
@@ -950,7 +954,7 @@ void FunctionWindow::OnReadWriteGpib(wxCommandEvent& event)
 
     sleepMs(100);   //wait for responce
 
-    wxLogDebug("Reading from device...");
+    std::cerr << "Reading from device..." << std::endl;
 
     Text = Global::AdapterInstance.read();
 
@@ -980,6 +984,12 @@ void FunctionWindow::OnTestMultiMess(wxCommandEvent& event)
     //Close Window
     MultiMessWin->Destroy();
 
+}
+void FunctionWindow::OnTest(wxCommandEvent& event)
+{
+    std::cerr << "Test wxLogDebug" << std::endl;
+    std::cerr << "Test cerr" << std::endl;
+    std::cout << "Test cout" << std::endl;
 }
 //-----Function Window Methodes End -----
 

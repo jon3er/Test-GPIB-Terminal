@@ -73,6 +73,15 @@ PlotWindow::PlotWindow(wxWindow *parent) : wxDialog(parent, wxID_ANY, "Plot Wind
 }
 PlotWindow::~PlotWindow()
 {
+    // Clean up measurement thread
+    if (m_measurementThread.joinable())
+    {
+        std::cerr << "PlotWindow destructor: Waiting for measurement thread to finish" << std::endl;
+        m_stopMeasurement = true;  // Signal thread to stop
+        m_measurementThread.join(); // Wait for thread to complete
+        std::cerr << "PlotWindow destructor: Measurement thread joined" << std::endl;
+    }
+
     Global::AdapterInstance.disconnect();
 }
 
@@ -96,32 +105,21 @@ void PlotWindow::getFileNames(const wxString& dirPath, wxArrayString& files)
 }
 void PlotWindow::executeScriptEvent(wxCommandEvent& event)
 {
-    wxArrayString logAdapterReceived;
-    wxString fileName = selectMesurement->GetStringSelection();
-
-    wxLogDebug("Reading Scriptfile...");
-    Global::AdapterInstance.readScriptFile(filePath, fileName, logAdapterReceived);
-
-    //output received msg
-    for (size_t i = 0; i < logAdapterReceived.GetCount(); i++)
+    // Prevent starting a new thread while one is already running
+    if (m_measurementThread.joinable())
     {
-        wxLogDebug(logAdapterReceived[i]);
+        wxLogWarning("Mesurement thread already running");
+        return;
     }
-    sData MessErgebnisse;
-    sData::sParam *MessInfo = MessErgebnisse.GetParameter();
-    wxDateTime now = wxDateTime::Now();
-    MessInfo->File = fileName;
-    MessInfo->Date = now.FormatISODate();
-    MessInfo->Time = now.FormatISOTime();
 
-    y = Global::Messung.getX_Data(); //zum test vertauscht
-    x = Global::Messung.getY_Data();
+    wxString fileName = selectMesurement->GetStringSelection();
+    std::cerr << "Starting measurement thread for: " << fileName << std::endl;
 
-    MessErgebnisse.SetData(MessInfo, y, x);
-    wxString filePathSave = System::filePathRoot + System::fileSystemSlash + "LogFiles" + System::fileSystemSlash + fileName;
-    saveToCsvFile(filePathSave, MessErgebnisse, 0);
-    //test
-    updatePlotData();
+    // Reset stop flag before starting new thread
+    m_stopMeasurement = false;
+
+    // Start measurement thread
+    m_measurementThread = std::thread(&PlotWindow::MeasurementWorkerThread, this, filePath, fileName);
 }
 void PlotWindow::updatePlotData()
 {
@@ -129,107 +127,170 @@ void PlotWindow::updatePlotData()
     plot->Fit();
 }
 
+void PlotWindow::MeasurementWorkerThread(const wxString& dirPath, const wxString& file)
+{
+    // im thread kein wxLogDebug möglich
+    std::cout << "Measurement thread started" <<std::endl;
+
+    try
+    {
+        wxArrayString logAdapterReceived;
+
+        // Run the blocking measurement in this worker thread
+        Global::AdapterInstance.readScriptFile(dirPath, file, logAdapterReceived, &m_stopMeasurement);
+
+        // Output received messages to debug log
+        for (size_t i = 0; i < logAdapterReceived.GetCount(); i++)
+        {
+            wxString text = logAdapterReceived[i];
+            wxEvtHandler::CallAfter([this,text]()
+            {
+                std::cerr << text << std::endl;
+            });
+            
+        }
+
+        // Copy data by value to avoid race conditions
+        std::vector<double> x_copy = Global::Messung.getX_Data();
+        std::vector<double> y_copy = Global::Messung.getY_Data();
+
+        // Create measurement info while still in worker thread
+        sData MessErgebnisse;
+        sData::sParam *MessInfo = MessErgebnisse.GetParameter();
+        wxDateTime now = wxDateTime::Now();
+        MessInfo->File = file;
+        MessInfo->Date = now.FormatISODate();
+        MessInfo->Time = now.FormatISOTime();
+
+        // Use CallAfter to safely update GUI from main thread
+        wxEvtHandler::CallAfter([this, x_copy, y_copy]()
+        {
+            // Update member data in main thread
+            this->y = x_copy;  // Note: original code has this swapped
+            this->x = y_copy;
+
+            // Update plot on main thread
+            this->updatePlotData();
+
+            std::cout << "[Thread] Plot updated with measurement data" << std::endl;
+        });
+
+        // Save measurement data to file (done in worker thread to not block GUI)
+        wxString filePathSave = System::filePathRoot + System::fileSystemSlash + "LogFiles" + System::fileSystemSlash + file;
+        saveToCsvFile(filePathSave, MessErgebnisse, 0);
+
+        std::cout << "[Thread] Measurement completed and saved" << std::endl;
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "[Thread ERROR] Error in measurement thread: " << e.what() << std::endl;
+    }
+    catch (...)
+    {
+        std::cerr << "[Thread ERROR] Unknown error in measurement thread" << std::endl;
+    }
+}
+
 //-----Plot Window ENDE--------
 
 //-----Plot Window Set Marker-------
-PlotWindowSetMarker::PlotWindowSetMarker( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
+PlotWindowSetMarker::PlotWindowSetMarker(wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style) 
+    : wxDialog(parent, id, title, pos, size, style)
 {
-    wxArrayString freqEinheiten;
-    freqEinheiten.Add("Hz");
-    freqEinheiten.Add("kHz");
-    freqEinheiten.Add("MHz");
-    freqEinheiten.Add("GHz");
+    // Frequency units
+    wxArrayString freqUnits;
+    freqUnits.Add("Hz");
+    freqUnits.Add("kHz");
+    freqUnits.Add("MHz");
+    freqUnits.Add("GHz");
 
-	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
+    // Window setup
+    this->SetSizeHints(wxDefaultSize, wxDefaultSize);
 
-	wxBoxSizer* bSizer1;
-	bSizer1 = new wxBoxSizer( wxVERTICAL );
+    // Main sizer
+    wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
 
-	wxStaticBoxSizer* sbSizer1;
-	sbSizer1 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, wxT("Marker 1") ), wxVERTICAL );
+    // ===== Marker 1 Section =====
+    wxStaticBoxSizer* marker1Box = new wxStaticBoxSizer(
+        new wxStaticBox(this, wxID_ANY, wxT("Marker 1")), wxVERTICAL);
 
-	wxBoxSizer* bSizer2;
-	bSizer2 = new wxBoxSizer( wxHORIZONTAL );
+    // Marker 1: Frequency input row
+    wxBoxSizer* marker1FreqRow = new wxBoxSizer(wxHORIZONTAL);
+    m_checkBox1 = new wxCheckBox(marker1Box->GetStaticBox(), wxID_ANY, wxT("Set to Frequency"), 
+        wxDefaultPosition, wxDefaultSize, 0);
+    m_checkBox1->Bind(wxEVT_CHECKBOX, &PlotWindowSetMarker::toggleSelection1, this);
+    m_textCtrl1 = new wxTextCtrl(marker1Box->GetStaticBox(), wxID_ANY, wxEmptyString, 
+        wxDefaultPosition, wxDefaultSize, 0);
+    m_choice1 = new wxChoice(marker1Box->GetStaticBox(), wxID_ANY, wxDefaultPosition, 
+        wxDefaultSize, freqUnits, 0);
+    m_choice1->SetSelection(0);
 
-	m_checkBox1 = new wxCheckBox( sbSizer1->GetStaticBox(), wxID_ANY, wxT("Set to Frequency"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_checkBox1->Bind(wxEVT_CHECKBOX, &PlotWindowSetMarker::toggleSelection1, this);
-    bSizer2->Add( m_checkBox1, 1, wxALL, 5 );
+    marker1FreqRow->Add(m_checkBox1, 1, wxALL, 5);
+    marker1FreqRow->Add(m_textCtrl1, 1, wxALL, 5);
+    marker1FreqRow->Add(m_choice1, 1, wxALL, 5);
+    marker1Box->Add(marker1FreqRow, 1, wxEXPAND, 5);
 
-	m_textCtrl1 = new wxTextCtrl( sbSizer1->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer2->Add( m_textCtrl1, 1, wxALL, 5 );
+    // Marker 1: Max frequency option
+    wxBoxSizer* marker1MaxRow = new wxBoxSizer(wxVERTICAL);
+    m_checkBox2 = new wxCheckBox(marker1Box->GetStaticBox(), wxID_ANY, wxT("Set to highest freq"), 
+        wxDefaultPosition, wxDefaultSize, 0);
+    m_checkBox2->Bind(wxEVT_CHECKBOX, &PlotWindowSetMarker::toggleSelection1, this);
+    marker1MaxRow->Add(m_checkBox2, 0, wxALL, 5);
+    marker1Box->Add(marker1MaxRow, 1, wxEXPAND, 5);
 
-	m_choice1 = new wxChoice( sbSizer1->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, freqEinheiten, 0 );
-	m_choice1->SetSelection( 0 );
-	bSizer2->Add( m_choice1, 1, wxALL, 5 );
+    // Marker 1: Set button
+    m_button1 = new wxButton(marker1Box->GetStaticBox(), wxID_ANY, wxT("Set"), 
+        wxDefaultPosition, wxDefaultSize, 0);
+    m_button1->Bind(wxEVT_BUTTON, &PlotWindowSetMarker::SetSelection1, this);
+    marker1Box->Add(m_button1, 1, wxALL, 5);
 
+    mainSizer->Add(marker1Box, 1, wxEXPAND, 5);
 
-	sbSizer1->Add( bSizer2, 1, wxEXPAND, 5 );
+    // ===== Marker 2 Section =====
+    wxStaticBoxSizer* marker2Box = new wxStaticBoxSizer(
+        new wxStaticBox(this, wxID_ANY, wxT("Marker 2")), wxVERTICAL);
 
-	wxBoxSizer* bSizer6;
-	bSizer6 = new wxBoxSizer( wxVERTICAL );
+    // Marker 2: Frequency input row
+    wxBoxSizer* marker2FreqRow = new wxBoxSizer(wxHORIZONTAL);
+    m_checkBox3 = new wxCheckBox(marker2Box->GetStaticBox(), wxID_ANY, wxT("Set to Frequency"), 
+        wxDefaultPosition, wxDefaultSize, 0);
+    m_checkBox3->Bind(wxEVT_CHECKBOX, &PlotWindowSetMarker::toggleSelection2, this);
+    m_textCtrl2 = new wxTextCtrl(marker2Box->GetStaticBox(), wxID_ANY, wxEmptyString, 
+        wxDefaultPosition, wxDefaultSize, 0);
+    m_choice2 = new wxChoice(marker2Box->GetStaticBox(), wxID_ANY, wxDefaultPosition, 
+        wxDefaultSize, freqUnits, 0);
+    m_choice2->SetSelection(0);
 
-	m_checkBox2 = new wxCheckBox( sbSizer1->GetStaticBox(), wxID_ANY, wxT("Set to highest freq"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_checkBox2->Bind(wxEVT_CHECKBOX, &PlotWindowSetMarker::toggleSelection1, this);
-    bSizer6->Add( m_checkBox2, 0, wxALL, 5 );
+    marker2FreqRow->Add(m_checkBox3, 1, wxALL, 5);
+    marker2FreqRow->Add(m_textCtrl2, 1, wxALL, 5);
+    marker2FreqRow->Add(m_choice2, 1, wxALL, 5);
+    marker2Box->Add(marker2FreqRow, 1, wxEXPAND, 5);
 
+    // Marker 2: Max frequency option
+    wxBoxSizer* marker2MaxRow = new wxBoxSizer(wxVERTICAL);
+    m_checkBox4 = new wxCheckBox(marker2Box->GetStaticBox(), wxID_ANY, wxT("Set to highest Freq"), 
+        wxDefaultPosition, wxDefaultSize, 0);
+    m_checkBox4->Bind(wxEVT_CHECKBOX, &PlotWindowSetMarker::toggleSelection2, this);
+    marker2MaxRow->Add(m_checkBox4, 1, wxALL, 5);
+    marker2Box->Add(marker2MaxRow, 1, wxEXPAND, 5);
 
-	sbSizer1->Add( bSizer6, 1, wxEXPAND, 5 );
+    // Marker 2: Set button
+    m_button2 = new wxButton(marker2Box->GetStaticBox(), wxID_ANY, wxT("Set"), 
+        wxDefaultPosition, wxDefaultSize, 0);
+    m_button2->Bind(wxEVT_BUTTON, &PlotWindowSetMarker::SetSelection2, this);
+    marker2Box->Add(m_button2, 1, wxALL, 5);
 
-	m_button1 = new wxButton( sbSizer1->GetStaticBox(), wxID_ANY, wxT("Set"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_button1->Bind(wxEVT_BUTTON, &PlotWindowSetMarker::SetSelection1, this);
-    sbSizer1->Add( m_button1, 1, wxALL, 5 );
+    mainSizer->Add(marker2Box, 1, wxEXPAND, 5);
 
+    // Apply layout
+    this->SetSizer(mainSizer);
+    this->Layout();
+    this->Centre(wxBOTH);
 
-	bSizer1->Add( sbSizer1, 1, wxEXPAND, 5 );
-
-	wxStaticBoxSizer* sbSizer11;
-	sbSizer11 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, wxT("Marker 2") ), wxVERTICAL );
-
-	wxBoxSizer* bSizer21;
-	bSizer21 = new wxBoxSizer( wxHORIZONTAL );
-
-	m_checkBox3 = new wxCheckBox( sbSizer11->GetStaticBox(), wxID_ANY, wxT("Set to Frequency"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_checkBox3->Bind(wxEVT_CHECKBOX, &PlotWindowSetMarker::toggleSelection2, this);
-    bSizer21->Add( m_checkBox3, 1, wxALL, 5 );
-
-	m_textCtrl2 = new wxTextCtrl( sbSizer11->GetStaticBox(), wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0 );
-	bSizer21->Add( m_textCtrl2, 1, wxALL, 5 );
-
-
-	m_choice2 = new wxChoice( sbSizer11->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, freqEinheiten, 0 );
-	m_choice2->SetSelection( 0 );
-	bSizer21->Add( m_choice2, 1, wxALL, 5 );
-
-
-	sbSizer11->Add( bSizer21, 1, wxEXPAND, 5 );
-
-	wxBoxSizer* bSizer5;
-	bSizer5 = new wxBoxSizer( wxVERTICAL );
-
-	m_checkBox4 = new wxCheckBox( sbSizer11->GetStaticBox(), wxID_ANY, wxT("Set to highest Freq"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_checkBox4->Bind(wxEVT_CHECKBOX, &PlotWindowSetMarker::toggleSelection2, this);
-    bSizer5->Add( m_checkBox4, 1, wxALL, 5 );
-
-
-	sbSizer11->Add( bSizer5, 1, wxEXPAND, 5 );
-
-	m_button2 = new wxButton( sbSizer11->GetStaticBox(), wxID_ANY, wxT("Set"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_button2->Bind(wxEVT_BUTTON, &PlotWindowSetMarker::SetSelection2, this);
-    sbSizer11->Add( m_button2, 1, wxALL, 5 );
-
-
-	bSizer1->Add( sbSizer11, 1, wxEXPAND, 5 );
-
-
-	this->SetSizer( bSizer1 );
-	this->Layout();
-
-	this->Centre( wxBOTH );
-
+    // Initialize
     GetValues();
     toggleSelection1fkt();
     toggleSelection2fkt();
-
 }
 PlotWindowSetMarker::~PlotWindowSetMarker()
 {
@@ -325,7 +386,7 @@ void PlotWindowSetMarker::GetSelectedValue1()
 
     if (!Marker1Freq.ToDouble(&val))
     {
-        wxLogDebug("Failed to convert input");
+        std::cerr << "Failed to convert input" << std::endl;
         return;
     }
 
@@ -351,7 +412,7 @@ void PlotWindowSetMarker::GetSelectedValue2()
 
     if (!Marker1Freq.ToDouble(&val))
     {
-        wxLogDebug("Failed to convert input");
+        std::cerr << "Failed to convert input" << std::endl;
         return;
     }
 
