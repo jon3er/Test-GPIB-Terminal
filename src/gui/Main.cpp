@@ -894,12 +894,58 @@ void FunctionWindow::OnTestSaveFile(wxCommandEvent& event)
 {
     std::cerr << "Pressed Test Save File" << std::endl;
     sData TestObjekt;
-
+    sData TestObjekt2;
+    
+    int xpt = 10;
+    int ypt = 10;
+    int count = 50;
+    int endFreq = 50'000;
+    // set Mesurement Header
     TestObjekt.setTimeAndDate();
-    TestObjekt.setNumberOfPts_X(10);
-    TestObjekt.setNumberOfPts_Y(10);
-    sData::sParam* TestData = new sData::sParam;
-    TestData = TestObjekt.GetParameter();
+    TestObjekt.setNumberOfPts_X(xpt);
+    TestObjekt.setNumberOfPts_Y(ypt);
+    TestObjekt.setEndFreq(endFreq);
+
+    std::vector<double> TestArray;
+    
+    for (size_t i = 0; i < count; i++)
+    {
+        try
+        {
+            TestArray.push_back(double(i));
+        }
+        catch(const std::exception& e)
+        {
+            std::cerr << "pushback failed" << e.what() << '\n';
+        } 
+    }
+    std::cout << "TestArray Ok" << std::endl;
+    std::cout << "count: " << count << std::endl;
+    std::cout << "real size :" << TestArray.size() << std::endl;
+    TestObjekt.setNumberofPts_Array(count);
+    std::cout << "setNumberofPts_Array Ok: " << TestObjekt.getNumberOfPts_Array()<< std::endl;
+    for (size_t i = 0; i < xpt; i++)
+    {
+        for (size_t j = 0; j < ypt; j++)
+        {
+            try
+            {
+                std::cout << "x: " << i << " y: " << j << std::endl;
+                
+                TestObjekt.set3DDataReal(TestArray,i,j);
+            }
+            catch(const std::exception& e)
+            {
+                std::cerr << "Set 3D Data failed: " << e.what() << '\n';
+                std::cerr << i << " " << j << std::endl;
+            }  
+        }
+    }
+    std::cout << "Set 3D Data Ok" << std::endl;
+    
+
+
+    sData::sParam* TestData = TestObjekt.GetParameter();
 
     std::cerr << "Zeit: " << TestData->Time << std::endl;
 
@@ -907,10 +953,27 @@ void FunctionWindow::OnTestSaveFile(wxCommandEvent& event)
 
     wxString Dateiname = "D:\\CodeProjects\\VSCode\\projects\\Diplom\\Test-GPIB-Terminal\\LogFiles\\TestCSVNeu";
 
-    //int messungen = TestObjekt.getNumberOfPts_X()* TestObjekt.getNumberOfPts_Y();
-    for (int i = 1; i < 100; i++)
+    int messungen = TestObjekt.getNumberOfPts_X()* TestObjekt.getNumberOfPts_Y();
+    for (int i = 1; i <= messungen; i++)
     {
         if (!saveToCsvFile(Dateiname, TestObjekt, i))
+        {
+            std::cerr << "Failed to save file" << std::endl;
+        }
+    }
+
+    // bis hier alles ok
+
+    readCsvFile(Dateiname, TestObjekt2);
+
+    Dateiname = "D:\\CodeProjects\\VSCode\\projects\\Diplom\\Test-GPIB-Terminal\\LogFiles\\TestCSVNeuKopie";
+
+    int totalpoints = TestObjekt2.getNumberOfPts_X()* TestObjekt2.getNumberOfPts_Y();
+    std::cout << "[Debug] Totalpoints: " << totalpoints << std::endl;
+
+    for (int i = 1; i < totalpoints; i++)
+    {
+        if (!saveToCsvFile(Dateiname, TestObjekt2, i))
         {
             std::cerr << "Failed to save file" << std::endl;
         }

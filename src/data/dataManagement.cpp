@@ -158,6 +158,29 @@ bool sData::setEndFreq(unsigned int EndFreq)
     return true;
 }
 
+void sData::setNumberofPts_Array(int numb) 
+{ 
+        if (numb == 0) 
+        {
+            dsParam->NoPoints_Array = dsR.size();
+        } 
+        else 
+        {
+            dsParam->NoPoints_Array = numb; 
+        }
+
+        try
+        {
+            resize3DData(dsParam->NoPoints_X, dsParam->NoPoints_Y, dsParam->NoPoints_Array);
+        }
+        catch(const std::exception& e)
+        {
+            std::cerr << "Set Number of Points Array Error" << e.what() << '\n';
+        }
+        
+        
+}
+
 bool sData::setTimeAndDate()
 {
     try
@@ -186,7 +209,7 @@ bool sData::set3DDataReal(std::vector<double> Array , int x, int y)
     }
     catch(const std::exception& e)
     {
-        std::cerr << e.what() << '\n';
+        std::cerr << "Copy failed " <<e.what() << '\n';
     }
     return false;
 }
@@ -221,9 +244,12 @@ sData3D::sData3D(int x, int y, int Anzahl) : X_Messpunkte(x), Y_Messpunkte(y), M
     resize(X_Messpunkte, Y_Messpunkte, Messpunkte);
 }
 
-void sData3D::resize(int x, int y, int Anzahl)
+void sData3D::resize(int x, int y, int Anzahl) 
 {
-    dataArray.resize(X_Messpunkte * Y_Messpunkte * Messpunkte, 0.0);
+    X_Messpunkte = x;
+    Y_Messpunkte = y;
+    Messpunkte = Anzahl;
+    dataArray.resize(x * y * Anzahl, 0.0);
 }
 
 double& sData3D::at(int x, int y, int dataIndex)
@@ -253,8 +279,6 @@ bool saveToCsvFile(wxString& filename, sData& data, int mesurementNumb)
 
     real = data.getRealArray();
     imag = data.getImagArray();
-
-
 
     //filename.Append(timestamp);
     if (!filename.Lower().EndsWith(".csv"))
@@ -305,20 +329,32 @@ bool saveToCsvFile(wxString& filename, sData& data, int mesurementNumb)
         cont = true;
     }
 
+
+    int xPoints = data.getNumberOfPts_X();
+    int yPoints = data.getNumberOfPts_Y();
+    
     // find line with current
-    wxString indexText = getIndexNumbers(data.getNumberOfPts_X(),data.getNumberOfPts_Y(), mesurementNumb, cont) + " Real";
+    wxString indexText = getIndexNumbers(xPoints, yPoints, mesurementNumb, cont) + " Real";
 
     int lineNumber = findLineCsv(file, indexText);
-    //wxLogDebug("found Line %d", lineNumber);
+    std::cout << "line Found: " << lineNumber << std::endl;
 
     int count = data.getNumberOfPts_Array();
 
+    // für den das Array ist die addressierung von 0 bis n-1
+    int xPosition = ((mesurementNumb - 1) / yPoints);
+    int yPosition = ((mesurementNumb - 1) % xPoints);
+
+    real = data.get3DDataReal(xPosition, yPosition);
+    imag = data.get3DDataImag(xPosition, yPosition);
+
     for (int i = 0; i < count; i++)
     {
-        file.GetLine(lineNumber) << ","<< real[i];
+    file.GetLine(lineNumber) << ","<< real[i];
 
-        file.GetLine(lineNumber + 1) << "," << imag[i];
+    file.GetLine(lineNumber + 1) << "," << imag[i];
     }
+
 
     file.Write();
     file.Close();
@@ -329,7 +365,7 @@ bool saveToCsvFile(wxString& filename, sData& data, int mesurementNumb)
 bool saveHeaderCsv(wxTextFile &file, sData& data)
 {
     sData::sParam* dsParam = data.GetParameter();
-    data.setNumberofPts_Array();
+    //data.setNumberofPts_Array();
 
     file.AddLine(wxString::Format("File Name,%s", dsParam->File));
     file.AddLine(wxString::Format("Date,%s", dsParam->Date));
@@ -347,16 +383,24 @@ bool saveHeaderCsv(wxTextFile &file, sData& data)
     wxString lineFreq = wxString::Format("f in %s", dsParam->ampUnit.ToAscii());
     double startFreq = dsParam->startFreq;
     double endFreq = dsParam->endFreq;
-    double step = 1;
+    double ArrayPts = double(data.getNumberOfPts_Array());
+
+    std::cout<< startFreq << endFreq << ArrayPts << std::endl;
+    double step;
+
+    // TODO stimmt noch nicht ganz gibt steps für n-1 werte aus
     try
     {
-        double step = (endFreq - startFreq) / data.getNumberOfPts_Array();
+        step = (endFreq - startFreq) / ArrayPts;
     }
     catch(const std::exception& e)
     {
         std::cerr << e.what() << '\n';
     }
     double freq = startFreq;
+
+    std::cout << step << std::endl;
+
 
     for (size_t i = 0; i < dsParam->NoPoints_Array; i++)
     {
@@ -379,10 +423,35 @@ bool saveHeaderCsv(wxTextFile &file, sData& data)
     return true;
 }
 
-bool readCsvHeader(wxTextFile &file, sData::sParam& dsParam)
+bool readCsvFile(wxString filename, sData& data)
 {
-    size_t lineCount = file.GetLineCount();
+    std::cerr << "read CSV" << std::endl;
 
+    wxTextFile file(filename.ToStdString());
+
+    if (!readCsvHeader(file, data))
+    {
+        std::cout << "Failed to read header" << std::endl;
+        file.Close();
+        return false;
+    }
+    readDataCsv(file, data);
+
+    file.Close();
+    return true;
+}
+
+bool readCsvHeader(wxTextFile&file, sData& data)
+{
+    if (!file.Open())
+    {
+        std::cout << "Failed to open file" << std::endl;
+        return false;
+    }   
+
+    sData::sParam* dsParam = data.GetParameter();
+
+    size_t lineCount = file.GetLineCount();
     // Minimale Zeilenanzahl prüfen
     if (lineCount < 9) {
         file.Close();
@@ -391,64 +460,34 @@ bool readCsvHeader(wxTextFile &file, sData::sParam& dsParam)
     }
 
     // Parse header metadata (lines 0-8)
-    dsParam.File = file.GetLine(0).AfterFirst(',').Trim(false).Trim();
-    dsParam.Date = file.GetLine(1).AfterFirst(',').Trim(false).Trim();
-    dsParam.Time = file.GetLine(2).AfterFirst(',').Trim(false).Trim();
-    dsParam.Type = file.GetLine(3).AfterFirst(',').Trim(false).Trim();
+    dsParam->File = file.GetLine(0).AfterFirst(',').Trim(false).Trim();
+    dsParam->Date = file.GetLine(1).AfterFirst(',').Trim(false).Trim();
+    dsParam->Time = file.GetLine(2).AfterFirst(',').Trim(false).Trim();
+    dsParam->Type = file.GetLine(3).AfterFirst(',').Trim(false).Trim();
 
     long lVal;
     if (file.GetLine(4).AfterFirst(',').ToLong(&lVal)) 
-        dsParam.NoPoints_X = lVal;
+        dsParam->NoPoints_X = lVal;
     if (file.GetLine(5).AfterFirst(',').ToLong(&lVal)) 
-        dsParam.NoPoints_Y = lVal;
+        dsParam->NoPoints_Y = lVal;
     if (file.GetLine(6).AfterFirst(',').ToLong(&lVal)) 
-        dsParam.NoPoints_Array = lVal;
+        dsParam->NoPoints_Array = lVal;
 
     // Parse frequency range
     wxString startFreqStr = file.GetLine(7).AfterFirst(',').Trim(false).Trim().BeforeFirst(' ');
     wxString endFreqStr = file.GetLine(8).AfterFirst(',').Trim(false).Trim().BeforeFirst(' ');
     
     long freqVal;
-    if (startFreqStr.ToLong(&freqVal)) dsParam.startFreq = freqVal;
-    if (endFreqStr.ToLong(&freqVal)) dsParam.endFreq = freqVal;
+    if (startFreqStr.ToLong(&freqVal)) dsParam->startFreq = freqVal;
+    if (endFreqStr.ToLong(&freqVal)) dsParam->endFreq = freqVal;
+
+    std::cout << "Read Header" << std::endl;
+    
+    // Resize Datastorage array for data
+    data.resize3DData(dsParam->NoPoints_X, dsParam->NoPoints_Y, dsParam->NoPoints_Array);
+
 
     file.Close();
-    return true;
-}
-
-bool saveDataCsv(wxTextFile& file, sData data, int mesurementNumb)
-{
-    return true;
-}
-
-bool writeDataCsv(wxTextFile& file, sData data, int mesurementNumb)
-{
-    std::vector<double> real = data.getRealArray();
-    std::vector<double> imag = data.getImagArray();
-    size_t count = data.getNumberOfPts_Array();
-
-    if (data.GetType() == "Line")
-    {
-        // ID Für Real Nummern einfügen
-        std::string index = getIndexNumbers(data.getNumberOfPts_X(), data.getNumberOfPts_Y(), mesurementNumb);
-
-        wxString buffer = wxString::Format("%s Real", index);
-        // Daten für Real anfügen
-        for (size_t i = 0; i < count; i++)
-        {
-            buffer << "," << real[i]; // Mehr dimisonales array einfügen und X-Y_Cord einfügen
-        }
-        file.AddLine(buffer);
-        // ID Für Imagh Zahlen einfügen
-
-        buffer = wxString::Format("%s Imag", index);
-        for (size_t i = 0; i < count; i++)
-        {
-            buffer << "," << real[i];
-        }
-        file.AddLine(buffer);
-    }
-
     return true;
 }
 
@@ -459,6 +498,12 @@ bool readDataCsv(wxTextFile& file, sData& data)
     int totalMeasurements = xPoints * yPoints;
 
     bool continuous = (data.GetType() != "Line");
+
+    if (!file.Open())
+    {
+        std::cout << "Failed to open file" << std::endl;
+        return false;
+    }   
 
     // Read all available measurements
     for (int mesurementNumb = 1; mesurementNumb <= totalMeasurements; mesurementNumb++)
@@ -552,8 +597,12 @@ bool readDataCsv(wxTextFile& file, sData& data)
         std::cerr << "Stored measurement " << mesurementNumb << " at position [" << xPos << "," << yPos << "]" << std::endl;
     }
 
+    file.Close();
+
     return true;
 }
+
+// Helper functions Index
 
 bool writeMatrixIndexCsv(wxTextFile& file, sData data)
 {

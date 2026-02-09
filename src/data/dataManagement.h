@@ -76,14 +76,13 @@ public:
     std::vector<double> getRealArray(int index = 0) { return dsR; };
     std::vector<double> getImagArray(int index = 0) { return dsI; };
 
-
     // set File Var
     bool setFileName(wxString Name);
     bool setFileType(wxString Type);
     // set Points
     bool setNumberOfPts_X(unsigned int NumbPtsX);
     bool setNumberOfPts_Y(unsigned int NumbPtsY);
-    void setNumberofPts_Array() { dsParam->NoPoints_Array = dsR.size();};
+    void setNumberofPts_Array(int numb = 0);
     // set Mesurement var
     bool setAmpUnit(wxString Unit);
     bool setStartFreq(unsigned int StartFreq);
@@ -95,6 +94,9 @@ public:
     bool set3DDataImag(std::vector<double> Array , int x, int y);
     std::vector<double> get3DDataReal(int x, int y);
     std::vector<double> get3DDataImag(int x, int y);
+
+    void resize3DData(int x, int y, int Anzahl) { Real3D.resize(x, y, Anzahl); Imag3D.resize(x, y, Anzahl); };
+
 
 private:
     sParam*                 dsParam;                            //parameters
@@ -108,15 +110,19 @@ private:
 
 
 // file operations
+// write
 bool saveToCsvFile(wxString& Filename, sData& data, int mesurementNumb);
-
-//bool testSaveCsv(wxString& Filename, sData& data, int mesurementNumb);
 
 bool saveHeaderCsv(wxTextFile& file, sData& data);
 
-bool readCsvHeader(wxString& filename, sData::sParam& dsParam);
-
 bool saveDataCsv(wxTextFile& file, sData data, int xCord, int yCord);
+
+// read functions
+bool readCsvFile(wxString filename, sData& data);
+
+bool readCsvHeader(wxTextFile& file, sData& data);
+
+bool readDataCsv(wxTextFile& file, sData& data);
 
 std::string getIndexNumbers(int xPoints, int yPoints, int mesurementNumb, bool continuous = false);
 
