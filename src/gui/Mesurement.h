@@ -8,11 +8,12 @@
 #include <wx/wx.h>
 #include <wx/tokenzr.h>
 
-#include "systemInfo.h"
+
 #include "main.h"
 #include "dataManagement.h"
 #include "fkt_GPIB.h"
 #include "fkt_d2xx.h"
+#include "systemInfo.h"
 
 #include "mathplot.h"
 

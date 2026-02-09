@@ -57,9 +57,9 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, wxWindowID id, const wxStrin
 	m_menu_File = new wxMenu();
 
     //file submenu
-	m_menuFile_Item_Open    = new wxMenuItem( m_menu_File, MainMenuBar::ID_Main_File_Open,      wxString( wxT("Open") ) + wxT('\t') + wxT("CTRL + O"), wxEmptyString, wxITEM_NORMAL );
+	m_menuFile_Item_Open    = new wxMenuItem( m_menu_File, MainMenuBar::ID_Main_File_Open,      wxString( wxT("Open") ) + wxT('\t') + wxT("Ctrl+O"), wxEmptyString, wxITEM_NORMAL );
 	m_menuFile_Item_Close   = new wxMenuItem( m_menu_File, MainMenuBar::ID_Main_File_Close,     wxString( wxT("Close") ) , wxEmptyString, wxITEM_NORMAL );
-    m_menuFile_Item_Save    = new wxMenuItem( m_menu_File, MainMenuBar::ID_Main_File_Save,      wxString( wxT("Save") ) + wxT('\t') + wxT("CTRL + S"), wxEmptyString, wxITEM_NORMAL );
+    m_menuFile_Item_Save    = new wxMenuItem( m_menu_File, MainMenuBar::ID_Main_File_Save,      wxString( wxT("Save") ) + wxT('\t') + wxT("Ctrl+S"), wxEmptyString, wxITEM_NORMAL );
     m_menuFile_Item_SaveAs  = new wxMenuItem( m_menu_File, MainMenuBar::ID_Main_File_SaveAs,    wxString( wxT("Save as ...") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menuFile_Item_Exit    = new wxMenuItem( m_menu_File, MainMenuBar::ID_Main_File_Exit,      wxString( wxT("Exit") ) , wxEmptyString, wxITEM_NORMAL );
 
@@ -124,7 +124,7 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, wxWindowID id, const wxStrin
 	m_menu_Test = new wxMenu();
 
     // create submenu elemets
-	m_menuTest_Item_Terminal    = new wxMenuItem( m_menu_Test, ID_Main_Test_Terminal, wxString( wxT("Terminal") ) + wxT('\t') + wxT("CTRL + SHIFT +T"), wxEmptyString, wxITEM_NORMAL );
+	m_menuTest_Item_Terminal    = new wxMenuItem( m_menu_Test, ID_Main_Test_Terminal, wxString( wxT("Terminal") ) + wxT('\t') + wxT("Ctrl+Shift+T"), wxEmptyString, wxITEM_NORMAL );
 	m_menuTest_Item_Func        = new wxMenuItem( m_menu_Test, ID_Main_Test_Func, wxString( wxT("Function Test") ) + wxT('\t') + wxT("F1"), wxEmptyString, wxITEM_NORMAL );
 
     // set submenu order
