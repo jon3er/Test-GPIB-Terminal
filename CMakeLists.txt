@@ -15,6 +15,8 @@ set(CMAKE_PREFIX_PATH "C:/Users/Jonathan/vcpkg/installed/x64-windows/share")
 find_package(wxWidgets CONFIG REQUIRED)
 # Define Windows target version for Boost.Asio
 add_compile_definitions(_WIN32_WINNT=0x0601)
+# Suppress Boost.Bind deprecation warning
+add_compile_definitions(BOOST_BIND_GLOBAL_PLACEHOLDERS)
 # Find Boost
 find_package(Boost REQUIRED COMPONENTS asio system)
 
@@ -60,6 +62,7 @@ target_include_directories(TEST-GPIB-Terminal PRIVATE ${wxMathplots_INCLUDE_DIR}
 # --- Add project include folder ---
 target_include_directories(TEST-GPIB-Terminal PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include/Plotter
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/hardware
     ${CMAKE_CURRENT_SOURCE_DIR}/src/hardware
     ${CMAKE_CURRENT_SOURCE_DIR}/src/data
 )
