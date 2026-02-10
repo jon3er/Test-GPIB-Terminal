@@ -129,6 +129,7 @@ void GrblScanWindow::OnStart(wxCommandEvent& event) {
             m_controller->StartScanCycle(startX, startY, rows, cols, stepX, stepY, 
                 [this, rows, cols](int r, int c, double x, double y) {
                     int measurementNumber = r * cols + c;  // Korrekte Berechnung
+                    std::cout << "Mesurement number: " << measurementNumber << std::endl;
 
                     // 2. Die Messfunktion aufrufen
                     bool success = PlotterMesurement(&m_currentData, measurementNumber);
