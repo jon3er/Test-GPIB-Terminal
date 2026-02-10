@@ -136,7 +136,7 @@ void PlotWindow::executeScriptEvent(wxCommandEvent& event)
     }
 
     // Start measurement thread
-    m_measurementThread = std::thread(&PlotWindow::MeasurementWorkerThread, this, filePath, fileName, MessErgebnisse, mesurementNumber);
+    m_measurementThread = std::thread(&PlotWindow::MeasurementWorkerThread, this, filePath, fileName, &MessErgebnisse, mesurementNumber);
 }
 void PlotWindow::updatePlotData()
 {
@@ -144,7 +144,7 @@ void PlotWindow::updatePlotData()
     plot->Fit();
 }
 
-void PlotWindow::MeasurementWorkerThread(const wxString& dirPath, const wxString& fileSkript, wxTextFile& file, sData& MessErgebnisse,int mesurementNumber)
+void PlotWindow::MeasurementWorkerThread(const wxString& dirPath, const wxString& fileSkript, sData* MessErgebnisse,int mesurementNumber)
 {
     std::cout << "Measurement thread started" <<std::endl;
 
@@ -165,25 +165,25 @@ void PlotWindow::MeasurementWorkerThread(const wxString& dirPath, const wxString
 
         // Copy data by value to avoid race conditions
         std::vector<double> x_copy = Global::Messung.getX_Data();
-        std::vector<double> y_copy = MessErgebnisse.GetFreqStepVector();
+        std::vector<double> y_copy = MessErgebnisse->GetFreqStepVector();
 
         // Create measurement info while still in worker thread
-        sData::sParam *MessInfo = MessErgebnisse.GetParameter();
+        sData::sParam *MessInfo = MessErgebnisse->GetParameter();
 
         if (mesurementNumber == 1)
         {
-            MessErgebnisse.setNumberofPts_Array(x_copy.size());
+            MessErgebnisse->setNumberofPts_Array(x_copy.size());
         }
         int xPos;
         int yPos;
-        MessErgebnisse.getXYCord(xPos, yPos, mesurementNumber);
-        MessErgebnisse.set3DDataReal(x_copy, xPos, yPos);
-        std::vector<double> freqScale = MessErgebnisse.GetFreqStepVector();
+        MessErgebnisse->getXYCord(xPos, yPos, mesurementNumber);
+        MessErgebnisse->set3DDataReal(x_copy, xPos, yPos);
+        std::vector<double> freqScale = MessErgebnisse->GetFreqStepVector();
 
         // Save Imag Values
         if (Global::Messung.isImagValues())
         {
-            MessErgebnisse.set3DDataImag(y_copy, xPos, yPos);
+            MessErgebnisse->set3DDataImag(y_copy, xPos, yPos);
         }
         
 
@@ -202,8 +202,12 @@ void PlotWindow::MeasurementWorkerThread(const wxString& dirPath, const wxString
 
         // Save measurement data to file (done in worker thread to not block GUI)
         wxString filePathSave = System::filePathRoot + System::fileSystemSlash + "LogFiles" + System::fileSystemSlash + "Messung " + MessInfo->Time;
-        saveToCsvFile(filePathSave, MessErgebnisse, mesurementNumber);
-
+        wxTextFile file(filePathSave);
+        file.Create();
+        if(!file.Open())
+        {
+            saveToCsvFile(filePathSave, *MessErgebnisse, mesurementNumber);
+        }
         std::cout << "[Thread] Measurement completed and saved" << std::endl;
     }
     catch (const std::exception& e)

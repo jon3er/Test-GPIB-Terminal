@@ -38,8 +38,7 @@ private:
     void updatePlotData();
     void MeasurementWorkerThread(const wxString& dirPath, 
                                     const wxString& fileSkript, 
-                                    wxTextFile& file, 
-                                    sData& MessErgebnisse,
+                                    sData* MessErgebnisse,
                                     int mesurementNumber);
     std::vector<double> x;
     std::vector<double> y;
