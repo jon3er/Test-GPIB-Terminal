@@ -21,6 +21,8 @@
 // info header
 #include "systemInfo.h"
 #include "cmdGpib.h"
+// Plotter
+#include "PlotterFrame.h"
 
 
 
@@ -67,6 +69,8 @@ protected:
     // Test menu elements
     wxMenuItem* m_menuTest_Item_Terminal;
     wxMenuItem* m_menuTest_Item_Func;
+    wxMenuItem* m_menuTest_Item_Ploter;
+
     wxMenuItem* m_menuHelp_Item_About;
 
 
@@ -110,6 +114,8 @@ public:
 
     void MenuTestTerminal(wxCommandEvent& event);
     void MenuTestFunc(wxCommandEvent& event);
+    void MenuTestPloter(wxCommandEvent& event);
+
 
     void MenuHelpAbout(wxCommandEvent& event);
 };

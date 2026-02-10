@@ -38,7 +38,7 @@ private:
     void updatePlotData();
     void MeasurementWorkerThread(const wxString& dirPath, 
                                     const wxString& fileSkript, 
-                                    sData* MessErgebnisse,
+                                    sData* MessErgebnisse, // muss als pointer übergeben werden
                                     int mesurementNumber);
     std::vector<double> x;
     std::vector<double> y;

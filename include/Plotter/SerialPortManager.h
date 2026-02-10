@@ -1,0 +1,59 @@
+#ifndef SERIALPORTMANAGER_H
+#define SERIALPORTMANAGER_H
+
+// Add this line to silence the Boost bind warnings
+#define BOOST_BIND_GLOBAL_PLACEHOLDER
+
+#include <boost/asio.hpp>
+#include <boost/bind.hpp>
+#include <boost/asio/deadline_timer.hpp>
+#include <boost/asio/buffer.hpp>
+#include <boost/optional.hpp>
+#include <vector>
+#include <string>
+#include <iostream>
+#include <filesystem>
+#include <chrono>
+#include <thread>
+
+#ifdef _WIN32
+    #include <windows.h>
+#else
+    #include <sys/ioctl.h>
+    #include <termios.h>
+#endif
+
+class SerialPortManager
+{
+    public:
+        SerialPortManager();
+        SerialPortManager& operator=(const SerialPortManager&) = default;
+        virtual ~SerialPortManager();
+
+        std::vector<std::string> ScanPorts();
+
+        bool OpenPort(const std::string& portName, unsigned int BaudRate = 115200);
+        void ClosePort();
+
+        bool IsOpen() const;
+
+        bool Write(const std::string& data);
+        bool Write(const boost::asio::const_buffer &buffer);
+
+        void StartAsyncRead(std::function<void(const std::string&)> onLineRead);
+
+    protected:
+
+    private:
+        boost::asio::io_context ioContext_;
+        boost::asio::serial_port serial_;
+        void DoRead();
+        char m_readChar;
+        std::string m_inputBuffer;
+        std::function<void(const std::string&)> m_onLineRead;
+        std::thread ioThread_;
+        boost::asio::executor_work_guard<boost::asio::io_context::executor_type> workGuard_;
+
+};
+
+#endif // SERIALPORTMANAGER_H

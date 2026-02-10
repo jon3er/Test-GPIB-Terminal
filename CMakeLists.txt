@@ -1,6 +1,10 @@
 # --- Basic Project Setup ---
 cmake_minimum_required(VERSION 3.15)
-project(TEST-GPIB-Terminal VERSION 1.0)
+
+# Suppress CMP0167 warning about FindBoost BEFORE any find_package calls
+cmake_policy(SET CMP0167 NEW)
+
+project(TEST-GPIB-Terminal VERSION 0.2)
 
 # Set the C++ standard (e.g., C++17)
 set(CMAKE_CXX_STANDARD 20)
@@ -9,7 +13,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 # --- 1. Find wxWidgets (from vcpkg) ---
 set(CMAKE_PREFIX_PATH "C:/Users/Jonathan/vcpkg/installed/x64-windows/share")
 find_package(wxWidgets CONFIG REQUIRED)
-
+# Define Windows target version for Boost.Asio
+add_compile_definitions(_WIN32_WINNT=0x0601)
+# Find Boost
+find_package(Boost REQUIRED COMPONENTS asio system)
 
 
 # --- 2. Define the ftd2xx Library (Manual) ---
@@ -27,7 +34,14 @@ add_executable(TEST-GPIB-Terminal
     src/gui/Mesurement.cpp
     src/gui/mainHelper.cpp
     src/hardware/fkt_GPIB.cpp
-    src/hardware/fkt_d2XX.cpp
+    src/hardware/fkt_d2xx.cpp
+    # Plotter
+    src/Plotter/PlotterFrame.cpp
+    src/Plotter/GrblController.cpp
+    src/Plotter/SerialPortManager.cpp
+    src/Plotter/GrblScanWindow.cpp
+    src/Plotter/GrblConfigDialog.cpp
+    src/Plotter/CoordinatePanel.cpp
     # wxMathplots
     third-party/wxMathplots/mathplot.cpp
 )
@@ -40,12 +54,12 @@ target_link_libraries(TEST-GPIB-Terminal PRIVATE wx::core wx::base)
 target_link_libraries(TEST-GPIB-Terminal PRIVATE ${FTDI_LIBRARY})
 target_include_directories(TEST-GPIB-Terminal PRIVATE ${FTDI_INCLUDE_DIR})
 
-# Link the manual ftd2xx library
+# Link wxMathplots library
 target_include_directories(TEST-GPIB-Terminal PRIVATE ${wxMathplots_INCLUDE_DIR})
 
 # --- Add project include folder ---
 target_include_directories(TEST-GPIB-Terminal PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/Plotter
     ${CMAKE_CURRENT_SOURCE_DIR}/src/hardware
     ${CMAKE_CURRENT_SOURCE_DIR}/src/data
 )
