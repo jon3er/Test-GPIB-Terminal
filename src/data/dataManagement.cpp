@@ -58,6 +58,36 @@ bool sData::GetData(sParam *par,std::vector<double>& re, std::vector<double>& im
     return true;
 
 }
+std::vector<double> sData::GetFreqStepVector()
+{
+    std::vector<double> freqSteps;
+
+    double endFreq = double(dsParam->endFreq);
+    double startFreq = double(dsParam->startFreq);
+    double ArrayPts = double(dsParam->NoPoints_Array);
+    double step;
+    
+    try
+    {
+        step = (endFreq - startFreq) / ArrayPts;
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+    }
+    double freq = startFreq;
+
+    std::cout << step << std::endl;
+
+
+    for (size_t i = 0; i < ArrayPts; i++)
+    {
+        freqSteps.push_back(freq);
+        freq += step;
+    }
+
+    return freqSteps;
+}
 
 bool sData::setFileName(wxString Name)
 {
@@ -100,7 +130,7 @@ bool sData::setNumberOfPts_X(unsigned int NumbPtsX)
     }
 
     return true;
-}
+} 
 bool sData::setNumberOfPts_Y(unsigned int NumbPtsY)
 {
         try
@@ -205,6 +235,7 @@ bool sData::set3DDataReal(std::vector<double> Array , int x, int y)
     try
     {
         std::memcpy(Real3D.getDataPtr(x,y), Array.data(), Array.size()* sizeof(double));
+        dsR = Array;
         return true;
     }
     catch(const std::exception& e)
@@ -223,6 +254,7 @@ bool sData::set3DDataImag(std::vector<double> Array , int x, int y)
     try
     {
         std::memcpy(Imag3D.getDataPtr(x,y), Array.data(), Array.size()* sizeof(double));
+        dsI = Array;
         return true;
     }
     catch(const std::exception& e)
@@ -300,9 +332,8 @@ bool saveToCsvFile(wxString& filename, sData& data, int mesurementNumb)
             file.Write();
         }
     }
-    file.Open();
 
-    if (!file.IsOpened())
+    if (!file.Open())
     {
         std::cout << "Failed to open file" << std::endl;
         return false;
@@ -314,6 +345,7 @@ bool saveToCsvFile(wxString& filename, sData& data, int mesurementNumb)
         saveHeaderCsv(file, data);
         // Write indexes
         writeMatrixIndexCsv(file, data);
+        file.Write();
     }
 
     bool cont;
@@ -343,7 +375,7 @@ bool saveToCsvFile(wxString& filename, sData& data, int mesurementNumb)
 
     // für den das Array ist die addressierung von 0 bis n-1
     int xPosition = ((mesurementNumb - 1) / yPoints);
-    int yPosition = ((mesurementNumb - 1) % xPoints);
+    int yPosition = ((mesurementNumb - 1) % yPoints);
 
     real = data.get3DDataReal(xPosition, yPosition);
     imag = data.get3DDataImag(xPosition, yPosition);
@@ -381,31 +413,12 @@ bool saveHeaderCsv(wxTextFile &file, sData& data)
 
     // Frequenz-Zeile zusammenbauen
     wxString lineFreq = wxString::Format("f in %s", dsParam->ampUnit.ToAscii());
-    double startFreq = dsParam->startFreq;
-    double endFreq = dsParam->endFreq;
-    double ArrayPts = double(data.getNumberOfPts_Array());
 
-    std::cout<< startFreq << endFreq << ArrayPts << std::endl;
-    double step;
-
-    // TODO stimmt noch nicht ganz gibt steps für n-1 werte aus
-    try
-    {
-        step = (endFreq - startFreq) / ArrayPts;
-    }
-    catch(const std::exception& e)
-    {
-        std::cerr << e.what() << '\n';
-    }
-    double freq = startFreq;
-
-    std::cout << step << std::endl;
-
+    std::vector<double> freq = data.GetFreqStepVector();
 
     for (size_t i = 0; i < dsParam->NoPoints_Array; i++)
     {
-        lineFreq << "," << freq;
-        freq += step;
+        lineFreq << "," << freq[i];
     }
     file.AddLine(lineFreq);
 
@@ -482,7 +495,7 @@ bool readCsvHeader(wxTextFile&file, sData& data)
     if (endFreqStr.ToLong(&freqVal)) dsParam->endFreq = freqVal;
 
     std::cout << "Read Header" << std::endl;
-    
+
     // Resize Datastorage array for data
     data.resize3DData(dsParam->NoPoints_X, dsParam->NoPoints_Y, dsParam->NoPoints_Array);
 
@@ -607,11 +620,14 @@ bool readDataCsv(wxTextFile& file, sData& data)
 bool writeMatrixIndexCsv(wxTextFile& file, sData data)
 {
     // ID Für Real Nummern einfügen
-    size_t count = data.getNumberOfPts_X() * data.getNumberOfPts_Y();
+    int xPoints = data.getNumberOfPts_X();
+    int yPoints = data.getNumberOfPts_Y();
 
+    size_t count = xPoints * yPoints;
+    
     for (size_t i = 0; i < count; i++)
     {
-        std::string index = getIndexNumbers(data.getNumberOfPts_X(), data.getNumberOfPts_Y(), i + 1);
+        std::string index = getIndexNumbers(xPoints, yPoints, i + 1);
 
         file.AddLine(wxString::Format("%s Real", index));
 
@@ -635,26 +651,30 @@ std::string getIndexNumbers(int xPoints, int yPoints, int mesurementNumb, bool c
         return "[0;0]";
     }
 
+    int idx = mesurementNumb - 1;
+
+    xPosition = (idx / yPoints) + 1;
     // get position in matrix for normal test
     if (!continuous) // line by line
     {
-        xPosition = ((mesurementNumb  -1) / yPoints) + 1;
-        yPosition = ((mesurementNumb - 1) % xPoints) + 1;
+        yPosition = (idx % yPoints) + 1;
     }
     else // snaking
     {
-        xPosition = ((mesurementNumb - 1) / yPoints) + 1;
+        
         if (xPosition % 2 == 0) // is even
         {
-            yPosition = yPoints - ((mesurementNumb - 1) % xPoints) + 1;
+            yPosition = yPoints - (idx % yPoints) + 1;
         }
         else
         {
-            yPosition = ((mesurementNumb - 1) % xPoints) + 1;
+            yPosition = (idx % yPoints) + 1;
         }
     }
+    std::cout << "x pts "<< xPoints << " y pts " << yPoints << std::endl;
 
     std::string text = "[" + std::to_string(xPosition) + ";" + std::to_string(yPosition) + "]";
+    std::cout << text << " Nr. " << mesurementNumb <<std::endl;
 
     return  text;
 }

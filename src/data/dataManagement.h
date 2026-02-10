@@ -72,6 +72,7 @@ public:
     unsigned int getNumberOfPts_X() {return dsParam->NoPoints_X; };
     unsigned int getNumberOfPts_Y() {return dsParam->NoPoints_Y; };
     unsigned int getNumberOfPts_Array() {return dsParam->NoPoints_Array; };
+    std::vector<double> GetFreqStepVector();
 
     std::vector<double> getRealArray(int index = 0) { return dsR; };
     std::vector<double> getImagArray(int index = 0) { return dsI; };

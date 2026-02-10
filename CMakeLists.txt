@@ -25,6 +25,7 @@ add_executable(TEST-GPIB-Terminal
     src/data/dataManagement.cpp
     src/gui/main.cpp
     src/gui/Mesurement.cpp
+    src/gui/mainHelper.cpp
     src/hardware/fkt_GPIB.cpp
     src/hardware/fkt_d2XX.cpp
     # wxMathplots

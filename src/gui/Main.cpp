@@ -892,13 +892,14 @@ void FunctionWindow::OnConDisconGpib(wxCommandEvent& event)
 }
 void FunctionWindow::OnTestSaveFile(wxCommandEvent& event)
 {
+    std::thread CsvThread;
     std::cerr << "Pressed Test Save File" << std::endl;
     sData TestObjekt;
     sData TestObjekt2;
     
-    int xpt = 10;
-    int ypt = 10;
-    int count = 50;
+    int xpt = 1;
+    int ypt = 1;
+    int count = 10000;
     int endFreq = 50'000;
     // set Mesurement Header
     TestObjekt.setTimeAndDate();
@@ -971,7 +972,10 @@ void FunctionWindow::OnTestSaveFile(wxCommandEvent& event)
     int totalpoints = TestObjekt2.getNumberOfPts_X()* TestObjekt2.getNumberOfPts_Y();
     std::cout << "[Debug] Totalpoints: " << totalpoints << std::endl;
 
-    for (int i = 1; i < totalpoints; i++)
+    TestObjekt2.setFileName("kopie");
+    TestObjekt2.setTimeAndDate();
+
+    for (int i = 1; i <= totalpoints; i++)
     {
         if (!saveToCsvFile(Dateiname, TestObjekt2, i))
         {
