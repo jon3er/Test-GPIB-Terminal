@@ -88,6 +88,15 @@ std::vector<double> sData::GetFreqStepVector()
 
     return freqSteps;
 }
+void sData::getXYCord(int& x, int& y, int mesurementNumber)
+{
+    // für den das Array ist die addressierung von 0 bis n-1
+    int yPoints = dsParam->NoPoints_Y;
+
+    x = ((mesurementNumber - 1) / yPoints);
+    y = ((mesurementNumber - 1) % yPoints);
+}
+
 
 bool sData::setFileName(wxString Name)
 {
@@ -304,6 +313,10 @@ std::vector<double> sData3D::getSingleArray(int x, int y)
     return subVector;
 }
 
+//------sData3D Ende------
+
+// save Csv Functions
+
 bool saveToCsvFile(wxString& filename, sData& data, int mesurementNumb)
 {
     std::vector<double> real;
@@ -449,15 +462,16 @@ bool saveDataCsv(wxTextFile& file, sData data, int mesurementNumb, bool cont)
     int lineNumber = findLineCsv(file, indexText);
     std::cout << "line Found: " << lineNumber << std::endl;
 
-    int count = data.getNumberOfPts_Array();
+    int xPosition;
+    int yPosition;
 
-    // für den das Array ist die addressierung von 0 bis n-1
-    int xPosition = ((mesurementNumb - 1) / yPoints);
-    int yPosition = ((mesurementNumb - 1) % yPoints);
+    data.getXYCord(xPosition, yPosition, mesurementNumb);
 
     std::vector<double> real = data.get3DDataReal(xPosition, yPosition);
     std::vector<double> imag = data.get3DDataImag(xPosition, yPosition);
-    
+
+    int count = data.getNumberOfPts_Array();
+
     for (int i = 0; i < count; i++)
     {
         file.GetLine(lineNumber) << ","<< real[i];
@@ -467,6 +481,9 @@ bool saveDataCsv(wxTextFile& file, sData data, int mesurementNumb, bool cont)
 
     return true;
 }
+
+// Read Csv functions
+
 
 bool readCsvFile(wxString filename, sData& data)
 {
@@ -728,114 +745,4 @@ int findLineCsv(wxTextFile& file, wxString findText)
     std::cerr << "Couldnt find text" << std::endl;
     return -1;
 }
-/*
-bool openCsvFile(wxString& filename, sData& data)
-{
-    std::cerr << "open CSV" << std::endl;
-    sData::sParam* dsParam = new sData::sParam;;
-    std::vector<double> dsR;
-    std::vector<double> dsI;
 
-    data.GetData(dsParam, dsR, dsI);
-    // 1. Parameter-Objekt prüfen
-    if (!dsParam) {
-        return false;
-    }
-
-    // 2. Datei mit wxTextFile öffnen (liest Zeilen in den Speicher)
-    wxTextFile file;
-    if (!file.Open(filename)) {
-        return false;
-    }
-
-    dsR.clear();
-    dsI.clear();
-
-    size_t lineCount = file.GetLineCount();
-
-    // Minimale Zeilenanzahl prüfen (Header + min. 1 Datenzeile)
-    if (lineCount < 9) {
-        file.Close();
-        return false;
-    }
-
-    int HeaderEnd = 6; //Minimum header Size
-
-    //search for fist empty cell (Header end)
-    for (size_t i = 0 ; i < lineCount; i++)
-    {
-        if (file.GetLine(i).IsEmpty() && file.GetLine( i+1 ).Contains("ID"))
-        {
-            HeaderEnd = i;
-            std::cerr << "Header Ende :" << HeaderEnd << std::endl;
-            break;
-        }
-    }
-
-
-    // 3. Header Metadaten parsen (Zeilen 0-5)
-    // AfterFirst(',') extrahiert den Wert nach dem Komma
-    dsParam->File = file.GetLine(0).AfterFirst(',').Trim(false).Trim();
-    dsParam->Date = file.GetLine(1).AfterFirst(',').Trim(false).Trim();
-    dsParam->Time = file.GetLine(2).AfterFirst(',').Trim(false).Trim();
-    dsParam->Type = file.GetLine(3).AfterFirst(',').Trim(false).Trim();
-
-    long lVal;
-    if (file.GetLine(4).AfterFirst(',').ToLong(&lVal)) dsParam->NoPoints_X = lVal;
-    if (file.GetLine(5).AfterFirst(',').ToLong(&lVal)) dsParam->NoPoints_Y = lVal;
-
-    // Data
-    for (size_t i = HeaderEnd + 2; i < lineCount; ++i)
-    {
-        wxString line = file.GetLine(i);
-
-        if (line.IsEmpty()) continue;
-
-        // Pointer auf den Zielvektor setzen
-        std::vector<double>* currentVec = nullptr;
-
-        // Prüfen, ob es eine Real- oder Imag-Zeile ist (Case Insensitive)
-        if (line.Upper().Contains("REAL"))
-        {
-            currentVec = &dsR; // kopiert vector auf Real Addresse
-        }
-        else if (line.Upper().Contains("IMAG"))
-        {
-            currentVec = &dsI; // kopiert vector auf Imag Addresse
-        }
-        else
-        {
-            continue;
-        }
-
-        // Tokenizer nur einmal für die aktuelle Zeile und den gewählten Vektor nutzen
-        wxStringTokenizer tokenizer(line, ",");
-
-        // 1. Token (Label/ID) entfernen: "[1;1] Real"
-        if (tokenizer.HasMoreTokens()) {
-            tokenizer.GetNextToken();
-        }
-
-        // Restliche Werte parsen
-        while (tokenizer.HasMoreTokens())
-        {
-            double val;
-            if (tokenizer.GetNextToken().ToDouble(&val))
-            {
-                // Sicherstellen, dass currentVec gültig ist (sollte durch if oben gegeben sein)
-                if(currentVec) currentVec->push_back(val);
-            }
-        }
-    }
-
-    // Optional: Validierung
-    if (dsR.size() != dsI.size()) {
-        std::cerr << "Warnung: Real/Imag Vektoren ungleich lang!" << std::endl;
-    }
-
-    data.SetData(dsParam, dsR, dsI);
-
-    file.Close();
-    return true;
-}
-*/

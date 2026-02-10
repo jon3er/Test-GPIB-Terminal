@@ -25,6 +25,8 @@ public:
     unsigned int getNoPoints_x() { return NoPoints_x; };
     unsigned int getNoPoints_y() { return NoPoints_y; };
     //sData::sParam getMesurmentData();
+    bool isImagValues() { return ImagValues; };
+
 
     void setFreqStartEnd(double FreqS, double FreqE);
 
@@ -38,6 +40,7 @@ private:
     unsigned int NoPoints_x;
     unsigned int NoPoints_y;
 
+    bool ImagValues = false;
     //sData tempData;
 };
 

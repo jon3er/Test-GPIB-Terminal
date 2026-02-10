@@ -391,7 +391,7 @@ sData::sParam fsuMesurement::getMesurmentData()
 
 //------fsuMesurement Ende-----
 
-
+// Helper functions
 wxString terminalTimestampOutput(wxString Text)
 {
     //Set Terminal Output Format
@@ -401,8 +401,6 @@ wxString terminalTimestampOutput(wxString Text)
 
     return FormatText;
 }
-
-
 std::vector<char> checkAscii(std::string input)
 {
     const char* charInput = input.c_str();
@@ -478,7 +476,6 @@ std::vector<char> checkAscii(std::string input)
 
     return vCharOutputGpib;
 }
-
 void sleepMs(int timeMs)
 {
     std::this_thread::sleep_for(std::chrono::milliseconds(timeMs));

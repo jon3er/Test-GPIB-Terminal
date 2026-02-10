@@ -36,14 +36,24 @@ private:
     void getFileNames(const wxString& dirPath, wxArrayString& files);
     void executeScriptEvent(wxCommandEvent& event);
     void updatePlotData();
-    void MeasurementWorkerThread(const wxString& dirPath, const wxString& file);
-
+    void MeasurementWorkerThread(const wxString& dirPath, 
+                                    const wxString& fileSkript, 
+                                    wxTextFile& file, 
+                                    sData& MessErgebnisse,
+                                    int mesurementNumber);
     std::vector<double> x;
     std::vector<double> y;
 
     // Threading members
     std::thread m_measurementThread;
     std::atomic<bool> m_stopMeasurement{false};
+
+    // Mesurement var
+    sData MessErgebnisse;
+    int mesurementNumber = 1;
+
+    int ptsX;
+    int ptsY;
 
     //device Class
     //GpibDevice Adapter;

@@ -74,9 +74,10 @@ public:
     unsigned int getTotalNumberOfPts() {return dsParam->NoPoints_X * dsParam->NoPoints_Y; };
     unsigned int getNumberOfPts_Array() {return dsParam->NoPoints_Array; };
     std::vector<double> GetFreqStepVector();
+    void getXYCord(int& x, int& y, int MesurementNumber);
 
-    std::vector<double> getRealArray(int index = 0) { return dsR; };
-    std::vector<double> getImagArray(int index = 0) { return dsI; };
+    std::vector<double> getRealArray() { return dsR; };
+    std::vector<double> getImagArray() { return dsI; };
 
     // set File Var
     bool setFileName(wxString Name);

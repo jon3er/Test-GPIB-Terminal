@@ -118,8 +118,25 @@ void PlotWindow::executeScriptEvent(wxCommandEvent& event)
     // Reset stop flag before starting new thread
     m_stopMeasurement = false;
 
+    // set up Mesurement data
+    sData::sParam *MessInfo = MessErgebnisse.GetParameter();
+    if (mesurementNumber == 1)
+    {
+        wxDateTime now = wxDateTime::Now();
+        MessInfo->File = "Mesurement";
+        MessInfo->Date = now.FormatISODate();
+        MessInfo->Time = now.FormatISOTime();
+        /* Muss die daten vom fester erhalten
+        MessInfo->NoPoints_X = ptsX;
+        MessInfo->NoPoints_Y = ptsY;
+        MessInfo->startFreq = 0;
+        MessInfo->endFreq = 50000;
+        MessInfo->ampUnit = "DB";
+        */
+    }
+
     // Start measurement thread
-    m_measurementThread = std::thread(&PlotWindow::MeasurementWorkerThread, this, filePath, fileName);
+    m_measurementThread = std::thread(&PlotWindow::MeasurementWorkerThread, this, filePath, fileName, MessErgebnisse, mesurementNumber);
 }
 void PlotWindow::updatePlotData()
 {
@@ -127,9 +144,8 @@ void PlotWindow::updatePlotData()
     plot->Fit();
 }
 
-void PlotWindow::MeasurementWorkerThread(const wxString& dirPath, const wxString& file)
+void PlotWindow::MeasurementWorkerThread(const wxString& dirPath, const wxString& fileSkript, wxTextFile& file, sData& MessErgebnisse,int mesurementNumber)
 {
-    // im thread kein wxLogDebug möglich
     std::cout << "Measurement thread started" <<std::endl;
 
     try
@@ -137,37 +153,46 @@ void PlotWindow::MeasurementWorkerThread(const wxString& dirPath, const wxString
         wxArrayString logAdapterReceived;
 
         // Run the blocking measurement in this worker thread
-        Global::AdapterInstance.readScriptFile(dirPath, file, logAdapterReceived, &m_stopMeasurement);
+        Global::AdapterInstance.readScriptFile(dirPath, fileSkript, logAdapterReceived, &m_stopMeasurement);
 
         // Output received messages to debug log
         for (size_t i = 0; i < logAdapterReceived.GetCount(); i++)
         {
             wxString text = logAdapterReceived[i];
-            wxEvtHandler::CallAfter([this,text]()
-            {
-                std::cerr << text << std::endl;
-            });
-            
+
+            std::cerr << text << std::endl;
         }
 
         // Copy data by value to avoid race conditions
         std::vector<double> x_copy = Global::Messung.getX_Data();
-        std::vector<double> y_copy = Global::Messung.getY_Data();
+        std::vector<double> y_copy = MessErgebnisse.GetFreqStepVector();
 
         // Create measurement info while still in worker thread
-        sData MessErgebnisse;
         sData::sParam *MessInfo = MessErgebnisse.GetParameter();
-        wxDateTime now = wxDateTime::Now();
-        MessInfo->File = file;
-        MessInfo->Date = now.FormatISODate();
-        MessInfo->Time = now.FormatISOTime();
+
+        if (mesurementNumber == 1)
+        {
+            MessErgebnisse.setNumberofPts_Array(x_copy.size());
+        }
+        int xPos;
+        int yPos;
+        MessErgebnisse.getXYCord(xPos, yPos, mesurementNumber);
+        MessErgebnisse.set3DDataReal(x_copy, xPos, yPos);
+        std::vector<double> freqScale = MessErgebnisse.GetFreqStepVector();
+
+        // Save Imag Values
+        if (Global::Messung.isImagValues())
+        {
+            MessErgebnisse.set3DDataImag(y_copy, xPos, yPos);
+        }
+        
 
         // Use CallAfter to safely update GUI from main thread
-        wxEvtHandler::CallAfter([this, x_copy, y_copy]()
+        wxEvtHandler::CallAfter([this, x_copy, freqScale]()
         {
             // Update member data in main thread
             this->y = x_copy;  // Note: original code has this swapped
-            this->x = y_copy;
+            this->x = freqScale;
 
             // Update plot on main thread
             this->updatePlotData();
@@ -176,8 +201,8 @@ void PlotWindow::MeasurementWorkerThread(const wxString& dirPath, const wxString
         });
 
         // Save measurement data to file (done in worker thread to not block GUI)
-        wxString filePathSave = System::filePathRoot + System::fileSystemSlash + "LogFiles" + System::fileSystemSlash + file;
-        saveToCsvFile(filePathSave, MessErgebnisse, 0);
+        wxString filePathSave = System::filePathRoot + System::fileSystemSlash + "LogFiles" + System::fileSystemSlash + "Messung " + MessInfo->Time;
+        saveToCsvFile(filePathSave, MessErgebnisse, mesurementNumber);
 
         std::cout << "[Thread] Measurement completed and saved" << std::endl;
     }
