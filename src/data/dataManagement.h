@@ -71,6 +71,7 @@ public:
 
     unsigned int getNumberOfPts_X() {return dsParam->NoPoints_X; };
     unsigned int getNumberOfPts_Y() {return dsParam->NoPoints_Y; };
+    unsigned int getTotalNumberOfPts() {return dsParam->NoPoints_X * dsParam->NoPoints_Y; };
     unsigned int getNumberOfPts_Array() {return dsParam->NoPoints_Array; };
     std::vector<double> GetFreqStepVector();
 
@@ -113,26 +114,17 @@ private:
 // file operations
 // write
 bool saveToCsvFile(wxString& Filename, sData& data, int mesurementNumb);
-
 bool saveHeaderCsv(wxTextFile& file, sData& data);
-
-bool saveDataCsv(wxTextFile& file, sData data, int xCord, int yCord);
+bool saveDataCsv(wxTextFile& file, sData data, int mesurementNumb, bool cont = false);
 
 // read functions
 bool readCsvFile(wxString filename, sData& data);
-
 bool readCsvHeader(wxTextFile& file, sData& data);
-
 bool readDataCsv(wxTextFile& file, sData& data);
 
+// helper functions
 std::string getIndexNumbers(int xPoints, int yPoints, int mesurementNumb, bool continuous = false);
-
-bool writeDataCsv(wxTextFile& file, sData data, int mesurementNumb);
-
 bool writeMatrixIndexCsv(wxTextFile& file, sData data);
-
 int findLineCsv(wxTextFile& file, wxString findText);
 
-bool openCsvFile(wxString& filename, sData& data);
 
-//bool openCsvFileMultiline(wxString& filename);

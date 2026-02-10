@@ -271,7 +271,7 @@ void MainProgrammWin::MenuFileOpen(wxCommandEvent& event)
 
     filePathCurrentFile = openFileDialog.GetPath();
 
-    if (openCsvFile(filePathCurrentFile, OpendData))
+    if (readCsvFile(filePathCurrentFile, OpendData))
     {
         fileOpen = true;
     }

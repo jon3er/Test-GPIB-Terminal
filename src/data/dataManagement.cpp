@@ -339,12 +339,33 @@ bool saveToCsvFile(wxString& filename, sData& data, int mesurementNumb)
         return false;
     }
 
-    if (mesurementNumb == 1) // weiteren check hinzufügen
+    // save All avalible data
+    if (mesurementNumb == 0)
     {
         // Write header
         saveHeaderCsv(file, data);
         // Write indexes
         writeMatrixIndexCsv(file, data);
+
+        int count = data.getTotalNumberOfPts();
+
+        for (size_t i = 1; i <= count; i++)
+        {
+            saveDataCsv(file, data, i);
+            // stop programm freezing
+            wxYield();
+        }
+        
+        file.Write();
+        return true;
+    }
+    else if (mesurementNumb == 1) // weiteren check hinzufügen
+    {
+        // Write header
+        saveHeaderCsv(file, data);
+        // Write indexes
+        writeMatrixIndexCsv(file, data);
+
         file.Write();
     }
 
@@ -352,40 +373,15 @@ bool saveToCsvFile(wxString& filename, sData& data, int mesurementNumb)
 
     if (data.GetType() == "Line")
     {
-        //wxLogDebug("Linear mesurement");
+
         cont = false;
     }
     else
     {
-        //wxLogDebug("Continuous mesurement");
         cont = true;
     }
 
-
-    int xPoints = data.getNumberOfPts_X();
-    int yPoints = data.getNumberOfPts_Y();
-    
-    // find line with current
-    wxString indexText = getIndexNumbers(xPoints, yPoints, mesurementNumb, cont) + " Real";
-
-    int lineNumber = findLineCsv(file, indexText);
-    std::cout << "line Found: " << lineNumber << std::endl;
-
-    int count = data.getNumberOfPts_Array();
-
-    // für den das Array ist die addressierung von 0 bis n-1
-    int xPosition = ((mesurementNumb - 1) / yPoints);
-    int yPosition = ((mesurementNumb - 1) % yPoints);
-
-    real = data.get3DDataReal(xPosition, yPosition);
-    imag = data.get3DDataImag(xPosition, yPosition);
-
-    for (int i = 0; i < count; i++)
-    {
-    file.GetLine(lineNumber) << ","<< real[i];
-
-    file.GetLine(lineNumber + 1) << "," << imag[i];
-    }
+    saveDataCsv(file, data, mesurementNumb, cont);
 
 
     file.Write();
@@ -432,6 +428,42 @@ bool saveHeaderCsv(wxTextFile &file, sData& data)
 
     // Wichtig: Änderungen speichern
     file.Write();
+
+    return true;
+}
+
+bool saveDataCsv(wxTextFile& file, sData data, int mesurementNumb, bool cont)
+{
+    if (!file.IsOpened())
+    {
+        std::cerr << "File not opened" << std::endl;
+        return false;
+    }
+    
+    int xPoints = data.getNumberOfPts_X();
+    int yPoints = data.getNumberOfPts_Y();
+    
+    // find line with current
+    wxString indexText = getIndexNumbers(xPoints, yPoints, mesurementNumb, cont) + " Real";
+
+    int lineNumber = findLineCsv(file, indexText);
+    std::cout << "line Found: " << lineNumber << std::endl;
+
+    int count = data.getNumberOfPts_Array();
+
+    // für den das Array ist die addressierung von 0 bis n-1
+    int xPosition = ((mesurementNumb - 1) / yPoints);
+    int yPosition = ((mesurementNumb - 1) % yPoints);
+
+    std::vector<double> real = data.get3DDataReal(xPosition, yPosition);
+    std::vector<double> imag = data.get3DDataImag(xPosition, yPosition);
+    
+    for (int i = 0; i < count; i++)
+    {
+        file.GetLine(lineNumber) << ","<< real[i];
+
+        file.GetLine(lineNumber + 1) << "," << imag[i];
+    }
 
     return true;
 }
@@ -696,7 +728,7 @@ int findLineCsv(wxTextFile& file, wxString findText)
     std::cerr << "Couldnt find text" << std::endl;
     return -1;
 }
-
+/*
 bool openCsvFile(wxString& filename, sData& data)
 {
     std::cerr << "open CSV" << std::endl;
@@ -806,4 +838,4 @@ bool openCsvFile(wxString& filename, sData& data)
     file.Close();
     return true;
 }
-
+*/
