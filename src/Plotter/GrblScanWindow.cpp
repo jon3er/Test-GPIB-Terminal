@@ -113,6 +113,13 @@ void GrblScanWindow::OnStart(wxCommandEvent& event) {
         
         m_btnStart->Enable(true); 
         m_btnStart->SetLabel("STOP SCAN"); // Change label
+
+        // Set Parameter for mesurement
+        sData::sParam *MessInfo = m_currentData.GetParameter();
+        MessInfo->File = "Mesurement";
+        MessInfo->NoPoints_X = rows;
+        MessInfo->NoPoints_Y = cols;
+        
         
         Layout();
 
@@ -120,9 +127,20 @@ void GrblScanWindow::OnStart(wxCommandEvent& event) {
             
             // This now respects the m_shouldCancel flag
             m_controller->StartScanCycle(startX, startY, rows, cols, stepX, stepY, 
-                [](int r, int c, double x, double y) {
-                    //Jonathan: TODO for point reached callback
-                    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+                [this, rows, cols](int r, int c, double x, double y) {
+                    int measurementNumber = r * cols + c;  // Korrekte Berechnung
+
+                    // 2. Die Messfunktion aufrufen
+                    bool success = PlotterMesurement(&m_currentData, measurementNumber);
+
+                    if (success) 
+                    {
+                        printf("Messung an Punkt R:%d C:%d erfolgreich beendet.\n", r, c);
+                    } else 
+                    {
+                        printf("FEHLER bei Messung an Punkt R:%d C:%d\n", r, c);
+                    }
+                    std::this_thread::sleep_for(std::chrono::milliseconds(500));
                     printf("Reached Point R:%d C:%d at (%.2f, %.2f)\n", r, c, x, y);
                 }, 
                 dir, zigzag, speed

@@ -3,6 +3,8 @@
 #include <thread>
 #include <atomic>
 #include "GrblController.h"
+#include "dataManagement.h"
+#include "mainHelper.h"
 
 class GrblScanWindow : public wxDialog {
 public:
@@ -28,6 +30,9 @@ private:
     // Threading
     std::thread m_workerThread;
     std::atomic<bool> m_isScanning{false};
+    
+    // Measurement Data
+    sData m_currentData;
 
     // Events
     void OnStart(wxCommandEvent& event);

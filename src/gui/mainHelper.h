@@ -9,6 +9,8 @@
 #include <wx/tokenzr.h>
 
 #include "dataManagement.h"
+#include "systemInfo.h"
 
 // Helper functions for komplex main functions
 
+bool PlotterMesurement(sData* data, int mesurementNumber);

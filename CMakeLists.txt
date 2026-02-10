@@ -63,8 +63,8 @@ target_include_directories(TEST-GPIB-Terminal PRIVATE ${wxMathplots_INCLUDE_DIR}
 target_include_directories(TEST-GPIB-Terminal PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include/Plotter
     ${CMAKE_CURRENT_SOURCE_DIR}/include/hardware
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/hardware
     ${CMAKE_CURRENT_SOURCE_DIR}/src/data
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/gui
 )
 
 # For wxWidgets on Windows, we need to add this
