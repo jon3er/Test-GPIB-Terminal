@@ -1,0 +1,28 @@
+# Momentane anzeigewerte aufnehmen
+# Manuellen lese betrieb anschalten
+++auto 0
+# Bildschirm aktuallisierung aus
+INIT:CONT OFF
+# Messpunkte Einstellen
+SWE:POIN 100
+# Stat und End Frequenz einstellen
+FREQ:STAR 75 MHZ
+FREQ:STOP 125 MHZ
+BAND:RES 100 KHZ
+# Daten format einstellen
+FORM:DATA ASC
+FORM:BORD NORM
+# Sweep time automatisch bestimmen
+SWE:TIME AUTO
+# Messung Starten
+INIT:IMM
+# Messgerät warte bis Messung Abgeschlossen bevor etwas anders macht
+*WAI
+# Entsprechen der daten menge warten
+wait 500
+# Abfragen ob die Messung noch läuf
+*OPC?
+# Anfordern der Messdaten von Trace 1
+TRAC:DATA? TRACE1
+# Bildschirm aktuallisierung an
+# INIT:CONT ON
