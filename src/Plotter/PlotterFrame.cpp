@@ -17,7 +17,7 @@ wxBEGIN_EVENT_TABLE(PlotterFrame, wxDialog)
 wxEND_EVENT_TABLE()
 
 PlotterFrame::PlotterFrame()
-    : wxDialog(NULL, wxID_ANY, "Amazing Printer Controller", wxDefaultPosition, wxSize(600, 500)),
+    : wxDialog(NULL, wxID_ANY, "Plotter Controller", wxDefaultPosition, wxSize(1000, 700)),
       m_grbl(std::make_unique<GrblController>())
 {
     // --- Create Main Sizer ---
@@ -26,14 +26,14 @@ PlotterFrame::PlotterFrame()
     // --- Create Top Panel with Settings Buttons ---
     wxPanel* topPanel = new wxPanel(this);
     wxBoxSizer* topSizer = new wxBoxSizer(wxHORIZONTAL);
-    
+
     wxButton* settingsBtn = new wxButton(topPanel, ID_SETTINGS_TOOL, "GRBL Settings");
     wxButton* scanBtn = new wxButton(topPanel, ID_SETTINGS_SCAN, "Scan Settings");
-    
+
     topSizer->Add(settingsBtn, 0, wxALL, 5);
     topSizer->Add(scanBtn, 0, wxALL, 5);
     topPanel->SetSizer(topSizer);
-    
+
     mainSizer->Add(topPanel, 0, wxEXPAND);
 
     // 1. Create the Splitter Window as the main child of the Frame
@@ -53,7 +53,7 @@ PlotterFrame::PlotterFrame()
 
     // Add splitter to main sizer
     mainSizer->Add(m_splitter, 1, wxEXPAND);
-    
+
     // Set main sizer on the dialog
     this->SetSizer(mainSizer);
 
@@ -71,7 +71,7 @@ void PlotterFrame::BuildLeftPanel(wxPanel* parent)
     leftSizer->Add(CreateConnectionBox(parent), 0, wxEXPAND | wxALL, 5);
     leftSizer->Add(CreateControlBox(parent), 0, wxEXPAND | wxALL, 5);
     leftSizer->Add(CreateMotionBox(parent), 0, wxEXPAND | wxALL, 5);
-    
+
     // Add your Manual Controls here if you kept them
     // leftSizer->Add(CreateManualBox(parent), ...);
 
@@ -91,7 +91,7 @@ void PlotterFrame::BuildRightPanel(wxPanel* parent)
     m_coordPanel->SetMinSize(wxSize(400, 400));
 
     m_coordPanel->SetOnPointClicked([this](double x, double y) {
-        
+
         // Check connection first
         if (!m_grbl || !m_grbl->IsConnected()) {
             wxMessageBox("Connect to machine first!", "Error", wxICON_WARNING);
@@ -101,17 +101,17 @@ void PlotterFrame::BuildRightPanel(wxPanel* parent)
         // Send Rapid Move (G0) to the clicked location
         // Using "G90" ensures we are in Absolute Mode
         wxString cmd = wxString::Format("G90 G0 X%.3f Y%.3f", x, y);
-        
+
         m_grbl->SendCommand(cmd.ToStdString());
-        
+
         wxLogMessage("Interactive Move: %s", cmd);
-        
+
         // Optional: Update the "Target" dot immediately for visual feedback
         // (The machine status update will eventually overwrite this)
         m_coordPanel->ClearPoints();
-        m_coordPanel->AddPoint(x, y, *wxRED); 
+        m_coordPanel->AddPoint(x, y, *wxRED);
     });
-    
+
     rightSizer->Add(m_coordPanel, 1, wxEXPAND | wxALL, 10);
 
     parent->SetSizer(rightSizer); // Critical: Set the sizer for this specific panel
@@ -136,7 +136,7 @@ wxSizer* PlotterFrame::CreateConnectionBox(wxPanel* parent)
 wxSizer* PlotterFrame::CreateControlBox(wxPanel* parent)
 {
     wxStaticBoxSizer* boxSizer = new wxStaticBoxSizer(wxVERTICAL, parent, "Machine Control");
-    
+
     // Create a Grid Sizer: 2 columns, 5px gap between items
     wxGridSizer* grid = new wxGridSizer(2, 5, 5);
 
@@ -147,16 +147,16 @@ wxSizer* PlotterFrame::CreateControlBox(wxPanel* parent)
     // 2. Flow Control
     grid->Add(new wxButton(boxSizer->GetStaticBox(), ID_PAUSE, "Hold (!)"), 1, wxEXPAND);
     grid->Add(new wxButton(boxSizer->GetStaticBox(), ID_RESUME, "Resume (~)"), 1, wxEXPAND);
-    
+
     // 3. Emergency Stop (Full Width)
     wxButton* stopBtn = new wxButton(boxSizer->GetStaticBox(), ID_RESET, "SOFT RESET");
 
     stopBtn->SetBackgroundColour(wxColour(200, 50, 50)); // Red warning color
     stopBtn->SetForegroundColour(*wxWHITE);
-    
+
     // Add grid to the static box
     boxSizer->Add(grid, 1, wxEXPAND | wxALL, 5);
-    
+
     // Add Stop button separately at the bottom
     boxSizer->Add(stopBtn, 0, wxEXPAND | wxALL, 5);
 
@@ -190,10 +190,10 @@ void PlotterFrame::SetupLogArea(wxPanel* parent, wxBoxSizer* mainVerticalSizer)
                                wxTE_MULTILINE | wxTE_READONLY | wxTE_RICH2);
     m_logCtrl->SetBackgroundColour(wxColour(30, 30, 30));
     m_logCtrl->SetForegroundColour(wxColour(0, 255, 0));
-    
+
     // Redirect wxLog
     delete wxLog::SetActiveTarget(new wxLogTextCtrl(m_logCtrl));
-    
+
     mainVerticalSizer->Add(m_logCtrl, 1, wxEXPAND | wxALL, 5);
 
     // 3. Command Input Area
@@ -218,7 +218,7 @@ void PlotterFrame::SetupGrblCallbacks()
 
         // 2. ONLY update the window if it is actually open
         if (isSetting && m_configDlg) {
-            m_configDlg->ReloadGrid(); 
+            m_configDlg->ReloadGrid();
         }
         });
     });
@@ -247,15 +247,15 @@ void PlotterFrame::OnOpenSettings(wxCommandEvent& event) {
 
     // Create the dialog
     GrblConfigDialog dlg(this, m_grbl.get());
-    
+
     // Register it so we can feed it data
     m_configDlg = &dlg;
-    
+
     // Show it (Blocking / Modal)
     dlg.ShowModal();
-    
+
     // Cleanup after it closes
-    m_configDlg = nullptr; 
+    m_configDlg = nullptr;
 }
 
 void PlotterFrame::OnOpenScanSettings(wxCommandEvent &event)
@@ -267,15 +267,15 @@ void PlotterFrame::OnOpenScanSettings(wxCommandEvent &event)
 
     // Create the dialog
     GrblScanWindow dlg(this, m_grbl.get());
-    
+
     // Register it so we can feed it data
     m_scanDlg = &dlg;
-    
+
     // Show it (Blocking / Modal)
     dlg.ShowModal();
-    
+
     // Cleanup after it closes
-    m_scanDlg = nullptr; 
+    m_scanDlg = nullptr;
 }
 
 void PlotterFrame::OnRefresh(wxCommandEvent& event) {
@@ -287,22 +287,22 @@ void PlotterFrame::OnConnect(wxCommandEvent& event) {
         m_grbl->Disconnect();
         m_connectBtn->SetLabel("Connect");
         m_portCombo->Enable(true);
-        wxLogMessage("Disconnected.");                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+        wxLogMessage("Disconnected.");
     } else {
         wxString selectedPort = m_portCombo->GetStringSelection();
-        std::string portStd = selectedPort.ToStdString(); 
+        std::string portStd = selectedPort.ToStdString();
 
         m_connectBtn->SetLabel("Connecting...");
-        m_connectBtn->Disable(); 
+        m_connectBtn->Disable();
         m_portCombo->Enable(false);
 
         std::thread([this, portStd]() {
-            
+
 
             bool success = m_grbl->Connect(portStd);
-            
+
             wxTheApp->CallAfter([this, success, portStd]() {
-                
+
                 m_connectBtn->Enable();
 
                 if (success) {
@@ -344,7 +344,7 @@ void PlotterFrame::OnGoTo(wxCommandEvent& event) {
 
 void PlotterFrame::OnHome(wxCommandEvent& event) {
     if(m_grbl && m_grbl->IsConnected()) {
-        m_grbl->SendCommand(Grbl::Home); 
+        m_grbl->SendCommand(Grbl::Home);
         wxLogMessage("Sent Homing Command ($H)");
     }
 }
@@ -358,14 +358,14 @@ void PlotterFrame::OnUnlock(wxCommandEvent& event) {
 
 void PlotterFrame::OnPause(wxCommandEvent& event) {
     if(m_grbl && m_grbl->IsConnected()) {
-        m_grbl->SendRealtimeCommand(Grbl::FeedHold); 
+        m_grbl->SendRealtimeCommand(Grbl::FeedHold);
         wxLogMessage("Sent Feed Hold (!)");
     }
 }
 
 void PlotterFrame::OnResume(wxCommandEvent& event) {
     if(m_grbl && m_grbl->IsConnected()) {
-        m_grbl->SendRealtimeCommand(Grbl::CycleStart); 
+        m_grbl->SendRealtimeCommand(Grbl::CycleStart);
         wxLogMessage("Sent Cycle Start (~)");
     }
 }

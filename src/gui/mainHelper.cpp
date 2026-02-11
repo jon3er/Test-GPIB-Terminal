@@ -11,7 +11,7 @@ bool PlotterMesurement(sData* data, int mesurementNumber)
     int x;
     int y;
 
-    Global::AdapterInstance.readScriptFile(System::filePathSystem, "Plot_Messung.txt", logAdapterReceived);
+    Global::AdapterInstance.readScriptFile(System::filePathSystem, "PlotMessung.txt", logAdapterReceived);
     // Output received messages to debug log
     for (size_t i = 0; i < logAdapterReceived.GetCount(); i++)
     {
@@ -20,7 +20,7 @@ bool PlotterMesurement(sData* data, int mesurementNumber)
         std::cerr << text << std::endl;
     }
 
-    
+
     MessWerteReal = Global::Messung.getX_Data();
 
     data->getXYCord(x, y, mesurementNumber);

@@ -240,7 +240,7 @@ void GpibDevice::readScriptFile(const wxString& dirPath, const wxString& file, w
                 std::cerr << "responce: " << logAdapterReceived.Last() << std::endl;
                 Messung.seperateDataBlock(logAdapterReceived.Last());
                 Messung.setFreqStartEnd(75'000'000,125'000'000);
-                Messung.calcYdata(); //start und end frequenz angeben
+                //Messung.calcYdata(); //start und end frequenz angeben
 
             }
             else if(line.Contains("?"))

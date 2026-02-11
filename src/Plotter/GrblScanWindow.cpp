@@ -13,7 +13,7 @@ wxBEGIN_EVENT_TABLE(GrblScanWindow, wxDialog)
 wxEND_EVENT_TABLE()
 
 GrblScanWindow::GrblScanWindow(wxWindow* parent, GrblController* controller)
-    : wxDialog(parent, wxID_ANY, "Scanner Configuration", wxDefaultPosition, wxSize(350, 450)),
+    : wxDialog(parent, wxID_ANY, "Scanner Configuration", wxDefaultPosition, wxSize(450, 650)),
       m_controller(controller)
 {
     auto* mainSizer = new wxBoxSizer(wxVERTICAL);
@@ -107,11 +107,11 @@ void GrblScanWindow::OnStart(wxCommandEvent& event) {
         double speed = std::stod(m_txtSpeed->GetValue().ToStdString());
         Direction dir = (m_rbDirection->GetSelection() == 0) ? DIR_Horizontal : DIR_Vertical;
         bool zigzag = m_chkZigzag->GetValue();
-        
+
         m_isScanning = true;
         ToggleControls(false); // Disable inputs
-        
-        m_btnStart->Enable(true); 
+
+        m_btnStart->Enable(true);
         m_btnStart->SetLabel("STOP SCAN"); // Change label
 
         // Set Parameter for mesurement
@@ -119,14 +119,14 @@ void GrblScanWindow::OnStart(wxCommandEvent& event) {
         MessInfo->File = "Mesurement";
         MessInfo->NoPoints_X = rows;
         MessInfo->NoPoints_Y = cols;
-        
-        
+
+
         Layout();
 
         m_workerThread = std::thread([=, this]() {
-            
+
             // This now respects the m_shouldCancel flag
-            m_controller->StartScanCycle(startX, startY, rows, cols, stepX, stepY, 
+            m_controller->StartScanCycle(startX, startY, rows, cols, stepX, stepY,
                 [this, rows, cols](int r, int c, double x, double y) {
                     int measurementNumber = r * cols + c;  // Korrekte Berechnung
                     std::cout << "Mesurement number: " << measurementNumber << std::endl;
@@ -134,28 +134,28 @@ void GrblScanWindow::OnStart(wxCommandEvent& event) {
                     // 2. Die Messfunktion aufrufen
                     bool success = PlotterMesurement(&m_currentData, measurementNumber);
 
-                    if (success) 
+                    if (success)
                     {
                         printf("Messung an Punkt R:%d C:%d erfolgreich beendet.\n", r, c);
-                    } else 
+                    } else
                     {
                         printf("FEHLER bei Messung an Punkt R:%d C:%d\n", r, c);
                     }
                     std::this_thread::sleep_for(std::chrono::milliseconds(500));
                     printf("Reached Point R:%d C:%d at (%.2f, %.2f)\n", r, c, x, y);
-                }, 
+                },
                 dir, zigzag, speed
             );
 
             // Update UI when finished (or cancelled)
             this->CallAfter([this]() {
                 m_isScanning = false;
-                
+
                 // Restore UI state
                 m_btnStart->SetLabel("Start Scan");
                 ToggleControls(true); // Re-enables inputs and buttons
                 Layout();
-                
+
                 // Optional: Check if it was a real finish or a cancel
                 // (You'd need a getter for m_shouldCancel if you want different messages)
                 wxMessageBox("Scan cycle ended.", "Info");
