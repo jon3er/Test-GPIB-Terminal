@@ -29,24 +29,21 @@ set(FTDI_LIBRARY     ${CMAKE_CURRENT_SOURCE_DIR}/third-party/FTDI/ftd2xx.lib)
 set(wxMathplots_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third-party/wxMathplots)
 
 # --- 3. Create Your Executable ---
-# Add your source files here.
-add_executable(TEST-GPIB-Terminal
-    src/data/dataManagement.cpp
-    src/gui/main.cpp
-    src/gui/Mesurement.cpp
-    src/gui/mainHelper.cpp
-    src/hardware/fkt_GPIB.cpp
-    src/hardware/fkt_d2xx.cpp
-    # Plotter
-    src/Plotter/PlotterFrame.cpp
-    src/Plotter/GrblController.cpp
-    src/Plotter/SerialPortManager.cpp
-    src/Plotter/GrblScanWindow.cpp
-    src/Plotter/GrblConfigDialog.cpp
-    src/Plotter/CoordinatePanel.cpp
-    # wxMathplots
-    third-party/wxMathplots/mathplot.cpp
+# Automatically discover all source files
+file(GLOB_RECURSE SOURCE_FILES 
+    "src/**/*.cpp"
 )
+
+# Add third-party sources
+file(GLOB_RECURSE THIRD_PARTY_SOURCES 
+    "third-party/wxMathplots/*.cpp"
+)
+
+# Combine all sources
+list(APPEND SOURCE_FILES ${THIRD_PARTY_SOURCES})
+
+# Create executable with discovered files
+add_executable(TEST-GPIB-Terminal ${SOURCE_FILES})
 set_target_properties(TEST-GPIB-Terminal PROPERTIES WIN32_EXECUTABLE YES)
 
 # --- 4. Link All Libraries ---
@@ -59,12 +56,27 @@ target_include_directories(TEST-GPIB-Terminal PRIVATE ${FTDI_INCLUDE_DIR})
 # Link wxMathplots library
 target_include_directories(TEST-GPIB-Terminal PRIVATE ${wxMathplots_INCLUDE_DIR})
 
-# --- Add project include folder ---
+# --- Add project include folders ---
+# Add all directories in include/ and src/
 target_include_directories(TEST-GPIB-Terminal PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/Plotter
+    # Include folders
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/include/hardware
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/Plotter
+    # Source folders
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/application
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/application/documents
     ${CMAKE_CURRENT_SOURCE_DIR}/src/data
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/domain
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/domain/models
     ${CMAKE_CURRENT_SOURCE_DIR}/src/gui
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/gui/SubWindow
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/gui/SubWindow/TerminalWindow
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/hardware
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/Plotter
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/presentation
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/presentation/views
 )
 
 # For wxWidgets on Windows, we need to add this

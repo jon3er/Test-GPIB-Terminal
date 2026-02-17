@@ -16,6 +16,9 @@
 // Gui header
 #include "mathplot.h"
 #include "Mesurement.h"
+#include "TerminalWindow.h"
+#include "FunctionWindow.h"
+#include "SettingsWindow.h"
 // Data
 #include "dataManagement.h"
 // info header
@@ -23,12 +26,8 @@
 #include "cmdGpib.h"
 // Plotter
 #include "PlotterFrame.h"
+//#include "PlotView.h"
 
-
-
-//-----Global Varibles Start------
-
-//-----Global Varibles Ende----
 
 //-----MainWin-----
 class MainWin : public wxApp
@@ -120,76 +119,7 @@ public:
     void MenuHelpAbout(wxCommandEvent& event);
 };
 
-//-----Terminal-----
-class TerminalWindow : public wxDialog
-{
-public:
-    TerminalWindow(wxWindow *parent);
-    virtual ~TerminalWindow();
 
-private:
-    void OnEnterTerminal(wxCommandEvent& event);
-
-    //Map Functions
-    void setupCmds();
-    //Command Functions
-    using CommandMap = std::map<std::string, std::function<void(const std::string&)>>;
-    CommandMap cmds;
-
-    // Device managment
-    void scanDevices(const std::string& args);
-    void statusDevice(const std::string& args);
-    void configDevice(const std::string& args);
-    // connection
-    void connectDevice(const std::string& args);
-    void disconnectDevice(const std::string& args);
-    // com
-    wxString sendToDevice(const std::string& args);
-    wxString readFromDevice(const std::string& args);
-    void writeToDevice(const std::string& args);
-    // test
-    void testDevice(const std::string& args);
-
-protected:
-    wxTextCtrl* TerminalDisplay;
-
-};
-
-class FunctionWindow : public wxDialog
-{
-public:
-    FunctionWindow(wxWindow *parent);
-    virtual ~FunctionWindow();
-
-private:
-    //Button Functions
-    void OnWriteGpib(wxCommandEvent& event);
-    void OnReadGpib(wxCommandEvent& event);
-    void OnReadWriteGpib(wxCommandEvent& event);
-    void OnUsbScan(wxCommandEvent& event);
-    void OnUsbConfig(wxCommandEvent& event);
-    void OnConDisconGpib(wxCommandEvent& event);
-    void OnTestSaveFile(wxCommandEvent& event);
-    void OnTestMultiMess(wxCommandEvent& event);
-    void OnTest(wxCommandEvent& event);
-
-    //Text Boxes
-    wxTextCtrl* textFuncOutput;
-    wxTextCtrl* writeFuncInput;
-
-    //device Class
-    //GpibDevice Adapter;
-};
-//-----Settings Window-----
-class SettingsWindow : public wxDialog
-{
-public:
-    SettingsWindow(wxWindow *parent);
-    //virtual ~SettingsWindow();
-
-private:
-
-};
 
 //------Subtabs------
 class SettingsTabDisplay : public wxPanel

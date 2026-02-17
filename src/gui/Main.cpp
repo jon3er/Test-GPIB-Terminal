@@ -1,6 +1,6 @@
 #include "main.h"
+#include "cmdGpib.h"
 
-// Verion Wo Gui noch komplett in einer datei ist.
 
 wxIMPLEMENT_APP(MainWin);
 
@@ -231,7 +231,7 @@ void MainProgrammWin::ButtonRefresh(wxCommandEvent& event)
     if (Global::AdapterInstance.getConnected())
     {
 
-        Text = Global::AdapterInstance.send("++ver");
+        Text = Global::AdapterInstance.send(ProLogixCmdLookup.at(ProLogixCmd::VER));
         if (Text.substr(0,6) == "Failed")
         {
             m_textCtrlAdapterStatus->SetValue("Error Check Connection");
@@ -241,7 +241,7 @@ void MainProgrammWin::ButtonRefresh(wxCommandEvent& event)
             m_textCtrlAdapterStatus->SetValue(Text.substr(14));
         }
 
-        Text = Global::AdapterInstance.send("*IDN?");
+        Text = Global::AdapterInstance.send(ScpiCmdLookup.at(ScpiCmd::IDN));
         if (Text == "No Message to Read\n")
         {
             Text = "No GPIB Device Found Check Connection";
@@ -352,7 +352,7 @@ void MainProgrammWin::MenuMesurementNew(wxCommandEvent& event)
 }
 void MainProgrammWin::MenuMesurementLoad(wxCommandEvent& event)
 {
-
+    
 }
 void MainProgrammWin::MenuMesurementSettings(wxCommandEvent& event)
 {
@@ -411,664 +411,9 @@ void MainProgrammWin::MenuHelpAbout(wxCommandEvent& event)
 
 }
 
-//----- Terminal Window Constructor -----
-TerminalWindow::TerminalWindow(wxWindow *parent)
-    : wxDialog(parent, wxID_ANY, "GPIB Terminal Window", wxDefaultPosition, wxSize(1000,600))
-{
-    wxPanel* panelTerm = new wxPanel(this);
 
-    //text Output
-    TerminalDisplay = new wxTextCtrl(panelTerm,wxID_ANY,"",wxDefaultPosition,wxSize(1000, 200), wxTE_MULTILINE);
-    //disable user input
-    TerminalDisplay->SetEditable(false);
 
-    //text input
-    wxTextCtrl* TerminalInput = new wxTextCtrl(panelTerm, wxID_ANY,"",wxDefaultPosition,wxSize(1000, 50), wxTE_MULTILINE | wxTE_PROCESS_ENTER);
-    //set Cursor in input window
-    TerminalInput->SetFocus();
 
-    wxStaticText* StaticTE = new wxStaticText(panelTerm, wxID_ANY,"GPIB Terminal log");
-    wxStaticText* StaticTEInput = new wxStaticText(panelTerm, wxID_ANY,"Input GPIB Commands:");
-
-    wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
-    sizer->Add(StaticTE,        0, wxALL, 20);
-    sizer->Add(TerminalDisplay, 0, wxEXPAND | wxALL, 20);
-    sizer->Add(StaticTEInput,   0 , wxALL, 20);
-    sizer->Add(TerminalInput,   0, wxALL, 20);
-    panelTerm->SetSizerAndFit(sizer);
-
-    //debug msg
-    std::cerr << "Terminal Window Opened" << std::endl;
-
-    TerminalInput->Bind(wxEVT_TEXT_ENTER, &TerminalWindow::OnEnterTerminal,this);
-    //define Termianl Commands
-    TerminalWindow::setupCmds();
-}
-//-----Terminal window Destructor -----
-TerminalWindow::~TerminalWindow()
-{
-    if (Global::AdapterInstance.getConnected() == true)
-    {
-        Global::AdapterInstance.disconnect();
-    }
-    std::cerr << "Terminal Window Closed" << std::endl;
-}
-//-----Terminal Window Methodes -----
-void TerminalWindow::setupCmds()
-{
-    cmds["scan"]        = [this](const std::string& args) { this->scanDevices(args); };
-    cmds["status"]      = [this](const std::string& args) { this->statusDevice(args); };
-    cmds["config"]      = [this](const std::string& args) { this->configDevice(args); };
-    cmds["connect"]     = [this](const std::string& args) { this->connectDevice(args); };
-    cmds["disconnect"]  = [this](const std::string& args) { this->disconnectDevice(args); };
-    cmds["send"]        = [this](const std::string& args) { this->sendToDevice(args); };
-    cmds["read"]        = [this](const std::string& args) { this->readFromDevice(args); };
-    cmds["write"]       = [this](const std::string& args) { this->writeToDevice(args); };
-    cmds["test"]        = [this](const std::string& args) { this->testDevice(args); };
-}
-
-void TerminalWindow::scanDevices(const std::string& args = "")
-{
-    DWORD devNum = scanUsbDev();
-    wxString Text = "Number of devices: " + std::to_string(devNum) + "\n";
-
-    TerminalDisplay->AppendText(terminalTimestampOutput(Text));
-}
-
-void TerminalWindow::statusDevice(const std::string& args = "")
-{
-    TerminalDisplay->AppendText(terminalTimestampOutput(Global::AdapterInstance.statusText()));
-}
-
-void TerminalWindow::connectDevice(const std::string& args = "")
-{
-    int dev = 0;
-
-    std::cerr << "Command entered: connected with args: " << args << std::endl;
-
-    if (args != "")
-    {
-        dev = std::stoi(args);
-        if (dev == std::clamp(dev, 1, 20))
-        {
-            std::cerr << "Valid dev number: " << dev << std::endl;
-            dev = dev - 1;
-        }
-        else
-        {
-            std::cerr << "Invalid dev number: " << dev << std::endl;
-            dev = 0;
-        }
-    }
-
-    if (!Global::AdapterInstance.getConnected())
-    {
-        Global::AdapterInstance.connect();
-
-        if (Global::AdapterInstance.getStatus() == FT_OK)
-        {
-            TerminalDisplay->AppendText(terminalTimestampOutput("Connected to a device\n"));
-            std::cerr << "Connected to " << dev << std::endl;
-        }
-        else
-        {
-            std::cerr << "Couldnt connect" << std::endl;
-            TerminalDisplay->AppendText(terminalTimestampOutput("Couldnt connect to a device\n Is programm running as SU?\n Is the FTDI_SIO Driver unloaded?\n"));
-        }
-
-        FT_STATUS ftStatus = FT_Purge(Global::AdapterInstance.getHandle(), FT_PURGE_RX | FT_PURGE_TX);
-        printErr(ftStatus,"Purge Failed");
-
-    }
-    else
-    {
-        TerminalDisplay->AppendText(terminalTimestampOutput("Device already connected\n"));
-    }
-}
-
-void TerminalWindow::disconnectDevice(const std::string& args = "")
-{
-    std::cerr << "Command entered: disconnect with arg: " << args << std::endl;
-
-    Global::AdapterInstance.disconnect();
-
-    if (Global::AdapterInstance.getStatus() == FT_OK)
-    {
-        TerminalDisplay->AppendText(terminalTimestampOutput("Disconnected from a device\n"));
-        std::cerr << "disconnected from current device" << std::endl;
-    }
-    else
-    {
-        TerminalDisplay->AppendText(terminalTimestampOutput("Coulnd't disconnect check if a device is connected with: status\n"));
-    }
-
-}
-
-wxString TerminalWindow::sendToDevice(const std::string& args)
-{
-    std::cerr << "terminal Command send " << args << " Entered" << std::endl;
-
-    wxString GPIBText = args;
-    std::string CheckText(GPIBText.ToUTF8());
-
-    wxString Text = Global::AdapterInstance.write(CheckText);
-
-    TerminalDisplay->AppendText(terminalTimestampOutput(Text));
-
-    sleepMs(100);   //wait for responce
-
-    std::cerr << "Reading from device..." << std::endl;
-
-    Text = Global::AdapterInstance.read();
-
-    TerminalDisplay->AppendText(terminalTimestampOutput(Text));
-
-    return Global::AdapterInstance.getLastMsgReseived();
-}
-
-wxString TerminalWindow::readFromDevice(const std::string& args = "")
-{
-
-    std::cerr << "command read entered with args: " << args << std::endl;
-
-    wxString Text = Global::AdapterInstance.read();
-
-    TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
-
-    return Global::AdapterInstance.getLastMsgReseived();
-}
-
-void TerminalWindow::writeToDevice(const std::string& args)
-{
-    std::cerr << "Write Command Entered" << std::endl;
-
-    wxString Text = Global::AdapterInstance.write(args);
-
-    TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
-}
-
-void TerminalWindow::configDevice(const std::string& args = "")
-{
-    wxString Text;
-
-    if (args != "")
-    {
-        if (std::stoi(args) == std::clamp(std::stoi(args), 1, 1'000'000))
-        {
-            int BaudRate = std::stoi(args);
-            Global::AdapterInstance.setBaudrate(BaudRate);
-            std::cerr << "Set Baudrate to " << Global::AdapterInstance.getBaudrate() << std::endl;
-
-        }
-        else
-        {
-            std::cerr << "Using Default Baudrate: " << Global::AdapterInstance.getBaudrate() << std::endl;
-        }
-    }
-    else
-    {
-        std::cerr << "Using Default Baudrate: " << Global::AdapterInstance.getBaudrate() << std::endl;
-    }
-
-    Global::AdapterInstance.config();
-
-    if (Global::AdapterInstance.getStatus() == FT_OK)
-    {
-        Text = "Set Device BaudRate to " + std::to_string(Global::AdapterInstance.getBaudrate()) + "\n";
-        TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
-        std::cerr << "Baudrate set to: " << std::to_string(Global::AdapterInstance.getBaudrate()) << std::endl;
-    }
-    else
-    {
-        Text = "Failed to config device check if run as SU\n";
-        TerminalWindow::TerminalDisplay->AppendText(terminalTimestampOutput(Text));
-    }
-}
-
-void TerminalWindow::testDevice(const std::string& args = "")
-{
-    if (args == "")
-    {
-        connectDevice();
-        configDevice();
-
-
-        writeToDevice("++clr");
-        sleepMs(200);
-        writeToDevice("++mode 1");
-        writeToDevice("++auto 1");
-        writeToDevice("++eos 2"); //lf
-        writeToDevice("++eoi 1");
-        writeToDevice("++eot_enable 0");
-        writeToDevice("++eot_char 10");
-        writeToDevice("++addr 20");
-        sendToDevice("++ver");
-
-        //writeToDevice("IDE?");
-        //writeToDevice("++read");
-        //auf antwort warten
-    }
-    else if(args == "1")
-    {
-
-        writeToDevice("++rst");
-        sleepMs(200);
-
-        writeToDevice("++mode 1");
-        writeToDevice("++auto 0");
-        writeToDevice("++addr 20");
-
-        writeToDevice("*IDE?");
-        writeToDevice("++read eoi");
-        sleepMs(50);
-        readFromDevice();
-    }
-    else if(args == "mess")
-    {
-        writeToDevice("++auto 0");
-
-        //Rest GPIB Device
-        writeToDevice("RST");
-        writeToDevice("*CLR");
-        //Set Range and Maker
-        writeToDevice("FREQ:CENT 1 GHZ");
-        writeToDevice("FREQ:SPAN 10 MHZ");
-        writeToDevice("BAND:RES 100 KHZ ");
-        writeToDevice("CALC:MARK:MAX");
-        //wait for fin
-        writeToDevice("*WAI");
-        //read makers
-
-        //after setup set to auto 1
-        writeToDevice("++auto 1");
-        sleepMs(200);
-        sendToDevice("CALC:MARK1:Y?");
-        sendToDevice("CALC:MARK1:X?");
-
-
-    }
-    else if ("big")
-    {
-
-        writeToDevice("++auto 0");
-        writeToDevice("INIT:CONT OFF"); //Dauerhafter sweep aus
-        writeToDevice("SWE:POIN 10"); //100 messpunkte über messbereich aufnehmen
-        writeToDevice("FREQ:STAR 80 MHZ");
-        writeToDevice("FREQ:STOP 120 MHZ");
-        writeToDevice("BAND:RES 100 KHZ ");
-
-        writeToDevice("FORM:DATA ASC");
-        writeToDevice("FORM:BORD NORM");
-        writeToDevice("SWE:TIME AUTO");
-        sleepMs(200);
-        writeToDevice("SWE:TIME?");
-        wxString swpTime = sendToDevice("++read");
-
-        //float muS = std::stof(swpTime.c_str())*100;
-        writeToDevice("INIT:IMM"); //Messung starten
-        writeToDevice("*WAI");
-        sleepMs(300);
-
-        wxString responce;
-        int i = 0;
-        while ((responce.substr(0,1) != "1") || (i == 20))
-        {
-            writeToDevice("*OPC?");
-            sleepMs(100);
-            responce = sendToDevice("++read eoi");
-            i++;
-        }
-
-        writeToDevice("TRAC:DATA? TRACE1");
-        //writeToDevice("TRAC1:DATA?");
-        writeToDevice("++read eoi");
-
-        sleepMs(100);
-        wxString Trace = readFromDevice();
-        std::vector<double> x_werte;
-
-        Global::Messung.seperateDataBlock(Trace);
-
-        wxFile file;
-
-        // wxFile::write_append zum Anhängen oder wxFile::write zum Überschreiben
-        if (file.Open("/home/jon3r/Documents/Code/CodeBlocks/Test_GPIB_Terminal/GpibScripts/Z_Log.txt", wxFile::write_append)) {
-            file.Write(Trace + "\n");
-            file.Close();
-        } else {
-            wxLogError("Konnte Datei nicht schreiben!");
-        }
-
-        std::cerr << "Received Trace: " << Trace << std::endl;
-
-        writeToDevice("INIT:CONT ON"); //Dauerhafter sweep an
-    }
-}
-
-void TerminalWindow::OnEnterTerminal(wxCommandEvent& event)
-{
-    wxTextCtrl* Terminal = static_cast<wxTextCtrl*>(event.GetEventObject());
-    wxString TText = Terminal->GetValue();
-    Terminal->SetValue("");
-
-    std::cerr << "user entered: " << TText.c_str() << std::endl;
-
-    //Output to terminal
-    TerminalDisplay->AppendText(terminalTimestampOutput(TText + "\n"));
-
-    //entspechende Funktionen finden und aufrufen
-    std::string strCmd;
-    std::string args;
-    std::string rawText(TText.ToUTF8());
-
-    size_t firstSpace = rawText.find(' ');
-
-    //seperiert Befehl und argument
-    if (firstSpace == std::string::npos)
-    {
-        strCmd = rawText;
-        args = "";
-    }
-    else
-    {
-        strCmd = rawText.substr(0, firstSpace);
-        args = rawText.substr(firstSpace + 1);
-    }
-
-    //findet passenden command und führt die funktion aus
-    auto match = cmds.find(strCmd);
-
-    if (match != cmds.end())
-    {
-        match->second(args);
-    }
-    else
-    {
-        TerminalDisplay->AppendText(terminalTimestampOutput("Unknown command!\n"));
-    }
-}
-//-----Terminal Window Methodes End -----
-
-//-----Function Window Constructor-----
-FunctionWindow::FunctionWindow(wxWindow *parent)
-    : wxDialog(parent, wxID_ANY, "Function Test Window", wxDefaultPosition, wxSize(500,750))
-{
-    wxPanel* panelfunc = new wxPanel(this);
-
-    //Input text lable
-    wxStaticText* discFuncInput = new wxStaticText(panelfunc,wxID_ANY,"Input text to write: ");
-
-    //Function input textbox
-    writeFuncInput = new wxTextCtrl(panelfunc, wxID_ANY,"",wxDefaultPosition,wxSize(300, 40));
-    //set Cursor in writeFuncInput window
-    writeFuncInput->SetFocus();
-
-
-    //Create Button "Write to GPIB"
-    wxButton* writeGpibButton       = new wxButton(panelfunc, wxID_ANY, "Write to GPIB",            wxPoint(10,0));
-    //Create Button "Read to GPIB"
-    wxButton* readGpibButton        = new wxButton(panelfunc, wxID_ANY, "Read from GPIB",           wxPoint(10,0));
-    //Create Button "Write and Read GPIB"
-    wxButton* readWriteGpibButton   = new wxButton(panelfunc, wxID_ANY, "Write and Read GPIB",      wxPoint(10,0));
-    //Create Button "Scan For Device"
-    wxButton* scanUsbButton         = new wxButton(panelfunc, wxID_ANY, "Scan For Device",          wxPoint(10,0));
-    //Create Button "Configure USB Device"
-    wxButton* devConfigButton       = new wxButton(panelfunc, wxID_ANY, "Configure USB Device",     wxPoint(10,0));
-    //Create Button "Connect / Disconnect"
-    wxButton* connectDevGpibButton  = new wxButton(panelfunc, wxID_ANY, "Connected / Disconnect",   wxPoint(10,0));
-    //Create Button "Test Save File"
-    wxButton* TestSaveFileButton    = new wxButton(panelfunc, wxID_ANY, "Test Save File",           wxPoint(10,0));
-    //Create Button "Test Multi Mesurement"
-    wxButton* TestMultiMessButton   = new wxButton(panelfunc, wxID_ANY, "Test Multi mesurement",    wxPoint(10,0));
-
-    wxButton* TestButton            = new wxButton(panelfunc, wxID_ANY, "Test Other",               wxPoint(10,0));
-
-
-    //Funtion Output Lable
-    wxStaticText* discFuncOutput = new wxStaticText(panelfunc,wxID_ANY,"Function output: ");
-    //Funtion Output Text Box
-    textFuncOutput = new wxTextCtrl(panelfunc, wxID_ANY,"",wxDefaultPosition,wxSize(300, 200), wxTE_MULTILINE);
-
-    // Function bindes
-    writeGpibButton     ->Bind(wxEVT_BUTTON, &FunctionWindow::OnWriteGpib,      this);
-    readGpibButton      ->Bind(wxEVT_BUTTON, &FunctionWindow::OnReadGpib,       this);
-    readWriteGpibButton ->Bind(wxEVT_BUTTON, &FunctionWindow::OnReadWriteGpib,  this);
-    scanUsbButton       ->Bind(wxEVT_BUTTON, &FunctionWindow::OnUsbScan,        this);
-    devConfigButton     ->Bind(wxEVT_BUTTON, &FunctionWindow::OnUsbConfig,      this);
-    connectDevGpibButton->Bind(wxEVT_BUTTON, &FunctionWindow::OnConDisconGpib,  this);
-    TestSaveFileButton  ->Bind(wxEVT_BUTTON, &FunctionWindow::OnTestSaveFile,   this);
-    TestMultiMessButton ->Bind(wxEVT_BUTTON, &FunctionWindow::OnTestMultiMess,  this);
-    TestButton          ->Bind(wxEVT_BUTTON, &FunctionWindow::OnTest,           this);
-    //sizer     Set Window Layout
-    wxBoxSizer* sizerFunc = new wxBoxSizer(wxVERTICAL);
-    sizerFunc->Add(discFuncInput,       0, wxEXPAND | wxALL , 10);
-    sizerFunc->Add(writeFuncInput,      0, wxEXPAND | wxALL , 10);
-    sizerFunc->Add(scanUsbButton,       0, wxEXPAND | wxALL , 10);
-    sizerFunc->Add(connectDevGpibButton,0, wxEXPAND | wxALL , 10);
-    sizerFunc->Add(devConfigButton,     0, wxEXPAND | wxALL , 10);
-    sizerFunc->Add(writeGpibButton,     0, wxEXPAND | wxALL , 10);
-    sizerFunc->Add(readGpibButton,      0, wxEXPAND | wxALL , 10);
-    sizerFunc->Add(readWriteGpibButton, 0, wxEXPAND | wxALL , 10);
-    sizerFunc->Add(TestSaveFileButton,  0, wxEXPAND | wxALL , 10);
-    sizerFunc->Add(TestMultiMessButton, 0, wxEXPAND | wxALL , 10);
-    sizerFunc->Add(TestButton,          0, wxEXPAND | wxALL , 10);
-
-    sizerFunc->Add(discFuncOutput,      0, wxEXPAND | wxALL , 10);
-    sizerFunc->Add(textFuncOutput,      0, wxEXPAND | wxALL , 10);
-    panelfunc->SetSizerAndFit(sizerFunc);
-}
-//-----Function Window Destructor-----
-FunctionWindow::~FunctionWindow()
-{
-    Global::AdapterInstance.disconnect();
-}
-//-----Function Window Methodes-----
-void FunctionWindow::OnUsbScan(wxCommandEvent& event)
-{
-    std::cerr << "Scan USB Devices" << std::endl;
-
-    DWORD devices = scanUsbDev();
-    wxString deviceNumString = std::to_string(devices) + " Devices Found" + "\n";
-
-    if (devices <= 0)
-    {
-        textFuncOutput->AppendText(terminalTimestampOutput("no device found \n"));
-    }
-    else
-    {
-        textFuncOutput->AppendText(terminalTimestampOutput(deviceNumString));
-    }
-}
-void FunctionWindow::OnConDisconGpib(wxCommandEvent& event)
-{
-    if (Global::AdapterInstance.getConnected() == false)
-    {
-       Global::AdapterInstance.connect();
-
-        if (Global::AdapterInstance.getStatus() == FT_OK)
-        {
-            textFuncOutput->AppendText(terminalTimestampOutput("Connected to a device\n"));
-        }
-    }
-    else
-    {
-        Global::AdapterInstance.disconnect();
-
-        if (Global::AdapterInstance.getStatus() == FT_OK)
-        {
-            textFuncOutput->AppendText(terminalTimestampOutput("Disconnected from a device\n"));
-        }
-    }
-}
-void FunctionWindow::OnTestSaveFile(wxCommandEvent& event)
-{
-    std::thread CsvThread;
-    std::cerr << "Pressed Test Save File" << std::endl;
-    sData TestObjekt;
-    sData TestObjekt2;
-
-    int xpt = 1;
-    int ypt = 1;
-    int count = 10000;
-    int endFreq = 50'000;
-    // set Mesurement Header
-    TestObjekt.setTimeAndDate();
-    TestObjekt.setNumberOfPts_X(xpt);
-    TestObjekt.setNumberOfPts_Y(ypt);
-    TestObjekt.setEndFreq(endFreq);
-
-    std::vector<double> TestArray;
-
-    for (int i = 0; i < count; i++)
-    {
-        try
-        {
-            TestArray.push_back(double(i));
-        }
-        catch(const std::exception& e)
-        {
-            std::cerr << "pushback failed" << e.what() << '\n';
-        }
-    }
-    std::cout << "TestArray Ok" << std::endl;
-    std::cout << "count: " << count << std::endl;
-    std::cout << "real size :" << TestArray.size() << std::endl;
-    TestObjekt.setNumberofPts_Array(count);
-    std::cout << "setNumberofPts_Array Ok: " << TestObjekt.getNumberOfPts_Array()<< std::endl;
-    for (int i = 0; i < xpt; i++)
-    {
-        for (int j = 0; j < ypt; j++)
-        {
-            try
-            {
-                std::cout << "x: " << i << " y: " << j << std::endl;
-
-                TestObjekt.set3DDataReal(TestArray,i,j);
-            }
-            catch(const std::exception& e)
-            {
-                std::cerr << "Set 3D Data failed: " << e.what() << '\n';
-                std::cerr << i << " " << j << std::endl;
-            }
-        }
-    }
-    std::cout << "Set 3D Data Ok" << std::endl;
-
-
-
-    sData::sParam* TestData = TestObjekt.GetParameter();
-
-    std::cerr << "Zeit: " << TestData->Time << std::endl;
-
-    std::cerr << "Schreib daten in CSV" << std::endl;
-
-    wxString Dateiname = "D:\\CodeProjects\\VSCode\\projects\\Diplom\\Test-GPIB-Terminal\\LogFiles\\TestCSVNeu";
-
-    int messungen = TestObjekt.getNumberOfPts_X()* TestObjekt.getNumberOfPts_Y();
-    for (int i = 1; i <= messungen; i++)
-    {
-        if (!saveToCsvFile(Dateiname, TestObjekt, i))
-        {
-            std::cerr << "Failed to save file" << std::endl;
-        }
-    }
-
-    // bis hier alles ok
-
-    readCsvFile(Dateiname, TestObjekt2);
-
-    Dateiname = "D:\\CodeProjects\\VSCode\\projects\\Diplom\\Test-GPIB-Terminal\\LogFiles\\TestCSVNeuKopie";
-
-    int totalpoints = TestObjekt2.getNumberOfPts_X()* TestObjekt2.getNumberOfPts_Y();
-    std::cout << "[Debug] Totalpoints: " << totalpoints << std::endl;
-
-    TestObjekt2.setFileName("kopie");
-    TestObjekt2.setTimeAndDate();
-
-    for (int i = 1; i <= totalpoints; i++)
-    {
-        if (!saveToCsvFile(Dateiname, TestObjekt2, i))
-        {
-            std::cerr << "Failed to save file" << std::endl;
-        }
-    }
-}
-void FunctionWindow::OnWriteGpib(wxCommandEvent& event)
-{
-    std::cerr << "Write Pressed!" << std::endl;
-
-    wxString GPIBText = FunctionWindow::writeFuncInput->GetValue();
-    FunctionWindow::writeFuncInput->SetValue("");
-
-    std::string CheckText(GPIBText.ToUTF8());
-
-    wxString Text = Global::AdapterInstance.write(CheckText);
-
-    FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
-}
-void FunctionWindow::OnReadGpib(wxCommandEvent& event)
-{
-    std::cerr << "On Read Pressed" << std::endl;
-
-    wxString Text = Global::AdapterInstance.read();
-
-    FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
-}
-void FunctionWindow::OnReadWriteGpib(wxCommandEvent& event)
-{
-    std::cerr << "Read / Write Pressed!" << std::endl;
-
-    std::cerr << "Writing to device..." << std::endl;
-
-    wxString GPIBText = FunctionWindow::writeFuncInput->GetValue();
-    std::string CheckText(GPIBText.ToUTF8());
-
-    FunctionWindow::writeFuncInput->SetValue("");
-
-    wxString Text = Global::AdapterInstance.write(CheckText);
-
-    FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
-
-    sleepMs(100);   //wait for responce
-
-    std::cerr << "Reading from device..." << std::endl;
-
-    Text = Global::AdapterInstance.read();
-
-    FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
-}
-void FunctionWindow::OnUsbConfig(wxCommandEvent& event)
-{
-    Global::AdapterInstance.config();
-
-    if (Global::AdapterInstance.getStatus() == FT_OK)
-    {
-        FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput("Set Default config\n"));
-    }
-    else
-    {
-        FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput("Config failed\n"));
-    }
-
-    FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Global::AdapterInstance.statusText()));
-}
-void FunctionWindow::OnTestMultiMess(wxCommandEvent& event)
-{
-    //Create new sub window
-    MultiMessWindow *MultiMessWin = new MultiMessWindow(this);
-    //open Window Pauses Main Window
-    MultiMessWin->ShowModal();
-    //Close Window
-    MultiMessWin->Destroy();
-
-}
-void FunctionWindow::OnTest(wxCommandEvent& event)
-{
-    std::cerr << "Test wxLogDebug" << std::endl;
-    std::cerr << "Test cerr" << std::endl;
-    std::cout << "Test cout" << std::endl;
-}
-//-----Function Window Methodes End -----
 
 //-----Settings Window--------
 SettingsWindow::SettingsWindow(wxWindow *parent)
@@ -1287,22 +632,22 @@ void SettingsTabDisplay::anwendenButton(wxCommandEvent& event)
     {
         if (!useCenterSpan)
         {
-            cmdText = "FREQ:STAR " + FreqStartSet + FreqStartSetUnit;
+            cmdText = ScpiCmdLookup.at(ScpiCmd::FREQ_STAR) + " " + FreqStartSet + FreqStartSetUnit;
             Global::AdapterInstance.write(cmdText);
-            cmdText = "FREQ:STOP " + FreqEndeSet + FreqEndeSetUnit;
+            cmdText = ScpiCmdLookup.at(ScpiCmd::FREQ_STOP) + " " + FreqEndeSet + FreqEndeSetUnit;
             Global::AdapterInstance.write(cmdText);
         }
         else if (!useStartEnde)
         {
-            cmdText = "FREQ:CENT " + FreqCenterSet + FreqCenterSetUnit;
+            cmdText = ScpiCmdLookup.at(ScpiCmd::FREQ_CENT) + " " + FreqCenterSet + FreqCenterSetUnit;
             Global::AdapterInstance.write(cmdText);
-            cmdText = "FREQ:SPAN " + FreqSpanSet + FreqSpanSetUnit;
+            cmdText = ScpiCmdLookup.at(ScpiCmd::FREQ_SPAN) + " " + FreqSpanSet + FreqSpanSetUnit;
             Global::AdapterInstance.write(cmdText);
         }
 
         cmdText = "UNIT:POW " + pegelSet + pegelSetUnit;
         Global::AdapterInstance.write(cmdText);
-        cmdText = "DISP:TRAC:Y:RLEV " + refPegelSet;
+        cmdText = ScpiCmdLookup.at(ScpiCmd::DISP_TRAC_Y_RLEV) + " " + refPegelSet;
         Global::AdapterInstance.write(cmdText);
         cmdText = "DISP:TRAC:Y:SPAC " + refPegelSet;
         Global::AdapterInstance.write(cmdText);
@@ -1313,12 +658,12 @@ void SettingsTabDisplay::getCurrentButton(wxCommandEvent& event)
 
     if (Global::AdapterInstance.getConnected())
     {
-        FreqStartSet    = Global::AdapterInstance.send("FREQ:STAR?");
-        FreqStartSet    = Global::AdapterInstance.send("FREQ:STOP?");
-        FreqEndeSet     = Global::AdapterInstance.send("FREQ:CENT?");
-        FreqCenterSet   = Global::AdapterInstance.send("FREQ:SPAN?");
+        FreqStartSet    = Global::AdapterInstance.send(ScpiCmdLookup.at(ScpiCmd::FREQ_STAR_QUERY));
+        FreqStartSet    = Global::AdapterInstance.send(ScpiCmdLookup.at(ScpiCmd::FREQ_STOP_QUERY));
+        FreqEndeSet     = Global::AdapterInstance.send(ScpiCmdLookup.at(ScpiCmd::FREQ_CENT_QUERY));
+        FreqCenterSet   = Global::AdapterInstance.send(ScpiCmdLookup.at(ScpiCmd::FREQ_SPAN_QUERY));
         FreqSpanSet     = Global::AdapterInstance.send("CALCulate:UNIT:POWer?");
-        pegelSet        = Global::AdapterInstance.send("DISP:TRAC:Y:RLEV?");
+        pegelSet        = Global::AdapterInstance.send(ScpiCmdLookup.at(ScpiCmd::DISP_TRAC_Y_RLEV_QUERY));
         refPegelSet     = Global::AdapterInstance.send("DISP:TRAC:Y:SPAC?");
 
         setValues();

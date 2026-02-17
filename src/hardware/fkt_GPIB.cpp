@@ -1,5 +1,6 @@
 
 #include "fkt_GPIB.h"
+#include "cmdGpib.h"
 
 //TODO Create Device Class and Create new read read and write funtions
 GpibDevice::GpibDevice()
@@ -124,10 +125,10 @@ void GpibDevice::connect(std::string args)
 }
 void GpibDevice::disconnect(std::string args)
 {
-    write("++auto 0");
-    write("*CLS");
-    write("++loc");
-    write("++ifc");
+    write(ProLogixCmdLookup.at(ProLogixCmd::AUTO) + " 0");
+    write(ScpiCmdLookup.at(ScpiCmd::CLR));
+    write(ProLogixCmdLookup.at(ProLogixCmd::LOC));
+    write(ProLogixCmdLookup.at(ProLogixCmd::IFC));
 
     sleepMs(200);
 
@@ -234,7 +235,7 @@ void GpibDevice::readScriptFile(const wxString& dirPath, const wxString& file, w
                 std::cerr << "line " << i << ": send: " << line << std::endl;
 
                 write(std::string(line.ToUTF8()));
-                write("++read eoi");
+                write(ProLogixCmdLookup.at(ProLogixCmd::READ) + " eoi");
                 sleepMs(300);
                 logAdapterReceived.Add(read());
                 std::cerr << "responce: " << logAdapterReceived.Last() << std::endl;

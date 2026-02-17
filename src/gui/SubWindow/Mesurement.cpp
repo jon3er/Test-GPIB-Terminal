@@ -1,4 +1,5 @@
 #include "Mesurement.h"
+#include "cmdGpib.h"
 
 //-----Plot Window BEGIN--------
 PlotWindow::PlotWindow(wxWindow *parent) : wxDialog(parent, wxID_ANY, "Plot Window", wxDefaultPosition, wxSize(1000,750))
@@ -457,14 +458,14 @@ void PlotWindowSetMarker::SetSelection1(wxCommandEvent& event)
 
     if (Marker1MaxSet)
     {
-        std::string Text = "CALC:MARK:MAX";
+        std::string Text = ScpiCmdLookup.at(ScpiCmd::CALC_MARK_MAX);
         Global::AdapterInstance.write(Text);
     }
     else if (Marker1FreqSet && (FreqMarker1Raw.IsNumber()))
     {
         GetSelectedValue1();
 
-        std::string Text = "CALC:MARK:MAX " + std::string(FreqMarker1Raw.ToUTF8());;
+        std::string Text = ScpiCmdLookup.at(ScpiCmd::CALC_MARK_MAX) + " " + std::string(FreqMarker1Raw.ToUTF8());;
         Global::AdapterInstance.write(Text);
     }
     //TODO Get X Y From Device and display in the Menu

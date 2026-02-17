@@ -8,4 +8,5 @@ Test_GPIB_Terminal.layout
 build/
 /.vscode
 third-party/
+Examples/
 
