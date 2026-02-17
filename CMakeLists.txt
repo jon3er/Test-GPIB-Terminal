@@ -68,15 +68,14 @@ target_include_directories(TEST-GPIB-Terminal PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src/application
     ${CMAKE_CURRENT_SOURCE_DIR}/src/application/documents
     ${CMAKE_CURRENT_SOURCE_DIR}/src/data
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/domain
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/domain/models
     ${CMAKE_CURRENT_SOURCE_DIR}/src/gui
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/gui/SubWindow
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/gui/SubWindow/TerminalWindow
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/gui/TerminalWindow
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/gui/SettingsWindow
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/gui/FunctionWindow
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/gui/MesurementWindow
     ${CMAKE_CURRENT_SOURCE_DIR}/src/hardware
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Plotter
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/presentation
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/presentation/views
+
 )
 
 # For wxWidgets on Windows, we need to add this
