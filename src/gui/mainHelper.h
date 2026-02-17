@@ -14,3 +14,5 @@
 // Helper functions for komplex main functions
 
 bool PlotterMesurement(sData* data, int mesurementNumber);
+
+void sleepMs(int timeMs);

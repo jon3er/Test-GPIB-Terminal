@@ -44,26 +44,26 @@ private:
     //sData tempData;
 };
 
-class GpibDevice
+class PrologixUsbGpibAdapter
 {
 protected:
-    GpibDevice();
+    PrologixUsbGpibAdapter();
 
     
 public:
     // Singelton pattern to prevent multiple calls
-    static GpibDevice& get_instance()
+    static PrologixUsbGpibAdapter& get_instance()
     {
-        static GpibDevice instance;
+        static PrologixUsbGpibAdapter instance;
         return instance;
     }
     // Overload to prevent second two instance
-    GpibDevice(const GpibDevice&) = delete;
-    GpibDevice(GpibDevice&&) = delete;
-    GpibDevice operator=(const GpibDevice&) = delete;
-    GpibDevice operator=(GpibDevice&&) = delete;
+    PrologixUsbGpibAdapter(const PrologixUsbGpibAdapter&) = delete;
+    PrologixUsbGpibAdapter(PrologixUsbGpibAdapter&&) = delete;
+    PrologixUsbGpibAdapter operator=(const PrologixUsbGpibAdapter&) = delete;
+    PrologixUsbGpibAdapter operator=(PrologixUsbGpibAdapter&&) = delete;
 
-    ~GpibDevice();
+    ~PrologixUsbGpibAdapter();
 
     std::string read(int forceReadBytes = 0);
     std::string write(std::string msg);
@@ -83,10 +83,12 @@ public:
     bool getConnected();
     int getBaudrate();
     std::string getLastMsgReseived();
+
+    void setBaudrate(int BaudrateNew);
     
     fsuMesurement getMesurement() { return Messung; };
 
-    void setBaudrate(int BaudrateNew);
+    
 private:
     FT_HANDLE ftHandle  = NULL;
     FT_STATUS ftStatus  = FT_OK;
@@ -99,11 +101,12 @@ private:
     DWORD BytesToRead   = 0;
 
     fsuMesurement Messung;
+
+    // helper Functionen
+    std::vector<char> checkAscii(std::string input);
 };
 
 
 wxString terminalTimestampOutput(wxString Text);
 
-std::vector<char> checkAscii(std::string input);
 
-void sleepMs(int timeMs);

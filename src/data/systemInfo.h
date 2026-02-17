@@ -21,7 +21,7 @@ namespace System
 
 namespace Global
 {
-    inline GpibDevice&     AdapterInstance = GpibDevice::get_instance();
+    inline PrologixUsbGpibAdapter&     AdapterInstance = PrologixUsbGpibAdapter::get_instance();
     inline fsuMesurement   Messung;
 }
 

@@ -41,3 +41,8 @@ bool PlotterMesurement(sData* data, int mesurementNumber)
     return true; // Mesurement Finished
 
 }
+
+void sleepMs(int timeMs)
+{
+    std::this_thread::sleep_for(std::chrono::milliseconds(timeMs));
+}

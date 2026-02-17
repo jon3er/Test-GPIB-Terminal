@@ -1,19 +1,23 @@
 
 #include "fkt_GPIB.h"
 #include "cmdGpib.h"
+#include "mainHelper.h"
 
 //TODO Create Device Class and Create new read read and write funtions
-GpibDevice::GpibDevice()
+PrologixUsbGpibAdapter::PrologixUsbGpibAdapter()
 {
 
 }
 
-GpibDevice::~GpibDevice()
+PrologixUsbGpibAdapter::~PrologixUsbGpibAdapter()
 {
-    disconnect();
+    if (Connected)
+    {
+        disconnect();
+    }
 }
 
-std::string GpibDevice::read(int forceReadBytes)
+std::string PrologixUsbGpibAdapter::read(int forceReadBytes)
 {
     wxString Text;
 
@@ -53,7 +57,7 @@ std::string GpibDevice::read(int forceReadBytes)
     return std::string(Text.ToUTF8());
 }
 
-std::string GpibDevice::write(std::string msg)
+std::string PrologixUsbGpibAdapter::write(std::string msg)
 {
     std::string Text;
 
@@ -89,7 +93,7 @@ std::string GpibDevice::write(std::string msg)
     return Text;
 }
 
-std::string GpibDevice::send(std::string msg, int DelayMs)
+std::string PrologixUsbGpibAdapter::send(std::string msg, int DelayMs)
 {
     write(msg);
     sleepMs(DelayMs);
@@ -98,7 +102,7 @@ std::string GpibDevice::send(std::string msg, int DelayMs)
     return read();
 }
 
-DWORD GpibDevice::quaryBuffer()
+DWORD PrologixUsbGpibAdapter::quaryBuffer()
 {
     //Get Number of bytes to read from receive queue
     ftStatus = FT_GetQueueStatus(ftHandle,&BytesToRead);
@@ -108,7 +112,7 @@ DWORD GpibDevice::quaryBuffer()
     return BytesToRead;
 }
 
-void GpibDevice::connect(std::string args)
+void PrologixUsbGpibAdapter::connect(std::string args)
 {
     if (!Connected)
     {
@@ -123,7 +127,7 @@ void GpibDevice::connect(std::string args)
         }
     }
 }
-void GpibDevice::disconnect(std::string args)
+void PrologixUsbGpibAdapter::disconnect(std::string args)
 {
     write(ProLogixCmdLookup.at(ProLogixCmd::AUTO) + " 0");
     write(ScpiCmdLookup.at(ScpiCmd::CLR));
@@ -141,7 +145,7 @@ void GpibDevice::disconnect(std::string args)
         Connected = false;
     }
 }
-void GpibDevice::config()
+void PrologixUsbGpibAdapter::config()
 {
     //set Baudrate
     ftStatus = FT_SetBaudRate(ftHandle,BaudRate);
@@ -167,7 +171,7 @@ void GpibDevice::config()
         configFin = false;
     }
 }
-void GpibDevice::readScriptFile(const wxString& dirPath, const wxString& file, wxArrayString& logAdapterReceived, const std::atomic<bool>* stopFlag)
+void PrologixUsbGpibAdapter::readScriptFile(const wxString& dirPath, const wxString& file, wxArrayString& logAdapterReceived, const std::atomic<bool>* stopFlag)
 {
     wxTextFile textFile;
 
@@ -259,7 +263,7 @@ void GpibDevice::readScriptFile(const wxString& dirPath, const wxString& file, w
     }
 }
 
-std::string GpibDevice::statusText()
+std::string PrologixUsbGpibAdapter::statusText()
 {
     std::string Text;
 
@@ -285,35 +289,112 @@ std::string GpibDevice::statusText()
     return Text;
 }
 
-FT_STATUS GpibDevice::getStatus()
+FT_STATUS PrologixUsbGpibAdapter::getStatus()
 {
     return ftStatus;
 }
 
-FT_HANDLE GpibDevice::getHandle()
+FT_HANDLE PrologixUsbGpibAdapter::getHandle()
 {
     return ftHandle;
 }
 
-bool GpibDevice::getConnected()
+bool PrologixUsbGpibAdapter::getConnected()
 {
     return Connected;
 }
 
-std::string GpibDevice::getLastMsgReseived()
+std::string PrologixUsbGpibAdapter::getLastMsgReseived()
 {
     return lastMsgReceived;
 }
 
-int GpibDevice::getBaudrate()
+int PrologixUsbGpibAdapter::getBaudrate()
 {
     return BaudRate;
 }
 
-void GpibDevice::setBaudrate(int BaudrateNew)
+void PrologixUsbGpibAdapter::setBaudrate(int BaudrateNew)
 {
     BaudRate = BaudrateNew;
 }
+
+std::vector<char> PrologixUsbGpibAdapter::checkAscii(std::string input)
+{
+    const char* charInput = input.c_str();
+    int DataSize = strlen(input.c_str());
+
+    std::cerr << "Length in function:" << std::endl;
+    std::cerr << std::to_string(DataSize) << std::endl;
+
+    char* charInputBuffer = new char[input.length()+1];
+    strcpy(charInputBuffer, charInput);
+    //allocate output for max possible length
+    char* charOutputBuffer = new char[input.length()*2 + 2];
+
+    if (input.substr(0,2) == "++")  //Adapter Command
+    {
+        strcpy(charOutputBuffer,charInputBuffer);
+        size_t BufferSize = strlen(charInputBuffer);
+        charOutputBuffer[BufferSize] = '\n';
+        charOutputBuffer[BufferSize + 1] = '\0';
+        std::vector<char> vCharOutputAdptr(charOutputBuffer,charOutputBuffer + strlen(charOutputBuffer));
+
+        std::cerr << "Adapter Command: " << std::string(vCharOutputAdptr.begin(),vCharOutputAdptr.end()) << std::endl;
+
+        delete[] charInputBuffer;
+        delete[] charOutputBuffer;
+        //return adapter command
+        return vCharOutputAdptr;
+    }
+
+    //for debuging
+    wxString OgString;
+    wxString ModString;
+
+    int j = 0;
+
+    for (int i=0;i < DataSize;i++)
+    {
+        switch(charInputBuffer[i])
+        {
+            case 10:
+            case 13:
+            case 27:
+            case 43:
+                charOutputBuffer[j] = {27};
+                ModString = ModString + std::to_string(charOutputBuffer[j]) + " ";
+                j++;
+
+                break;
+            default:
+
+                break;
+        }
+        charOutputBuffer[j]= charInputBuffer[i];
+
+        OgString = OgString + std::to_string(charInputBuffer[i]) + " ";
+        ModString = ModString + std::to_string(charOutputBuffer[j]) + " ";
+
+        j++;
+    }
+    //Add LF to end "nicht notwendig wenn ++eos 2 und eigenglich müsste ascii 27 angehängt werden"
+    charOutputBuffer[j] = '\n';
+    charOutputBuffer[j+1] = '\0';
+    ModString = ModString + std::to_string(charOutputBuffer[j]) + " ";
+    ModString = ModString + std::to_string(charOutputBuffer[j + 1]);
+
+    std::cerr << "Input str in ascii: " << OgString << std::endl;
+    std::cerr << "Output str in ascii: " << ModString << std::endl;
+
+    std::vector<char> vCharOutputGpib(charOutputBuffer,charOutputBuffer + strlen(charOutputBuffer));
+
+    delete[] charInputBuffer;
+    delete[] charOutputBuffer;
+
+    return vCharOutputGpib;
+}
+
 //------fsuMesurement Beginn-----
 fsuMesurement::fsuMesurement()
 {
@@ -402,82 +483,5 @@ wxString terminalTimestampOutput(wxString Text)
 
     return FormatText;
 }
-std::vector<char> checkAscii(std::string input)
-{
-    const char* charInput = input.c_str();
-    int DataSize = strlen(input.c_str());
 
-    std::cerr << "Length in function:" << std::endl;
-    std::cerr << std::to_string(DataSize) << std::endl;
 
-    char* charInputBuffer = new char[input.length()+1];
-    strcpy(charInputBuffer, charInput);
-    //allocate output for max possible length
-    char* charOutputBuffer = new char[input.length()*2 + 2];
-
-    if (input.substr(0,2) == "++")  //Adapter Command
-    {
-        strcpy(charOutputBuffer,charInputBuffer);
-        size_t BufferSize = strlen(charInputBuffer);
-        charOutputBuffer[BufferSize] = '\n';
-        charOutputBuffer[BufferSize + 1] = '\0';
-        std::vector<char> vCharOutputAdptr(charOutputBuffer,charOutputBuffer + strlen(charOutputBuffer));
-
-        std::cerr << "Adapter Command: " << std::string(vCharOutputAdptr.begin(),vCharOutputAdptr.end()) << std::endl;
-
-        delete[] charInputBuffer;
-        delete[] charOutputBuffer;
-        //return adapter command
-        return vCharOutputAdptr;
-    }
-
-    //for debuging
-    wxString OgString;
-    wxString ModString;
-
-    int j = 0;
-
-    for (int i=0;i < DataSize;i++)
-    {
-        switch(charInputBuffer[i])
-        {
-            case 10:
-            case 13:
-            case 27:
-            case 43:
-                charOutputBuffer[j] = {27};
-                ModString = ModString + std::to_string(charOutputBuffer[j]) + " ";
-                j++;
-
-                break;
-            default:
-
-                break;
-        }
-        charOutputBuffer[j]= charInputBuffer[i];
-
-        OgString = OgString + std::to_string(charInputBuffer[i]) + " ";
-        ModString = ModString + std::to_string(charOutputBuffer[j]) + " ";
-
-        j++;
-    }
-    //Add LF to end "nicht notwendig wenn ++eos 2 und eigenglich müsste ascii 27 angehängt werden"
-    charOutputBuffer[j] = '\n';
-    charOutputBuffer[j+1] = '\0';
-    ModString = ModString + std::to_string(charOutputBuffer[j]) + " ";
-    ModString = ModString + std::to_string(charOutputBuffer[j + 1]);
-
-    std::cerr << "Input str in ascii: " << OgString << std::endl;
-    std::cerr << "Output str in ascii: " << ModString << std::endl;
-
-    std::vector<char> vCharOutputGpib(charOutputBuffer,charOutputBuffer + strlen(charOutputBuffer));
-
-    delete[] charInputBuffer;
-    delete[] charOutputBuffer;
-
-    return vCharOutputGpib;
-}
-void sleepMs(int timeMs)
-{
-    std::this_thread::sleep_for(std::chrono::milliseconds(timeMs));
-}

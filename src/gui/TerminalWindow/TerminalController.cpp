@@ -2,6 +2,7 @@
 #include "TerminalController.h"
 #include "systemInfo.h"
 #include "cmdGpib.h"
+#include "mainHelper.h"
 
 #include <iostream>
 #include <sstream>
