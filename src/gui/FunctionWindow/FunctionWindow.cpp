@@ -12,9 +12,9 @@ FunctionWindow::FunctionWindow(wxWindow *parent)
     wxStaticText* discFuncInput = new wxStaticText(panelfunc,wxID_ANY,"Input text to write: ");
 
     //Function input textbox
-    writeFuncInput = new wxTextCtrl(panelfunc, wxID_ANY,"",wxDefaultPosition,wxSize(300, 40));
+    m_writeFuncInput = new wxTextCtrl(panelfunc, wxID_ANY,"",wxDefaultPosition,wxSize(300, 40));
     //set Cursor in writeFuncInput window
-    writeFuncInput->SetFocus();
+    m_writeFuncInput->SetFocus();
 
 
     //Create Button "Write to GPIB"
@@ -40,7 +40,7 @@ FunctionWindow::FunctionWindow(wxWindow *parent)
     //Funtion Output Lable
     wxStaticText* discFuncOutput = new wxStaticText(panelfunc,wxID_ANY,"Function output: ");
     //Funtion Output Text Box
-    textFuncOutput = new wxTextCtrl(panelfunc, wxID_ANY,"",wxDefaultPosition,wxSize(300, 200), wxTE_MULTILINE);
+    m_textFuncOutput = new wxTextCtrl(panelfunc, wxID_ANY,"",wxDefaultPosition,wxSize(300, 200), wxTE_MULTILINE);
 
     // Function bindes
     writeGpibButton     ->Bind(wxEVT_BUTTON, &FunctionWindow::OnWriteGpib,      this);
@@ -55,7 +55,7 @@ FunctionWindow::FunctionWindow(wxWindow *parent)
     //sizer     Set Window Layout
     wxBoxSizer* sizerFunc = new wxBoxSizer(wxVERTICAL);
     sizerFunc->Add(discFuncInput,       0, wxEXPAND | wxALL , 10);
-    sizerFunc->Add(writeFuncInput,      0, wxEXPAND | wxALL , 10);
+    sizerFunc->Add(m_writeFuncInput,      0, wxEXPAND | wxALL , 10);
     sizerFunc->Add(scanUsbButton,       0, wxEXPAND | wxALL , 10);
     sizerFunc->Add(connectDevGpibButton,0, wxEXPAND | wxALL , 10);
     sizerFunc->Add(devConfigButton,     0, wxEXPAND | wxALL , 10);
@@ -67,7 +67,7 @@ FunctionWindow::FunctionWindow(wxWindow *parent)
     sizerFunc->Add(TestButton,          0, wxEXPAND | wxALL , 10);
 
     sizerFunc->Add(discFuncOutput,      0, wxEXPAND | wxALL , 10);
-    sizerFunc->Add(textFuncOutput,      0, wxEXPAND | wxALL , 10);
+    sizerFunc->Add(m_textFuncOutput,      0, wxEXPAND | wxALL , 10);
     panelfunc->SetSizerAndFit(sizerFunc);
 }
 //-----Function Window Destructor-----
@@ -85,11 +85,11 @@ void FunctionWindow::OnUsbScan(wxCommandEvent& event)
 
     if (devices <= 0)
     {
-        textFuncOutput->AppendText(terminalTimestampOutput("no device found \n"));
+        m_textFuncOutput->AppendText(terminalTimestampOutput("no device found \n"));
     }
     else
     {
-        textFuncOutput->AppendText(terminalTimestampOutput(deviceNumString));
+        m_textFuncOutput->AppendText(terminalTimestampOutput(deviceNumString));
     }
 }
 void FunctionWindow::OnConDisconGpib(wxCommandEvent& event)
@@ -100,7 +100,7 @@ void FunctionWindow::OnConDisconGpib(wxCommandEvent& event)
 
         if (Global::AdapterInstance.getStatus() == FT_OK)
         {
-            textFuncOutput->AppendText(terminalTimestampOutput("Connected to a device\n"));
+            m_textFuncOutput->AppendText(terminalTimestampOutput("Connected to a device\n"));
         }
     }
     else
@@ -109,7 +109,7 @@ void FunctionWindow::OnConDisconGpib(wxCommandEvent& event)
 
         if (Global::AdapterInstance.getStatus() == FT_OK)
         {
-            textFuncOutput->AppendText(terminalTimestampOutput("Disconnected from a device\n"));
+            m_textFuncOutput->AppendText(terminalTimestampOutput("Disconnected from a device\n"));
         }
     }
 }
@@ -210,14 +210,14 @@ void FunctionWindow::OnWriteGpib(wxCommandEvent& event)
 {
     std::cerr << "Write Pressed!" << std::endl;
 
-    wxString GPIBText = FunctionWindow::writeFuncInput->GetValue();
-    FunctionWindow::writeFuncInput->SetValue("");
+    wxString GPIBText = m_writeFuncInput->GetValue();
+    m_writeFuncInput->SetValue("");
 
     std::string CheckText(GPIBText.ToUTF8());
 
     wxString Text = Global::AdapterInstance.write(CheckText);
 
-    FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
+    m_textFuncOutput->AppendText(terminalTimestampOutput(Text));
 }
 void FunctionWindow::OnReadGpib(wxCommandEvent& event)
 {
@@ -225,7 +225,7 @@ void FunctionWindow::OnReadGpib(wxCommandEvent& event)
 
     wxString Text = Global::AdapterInstance.read();
 
-    FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
+    m_textFuncOutput->AppendText(terminalTimestampOutput(Text));
 }
 void FunctionWindow::OnReadWriteGpib(wxCommandEvent& event)
 {
@@ -233,14 +233,14 @@ void FunctionWindow::OnReadWriteGpib(wxCommandEvent& event)
 
     std::cerr << "Writing to device..." << std::endl;
 
-    wxString GPIBText = FunctionWindow::writeFuncInput->GetValue();
+    wxString GPIBText = m_writeFuncInput->GetValue();
     std::string CheckText(GPIBText.ToUTF8());
 
-    FunctionWindow::writeFuncInput->SetValue("");
+    m_writeFuncInput->SetValue("");
 
     wxString Text = Global::AdapterInstance.write(CheckText);
 
-    FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
+    m_textFuncOutput->AppendText(terminalTimestampOutput(Text));
 
     sleepMs(100);   //wait for responce
 
@@ -248,7 +248,7 @@ void FunctionWindow::OnReadWriteGpib(wxCommandEvent& event)
 
     Text = Global::AdapterInstance.read();
 
-    FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Text));
+    m_textFuncOutput->AppendText(terminalTimestampOutput(Text));
 }
 void FunctionWindow::OnUsbConfig(wxCommandEvent& event)
 {
@@ -256,14 +256,14 @@ void FunctionWindow::OnUsbConfig(wxCommandEvent& event)
 
     if (Global::AdapterInstance.getStatus() == FT_OK)
     {
-        FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput("Set Default config\n"));
+        m_textFuncOutput->AppendText(terminalTimestampOutput("Set Default config\n"));
     }
     else
     {
-        FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput("Config failed\n"));
+        m_textFuncOutput->AppendText(terminalTimestampOutput("Config failed\n"));
     }
 
-    FunctionWindow::textFuncOutput->AppendText(terminalTimestampOutput(Global::AdapterInstance.statusText()));
+    m_textFuncOutput->AppendText(terminalTimestampOutput(Global::AdapterInstance.statusText()));
 }
 void FunctionWindow::OnTestMultiMess(wxCommandEvent& event)
 {

@@ -11,7 +11,7 @@ PrologixUsbGpibAdapter::PrologixUsbGpibAdapter()
 
 PrologixUsbGpibAdapter::~PrologixUsbGpibAdapter()
 {
-    if (Connected)
+    if (m_Connected)
     {
         disconnect();
     }
@@ -21,7 +21,7 @@ std::string PrologixUsbGpibAdapter::read(int forceReadBytes)
 {
     wxString Text;
 
-    if (Connected)
+    if (m_Connected)
     {
         std::vector<char> BigBuffer;
         DWORD BufferSize;
@@ -29,12 +29,12 @@ std::string PrologixUsbGpibAdapter::read(int forceReadBytes)
 
         std::cerr << "Reading from Device..." << std::endl;
 
-        ftStatus = readUsbDev(ftHandle, BigBuffer, BufferSize, forceReadBytes);
+        ftStatus = readUsbDev(m_ftHandle, BigBuffer, BufferSize, forceReadBytes);
 
         if (ftStatus == FT_OK)
         {
-            lastMsgReceived = std::string(BigBuffer.data(),BigBuffer.size());
-            Text = "Msg received: " + lastMsgReceived + "\n";
+            m_lastMsgReceived = std::string(BigBuffer.data(),BigBuffer.size());
+            Text = "Msg received: " + m_lastMsgReceived + "\n";
 
             if (BigBuffer.size() == 0)
             {
@@ -44,14 +44,14 @@ std::string PrologixUsbGpibAdapter::read(int forceReadBytes)
         else
         {
             Text = "Failed to Receive Data - TimeOut after 5s\n";
-            Connected = false;
+            m_Connected = false;
         }
     }
     else
     {
         std::cerr << "No Device to send too" << std::endl;
         Text = "Failed to Connect to a Device\n";
-        Connected = false;
+        m_Connected = false;
     }
 
     return std::string(Text.ToUTF8());
@@ -63,7 +63,7 @@ std::string PrologixUsbGpibAdapter::write(std::string msg)
 
     std::cerr << "Write Command Entered" << std::endl;
 
-    if (Connected)
+    if (m_Connected)
     {
         DWORD bytesWritten;
         wxString GPIBText = msg;
@@ -73,7 +73,7 @@ std::string PrologixUsbGpibAdapter::write(std::string msg)
 
         std::cerr << "Trying to write to Device... " << std::string(charArrWriteGpib.begin(),charArrWriteGpib.end()) << std::endl;
 
-        FT_STATUS ftStatus =writeUsbDev(ftHandle, charArrWriteGpib, bytesWritten);
+        FT_STATUS ftStatus =writeUsbDev(m_ftHandle, charArrWriteGpib, bytesWritten);
 
         if (ftStatus == FT_OK)
         {
@@ -105,25 +105,25 @@ std::string PrologixUsbGpibAdapter::send(std::string msg, int DelayMs)
 DWORD PrologixUsbGpibAdapter::quaryBuffer()
 {
     //Get Number of bytes to read from receive queue
-    ftStatus = FT_GetQueueStatus(ftHandle,&BytesToRead);
-    std::cerr << "Bytes in Queue: " << BytesToRead << std::endl;
-    printErr(ftStatus,"Failed to Get Queue Status");
+    m_ftStatus = FT_GetQueueStatus(m_ftHandle,&m_BytesToRead);
+    std::cerr << "Bytes in Queue: " << m_BytesToRead << std::endl;
+    printErr(m_ftStatus,"Failed to Get Queue Status");
 
-    return BytesToRead;
+    return m_BytesToRead;
 }
 
 void PrologixUsbGpibAdapter::connect(std::string args)
 {
-    if (!Connected)
+    if (!m_Connected)
     {
-        ftStatus = FT_Open(numDev,&ftHandle);
-        printErr(ftStatus,"Failed to Connect");
+        m_ftStatus = FT_Open(m_numDev,&m_ftHandle);
+        printErr(m_ftStatus,"Failed to Connect");
         write("SYST:DISP:UDP ON"); //Turn on monitor
 
-        if (ftStatus == FT_OK)
+        if (m_ftStatus == FT_OK)
         {
-            std::cerr << "Connected to " << numDev << std::endl;
-            Connected = true;
+            std::cerr << "Connected to " << m_numDev << std::endl;
+            m_Connected = true;
         }
     }
 }
@@ -137,38 +137,38 @@ void PrologixUsbGpibAdapter::disconnect(std::string args)
     sleepMs(200);
 
 
-    ftStatus = FT_Close(ftHandle);
-    printErr(ftStatus,"Failed to Disconnect");
-    if (ftStatus == FT_OK)
+    m_ftStatus = FT_Close(m_ftHandle);
+    printErr(m_ftStatus,"Failed to Disconnect");
+    if (m_ftStatus == FT_OK)
     {
-        std::cerr << "Connected to " << numDev << std::endl;
-        Connected = false;
+        std::cerr << "Connected to " << m_numDev << std::endl;
+        m_Connected = false;
     }
 }
 void PrologixUsbGpibAdapter::config()
 {
     //set Baudrate
-    ftStatus = FT_SetBaudRate(ftHandle,BaudRate);
-    printErr(ftStatus,"Failed to set Baudrate");
+    m_ftStatus = FT_SetBaudRate(m_ftHandle,m_BaudRate);
+    printErr(m_ftStatus,"Failed to set Baudrate");
 
-    ftStatus = FT_SetDataCharacteristics(ftHandle, FT_BITS_8, FT_STOP_BITS_1, FT_PARITY_NONE);
-    printErr(ftStatus,"Failed to set Data Characteristics");
+    m_ftStatus = FT_SetDataCharacteristics(m_ftHandle, FT_BITS_8, FT_STOP_BITS_1, FT_PARITY_NONE);
+    printErr(m_ftStatus,"Failed to set Data Characteristics");
 
-    ftStatus = FT_SetFlowControl(ftHandle, FT_FLOW_NONE, 0, 0);
-    printErr(ftStatus,"Failed to set flow Characteristics");
+    m_ftStatus = FT_SetFlowControl(m_ftHandle, FT_FLOW_NONE, 0, 0);
+    printErr(m_ftStatus,"Failed to set flow Characteristics");
 
-    ftStatus =  FT_SetTimeouts(ftHandle, 500,500);
-    printErr(ftStatus,"Failed to set TimeOut");
+    m_ftStatus =  FT_SetTimeouts(m_ftHandle, 500,500);
+    printErr(m_ftStatus,"Failed to set TimeOut");
 
     std::cerr << "FT-Config complete" << std::endl;
 
-    if (ftStatus == FT_OK)
+    if (m_ftStatus == FT_OK)
     {
-        configFin = true;
+        m_configFin = true;
     }
     else
     {
-        configFin = false;
+        m_configFin = false;
     }
 }
 void PrologixUsbGpibAdapter::readScriptFile(const wxString& dirPath, const wxString& file, wxArrayString& logAdapterReceived, const std::atomic<bool>* stopFlag)
@@ -243,8 +243,8 @@ void PrologixUsbGpibAdapter::readScriptFile(const wxString& dirPath, const wxStr
                 sleepMs(300);
                 logAdapterReceived.Add(read());
                 std::cerr << "responce: " << logAdapterReceived.Last() << std::endl;
-                Messung.seperateDataBlock(logAdapterReceived.Last());
-                Messung.setFreqStartEnd(75'000'000,125'000'000);
+                m_Messung.seperateDataBlock(logAdapterReceived.Last());
+                m_Messung.setFreqStartEnd(75'000'000,125'000'000);
                 //Messung.calcYdata(); //start und end frequenz angeben
 
             }
@@ -267,7 +267,7 @@ std::string PrologixUsbGpibAdapter::statusText()
 {
     std::string Text;
 
-    if (Connected)
+    if (m_Connected)
     {
         Text = "Connected to a Device ";
     }
@@ -275,48 +275,48 @@ std::string PrologixUsbGpibAdapter::statusText()
     {
         Text = "Not connected to a device";
     }
-    if (Connected && configFin)
+    if (m_Connected && m_configFin)
     {
         Text = Text + " and ";
     }
-    if (configFin)
+    if (m_configFin)
     {
-        Text = Text + "Device config set Baudrate to: " + std::to_string(BaudRate);
+        Text = Text + "Device config set Baudrate to: " + std::to_string(m_BaudRate);
     }
 
-    Text += "\nLast Status code:" + wxString(statusString(ftStatus)) + "\n";
+    Text += "\nLast Status code:" + wxString(statusString(m_ftStatus)) + "\n";
 
     return Text;
 }
 
 FT_STATUS PrologixUsbGpibAdapter::getStatus()
 {
-    return ftStatus;
+    return m_ftStatus;
 }
 
 FT_HANDLE PrologixUsbGpibAdapter::getHandle()
 {
-    return ftHandle;
+    return m_ftHandle;
 }
 
 bool PrologixUsbGpibAdapter::getConnected()
 {
-    return Connected;
+    return m_Connected;
 }
 
 std::string PrologixUsbGpibAdapter::getLastMsgReseived()
 {
-    return lastMsgReceived;
+    return m_lastMsgReceived;
 }
 
 int PrologixUsbGpibAdapter::getBaudrate()
 {
-    return BaudRate;
+    return m_BaudRate;
 }
 
 void PrologixUsbGpibAdapter::setBaudrate(int BaudrateNew)
 {
-    BaudRate = BaudrateNew;
+    m_BaudRate = BaudrateNew;
 }
 
 std::vector<char> PrologixUsbGpibAdapter::checkAscii(std::string input)
@@ -398,14 +398,14 @@ std::vector<char> PrologixUsbGpibAdapter::checkAscii(std::string input)
 //------fsuMesurement Beginn-----
 fsuMesurement::fsuMesurement()
 {
-    x_Data = {0};
-    y_Data = {0};
+    m_x_Data = {0};
+    m_y_Data = {0};
 
-    FreqStart = 75'000'000;
-    FreqEnd = 125'000'000;
+    m_FreqStart = 75'000'000;
+    m_FreqEnd = 125'000'000;
 
-    NoPoints_x = 0;
-    NoPoints_y = 0;
+    m_NoPoints_x = 0;
+    m_NoPoints_y = 0;
 }
 void fsuMesurement::seperateDataBlock(const wxString& receivedString)
 {
@@ -430,37 +430,37 @@ void fsuMesurement::seperateDataBlock(const wxString& receivedString)
         }
     }
 
-    x_Data.resize(x.size());
-    x_Data=x;
+    m_x_Data.resize(x.size());
+    m_x_Data=x;
 }
 std::vector<double> fsuMesurement::calcYdata()
 {
-    int totalPoints = x_Data.size();
-    NoPoints_x = totalPoints;
-    y_Data.clear();
+    int totalPoints = m_x_Data.size();
+    m_NoPoints_x = totalPoints;
+    m_y_Data.clear();
 
     std::cerr << "Total points: " << totalPoints << std::endl;
-    double range = FreqEnd-FreqStart;
+    double range = m_FreqEnd-m_FreqStart;
 
     double step = range/totalPoints;
     std::cerr << "Range: " << range << "   Step: " << step << std::endl;
-    double newYPoint = FreqStart;
+    double newYPoint = m_FreqStart;
 
     for(int i = 0; i < totalPoints; i++)
     {
         newYPoint = newYPoint + step;
-        y_Data.push_back(newYPoint);
-        std::cerr << "Y Berechnet: " << y_Data[i] << std::endl;
+        m_y_Data.push_back(newYPoint);
+        std::cerr << "Y Berechnet: " << m_y_Data[i] << std::endl;
     }
 
-    NoPoints_y = y_Data.size();
+    m_NoPoints_y = m_y_Data.size();
 
-    return y_Data;
+    return m_y_Data;
 }
 void fsuMesurement::setFreqStartEnd(double FreqS, double FreqE)
 {
-    FreqStart = FreqS;
-    FreqEnd = FreqE;
+    m_FreqStart = FreqS;
+    m_FreqEnd = FreqE;
 }
 /*
 sData::sParam fsuMesurement::getMesurmentData()

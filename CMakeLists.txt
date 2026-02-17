@@ -65,8 +65,6 @@ target_include_directories(TEST-GPIB-Terminal PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include/Plotter
     # Source folders
     ${CMAKE_CURRENT_SOURCE_DIR}/src
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/application
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/application/documents
     ${CMAKE_CURRENT_SOURCE_DIR}/src/data
     ${CMAKE_CURRENT_SOURCE_DIR}/src/gui
     ${CMAKE_CURRENT_SOURCE_DIR}/src/gui/TerminalWindow

@@ -16,13 +16,13 @@ class sData3D
 {
 private:
 
-    int X_Messpunkte;
-    int Y_Messpunkte;
-    int Messpunkte;
+    int m_X_Messpunkte;
+    int m_Y_Messpunkte;
+    int m_Messpunkte;
 
     //Ein Großes array mit allen Messdaten hintereinander geschrieben
     // index fängt mit null an in beiden fällen
-    std::vector<double> dataArray;
+    std::vector<double> m_dataArray;
 public:
     sData3D(int x = 1, int y = 1, int Anzahl = 512);
 
@@ -63,21 +63,21 @@ public:
     bool GetData(sParam *par,std::vector<double>& re, std::vector<double>& im);
 
     //get data
-    sParam* GetParameter() { return(dsParam); };
-    wxString GetFile() { return dsParam->File; };
-    wxString GetDate() { return dsParam->Date; };
-    wxString GetTime() { return dsParam->Time; };
-    wxString GetType() { return dsParam->Type; };
+    sParam* GetParameter() { return(m_dsParam); };
+    wxString GetFile() { return m_dsParam->File; };
+    wxString GetDate() { return m_dsParam->Date; };
+    wxString GetTime() { return m_dsParam->Time; };
+    wxString GetType() { return m_dsParam->Type; };
 
-    unsigned int getNumberOfPts_X() {return dsParam->NoPoints_X; };
-    unsigned int getNumberOfPts_Y() {return dsParam->NoPoints_Y; };
-    unsigned int getTotalNumberOfPts() {return dsParam->NoPoints_X * dsParam->NoPoints_Y; };
-    unsigned int getNumberOfPts_Array() {return dsParam->NoPoints_Array; };
+    unsigned int getNumberOfPts_X() {return m_dsParam->NoPoints_X; };
+    unsigned int getNumberOfPts_Y() {return m_dsParam->NoPoints_Y; };
+    unsigned int getTotalNumberOfPts() {return m_dsParam->NoPoints_X * m_dsParam->NoPoints_Y; };
+    unsigned int getNumberOfPts_Array() {return m_dsParam->NoPoints_Array; };
     std::vector<double> GetFreqStepVector();
     void getXYCord(int& x, int& y, int MesurementNumber);
 
-    std::vector<double> getRealArray() { return dsR; };
-    std::vector<double> getImagArray() { return dsI; };
+    std::vector<double> getRealArray() { return m_dsR; };
+    std::vector<double> getImagArray() { return m_dsI; };
 
     // set File Var
     bool setFileName(wxString Name);
@@ -98,16 +98,16 @@ public:
     std::vector<double> get3DDataReal(int x, int y);
     std::vector<double> get3DDataImag(int x, int y);
 
-    void resize3DData(int x, int y, int Anzahl) { Real3D.resize(x, y, Anzahl); Imag3D.resize(x, y, Anzahl); };
+    void resize3DData(int x, int y, int Anzahl) { m_Real3D.resize(x, y, Anzahl); m_Imag3D.resize(x, y, Anzahl); };
 
 
 private:
-    sParam*                 dsParam;                            //parameters
-    std::vector<double>     dsR;                                //data
-    std::vector<double>     dsI;
+    sParam*                 m_dsParam;                            //parameters
+    std::vector<double>     m_dsR;                                //data
+    std::vector<double>     m_dsI;
 
-    sData3D Real3D;
-    sData3D Imag3D;
+    sData3D m_Real3D;
+    sData3D m_Imag3D;
 
 };
 

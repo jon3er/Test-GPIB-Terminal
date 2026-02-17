@@ -1,31 +1,32 @@
 #include "Mesurement.h"
+#include "SettingsWindow.h"
 #include "cmdGpib.h"
 
 //-----Plot Window BEGIN--------
 PlotWindow::PlotWindow(wxWindow *parent) : wxDialog(parent, wxID_ANY, "Plot Window", wxDefaultPosition, wxSize(1000,750))
 {
-    getFileNames(filePath, fileNames);
+    getFileNames(m_filePath, m_fileNames);
 
     wxButton* executeMesurment = new wxButton(this, wxID_ANY, "Execute Mesurement");
     executeMesurment->Bind(wxEVT_BUTTON, &PlotWindow::executeScriptEvent,this);
-    selectMesurement = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, fileNames);
-    selectMesurement->SetSelection(0);
+    m_selectMesurement = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, m_fileNames);
+    m_selectMesurement->SetSelection(0);
     // 1. mpWindow (Zeichenfläche) erstellen
-    plot = new mpWindow(this, wxID_ANY);
+    m_plot = new mpWindow(this, wxID_ANY);
 
     // Farbeinstellungen (Optional)
-    plot->SetMargins(30, 30, 50, 50);
+    m_plot->SetMargins(30, 30, 50, 50);
 
     // 2. Achsen als Layer hinzufügen
     // mpScaleX(Name, Ausrichtung, Ticks anzeigen, Typ)
     mpScaleX* xAxis = new mpScaleX("X-Achse", mpALIGN_BORDER_BOTTOM, true, mpX_NORMAL);
     mpScaleY* yAxis = new mpScaleY("Y-Achse", mpALIGN_BORDER_LEFT, true);
 
-    plot->AddLayer(xAxis);
-    plot->AddLayer(yAxis);
+    m_plot->AddLayer(xAxis);
+    m_plot->AddLayer(yAxis);
 
-    x = {0.0, 1.0, 2.0, 3.0, 4.0, 5.0 };
-    y = {0.0, 1.0, 4.0, 2.0, 5.0, 3.0 };
+    m_x = {0.0, 1.0, 2.0, 3.0, 4.0, 5.0 };
+    m_y = {0.0, 1.0, 4.0, 2.0, 5.0, 3.0 };
 
     // 3. Daten vorbereiten (std::vector laut Header Definition von mpFXYVector)
 
@@ -37,39 +38,39 @@ PlotWindow::PlotWindow(wxWindow *parent) : wxDialog(parent, wxID_ANY, "Plot Wind
         {
             sData temp = MainFrame->returnOpendData();
             sData::sParam *tempStruct = temp.GetParameter();
-            temp.GetData(tempStruct, x,y);
+            temp.GetData(tempStruct, m_x,m_y);
         }
     }
 
 
 
     // 4. Vektor-Layer erstellen
-    vectorLayer = new mpFXYVector("Messdaten");
-    vectorLayer->SetData(x, y);
-    vectorLayer->SetContinuity(true); // True = Linie zeichnen
-    vectorLayer->SetPen(wxPen(*wxBLUE, 2, wxPENSTYLE_SOLID));
-    vectorLayer->ShowName(true);      // Wichtig für die Legende
+    m_vectorLayer = new mpFXYVector("Messdaten");
+    m_vectorLayer->SetData(m_x, m_y);
+    m_vectorLayer->SetContinuity(true); // True = Linie zeichnen
+    m_vectorLayer->SetPen(wxPen(*wxBLUE, 2, wxPENSTYLE_SOLID));
+    m_vectorLayer->ShowName(true);      // Wichtig für die Legende
 
-    plot->AddLayer(vectorLayer);
+    m_plot->AddLayer(m_vectorLayer);
 
     // 5. Legende hinzufügen (mpInfoLegend ist ein Layer)
     // wxRect definiert Startposition und ungefähre Größe
     mpInfoLegend* legend = new mpInfoLegend(wxRect(20, 20, 10, 10), wxTRANSPARENT_BRUSH);
     legend->SetItemMode(mpLEGEND_LINE); // Zeigt Linie statt Quadrat in der Legende
-    plot->AddLayer(legend);
+    m_plot->AddLayer(legend);
 
     // 6. Layout-Management
     wxBoxSizer* sizerButtons = new wxBoxSizer(wxHORIZONTAL);
     sizerButtons->Add(executeMesurment, 0, wxEXPAND | wxALL);
-    sizerButtons->Add(selectMesurement, 0, wxEXPAND | wxALL);
+    sizerButtons->Add(m_selectMesurement, 0, wxEXPAND | wxALL);
 
     wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
-    sizer->Add(plot, 1, wxEXPAND | wxALL, 5);
+    sizer->Add(m_plot, 1, wxEXPAND | wxALL, 5);
     sizer->Add(sizerButtons, 0, wxEXPAND| wxALL , 5);
     this->SetSizer(sizer);
     this->Layout();
     // 7. Zoom auf Daten anpassen
-    plot->Fit();
+    m_plot->Fit();
 
 }
 PlotWindow::~PlotWindow()
@@ -113,15 +114,15 @@ void PlotWindow::executeScriptEvent(wxCommandEvent& event)
         return;
     }
 
-    wxString fileName = selectMesurement->GetStringSelection();
+    wxString fileName = m_selectMesurement->GetStringSelection();
     std::cerr << "Starting measurement thread for: " << fileName << std::endl;
 
     // Reset stop flag before starting new thread
     m_stopMeasurement = false;
 
     // set up Mesurement data
-    sData::sParam *MessInfo = MessErgebnisse.GetParameter();
-    if (mesurementNumber == 1)
+    sData::sParam *MessInfo = m_MessErgebnisse.GetParameter();
+    if (m_mesurementNumber == 1)
     {
         wxDateTime now = wxDateTime::Now();
         MessInfo->File = "Mesurement";
@@ -137,12 +138,12 @@ void PlotWindow::executeScriptEvent(wxCommandEvent& event)
     }
 
     // Start measurement thread
-    m_measurementThread = std::thread(&PlotWindow::MeasurementWorkerThread, this, filePath, fileName, &MessErgebnisse, mesurementNumber);
+    m_measurementThread = std::thread(&PlotWindow::MeasurementWorkerThread, this, m_filePath, fileName, &m_MessErgebnisse, m_mesurementNumber);
 }
 void PlotWindow::updatePlotData()
 {
-    vectorLayer->SetData(x, y);
-    plot->Fit();
+    m_vectorLayer->SetData(m_x, m_y);
+    m_plot->Fit();
 }
 
 void PlotWindow::MeasurementWorkerThread(const wxString& dirPath, const wxString& fileSkript, sData* MessErgebnisse,int mesurementNumber)
@@ -192,8 +193,8 @@ void PlotWindow::MeasurementWorkerThread(const wxString& dirPath, const wxString
         wxEvtHandler::CallAfter([this, x_copy, freqScale]()
         {
             // Update member data in main thread
-            this->y = x_copy;  // Note: original code has this swapped
-            this->x = freqScale;
+            this->m_y = x_copy;  // Note: original code has this swapped
+            this->m_x = freqScale;
 
             // Update plot on main thread
             this->updatePlotData();
@@ -328,36 +329,36 @@ PlotWindowSetMarker::~PlotWindowSetMarker()
 
 void PlotWindowSetMarker::GetValues()
 {
-    Marker1FreqSet      = m_checkBox1->GetValue();
-    Marker1MaxSet       = m_checkBox2->GetValue();
+    m_Marker1FreqSet      = m_checkBox1->GetValue();
+    m_Marker1MaxSet       = m_checkBox2->GetValue();
 
-    Marker2FreqSet      = m_checkBox3->GetValue();
-    Marker2MaxSet       = m_checkBox4->GetValue();
+    m_Marker2FreqSet      = m_checkBox3->GetValue();
+    m_Marker2MaxSet       = m_checkBox4->GetValue();
 
-    Marker1Freq         = m_textCtrl1->GetValue();
-    Marker1Unit         = m_choice1->GetStringSelection();
-    Marker2Freq         = m_textCtrl2->GetValue();
-    Marker2Unit         = m_choice2->GetStringSelection();
+    m_Marker1Freq         = m_textCtrl1->GetValue();
+    m_Marker1Unit         = m_choice1->GetStringSelection();
+    m_Marker2Freq         = m_textCtrl2->GetValue();
+    m_Marker2Unit         = m_choice2->GetStringSelection();
 
 }
 
 void PlotWindowSetMarker::toggleSelection1fkt()
 {
-    if (!Marker1FreqSet && !Marker1MaxSet)
+    if (!m_Marker1FreqSet && !m_Marker1MaxSet)
     {
         m_checkBox1->SetValue(true);
         m_checkBox2->SetValue(false);
         m_textCtrl1->Enable(true);
         m_choice1->Enable(true);
     }
-    else if (!Marker1FreqSet && Marker1MaxSet)
+    else if (!m_Marker1FreqSet && m_Marker1MaxSet)
     {
         m_checkBox1->SetValue(true);
         m_checkBox2->SetValue(false);
         m_textCtrl1->Enable(true);
         m_choice1->Enable(true);
     }
-    else if (Marker1FreqSet && !Marker1MaxSet)
+    else if (m_Marker1FreqSet && !m_Marker1MaxSet)
     {
         m_checkBox1->SetValue(false);
         m_checkBox2->SetValue(true);
@@ -374,21 +375,21 @@ void PlotWindowSetMarker::toggleSelection1(wxCommandEvent& event)
 
 void PlotWindowSetMarker::toggleSelection2fkt()
 {
-    if (!Marker2FreqSet && !Marker2MaxSet)
+    if (!m_Marker2FreqSet && !m_Marker2MaxSet)
     {
         m_checkBox3->SetValue(true);
         m_checkBox4->SetValue(false);
         m_textCtrl2->Enable(true);
         m_choice2->Enable(true);
     }
-    else if (!Marker2FreqSet && Marker2MaxSet)
+    else if (!m_Marker2FreqSet && m_Marker2MaxSet)
     {
         m_checkBox3->SetValue(true);
         m_checkBox4->SetValue(false);
         m_textCtrl2->Enable(true);
         m_choice2->Enable(true);
     }
-    else if (Marker2FreqSet && !Marker2MaxSet)
+    else if (m_Marker2FreqSet && !m_Marker2MaxSet)
     {
         m_checkBox3->SetValue(false);
         m_checkBox4->SetValue(true);
@@ -414,7 +415,7 @@ void PlotWindowSetMarker::GetSelectedValue1()
     int selection = m_choice1->GetSelection();
     double val;
 
-    if (!Marker1Freq.ToDouble(&val))
+    if (!m_Marker1Freq.ToDouble(&val))
     {
         std::cerr << "Failed to convert input" << std::endl;
         return;
@@ -423,7 +424,7 @@ void PlotWindowSetMarker::GetSelectedValue1()
     if (selection != wxNOT_FOUND) {
         double factor = multipliers[selection];
         double frequencyHz =  val * factor;
-        FreqMarker1Raw = wxString::FromCDouble(frequencyHz);
+        m_FreqMarker1Raw = wxString::FromCDouble(frequencyHz);
     }
 }
 void PlotWindowSetMarker::GetSelectedValue2()
@@ -440,7 +441,7 @@ void PlotWindowSetMarker::GetSelectedValue2()
     int selection = m_choice2->GetSelection();
     double val;
 
-    if (!Marker1Freq.ToDouble(&val))
+    if (!m_Marker1Freq.ToDouble(&val))
     {
         std::cerr << "Failed to convert input" << std::endl;
         return;
@@ -449,23 +450,23 @@ void PlotWindowSetMarker::GetSelectedValue2()
     if (selection != wxNOT_FOUND) {
         double factor = multipliers[selection];
         double frequencyHz =  val * factor;
-        FreqMarker2Raw = wxString::FromCDouble(frequencyHz);
+        m_FreqMarker2Raw = wxString::FromCDouble(frequencyHz);
     }
 }
 void PlotWindowSetMarker::SetSelection1(wxCommandEvent& event)
 {
     GetValues();
 
-    if (Marker1MaxSet)
+    if (m_Marker1MaxSet)
     {
         std::string Text = ScpiCmdLookup.at(ScpiCmd::CALC_MARK_MAX);
         Global::AdapterInstance.write(Text);
     }
-    else if (Marker1FreqSet && (FreqMarker1Raw.IsNumber()))
+    else if (m_Marker1FreqSet && (m_FreqMarker1Raw.IsNumber()))
     {
         GetSelectedValue1();
 
-        std::string Text = ScpiCmdLookup.at(ScpiCmd::CALC_MARK_MAX) + " " + std::string(FreqMarker1Raw.ToUTF8());;
+        std::string Text = ScpiCmdLookup.at(ScpiCmd::CALC_MARK_MAX) + " " + std::string(m_FreqMarker1Raw.ToUTF8());;
         Global::AdapterInstance.write(Text);
     }
     //TODO Get X Y From Device and display in the Menu
@@ -474,16 +475,16 @@ void PlotWindowSetMarker::SetSelection2(wxCommandEvent& event)
 {
     GetValues();
 
-    if (Marker2MaxSet)
+    if (m_Marker2MaxSet)
     {
         std::string Text = "CALC:MARK2:MAX";
         Global::AdapterInstance.write(Text);
     }
-    else if (Marker2FreqSet && (FreqMarker2Raw.IsNumber()))
+    else if (m_Marker2FreqSet && (m_FreqMarker2Raw.IsNumber()))
     {
         GetSelectedValue1();
 
-        std::string Text = "CALC:MARK2:MAX " + std::string(FreqMarker2Raw.ToUTF8());;
+        std::string Text = "CALC:MARK2:MAX " + std::string(m_FreqMarker2Raw.ToUTF8());;
         Global::AdapterInstance.write(Text);
     }
     //TODO Get X Y From Device and display in the Menu
@@ -680,37 +681,37 @@ void Mesurement2D::OnSliderUpdate(wxCommandEvent& event)
 
 void Mesurement2D::GetValues()
 {
-    sliderY         = m_slider1->GetValue();
-    sliderX         = m_slider2->GetValue();
-    sliderScale     = m_slider3->GetValue();
+    m_sliderY         = m_slider1->GetValue();
+    m_sliderX         = m_slider2->GetValue();
+    m_sliderScale     = m_slider3->GetValue();
 
-    progressbar     = m_gauge1->GetValue();
+    m_progressbar     = m_gauge1->GetValue();
 }
 void Mesurement2D::SetValues()
 {
-    m_slider1->SetValue(sliderY);
-    m_slider2->SetValue(sliderX);
-    m_slider3->SetValue(sliderScale);
+    m_slider1->SetValue(m_sliderY);
+    m_slider2->SetValue(m_sliderX);
+    m_slider3->SetValue(m_sliderScale);
 
-    m_gauge1->SetValue(progressbar);
+    m_gauge1->SetValue(m_progressbar);
 }
 void Mesurement2D::GetTotalMesurements()
 {
     GetValues();
 
-    totalMesurmentPoints = sliderX * sliderY;
+    m_totalMesurmentPoints = m_sliderX * m_sliderY;
 }
 void Mesurement2D::incrementCurrentMesurmentPoint()
 {
-    currentMesurmentPoint++;
+    m_currentMesurmentPoint++;
 }
 void Mesurement2D::updateProgressBar()
 {
-    if (currentMesurmentPoint < totalMesurmentPoints)
+    if (m_currentMesurmentPoint < m_totalMesurmentPoints)
     {
-        int Progress = currentMesurmentPoint * 100 / totalMesurmentPoints;
+        int Progress = m_currentMesurmentPoint * 100 / m_totalMesurmentPoints;
 
-        wxString Text = wxString::Format("%d",currentMesurmentPoint) + "/" + wxString::Format("%d",totalMesurmentPoints);
+        wxString Text = wxString::Format("%d",m_currentMesurmentPoint) + "/" + wxString::Format("%d",m_totalMesurmentPoints);
         m_staticText7->SetLabel(Text);
 
         m_gauge1->SetValue(Progress);
@@ -718,28 +719,28 @@ void Mesurement2D::updateProgressBar()
 }
 void Mesurement2D::resetProgressBar()
 {
-    currentMesurmentPoint = 0;
+    m_currentMesurmentPoint = 0;
     updateProgressBar();
 }
 void Mesurement2D::SetSliderValues()
 {
     GetValues();
-    wxString Text = "Y Points:    " + wxString::Format("%d", sliderY);
+    wxString Text = "Y Points:    " + wxString::Format("%d", m_sliderY);
     m_staticText2->SetLabel(Text);
 
-    Text = "X Points:    " + wxString::Format("%d", sliderX);
+    Text = "X Points:    " + wxString::Format("%d", m_sliderX);
     m_staticText3->SetLabel(Text);
 
-    Text = "Scale:       " + wxString::Format("%d", sliderScale);
+    Text = "Scale:       " + wxString::Format("%d", m_sliderScale);
     m_staticText4->SetLabel(Text);
 }
 void Mesurement2D::resetGuiValues()
 {
-    sliderY                 = 10;
-    sliderX                 = 10;
-    sliderScale             = 100;
-    progressbar             = 0;
-    currentMesurmentPoint   = 0;
+    m_sliderY                 = 10;
+    m_sliderX                 = 10;
+    m_sliderScale             = 100;
+    m_progressbar             = 0;
+    m_currentMesurmentPoint   = 0;
 
     SetValues();
     GetTotalMesurements();
@@ -750,6 +751,7 @@ void Mesurement2D::resetGuiValues()
 
 Mesurement2D::~Mesurement2D()
 {
+
 }
 
 
@@ -961,7 +963,7 @@ void MultiMessWindow::startButton(wxCommandEvent& event)
 {
     GetValues();
     //set total point in the test section
-    totalMesurmentPoints = std::stoi(X_Messpunkte.ToStdString())*std::stoi(Y_Messpunkte.ToStdString());
+    m_totalMesurmentPoints = std::stoi(m_X_Messpunkte.ToStdString())*std::stoi(m_Y_Messpunkte.ToStdString());
 
     UpdateProgressBar();
 
@@ -970,9 +972,9 @@ void MultiMessWindow::stopButton(wxCommandEvent& event)
 {
     GetValues();
     //set total point in the test section
-    totalMesurmentPoints = std::stoi(X_Messpunkte.ToStdString())*std::stoi(Y_Messpunkte.ToStdString());
+    m_totalMesurmentPoints = std::stoi(m_X_Messpunkte.ToStdString())*std::stoi(m_Y_Messpunkte.ToStdString());
 
-    currentMesurmentPoint = 0;
+    m_currentMesurmentPoint = 0;
 
     UpdateProgressBar();
 
@@ -992,8 +994,8 @@ void MultiMessWindow::resetButton(wxCommandEvent& event)
     m_choiceEinheitFreq1    ->SetSelection(1);
     m_textCtrlAnzahlSweep   ->SetValue("512");
 
-    totalMesurmentPoints = 1;
-    currentMesurmentPoint = 0;
+    m_totalMesurmentPoints = 1;
+    m_currentMesurmentPoint = 0;
 
     GetValues();
 
@@ -1003,9 +1005,9 @@ void MultiMessWindow::nextButton(wxCommandEvent& event)
 {
     GetValues();
 
-    if (currentMesurmentPoint < totalMesurmentPoints)
+    if (m_currentMesurmentPoint < m_totalMesurmentPoints)
     {
-        currentMesurmentPoint++;
+        m_currentMesurmentPoint++;
     }
 
     UpdateProgressBar();
@@ -1013,39 +1015,39 @@ void MultiMessWindow::nextButton(wxCommandEvent& event)
 
 void MultiMessWindow::GetValues()
 {
-    X_Messpunkte    = m_textCtrlXMess       ->GetValue();
-    Y_Messpunkte    = m_textCtrlYMess       ->GetValue();
-    X_Cord          = m_textCtrlXStartCord  ->GetValue();
-    Y_Cord          = m_textCtrlYStartCord  ->GetValue();
-    X_MessAbstand   = m_textCtrlXAbstand    ->GetValue();
-    Y_MessAbstand   = m_textCtrlYAbstand    ->GetValue();
-    startFreq       = m_textCtrlStrtFreq    ->GetValue();
-    stopFreq        = m_textCtrlEndFreq     ->GetValue();
-    AnzSweepMessPkt = m_textCtrlAnzahlSweep ->GetValue();
+    m_X_Messpunkte    = m_textCtrlXMess       ->GetValue();
+    m_Y_Messpunkte    = m_textCtrlYMess       ->GetValue();
+    m_X_Cord          = m_textCtrlXStartCord  ->GetValue();
+    m_Y_Cord          = m_textCtrlYStartCord  ->GetValue();
+    m_X_MessAbstand   = m_textCtrlXAbstand    ->GetValue();
+    m_Y_MessAbstand   = m_textCtrlYAbstand    ->GetValue();
+    m_startFreq       = m_textCtrlStrtFreq    ->GetValue();
+    m_stopFreq        = m_textCtrlEndFreq     ->GetValue();
+    m_AnzSweepMessPkt = m_textCtrlAnzahlSweep ->GetValue();
 
-    startFreqUnit   = m_choiceEinheitFreq1  ->GetStringSelection();
-    stopFreqUnit    = m_choiceEinheitFreq2  ->GetStringSelection();
+    m_startFreqUnit   = m_choiceEinheitFreq1  ->GetStringSelection();
+    m_stopFreqUnit    = m_choiceEinheitFreq2  ->GetStringSelection();
 }
 void MultiMessWindow::SetValues()
 {
-    m_textCtrlXMess         ->SetValue(X_Messpunkte    );
-    m_textCtrlYMess         ->SetValue(Y_Messpunkte    );
-    m_textCtrlXStartCord    ->SetValue(X_Cord          );
-    m_textCtrlYStartCord    ->SetValue(Y_Cord          );
-    m_textCtrlXAbstand      ->SetValue(X_MessAbstand   );
-    m_textCtrlYAbstand      ->SetValue(Y_MessAbstand   );
+    m_textCtrlXMess         ->SetValue(m_X_Messpunkte    );
+    m_textCtrlYMess         ->SetValue(m_Y_Messpunkte    );
+    m_textCtrlXStartCord    ->SetValue(m_X_Cord          );
+    m_textCtrlYStartCord    ->SetValue(m_Y_Cord          );
+    m_textCtrlXAbstand      ->SetValue(m_X_MessAbstand   );
+    m_textCtrlYAbstand      ->SetValue(m_Y_MessAbstand   );
 
-    m_textCtrlStrtFreq      ->SetValue(startFreq       );
-    m_textCtrlEndFreq       ->SetValue(stopFreq        );
-    m_textCtrlAnzahlSweep   ->SetValue(AnzSweepMessPkt );
+    m_textCtrlStrtFreq      ->SetValue(m_startFreq       );
+    m_textCtrlEndFreq       ->SetValue(m_stopFreq        );
+    m_textCtrlAnzahlSweep   ->SetValue(m_AnzSweepMessPkt );
 }
 void MultiMessWindow::UpdateProgressBar()
 {
-    if (currentMesurmentPoint <= totalMesurmentPoints)
+    if (m_currentMesurmentPoint <= m_totalMesurmentPoints)
     {
-        int Progress = currentMesurmentPoint * 100 / totalMesurmentPoints;
+        int Progress = m_currentMesurmentPoint * 100 / m_totalMesurmentPoints;
 
-        wxString Text = wxString::Format("%d",currentMesurmentPoint) + "/" + wxString::Format("%d",totalMesurmentPoints);
+        wxString Text = wxString::Format("%d",m_currentMesurmentPoint) + "/" + wxString::Format("%d",m_totalMesurmentPoints);
         m_staticTextProgress->SetLabel(Text);
 
         m_gaugeProgress->SetValue(Progress);
@@ -1054,12 +1056,12 @@ void MultiMessWindow::UpdateProgressBar()
 
 void MultiMessWindow::testMessFunction()
 {
-    if (currentMesurmentPoint == 0)
+    if (m_currentMesurmentPoint == 0)
     {
         //Adapter.send()
     }
 
-    if (totalMesurmentPoints == 1)
+    if (m_totalMesurmentPoints == 1)
     {
         Global::AdapterInstance.getMesurement();
     }

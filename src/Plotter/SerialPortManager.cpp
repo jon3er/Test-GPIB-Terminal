@@ -1,17 +1,17 @@
 #include "SerialPortManager.h"
 
 SerialPortManager::SerialPortManager()
-    : serial_(ioContext_), 
-      workGuard_(boost::asio::make_work_guard(ioContext_))
+    : m_serial(m_ioContext), 
+      m_workGuard(boost::asio::make_work_guard(m_ioContext))
 {}
 
 SerialPortManager::~SerialPortManager() {
     ClosePort();
 
-    ioContext_.stop();
+    m_ioContext.stop();
     
-    if (ioThread_.joinable()) {
-        ioThread_.join();
+    if (m_ioThread.joinable()) {
+        m_ioThread.join();
     }
 }
 
@@ -22,7 +22,7 @@ std::vector<std::string> SerialPortManager::ScanPorts() {
     for (int i = 1; i <= 256; ++i) {
         std::string portName = "COM" + std::to_string(i);
         try {
-            boost::asio::serial_port test_port(ioContext_);
+            boost::asio::serial_port test_port(m_ioContext);
             test_port.open(portName);
             test_port.close();
             ports.push_back(portName);
@@ -46,22 +46,22 @@ std::vector<std::string> SerialPortManager::ScanPorts() {
 
 bool SerialPortManager::OpenPort(const std::string& portName, unsigned int baudRate) {
     try {
-        if (serial_.is_open()) serial_.close();
+        if (m_serial.is_open()) m_serial.close();
 
-        serial_.open(portName);
+        m_serial.open(portName);
 
-        serial_.set_option(boost::asio::serial_port_base::baud_rate(baudRate));
-        serial_.set_option(boost::asio::serial_port_base::character_size(8));
-        serial_.set_option(boost::asio::serial_port_base::parity(
+        m_serial.set_option(boost::asio::serial_port_base::baud_rate(baudRate));
+        m_serial.set_option(boost::asio::serial_port_base::character_size(8));
+        m_serial.set_option(boost::asio::serial_port_base::parity(
             boost::asio::serial_port_base::parity::none));
-        serial_.set_option(boost::asio::serial_port_base::stop_bits(
+        m_serial.set_option(boost::asio::serial_port_base::stop_bits(
             boost::asio::serial_port_base::stop_bits::one));
-        serial_.set_option(boost::asio::serial_port_base::flow_control(
+        m_serial.set_option(boost::asio::serial_port_base::flow_control(
             boost::asio::serial_port_base::flow_control::none));
 
 #ifdef _WIN32
         // Windows: Set DTR via DCB (Device Control Block)
-        auto handle = serial_.native_handle();
+        auto handle = m_serial.native_handle();
         DCB dcb;
         GetCommState(handle, &dcb);
         dcb.fDtrControl = DTR_CONTROL_ENABLE;   // set DTR
@@ -69,7 +69,7 @@ bool SerialPortManager::OpenPort(const std::string& portName, unsigned int baudR
         SetCommState(handle, &dcb);
 #else
         // Linux/Unix: Set DTR/RTS via ioctl
-        int fd = serial_.native_handle();
+        int fd = m_serial.native_handle();
         int flags;
         ioctl(fd, TIOCMGET, &flags);
         flags |= TIOCM_DTR;   // set DTR
@@ -93,11 +93,11 @@ bool SerialPortManager::OpenPort(const std::string& portName, unsigned int baudR
 }
 
 void SerialPortManager::ClosePort() {
-    if (serial_.is_open()) serial_.close();
+    if (m_serial.is_open()) m_serial.close();
 }
 
 bool SerialPortManager::IsOpen() const {
-    return serial_.is_open();
+    return m_serial.is_open();
 }
 
 bool SerialPortManager::Write(const std::string& data) {
@@ -105,10 +105,10 @@ bool SerialPortManager::Write(const std::string& data) {
 }
 
 bool SerialPortManager::Write(const boost::asio::const_buffer& buffer) {
-    if (!serial_.is_open()) return false;
+    if (!m_serial.is_open()) return false;
 
     try {
-        boost::asio::write(serial_, buffer);
+        boost::asio::write(m_serial, buffer);
         return true;
     } catch (const boost::system::system_error& e) {
         std::cerr << "Write error: " << e.what() << "\n";
@@ -120,15 +120,15 @@ void SerialPortManager::StartAsyncRead(std::function<void(const std::string&)> o
     m_onLineRead = onLineRead;
     DoRead();
 
-    if (!ioThread_.joinable()) {
-        ioThread_ = std::thread([this]() {
-            ioContext_.run();
+    if (!m_ioThread.joinable()) {
+        m_ioThread = std::thread([this]() {
+            m_ioContext.run();
         });
     }
 }
 
 void SerialPortManager::DoRead() {
-    serial_.async_read_some(boost::asio::buffer(&m_readChar, 1),
+    m_serial.async_read_some(boost::asio::buffer(&m_readChar, 1),
         [this](const boost::system::error_code& ec, std::size_t bytes_transferred) {
             if (!ec) {
                 if (m_readChar == '\n') {

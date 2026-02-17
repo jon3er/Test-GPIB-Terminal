@@ -45,14 +45,14 @@ class SerialPortManager
     protected:
 
     private:
-        boost::asio::io_context ioContext_;
-        boost::asio::serial_port serial_;
+        boost::asio::io_context m_ioContext;
+        boost::asio::serial_port m_serial;
         void DoRead();
         char m_readChar;
         std::string m_inputBuffer;
         std::function<void(const std::string&)> m_onLineRead;
-        std::thread ioThread_;
-        boost::asio::executor_work_guard<boost::asio::io_context::executor_type> workGuard_;
+        std::thread m_ioThread;
+        boost::asio::executor_work_guard<boost::asio::io_context::executor_type> m_workGuard;
 
 };
 

@@ -19,28 +19,28 @@ public:
     void seperateDataBlock(const wxString& receivedString);
     std::vector<double> calcYdata(); //TODO umbennen ist eigendlich x und ich erhalte vom gerät nur Y die amplitude.
 
-    wxString getMesurmentTime() { return lastMesurementTime; };
-    std::vector<double> getX_Data() {return x_Data; };
-    std::vector<double> getY_Data() {return y_Data; };
-    unsigned int getNoPoints_x() { return NoPoints_x; };
-    unsigned int getNoPoints_y() { return NoPoints_y; };
+    wxString getMesurmentTime() { return m_lastMesurementTime; };
+    std::vector<double> getX_Data() {return m_x_Data; };
+    std::vector<double> getY_Data() {return m_y_Data; };
+    unsigned int getNoPoints_x() { return m_NoPoints_x; };
+    unsigned int getNoPoints_y() { return m_NoPoints_y; };
     //sData::sParam getMesurmentData();
-    bool isImagValues() { return ImagValues; };
+    bool isImagValues() { return m_ImagValues; };
 
 
     void setFreqStartEnd(double FreqS, double FreqE);
 
 private:
 
-    std::vector<double> x_Data;
-    std::vector<double> y_Data;
-    double FreqStart;
-    double FreqEnd; 
-    wxString lastMesurementTime;
-    unsigned int NoPoints_x;
-    unsigned int NoPoints_y;
+    std::vector<double> m_x_Data;
+    std::vector<double> m_y_Data;
+    double m_FreqStart;
+    double m_FreqEnd; 
+    wxString m_lastMesurementTime;
+    unsigned int m_NoPoints_x;
+    unsigned int m_NoPoints_y;
 
-    bool ImagValues = false;
+    bool m_ImagValues = false;
     //sData tempData;
 };
 
@@ -86,21 +86,21 @@ public:
 
     void setBaudrate(int BaudrateNew);
     
-    fsuMesurement getMesurement() { return Messung; };
+    fsuMesurement getMesurement() { return m_Messung; };
 
     
 private:
-    FT_HANDLE ftHandle  = NULL;
-    FT_STATUS ftStatus  = FT_OK;
-    DWORD numDev        = 0;
-    int BaudRate        = 921600;
-    bool Connected      = false;
-    bool configFin      = false;
-    int sendDelayMs     = 100;
-    std::string lastMsgReceived = "";
-    DWORD BytesToRead   = 0;
+    FT_HANDLE m_ftHandle  = NULL;
+    FT_STATUS m_ftStatus  = FT_OK;
+    DWORD m_numDev        = 0;
+    int m_BaudRate        = 921600;
+    bool m_Connected      = false;
+    bool m_configFin      = false;
+    int m_sendDelayMs     = 100;
+    std::string m_lastMsgReceived = "";
+    DWORD m_BytesToRead   = 0;
 
-    fsuMesurement Messung;
+    fsuMesurement m_Messung;
 
     // helper Functionen
     std::vector<char> checkAscii(std::string input);

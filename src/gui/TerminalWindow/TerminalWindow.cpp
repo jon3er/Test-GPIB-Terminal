@@ -9,7 +9,7 @@ TerminalWindow::TerminalWindow(wxWindow *parent)
     wxPanel* panelTerm = new wxPanel(this);
 
     // Text Output (read-only log display)
-    TerminalDisplay = new wxTextCtrl(panelTerm, wxID_ANY, "", wxDefaultPosition, wxSize(1000, 200), wxTE_MULTILINE | wxTE_READONLY);
+    m_TerminalDisplay = new wxTextCtrl(panelTerm, wxID_ANY, "", wxDefaultPosition, wxSize(1000, 200), wxTE_MULTILINE | wxTE_READONLY);
 
     // Text Input (for user commands)
     wxTextCtrl* TerminalInput = new wxTextCtrl(panelTerm, wxID_ANY, "", wxDefaultPosition, wxSize(1000, 50), wxTE_MULTILINE | wxTE_PROCESS_ENTER);
@@ -20,7 +20,7 @@ TerminalWindow::TerminalWindow(wxWindow *parent)
 
     wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
     sizer->Add(StaticTE, 0, wxALL, 20);
-    sizer->Add(TerminalDisplay, 0, wxEXPAND | wxALL, 20);
+    sizer->Add(m_TerminalDisplay, 0, wxEXPAND | wxALL, 20);
     sizer->Add(StaticTEInput, 0, wxALL, 20);
     sizer->Add(TerminalInput, 0, wxALL, 20);
     panelTerm->SetSizerAndFit(sizer);
@@ -32,7 +32,7 @@ TerminalWindow::TerminalWindow(wxWindow *parent)
 
     // Set controller's output callback to update display
     m_controller.setOutputCallback([this](const std::string& output) {
-        TerminalDisplay->AppendText(formatOutput(output));
+        m_TerminalDisplay->AppendText(formatOutput(output));
     });
 }
 
@@ -62,7 +62,7 @@ void TerminalWindow::OnEnterTerminal(wxCommandEvent& event)
     std::cerr << "User entered: " << TText.c_str() << std::endl;
 
     // Display user input in terminal
-    TerminalDisplay->AppendText(formatOutput(std::string(TText.ToUTF8()) + "\n"));
+    m_TerminalDisplay->AppendText(formatOutput(std::string(TText.ToUTF8()) + "\n"));
 
     // Process command through the controller
     std::string input(TText.ToUTF8());

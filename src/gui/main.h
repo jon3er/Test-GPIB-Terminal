@@ -41,9 +41,9 @@ public:
 class MainProgrammWin : public wxFrame
 {
 private:
-    wxString filePathCurrentFile;
-    sData OpendData;
-    bool fileOpen;
+    wxString m_filePathCurrentFile;
+    sData m_OpendData;
+    bool m_fileOpen;
 protected:
 	wxMenuBar* m_menubarMainProg;
 
@@ -93,8 +93,8 @@ public:
 	MainProgrammWin( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("GPIB Messurement"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 814,454 ), long style = wxDEFAULT_FRAME_STYLE|wxTAB_TRAVERSAL );
 	~MainProgrammWin();
     //PassData
-    sData returnOpendData() { return OpendData; };
-    bool isFileOpen() { return fileOpen; };
+    sData returnOpendData() { return m_OpendData; };
+    bool isFileOpen() { return m_fileOpen; };
     // Button func
     void ButtonRefresh(wxCommandEvent& event);
     // Menubar items
@@ -121,75 +121,7 @@ public:
 
 
 
-//------Subtabs------
-class SettingsTabDisplay : public wxPanel
-{
-public:
-    SettingsTabDisplay(wxNotebook *parent, const wxString &label);
 
-private:
-    void anwendenButton(wxCommandEvent& event);
-    void getCurrentButton(wxCommandEvent& event);
-    void toggleSelectionEvent(wxCommandEvent& event);
-    void toggleSelection();
-    void getValues();
-    void setValues();
-
-    std::string getGpibCmdFreq(wxString NumVal, wxString Selection);
-    std::string getGpibCmdPegel(wxString NumVal, wxString Selection);
-
-    //Units
-    wxString FreqStartSetUnit;
-    wxString FreqEndeSetUnit;
-    wxString FreqCenterSetUnit;
-    wxString FreqSpanSetUnit;
-    wxString pegelSetUnit;
-    wxString scalingYSetUnit;
-    //Text Input
-    wxString FreqStartSet;
-    wxString FreqEndeSet;
-    wxString FreqCenterSet;
-    wxString FreqSpanSet;
-    wxString pegelSet;
-    wxString refPegelSet;
-    //Bool
-    bool useStartEnde = false;
-    bool useCenterSpan = false;
-
-    //Elemente
-    wxCheckBox* startEndeCheck;
-    wxCheckBox* centerSpanCheck;
-
-    wxChoice* freqEinheitAuswahl_1;
-    wxChoice* freqEinheitAuswahl_2;
-    wxChoice* freqEinheitAuswahl_3;
-    wxChoice* freqEinheitAuswahl_4;
-    wxChoice* pegelEinheitAuswahl;
-    wxChoice* yScalingAuswahl;
-
-    wxTextCtrl* inputText_1;
-    wxTextCtrl* inputText_2;
-    wxTextCtrl* inputText_3;
-    wxTextCtrl* inputText_4;
-    wxTextCtrl* inputText_5;
-    wxTextCtrl* inputText_7;
-
-};
-
-class SettingsTabAdapter : public wxPanel
-{
-public:
-    SettingsTabAdapter(wxNotebook *parent, const wxString &label);
-
-};
-
-class SettingsTabGeneral : public wxPanel
-{
-public:
-    SettingsTabGeneral(wxNotebook *parent, const wxString &label);
-
-};
-//-----end Subtabs-----
 
 
 

@@ -26,8 +26,8 @@ private:
     void OnPaint(wxPaintEvent& evt);
     wxPoint CoordToScreen(double x, double y);
 
-    double minX, maxX, minY, maxY;
-    std::vector<DataPoint> points;
+    double m_minX, m_maxX, m_minY, m_maxY;
+    std::vector<DataPoint> m_points;
 
     void ScreenToCoord(int px, int py, double& outX, double& outY);
     void OnMouseClick(wxMouseEvent& event);

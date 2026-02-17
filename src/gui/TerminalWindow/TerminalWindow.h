@@ -17,7 +17,7 @@ private:
     wxString formatOutput(const std::string& text);
 
     // GUI Components
-    wxTextCtrl* TerminalDisplay;
+    wxTextCtrl* m_TerminalDisplay;
 
     // Business Logic (Model)
     TerminalController m_controller;

@@ -23,19 +23,9 @@ private:
     void OnTest(wxCommandEvent& event);
 
     //Text Boxes
-    wxTextCtrl* textFuncOutput;
-    wxTextCtrl* writeFuncInput;
+    wxTextCtrl* m_textFuncOutput;
+    wxTextCtrl* m_writeFuncInput;
 
     //device Class
     //GpibDevice Adapter;
-};
-//-----Settings Window-----
-class SettingsWindow : public wxDialog
-{
-public:
-    SettingsWindow(wxWindow *parent);
-    //virtual ~SettingsWindow();
-
-private:
-
 };

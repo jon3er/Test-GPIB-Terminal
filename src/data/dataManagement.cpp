@@ -4,21 +4,21 @@
 sData::sData(const char* type)
 {
     //init Struct
-    dsParam = new sParam;
-    dsParam->File = "Empty";
-    dsParam->Date = "Empty";
-    dsParam->Time = "Empty";
-    dsParam->Type = type;
-    dsParam->NoPoints_X = 1;
-    dsParam->NoPoints_Y = 1;
-    dsParam->ampUnit = "DB";
-    dsParam->startFreq = 0;
-    dsParam->endFreq = 100000;
+    m_dsParam = new sParam;
+    m_dsParam->File = "Empty";
+    m_dsParam->Date = "Empty";
+    m_dsParam->Time = "Empty";
+    m_dsParam->Type = type;
+    m_dsParam->NoPoints_X = 1;
+    m_dsParam->NoPoints_Y = 1;
+    m_dsParam->ampUnit = "DB";
+    m_dsParam->startFreq = 0;
+    m_dsParam->endFreq = 100000;
     //get time
     setTimeAndDate();
     //test values
-    dsR = {0,1,2,3,4};
-    dsI = {0,1,2,3,4};
+    m_dsR = {0,1,2,3,4};
+    m_dsI = {0,1,2,3,4};
 
 }
 sData::~sData()
@@ -30,9 +30,9 @@ bool sData::SetData(sParam *par, std::vector<double> re, std::vector<double> im)
 {
     try
     {
-        dsParam = par;
-        dsR = re;
-        dsI = im;
+        m_dsParam = par;
+        m_dsR = re;
+        m_dsI = im;
     }
     catch(const std::exception& e)
     {
@@ -46,9 +46,9 @@ bool sData::GetData(sParam *par,std::vector<double>& re, std::vector<double>& im
 {
     try
     {
-        par = dsParam;
-        re = dsR;
-        im = dsI;
+        par = m_dsParam;
+        re = m_dsR;
+        im = m_dsI;
     }
     catch(const std::exception& e)
     {
@@ -62,9 +62,9 @@ std::vector<double> sData::GetFreqStepVector()
 {
     std::vector<double> freqSteps;
 
-    double endFreq = double(dsParam->endFreq);
-    double startFreq = double(dsParam->startFreq);
-    double ArrayPts = double(dsParam->NoPoints_Array);
+    double endFreq = double(m_dsParam->endFreq);
+    double startFreq = double(m_dsParam->startFreq);
+    double ArrayPts = double(m_dsParam->NoPoints_Array);
     double step;
     
     try
@@ -91,7 +91,7 @@ std::vector<double> sData::GetFreqStepVector()
 void sData::getXYCord(int& x, int& y, int mesurementNumber)
 {
     // für den das Array ist die addressierung von 0 bis n-1
-    int yPoints = dsParam->NoPoints_Y;
+    int yPoints = m_dsParam->NoPoints_Y;
 
     x = ((mesurementNumber - 1) / yPoints);
     y = ((mesurementNumber - 1) % yPoints);
@@ -102,7 +102,7 @@ bool sData::setFileName(wxString Name)
 {
     try
     {
-        dsParam->File = Name;
+        m_dsParam->File = Name;
     }
     catch(const std::exception& e)
     {
@@ -116,7 +116,7 @@ bool sData::setFileType(wxString Type)
 {
     try
     {
-        dsParam->Type = Type;
+        m_dsParam->Type = Type;
     }
     catch(const std::exception& e)
     {
@@ -130,7 +130,7 @@ bool sData::setNumberOfPts_X(unsigned int NumbPtsX)
 {
         try
     {
-        dsParam->NoPoints_X = NumbPtsX;
+        m_dsParam->NoPoints_X = NumbPtsX;
     }
     catch(const std::exception& e)
     {
@@ -144,7 +144,7 @@ bool sData::setNumberOfPts_Y(unsigned int NumbPtsY)
 {
         try
     {
-        dsParam->NoPoints_Y = NumbPtsY;
+        m_dsParam->NoPoints_Y = NumbPtsY;
     }
     catch(const std::exception& e)
     {
@@ -158,7 +158,7 @@ bool sData::setAmpUnit(wxString Unit)
 {
     try
     {
-        dsParam->ampUnit = Unit;
+        m_dsParam->ampUnit = Unit;
     }
     catch(const std::exception& e)
     {
@@ -172,7 +172,7 @@ bool sData::setStartFreq(unsigned int StartFreq)
 {
     try
     {
-        dsParam->startFreq = StartFreq;
+        m_dsParam->startFreq = StartFreq;
     }
     catch(const std::exception& e)
     {
@@ -186,7 +186,7 @@ bool sData::setEndFreq(unsigned int EndFreq)
 {
     try
     {
-        dsParam->endFreq = EndFreq;
+        m_dsParam->endFreq = EndFreq;
     }
     catch(const std::exception& e)
     {
@@ -201,16 +201,16 @@ void sData::setNumberofPts_Array(int numb)
 { 
         if (numb == 0) 
         {
-            dsParam->NoPoints_Array = dsR.size();
+            m_dsParam->NoPoints_Array = m_dsR.size();
         } 
         else 
         {
-            dsParam->NoPoints_Array = numb; 
+            m_dsParam->NoPoints_Array = numb; 
         }
 
         try
         {
-            resize3DData(dsParam->NoPoints_X, dsParam->NoPoints_Y, dsParam->NoPoints_Array);
+            resize3DData(m_dsParam->NoPoints_X, m_dsParam->NoPoints_Y, m_dsParam->NoPoints_Array);
         }
         catch(const std::exception& e)
         {
@@ -226,10 +226,10 @@ bool sData::setTimeAndDate()
     {
         wxDateTime zeitJetzt = wxDateTime::Now();
         wxString timestamp = zeitJetzt.Format("%H:%M:%S");
-        dsParam->Time = timestamp;
+        m_dsParam->Time = timestamp;
 
         wxString dateStamp = zeitJetzt.Format("%Y:%m:%d");
-        dsParam->Date = dateStamp;
+        m_dsParam->Date = dateStamp;
     }
     catch(const std::exception& e)
     {
@@ -243,8 +243,8 @@ bool sData::set3DDataReal(std::vector<double> Array , int x, int y)
 {
     try
     {
-        std::memcpy(Real3D.getDataPtr(x,y), Array.data(), Array.size()* sizeof(double));
-        dsR = Array;
+        std::memcpy(m_Real3D.getDataPtr(x,y), Array.data(), Array.size()* sizeof(double));
+        m_dsR = Array;
         return true;
     }
     catch(const std::exception& e)
@@ -255,15 +255,15 @@ bool sData::set3DDataReal(std::vector<double> Array , int x, int y)
 }
 std::vector<double> sData::get3DDataReal(int x, int y)
 {
-    return Real3D.getSingleArray(x,y);
+    return m_Real3D.getSingleArray(x,y);
 }
 
 bool sData::set3DDataImag(std::vector<double> Array , int x, int y)
 {
     try
     {
-        std::memcpy(Imag3D.getDataPtr(x,y), Array.data(), Array.size()* sizeof(double));
-        dsI = Array;
+        std::memcpy(m_Imag3D.getDataPtr(x,y), Array.data(), Array.size()* sizeof(double));
+        m_dsI = Array;
         return true;
     }
     catch(const std::exception& e)
@@ -274,41 +274,41 @@ bool sData::set3DDataImag(std::vector<double> Array , int x, int y)
 }
 std::vector<double> sData::get3DDataImag(int x, int y)
 {
-    return Imag3D.getSingleArray(x,y);
+    return m_Imag3D.getSingleArray(x,y);
 }
 //------sData Ende------
 
 //------sData3D------
 
-sData3D::sData3D(int x, int y, int Anzahl) : X_Messpunkte(x), Y_Messpunkte(y), Messpunkte(Anzahl)
+sData3D::sData3D(int x, int y, int Anzahl) : m_X_Messpunkte(x), m_Y_Messpunkte(y), m_Messpunkte(Anzahl)
 {
-    resize(X_Messpunkte, Y_Messpunkte, Messpunkte);
+    resize(m_X_Messpunkte, m_Y_Messpunkte, m_Messpunkte);
 }
 
 void sData3D::resize(int x, int y, int Anzahl) 
 {
-    X_Messpunkte = x;
-    Y_Messpunkte = y;
-    Messpunkte = Anzahl;
-    dataArray.resize(x * y * Anzahl, 0.0);
+    m_X_Messpunkte = x;
+    m_Y_Messpunkte = y;
+    m_Messpunkte = Anzahl;
+    m_dataArray.resize(x * y * Anzahl, 0.0);
 }
 
 double& sData3D::at(int x, int y, int dataIndex)
 {
-    int index = (y*X_Messpunkte + x) * Messpunkte + dataIndex;
-    return dataArray[index];
+    int index = (y*m_X_Messpunkte + x) * m_Messpunkte + dataIndex;
+    return m_dataArray[index];
 }
 
 double* sData3D::getDataPtr(int x, int y)
 {
-    int index = (y*X_Messpunkte + x) * Messpunkte;
-    return &dataArray[index];
+    int index = (y*m_X_Messpunkte + x) * m_Messpunkte;
+    return &m_dataArray[index];
 }
 
 std::vector<double> sData3D::getSingleArray(int x, int y)
 {
-    int index = (y*X_Messpunkte + x) * Messpunkte;
-    std::vector<double> subVector(dataArray.begin() + index, dataArray.begin() + index + Messpunkte);
+    int index = (y*m_X_Messpunkte + x) * m_Messpunkte;
+    std::vector<double> subVector(m_dataArray.begin() + index, m_dataArray.begin() + index + m_Messpunkte);
 
     return subVector;
 }

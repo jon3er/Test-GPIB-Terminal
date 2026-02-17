@@ -24,14 +24,14 @@ public:
     PlotWindow(wxWindow *parent);
     virtual ~PlotWindow();
 protected:
-    wxChoice* selectMesurement;
+    wxChoice* m_selectMesurement;
     //Plot var
-    mpWindow* plot;
-    mpFXYVector* vectorLayer;
+    mpWindow* m_plot;
+    mpFXYVector* m_vectorLayer;
 private:
 
-    wxString filePath = System::filePathSystem;
-    wxArrayString fileNames;
+    wxString m_filePath = System::filePathSystem;
+    wxArrayString m_fileNames;
 
     void getFileNames(const wxString& dirPath, wxArrayString& files);
     void executeScriptEvent(wxCommandEvent& event);
@@ -40,19 +40,19 @@ private:
                                     const wxString& fileSkript, 
                                     sData* MessErgebnisse, // muss als pointer übergeben werden
                                     int mesurementNumber);
-    std::vector<double> x;
-    std::vector<double> y;
+    std::vector<double> m_x;
+    std::vector<double> m_y;
 
     // Threading members
     std::thread m_measurementThread;
     std::atomic<bool> m_stopMeasurement{false};
 
     // Mesurement var
-    sData MessErgebnisse;
-    int mesurementNumber = 1;
+    sData m_MessErgebnisse;
+    int m_mesurementNumber = 1;
 
-    int ptsX;
-    int ptsY;
+    int m_ptsX;
+    int m_ptsY;
 
     //device Class
     //GpibDevice Adapter;
@@ -62,20 +62,20 @@ class PlotWindowSetMarker : public wxDialog
 {
 	private:
 
-        bool Marker1FreqSet = false;
-        bool Marker1MaxSet = false;
+        bool m_Marker1FreqSet = false;
+        bool m_Marker1MaxSet = false;
 
 
-        wxString Marker1Freq;
-        wxString Marker1Unit;
-        wxString FreqMarker1Raw;
+        wxString m_Marker1Freq;
+        wxString m_Marker1Unit;
+        wxString m_FreqMarker1Raw;
 
-        bool Marker2FreqSet = false;
-        bool Marker2MaxSet = false;
+        bool m_Marker2FreqSet = false;
+        bool m_Marker2MaxSet = false;
 
-        wxString Marker2Freq;
-        wxString Marker2Unit;
-        wxString FreqMarker2Raw;
+        wxString m_Marker2Freq;
+        wxString m_Marker2Unit;
+        wxString m_FreqMarker2Raw;
 
 	protected:
 		wxCheckBox* m_checkBox1;
@@ -112,15 +112,14 @@ class PlotWindowSetMarker : public wxDialog
 class Mesurement2D : public wxDialog
 {
 	private:
-        int sliderY;
-        int sliderX;
-        int sliderScale;
-        int progressbar;
-        int currentMesurmentPoint;
-        int totalMesurmentPoints;
+        int m_sliderY;
+        int m_sliderX;
+        int m_sliderScale;
+        int m_progressbar;
+        int m_currentMesurmentPoint;
+        int m_totalMesurmentPoints;
 
-	protected:
-		wxStaticText* m_staticText1;
+        wxStaticText* m_staticText1;
 		wxStaticText* m_staticText2;
         wxStaticText* m_staticText3;
         wxStaticText* m_staticText4;
@@ -187,21 +186,21 @@ class MultiMessWindow : public wxDialog
         void testMessFunction();
 
         // Set Default values
-        wxString X_Messpunkte   = "1";
-        wxString Y_Messpunkte   = "1";
-        wxString X_Cord         = "0";
-        wxString Y_Cord         = "0";
-        wxString X_MessAbstand  = "10";
-        wxString Y_MessAbstand  = "10";
+        wxString m_X_Messpunkte   = "1";
+        wxString m_Y_Messpunkte   = "1";
+        wxString m_X_Cord         = "0";
+        wxString m_Y_Cord         = "0";
+        wxString m_X_MessAbstand  = "10";
+        wxString m_Y_MessAbstand  = "10";
 
-        wxString startFreq      = "50";
-        wxString startFreqUnit;
-        wxString stopFreq       = "100";
-        wxString stopFreqUnit;
-        wxString AnzSweepMessPkt= "512";
+        wxString m_startFreq      = "50";
+        wxString m_startFreqUnit;
+        wxString m_stopFreq       = "100";
+        wxString m_stopFreqUnit;
+        wxString m_AnzSweepMessPkt= "512";
 
-        int unsigned currentMesurmentPoint = 0;
-        int unsigned totalMesurmentPoints;
+        int unsigned m_currentMesurmentPoint = 0;
+        int unsigned m_totalMesurmentPoints;
 
         //sData Data1D;
         //sData3D Data3D;
