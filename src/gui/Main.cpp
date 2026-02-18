@@ -327,7 +327,7 @@ void MainProgrammWin::MenuFileOpen(wxCommandEvent& event)
 
     m_filePathCurrentFile = openFileDialog.GetPath();
 
-    if (readCsvFile(m_filePathCurrentFile, m_OpendData))
+    if (m_csvFile.readCsvFile(m_filePathCurrentFile, m_OpendData))
     {
         m_fileOpen = true;
     }
@@ -343,7 +343,7 @@ void MainProgrammWin::MenuFileSave(wxCommandEvent& event)
 {
     if (m_fileOpen)
     {
-        saveToCsvFile(m_filePathCurrentFile, m_OpendData, 0);
+        m_csvFile.saveToCsvFile(m_filePathCurrentFile, m_OpendData, 0);
     }
     else
     {
@@ -368,7 +368,7 @@ void MainProgrammWin::MenuFileSaveAs(wxCommandEvent& event)
     std::cerr << "Opend save as window" << std::endl;
 
     m_filePathCurrentFile = saveAsFileDialog.GetPath();
-    if (!saveToCsvFile(m_filePathCurrentFile, m_OpendData, 0))
+    if (!m_csvFile.saveToCsvFile(m_filePathCurrentFile, m_OpendData, 0))
     {
         std::cerr << "failed to save" << std::endl;
         m_fileOpen = false;
@@ -396,12 +396,17 @@ void MainProgrammWin::MenuFileExit(wxCommandEvent& event)
 
 void MainProgrammWin::MenuMesurementNew(wxCommandEvent& event)
 {
-    //Create new sub window
-    PlotWindow *PlotWin = new PlotWindow(this);
-    //open Window Pauses Main Window
+    // Document owns hardware state, independent of the view
+    MeasurementDocument measDoc(Global::AdapterInstance, Global::Messung);
+
+    PlotWindow* PlotWin = new PlotWindow(this);
+    PlotWin->SetDocument(&measDoc);
+
     PlotWin->ShowModal();
-    //Close Window
+
+    PlotWin->SetDocument(nullptr);
     PlotWin->Destroy();
+    // measDoc goes out of scope: destructor handles disconnect + thread join
 }
 void MainProgrammWin::MenuMesurementLoad(wxCommandEvent& event)
 {
@@ -409,30 +414,43 @@ void MainProgrammWin::MenuMesurementLoad(wxCommandEvent& event)
 }
 void MainProgrammWin::MenuMesurementSettings(wxCommandEvent& event)
 {
-    //Create new sub window
-    SettingsWindow *SettingsWin = new SettingsWindow(this);
-    //open Window Pauses Main Window
+    // Document owns hardware state; created on the stack to match the lifecycle of the dialog
+    SettingsDocument settingsDoc(Global::AdapterInstance);
+
+    SettingsWindow* SettingsWin = new SettingsWindow(this);
+    SettingsWin->SetDocument(&settingsDoc);   // register observer + initial refresh
     SettingsWin->ShowModal();
-    //Close Window
+    SettingsWin->SetDocument(nullptr);        // deregister observer before destruction
     SettingsWin->Destroy();
 }
 void MainProgrammWin::MenuTestTerminal(wxCommandEvent& event)
 {
-    //Create new sub window
-    TerminalWindow *TWin = new TerminalWindow(this);
-    //open Window Pauses Main Window
+    // Document owns hardware state and is independent of the view
+    TerminalDocument termDoc(Global::AdapterInstance);
+
+    // Create view and attach document
+    TerminalWindow* TWin = new TerminalWindow(this);
+    TWin->SetDocument(&termDoc);
+
+    // Open window — blocks until the user closes it
     TWin->ShowModal();
-    //Close Window
+
+    // Detach document before destroying the view
+    TWin->SetDocument(nullptr);
     TWin->Destroy();
+    // termDoc goes out of scope here: destructor handles disconnect
 }
 void MainProgrammWin::MenuTestFunc(wxCommandEvent& event)
 {
-    //Create new sub window
-    FunctionWindow *FuncWin = new FunctionWindow(this);
-    //open Window Pauses Main Window
+    // Document owns all function-test state and the adapter reference.
+    FunctionDocument funcDoc(Global::AdapterInstance);
+
+    FunctionWindow* FuncWin = new FunctionWindow(this);
+    FuncWin->SetDocument(&funcDoc);
     FuncWin->ShowModal();
-    //Close Window
+    FuncWin->SetDocument(nullptr);
     FuncWin->Destroy();
+    // funcDoc goes out of scope here: destructor handles disconnect if needed.
 }
 void MainProgrammWin::MenuTestPloter(wxCommandEvent& event)
 {
@@ -443,20 +461,20 @@ void MainProgrammWin::MenuTestPloter(wxCommandEvent& event)
 
 void MainProgrammWin::MenuMesurementSetMarker(wxCommandEvent& event)
 {
-    //Create new sub window
-    PlotWindowSetMarker *PlotWinMarker = new PlotWindowSetMarker(this);
-    //open Window Pauses Main Window
+    // Reuse the same adapter — marker dialog only needs to write SCPI commands
+    MeasurementDocument markerDoc(Global::AdapterInstance, Global::Messung);
+
+    PlotWindowSetMarker* PlotWinMarker = new PlotWindowSetMarker(this);
+    PlotWinMarker->SetDocument(&markerDoc);
+
     PlotWinMarker->ShowModal();
-    //Close Window
+
+    PlotWinMarker->SetDocument(nullptr);
     PlotWinMarker->Destroy();
 }
 void MainProgrammWin::MenuMesurement2DMess(wxCommandEvent& event)
 {
-    Mesurement2D *Mesurement2DWindow = new Mesurement2D(this);
 
-    Mesurement2DWindow->ShowModal();
-
-    Mesurement2DWindow->Destroy();
 }
 
 void MainProgrammWin::MenuHelpAbout(wxCommandEvent& event)

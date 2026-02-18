@@ -4,6 +4,8 @@
 bool PlotterMesurement(sData* data, int mesurementNumber)
 {
     wxArrayString logAdapterReceived;
+    CsvFile csvFile;
+
 
     std::vector<double> MessWerteReal;
     std::vector<double> MessWerteImag;
@@ -33,7 +35,7 @@ bool PlotterMesurement(sData* data, int mesurementNumber)
 
     // save data to a Csv file
     wxString fileName = System::filePathRoot + "LogFiles" + System::fileSystemSlash + "PlotterMessung.csv";
-    if(!saveToCsvFile(fileName, *data, mesurementNumber))
+    if(!csvFile.saveToCsvFile(fileName, *data, mesurementNumber))
     {
         std::cout << "[Error] Failed to save data to CSV file" << std::endl;
     }

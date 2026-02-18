@@ -112,20 +112,32 @@ private:
 };
 
 
-// file operations
-// write
-bool saveToCsvFile(wxString& Filename, sData& data, int mesurementNumb);
-bool saveHeaderCsv(wxTextFile& file, sData& data);
-bool saveDataCsv(wxTextFile& file, sData data, int mesurementNumb, bool cont = false);
-
-// read functions
-bool readCsvFile(wxString filename, sData& data);
-bool readCsvHeader(wxTextFile& file, sData& data);
-bool readDataCsv(wxTextFile& file, sData& data);
-
-// helper functions
-std::string getIndexNumbers(int xPoints, int yPoints, int mesurementNumb, bool continuous = false);
-bool writeMatrixIndexCsv(wxTextFile& file, sData data);
-int findLineCsv(wxTextFile& file, wxString findText);
 
 
+class CsvFile
+{
+    public:
+    // file operations
+        // write
+        bool saveToCsvFile(wxString& Filename, sData& data, int mesurementNumb);
+        // read
+        bool readCsvFile(wxString filename, sData& data);
+
+    private:
+
+        wxTextFile m_file;
+        sData m_data;
+
+        // save Helper Functions
+        bool saveHeaderCsv(wxTextFile& file, sData& data);
+        bool saveDataCsv(wxTextFile& file, sData data, int mesurementNumb, bool cont = false);
+
+        // read Helper Functions
+        bool readCsvHeader(wxTextFile& file, sData& data);
+        bool readDataCsv(wxTextFile& file, sData& data);
+
+        // helper functions
+        std::string getIndexNumbers(int xPoints, int yPoints, int mesurementNumb, bool continuous = false);
+        bool writeMatrixIndexCsv(wxTextFile& file, sData data);
+        int findLineCsv(wxTextFile& file, wxString findText);
+};

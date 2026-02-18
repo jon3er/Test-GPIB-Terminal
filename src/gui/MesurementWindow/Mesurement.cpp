@@ -26,8 +26,8 @@ PlotWindow::PlotWindow(wxWindow *parent) : wxDialog(parent, wxID_ANY, "Plot Wind
     m_plot->AddLayer(xAxis);
     m_plot->AddLayer(yAxis);
 
-    m_x = {0.0, 1.0, 2.0, 3.0, 4.0, 5.0 };
-    m_y = {0.0, 1.0, 4.0, 2.0, 5.0, 3.0 };
+    std::vector<double> m_x = {0.0, 1.0, 2.0, 3.0, 4.0, 5.0 };
+    std::vector<double> m_y = {0.0, 1.0, 4.0, 2.0, 5.0, 3.0 };
 
     // 3. Daten vorbereiten (std::vector laut Header Definition von mpFXYVector)
 
@@ -39,7 +39,7 @@ PlotWindow::PlotWindow(wxWindow *parent) : wxDialog(parent, wxID_ANY, "Plot Wind
         {
             sData temp = MainFrame->returnOpendData();
             sData::sParam *tempStruct = temp.GetParameter();
-            temp.GetData(tempStruct, m_x,m_y);
+            temp.GetData(tempStruct, m_x, m_y);
         }
     }
 
@@ -73,33 +73,48 @@ PlotWindow::PlotWindow(wxWindow *parent) : wxDialog(parent, wxID_ANY, "Plot Wind
     // 7. Zoom auf Daten anpassen
     m_plot->Fit();
 
-    // Set controller's callbacks
-    m_MeasurementLogic.setDataUpdateCallback([this](const std::vector<double>& x, const std::vector<double>& y) {
-        m_x = x;
-        m_y = y;
-        updatePlotData();
-    });
-
-    m_MeasurementLogic.setProgressCallback([this](int current, int total) {
-        std::cerr << "Progress: " << current << "/" << total << std::endl;
-    });
-
-    m_MeasurementLogic.setOutputCallback([this](const std::string& output) {
-        std::cerr << output;
-    });
+    // (callbacks wired via SetDocument / OnDocumentChanged)
 }
+
 PlotWindow::~PlotWindow()
 {
-    // Clean up measurement thread
-    if (m_measurementThread.joinable())
-    {
-        std::cerr << "PlotWindow destructor: Waiting for measurement thread to finish" << std::endl;
-        m_stopMeasurement = true;  // Signal thread to stop
-        m_measurementThread.join(); // Wait for thread to complete
-        std::cerr << "PlotWindow destructor: Measurement thread joined" << std::endl;
-    }
+    // Document handles StopMeasurement + disconnect in its destructor
+    if (m_document)
+        m_document->RemoveObserver(this);
 
-    Global::AdapterInstance.disconnect();
+    std::cerr << "PlotWindow closed" << std::endl;
+}
+
+void PlotWindow::SetDocument(MeasurementDocument* doc)
+{
+    if (m_document)
+        m_document->RemoveObserver(this);
+
+    m_document = doc;
+
+    if (m_document)
+        m_document->AddObserver(this);
+}
+
+void PlotWindow::OnDocumentChanged(const std::string& changeType)
+{
+    if (!m_document)
+        return;
+
+    if (changeType == "DataUpdated")
+    {
+        // DataUpdated may arrive from a worker thread — guard with CallAfter
+        wxEvtHandler::CallAfter([this]()
+        {
+            // Pull latest vectors from the document (already copied by WorkerThread)
+            auto x = m_document->GetXData();
+            auto y = m_document->GetYData();
+            m_vectorLayer->SetData(x, y);
+            m_plot->Fit();
+            std::cout << "[PlotWindow] Plot refreshed from document" << std::endl;
+        });
+    }
+    // MeasurementStarted / MeasurementStopped — no visual action needed here
 }
 
 wxString PlotWindow::formatOutput(const std::string& text)
@@ -127,122 +142,43 @@ void PlotWindow::getFileNames(const wxString& dirPath, wxArrayString& files)
 }
 void PlotWindow::executeScriptEvent(wxCommandEvent& event)
 {
-    // Prevent starting a new thread while one is already running
-    if (m_measurementThread.joinable())
+    if (!m_document)
     {
-        wxLogWarning("Mesurement thread already running");
+        wxLogWarning("PlotWindow: no document attached");
+        return;
+    }
+
+    if (m_document->IsMeasuring())
+    {
+        wxLogWarning("Measurement thread already running");
         return;
     }
 
     wxString fileName = m_selectMesurement->GetStringSelection();
-    std::cerr << "Starting measurement thread for: " << fileName << std::endl;
+    std::cerr << "Starting measurement for: " << fileName << std::endl;
 
-    // Reset stop flag before starting new thread
-    m_stopMeasurement = false;
-
-    // set up Mesurement data
-    sData::sParam *MessInfo = m_MessErgebnisse.GetParameter();
+    // Set basic metadata on the first pass
     if (m_mesurementNumber == 1)
     {
         wxDateTime now = wxDateTime::Now();
-        MessInfo->File = "Mesurement";
-        MessInfo->Date = now.FormatISODate();
-        MessInfo->Time = now.FormatISOTime();
-        /* Muss die daten vom fester erhalten
-        MessInfo->NoPoints_X = ptsX;
-        MessInfo->NoPoints_Y = ptsY;
-        MessInfo->startFreq = 0;
-        MessInfo->endFreq = 50000;
-        MessInfo->ampUnit = "DB";
-        */
+        sData::sParam* info = m_document->GetResultsMutable().GetParameter();
+        info->File = "Mesurement";
+        info->Date = now.FormatISODate();
+        info->Time = now.FormatISOTime();
     }
 
-    // Start measurement thread
-    m_measurementThread = std::thread(&PlotWindow::MeasurementWorkerThread, this, m_filePath, fileName, &m_MessErgebnisse, m_mesurementNumber);
+    m_document->StartMeasurement(m_filePath.ToStdString(), fileName.ToStdString(), m_mesurementNumber);
 }
 void PlotWindow::updatePlotData()
 {
-    m_vectorLayer->SetData(m_x, m_y);
+    if (m_document)
+    {
+        auto x = m_document->GetXData();
+        auto y = m_document->GetYData();
+        m_vectorLayer->SetData(x, y);
+    }
     m_plot->Fit();
 }
-
-void PlotWindow::MeasurementWorkerThread(const wxString& dirPath, const wxString& fileSkript, sData* MessErgebnisse,int mesurementNumber)
-{
-    std::cout << "Measurement thread started" <<std::endl;
-
-    try
-    {
-        wxArrayString logAdapterReceived;
-
-        // Run the blocking measurement in this worker thread
-        Global::AdapterInstance.readScriptFile(dirPath, fileSkript, logAdapterReceived, &m_stopMeasurement);
-
-        // Output received messages to debug log
-        for (size_t i = 0; i < logAdapterReceived.GetCount(); i++)
-        {
-            wxString text = logAdapterReceived[i];
-
-            std::cerr << text << std::endl;
-        }
-
-        // Copy data by value to avoid race conditions
-        std::vector<double> x_copy = Global::Messung.getX_Data();
-        std::vector<double> y_copy = MessErgebnisse->GetFreqStepVector();
-
-        // Create measurement info while still in worker thread
-        sData::sParam *MessInfo = MessErgebnisse->GetParameter();
-
-        if (mesurementNumber == 1)
-        {
-            MessErgebnisse->setNumberofPts_Array(x_copy.size());
-        }
-        int xPos;
-        int yPos;
-        MessErgebnisse->getXYCord(xPos, yPos, mesurementNumber);
-        MessErgebnisse->set3DDataReal(x_copy, xPos, yPos);
-        std::vector<double> freqScale = MessErgebnisse->GetFreqStepVector();
-
-        // Save Imag Values
-        if (Global::Messung.isImagValues())
-        {
-            MessErgebnisse->set3DDataImag(y_copy, xPos, yPos);
-        }
-        
-
-        // Use CallAfter to safely update GUI from main thread
-        wxEvtHandler::CallAfter([this, x_copy, freqScale]()
-        {
-            // Update member data in main thread
-            this->m_y = x_copy;  // Note: original code has this swapped
-            this->m_x = freqScale;
-
-            // Update plot on main thread
-            this->updatePlotData();
-
-            std::cout << "[Thread] Plot updated with measurement data" << std::endl;
-        });
-
-        // Save measurement data to file (done in worker thread to not block GUI)
-        wxString filePathSave = System::filePathRoot + System::fileSystemSlash + "LogFiles" + System::fileSystemSlash + "Messung " + MessInfo->Time;
-        wxTextFile file(filePathSave);
-        file.Create();
-        if(!file.Open())
-        {
-            saveToCsvFile(filePathSave, *MessErgebnisse, mesurementNumber);
-        }
-        std::cout << "[Thread] Measurement completed and saved" << std::endl;
-    }
-    catch (const std::exception& e)
-    {
-        std::cerr << "[Thread ERROR] Error in measurement thread: " << e.what() << std::endl;
-    }
-    catch (...)
-    {
-        std::cerr << "[Thread ERROR] Unknown error in measurement thread" << std::endl;
-    }
-}
-
-//-----Plot Window ENDE--------
 
 //-----Plot Window Set Marker-------
 PlotWindowSetMarker::PlotWindowSetMarker(wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style) 
@@ -473,21 +409,29 @@ void PlotWindowSetMarker::GetSelectedValue2()
         m_FreqMarker2Raw = wxString::FromCDouble(frequencyHz);
     }
 }
+void PlotWindowSetMarker::SetDocument(MeasurementDocument* doc)
+{
+    m_document = doc;
+}
+
 void PlotWindowSetMarker::SetSelection1(wxCommandEvent& event)
 {
     GetValues();
 
+    if (!m_document)
+    {
+        wxLogWarning("PlotWindowSetMarker: no document attached");
+        return;
+    }
+
     if (m_Marker1MaxSet)
     {
-        std::string Text = ScpiCmdLookup.at(ScpiCmd::CALC_MARK_MAX);
-        Global::AdapterInstance.write(Text);
+        m_document->WriteMarker1(true, "");
     }
-    else if (m_Marker1FreqSet && (m_FreqMarker1Raw.IsNumber()))
+    else if (m_Marker1FreqSet && m_FreqMarker1Raw.IsNumber())
     {
         GetSelectedValue1();
-
-        std::string Text = ScpiCmdLookup.at(ScpiCmd::CALC_MARK_MAX) + " " + std::string(m_FreqMarker1Raw.ToUTF8());;
-        Global::AdapterInstance.write(Text);
+        m_document->WriteMarker1(false, std::string(m_FreqMarker1Raw.ToUTF8()));
     }
     //TODO Get X Y From Device and display in the Menu
 }
@@ -495,300 +439,23 @@ void PlotWindowSetMarker::SetSelection2(wxCommandEvent& event)
 {
     GetValues();
 
+    if (!m_document)
+    {
+        wxLogWarning("PlotWindowSetMarker: no document attached");
+        return;
+    }
+
     if (m_Marker2MaxSet)
     {
-        std::string Text = "CALC:MARK2:MAX";
-        Global::AdapterInstance.write(Text);
+        m_document->WriteMarker2(true, "");
     }
-    else if (m_Marker2FreqSet && (m_FreqMarker2Raw.IsNumber()))
+    else if (m_Marker2FreqSet && m_FreqMarker2Raw.IsNumber())
     {
-        GetSelectedValue1();
-
-        std::string Text = "CALC:MARK2:MAX " + std::string(m_FreqMarker2Raw.ToUTF8());;
-        Global::AdapterInstance.write(Text);
+        GetSelectedValue2();
+        m_document->WriteMarker2(false, std::string(m_FreqMarker2Raw.ToUTF8()));
     }
     //TODO Get X Y From Device and display in the Menu
 }
-
-
-Mesurement2D::Mesurement2D( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxDialog( parent, id, title, pos, size, style )
-{
-	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
-
-	wxBoxSizer* bSizer1;
-	bSizer1 = new wxBoxSizer( wxVERTICAL );
-
-	wxStaticBoxSizer* sbSizer1;
-	sbSizer1 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, wxT("Mesurment Settings") ), wxVERTICAL );
-
-	m_staticText1 = new wxStaticText( sbSizer1->GetStaticBox(), wxID_ANY, wxT("Mesurement Points:"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText1->Wrap( -1 );
-	sbSizer1->Add( m_staticText1, 0, wxALL, 5 );
-
-	wxBoxSizer* bSizer2;
-	bSizer2 = new wxBoxSizer( wxHORIZONTAL );
-
-	m_staticText2 = new wxStaticText( sbSizer1->GetStaticBox(), wxID_ANY, wxT("Y Points:"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText2->Wrap( -1 );
-	bSizer2->Add( m_staticText2, 1, wxALL, 5 );
-
-
-	m_slider1 = new wxSlider( sbSizer1->GetStaticBox(), wxID_ANY, 10, 1, 100, wxDefaultPosition, wxDefaultSize, wxSL_HORIZONTAL );
-	m_slider1->Bind(wxEVT_SLIDER, &Mesurement2D::OnSliderUpdate, this);
-    bSizer2->Add( m_slider1, 1, wxALL, 5 );
-
-
-	sbSizer1->Add( bSizer2, 1, wxEXPAND, 5 );
-
-	wxBoxSizer* bSizer21;
-	bSizer21 = new wxBoxSizer( wxHORIZONTAL );
-
-	m_staticText3 = new wxStaticText( sbSizer1->GetStaticBox(), wxID_ANY, wxT("X Points:"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText3->Wrap( -1 );
-	bSizer21->Add( m_staticText3, 1, wxALL, 5 );
-
-	m_slider2 = new wxSlider( sbSizer1->GetStaticBox(), wxID_ANY, 10, 1, 100, wxDefaultPosition, wxDefaultSize, wxSL_HORIZONTAL );
-	m_slider2->Bind(wxEVT_SLIDER, &Mesurement2D::OnSliderUpdate, this);
-    bSizer21->Add( m_slider2, 1, wxALL, 5 );
-
-
-	sbSizer1->Add( bSizer21, 1, wxEXPAND, 5 );
-
-	wxBoxSizer* bSizer211;
-	bSizer211 = new wxBoxSizer( wxHORIZONTAL );
-
-	m_staticText4 = new wxStaticText( sbSizer1->GetStaticBox(), wxID_ANY, wxT("Scale:"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText4->Wrap( -1 );
-	bSizer211->Add( m_staticText4, 1, wxALL, 5 );
-
-	m_slider3 = new wxSlider( sbSizer1->GetStaticBox(), wxID_ANY, 100, 1, 100, wxDefaultPosition, wxDefaultSize, wxSL_HORIZONTAL );
-	m_slider3->Bind(wxEVT_SLIDER, &Mesurement2D::OnSliderUpdate, this);
-    bSizer211->Add( m_slider3, 1, wxALL, 5 );
-
-
-	sbSizer1->Add( bSizer211, 1, wxEXPAND, 5 );
-
-	wxBoxSizer* bSizer9;
-	bSizer9 = new wxBoxSizer( wxHORIZONTAL );
-
-	m_staticText5 = new wxStaticText( sbSizer1->GetStaticBox(), wxID_ANY, wxT("Orientation point:"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText5->Wrap( -1 );
-	bSizer9->Add( m_staticText5, 1, wxALL, 5 );
-
-	wxArrayString StartPosition;
-    StartPosition.Add("Center");
-    StartPosition.Add("Top Left");
-    StartPosition.Add("Top Right");
-    StartPosition.Add("Bottom Right");
-    StartPosition.Add("Bottom Left");
-
-	m_choice1 = new wxChoice( sbSizer1->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, StartPosition, 0 );
-	m_choice1->SetSelection( 0 );
-	bSizer9->Add( m_choice1, 1, wxALL, 5 );
-
-
-	sbSizer1->Add( bSizer9, 1, wxEXPAND, 5 );
-
-	wxBoxSizer* bSizer10;
-	bSizer10 = new wxBoxSizer( wxHORIZONTAL );
-
-	m_button2 = new wxButton( sbSizer1->GetStaticBox(), wxID_ANY, wxT("Reset"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_button2->Bind(wxEVT_BUTTON, &Mesurement2D::OnReset, this);
-    bSizer10->Add( m_button2, 1, wxALL, 5 );
-
-	m_button1 = new wxButton( sbSizer1->GetStaticBox(), wxID_ANY, wxT("Open Device settings"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_button1->Bind(wxEVT_BUTTON, &Mesurement2D::OnSettings, this);
-    bSizer10->Add( m_button1, 1, wxALL, 5 );
-
-
-	sbSizer1->Add( bSizer10, 1, wxEXPAND, 5 );
-
-
-	bSizer1->Add( sbSizer1, 1, wxEXPAND, 5 );
-
-	wxStaticBoxSizer* sbSizer2;
-	sbSizer2 = new wxStaticBoxSizer( new wxStaticBox( this, wxID_ANY, wxT("Mesurment") ), wxVERTICAL );
-
-	wxBoxSizer* bSizer14;
-	bSizer14 = new wxBoxSizer( wxHORIZONTAL );
-
-	m_staticText6 = new wxStaticText( sbSizer2->GetStaticBox(), wxID_ANY, wxT("Progress:"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText6->Wrap( -1 );
-	bSizer14->Add( m_staticText6, 1, wxALL, 5 );
-
-	m_staticText7 = new wxStaticText( sbSizer2->GetStaticBox(), wxID_ANY, wxT("0/100"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText7->Wrap( -1 );
-	bSizer14->Add( m_staticText7, 1, wxALL, 5 );
-
-	m_gauge1 = new wxGauge( sbSizer2->GetStaticBox(), wxID_ANY, 100, wxDefaultPosition, wxDefaultSize, wxGA_HORIZONTAL );
-	m_gauge1->SetValue( 0 );
-	bSizer14->Add( m_gauge1, 5, wxALL, 5 );
-
-
-	sbSizer2->Add( bSizer14, 1, wxEXPAND, 5 );
-
-	wxBoxSizer* bSizer15;
-	bSizer15 = new wxBoxSizer( wxHORIZONTAL );
-
-	m_button3 = new wxButton( sbSizer2->GetStaticBox(), wxID_ANY, wxT("Start"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_button3->Bind(wxEVT_BUTTON, &Mesurement2D::OnStart, this);
-    bSizer15->Add( m_button3, 1, wxALL, 5 );
-
-	m_button4 = new wxButton( sbSizer2->GetStaticBox(), wxID_ANY, wxT("Stop"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_button4->Bind(wxEVT_BUTTON, &Mesurement2D::OnStop, this);
-    bSizer15->Add( m_button4, 1, wxALL, 5 );
-
-	m_button5 = new wxButton( sbSizer2->GetStaticBox(), wxID_ANY, wxT("Restart"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_button5->Bind(wxEVT_BUTTON, &Mesurement2D::OnRestart, this);
-    bSizer15->Add( m_button5, 1, wxALL, 5 );
-
-
-	sbSizer2->Add( bSizer15, 1, wxEXPAND, 5 );
-
-
-	bSizer1->Add( sbSizer2, 1, wxEXPAND, 5 );
-
-
-	this->SetSizer( bSizer1 );
-	this->Layout();
-
-	this->Centre( wxBOTH );
-
-    resetGuiValues();
-    GetValues();
-    GetTotalMesurements();
-    updateProgressBar();
-    SetSliderValues();
-
-    // Set controller's callbacks
-    m_MeasuementLogic.setProgressCallback([this](int current, int total) {
-        m_currentMesurmentPoint = current;
-        m_totalMesurmentPoints = total;
-        updateProgressBar();
-    });
-
-    m_MeasuementLogic.setOutputCallback([this](const std::string& output) {
-        std::cerr << output;
-    });
-
-    m_MeasuementLogic.setUpdateCallback([this]() {
-        SetSliderValues();
-        updateProgressBar();
-    });
-}
-void Mesurement2D::OnReset(wxCommandEvent& event)
-{
-    resetGuiValues();
-    SetSliderValues();
-    updateProgressBar();
-
-}
-void Mesurement2D::OnSettings(wxCommandEvent& event)
-{
-    //Create new sub window
-    SettingsWindow *SettingsWin = new SettingsWindow(this);
-    //open Window Pauses Main Window
-    SettingsWin->ShowModal();
-    //Close Window
-    SettingsWin->Destroy();
-}
-void Mesurement2D::OnStart(wxCommandEvent& event)
-{
-    GetTotalMesurements();
-    updateProgressBar();
-}
-void Mesurement2D::OnStop(wxCommandEvent& event)
-{
-    incrementCurrentMesurmentPoint();
-    updateProgressBar();
-}
-void Mesurement2D::OnRestart(wxCommandEvent& event)
-{
-    resetProgressBar();
-    SetSliderValues();
-    updateProgressBar();
-}
-
-void Mesurement2D::OnSliderUpdate(wxCommandEvent& event)
-{
-    SetSliderValues();
-}
-
-void Mesurement2D::GetValues()
-{
-    m_sliderY         = m_slider1->GetValue();
-    m_sliderX         = m_slider2->GetValue();
-    m_sliderScale     = m_slider3->GetValue();
-
-    m_progressbar     = m_gauge1->GetValue();
-}
-void Mesurement2D::SetValues()
-{
-    m_slider1->SetValue(m_sliderY);
-    m_slider2->SetValue(m_sliderX);
-    m_slider3->SetValue(m_sliderScale);
-
-    m_gauge1->SetValue(m_progressbar);
-}
-void Mesurement2D::GetTotalMesurements()
-{
-    GetValues();
-
-    m_totalMesurmentPoints = m_sliderX * m_sliderY;
-}
-void Mesurement2D::incrementCurrentMesurmentPoint()
-{
-    m_currentMesurmentPoint++;
-}
-void Mesurement2D::updateProgressBar()
-{
-    if (m_currentMesurmentPoint < m_totalMesurmentPoints)
-    {
-        int Progress = m_currentMesurmentPoint * 100 / m_totalMesurmentPoints;
-
-        wxString Text = wxString::Format("%d",m_currentMesurmentPoint) + "/" + wxString::Format("%d",m_totalMesurmentPoints);
-        m_staticText7->SetLabel(Text);
-
-        m_gauge1->SetValue(Progress);
-    }
-}
-void Mesurement2D::resetProgressBar()
-{
-    m_currentMesurmentPoint = 0;
-    updateProgressBar();
-}
-void Mesurement2D::SetSliderValues()
-{
-    GetValues();
-    wxString Text = "Y Points:    " + wxString::Format("%d", m_sliderY);
-    m_staticText2->SetLabel(Text);
-
-    Text = "X Points:    " + wxString::Format("%d", m_sliderX);
-    m_staticText3->SetLabel(Text);
-
-    Text = "Scale:       " + wxString::Format("%d", m_sliderScale);
-    m_staticText4->SetLabel(Text);
-}
-void Mesurement2D::resetGuiValues()
-{
-    m_sliderY                 = 10;
-    m_sliderX                 = 10;
-    m_sliderScale             = 100;
-    m_progressbar             = 0;
-    m_currentMesurmentPoint   = 0;
-
-    SetValues();
-    GetTotalMesurements();
-    SetSliderValues();
-    updateProgressBar();
-}
-
-
-Mesurement2D::~Mesurement2D()
-{
-
-}
-
 
 //-----Plot Window Set Marker ENDE-------
 
@@ -986,138 +653,128 @@ MultiMessWindow::MultiMessWindow( wxWindow* parent, wxWindowID id, const wxStrin
 	this->Layout();
 
 	this->Centre( wxBOTH );
-
-    // Set controller's callbacks
-    m_MultiMessLogic.setProgressCallback([this](int current, int total) {
-        m_currentMesurmentPoint = current;
-        m_totalMesurmentPoints = total;
-        UpdateProgressBar();
-    });
-
-    m_MultiMessLogic.setOutputCallback([this](const std::string& output) {
-        std::cerr << output;
-    });
-
-    m_MultiMessLogic.setUpdateCallback([this]() {
-        UpdateProgressBar();
-    });
+    // Document is attached later via SetDocument() from the caller
 }
 
 MultiMessWindow::~MultiMessWindow()
 {
+    if (m_document)
+        m_document->RemoveObserver(this);
+}
 
+void MultiMessWindow::SetDocument(MultiMessDocument* doc)
+{
+    if (m_document)
+        m_document->RemoveObserver(this);
 
+    m_document = doc;
+
+    if (m_document)
+    {
+        m_document->AddObserver(this);
+        PullValuesFromDocument();
+        UpdateProgressBar();
+    }
+}
+
+void MultiMessWindow::OnMultiMessDocumentChanged(const std::string& changeType)
+{
+    if (!m_document)
+        return;
+
+    if (changeType == "ProgressChanged" || changeType == "Started" || changeType == "Stopped")
+    {
+        UpdateProgressBar();
+    }
+    else if (changeType == "Reset")
+    {
+        PullValuesFromDocument();
+        UpdateProgressBar();
+    }
+    // "ConfigChanged" — no visual update required beyond what the view already shows
 }
 
 void MultiMessWindow::startButton(wxCommandEvent& event)
 {
-    GetValues();
-    //set total point in the test section
-    m_totalMesurmentPoints = std::stoi(m_X_Messpunkte.ToStdString())*std::stoi(m_Y_Messpunkte.ToStdString());
-
-    UpdateProgressBar();
-
+    if (!m_document) return;
+    PushValuesToDocument();
+    m_document->Start();
 }
+
 void MultiMessWindow::stopButton(wxCommandEvent& event)
 {
-    GetValues();
-    //set total point in the test section
-    m_totalMesurmentPoints = std::stoi(m_X_Messpunkte.ToStdString())*std::stoi(m_Y_Messpunkte.ToStdString());
-
-    m_currentMesurmentPoint = 0;
-
-    UpdateProgressBar();
-
+    if (!m_document) return;
+    m_document->Stop();
 }
+
 void MultiMessWindow::resetButton(wxCommandEvent& event)
 {
-    m_textCtrlXMess         ->SetValue("1"  );
-    m_textCtrlYMess         ->SetValue("1"  );
-    m_textCtrlXStartCord    ->SetValue("0"  );
-    m_textCtrlYStartCord    ->SetValue("0"  );
-    m_textCtrlXAbstand      ->SetValue("10" );
-    m_textCtrlYAbstand      ->SetValue("10" );
-
-    m_textCtrlStrtFreq      ->SetValue("50" );
-    m_choiceEinheitFreq1    ->SetSelection(1);
-    m_textCtrlEndFreq       ->SetValue("100");
-    m_choiceEinheitFreq1    ->SetSelection(1);
-    m_textCtrlAnzahlSweep   ->SetValue("512");
-
-    m_totalMesurmentPoints = 1;
-    m_currentMesurmentPoint = 0;
-
-    GetValues();
-
-    UpdateProgressBar();
+    if (!m_document) return;
+    m_document->Reset();
+    // PullValuesFromDocument is triggered via OnMultiMessDocumentChanged("Reset")
 }
+
 void MultiMessWindow::nextButton(wxCommandEvent& event)
 {
-    GetValues();
-
-    if (m_currentMesurmentPoint < m_totalMesurmentPoints)
-    {
-        m_currentMesurmentPoint++;
-    }
-
-    UpdateProgressBar();
+    if (!m_document) return;
+    m_document->NextPoint();
 }
 
-void MultiMessWindow::GetValues()
+void MultiMessWindow::PushValuesToDocument()
 {
-    m_X_Messpunkte    = m_textCtrlXMess       ->GetValue();
-    m_Y_Messpunkte    = m_textCtrlYMess       ->GetValue();
-    m_X_Cord          = m_textCtrlXStartCord  ->GetValue();
-    m_Y_Cord          = m_textCtrlYStartCord  ->GetValue();
-    m_X_MessAbstand   = m_textCtrlXAbstand    ->GetValue();
-    m_Y_MessAbstand   = m_textCtrlYAbstand    ->GetValue();
-    m_startFreq       = m_textCtrlStrtFreq    ->GetValue();
-    m_stopFreq        = m_textCtrlEndFreq     ->GetValue();
-    m_AnzSweepMessPkt = m_textCtrlAnzahlSweep ->GetValue();
-
-    m_startFreqUnit   = m_choiceEinheitFreq1  ->GetStringSelection();
-    m_stopFreqUnit    = m_choiceEinheitFreq2  ->GetStringSelection();
+    if (!m_document) return;
+    m_document->SetXMeasurementPoints (std::string(m_textCtrlXMess      ->GetValue().ToUTF8()));
+    m_document->SetYMeasurementPoints (std::string(m_textCtrlYMess      ->GetValue().ToUTF8()));
+    m_document->SetXStartCoordinate   (std::string(m_textCtrlXStartCord ->GetValue().ToUTF8()));
+    m_document->SetYStartCoordinate   (std::string(m_textCtrlYStartCord ->GetValue().ToUTF8()));
+    m_document->SetXMeasurementSpacing(std::string(m_textCtrlXAbstand   ->GetValue().ToUTF8()));
+    m_document->SetYMeasurementSpacing(std::string(m_textCtrlYAbstand   ->GetValue().ToUTF8()));
+    m_document->SetStartFrequency     (std::string(m_textCtrlStrtFreq   ->GetValue().ToUTF8()));
+    m_document->SetStopFrequency      (std::string(m_textCtrlEndFreq    ->GetValue().ToUTF8()));
+    m_document->SetNumberOfSweepPoints(std::string(m_textCtrlAnzahlSweep->GetValue().ToUTF8()));
+    m_document->SetStartFrequencyUnit (std::string(m_choiceEinheitFreq1 ->GetStringSelection().ToUTF8()));
+    m_document->SetStopFrequencyUnit  (std::string(m_choiceEinheitFreq2 ->GetStringSelection().ToUTF8()));
 }
-void MultiMessWindow::SetValues()
+
+void MultiMessWindow::PullValuesFromDocument()
 {
-    m_textCtrlXMess         ->SetValue(m_X_Messpunkte    );
-    m_textCtrlYMess         ->SetValue(m_Y_Messpunkte    );
-    m_textCtrlXStartCord    ->SetValue(m_X_Cord          );
-    m_textCtrlYStartCord    ->SetValue(m_Y_Cord          );
-    m_textCtrlXAbstand      ->SetValue(m_X_MessAbstand   );
-    m_textCtrlYAbstand      ->SetValue(m_Y_MessAbstand   );
-
-    m_textCtrlStrtFreq      ->SetValue(m_startFreq       );
-    m_textCtrlEndFreq       ->SetValue(m_stopFreq        );
-    m_textCtrlAnzahlSweep   ->SetValue(m_AnzSweepMessPkt );
+    if (!m_document) return;
+    m_textCtrlXMess       ->SetValue(wxString(m_document->GetXMeasurementPoints()));
+    m_textCtrlYMess       ->SetValue(wxString(m_document->GetYMeasurementPoints()));
+    m_textCtrlXStartCord  ->SetValue(wxString(m_document->GetXStartCoordinate()));
+    m_textCtrlYStartCord  ->SetValue(wxString(m_document->GetYStartCoordinate()));
+    m_textCtrlXAbstand    ->SetValue(wxString(m_document->GetXMeasurementSpacing()));
+    m_textCtrlYAbstand    ->SetValue(wxString(m_document->GetYMeasurementSpacing()));
+    m_textCtrlStrtFreq    ->SetValue(wxString(m_document->GetStartFrequency()));
+    m_textCtrlEndFreq     ->SetValue(wxString(m_document->GetStopFrequency()));
+    m_textCtrlAnzahlSweep ->SetValue(wxString(m_document->GetNumberOfSweepPoints()));
 }
+
 void MultiMessWindow::UpdateProgressBar()
 {
-    if (m_currentMesurmentPoint <= m_totalMesurmentPoints)
-    {
-        int Progress = m_currentMesurmentPoint * 100 / m_totalMesurmentPoints;
+    if (!m_document) return;
+    unsigned int current = m_document->GetCurrentPoint();
+    unsigned int total   = m_document->GetTotalPoints();
+    if (total == 0) return;
 
-        wxString Text = wxString::Format("%d",m_currentMesurmentPoint) + "/" + wxString::Format("%d",m_totalMesurmentPoints);
-        m_staticTextProgress->SetLabel(Text);
-
-        m_gaugeProgress->SetValue(Progress);
-    }
+    int progress = static_cast<int>(current * 100 / total);
+    wxString text = wxString::Format("%u", current) + "/" + wxString::Format("%u", total);
+    m_staticTextProgress->SetLabel(text);
+    m_gaugeProgress->SetValue(progress);
 }
 
-void MultiMessWindow::testMessFunction()
+void MultiMessWindow::SetValues()
 {
-    if (m_currentMesurmentPoint == 0)
-    {
-        //Adapter.send()
-    }
-
-    if (m_totalMesurmentPoints == 1)
-    {
-        Global::AdapterInstance.getMesurement();
-    }
-    else
-    {
-
-    }
-
+    // Populate fields from default document values when no document is attached yet
+    m_textCtrlXMess       ->SetValue("1"  );
+    m_textCtrlYMess       ->SetValue("1"  );
+    m_textCtrlXStartCord  ->SetValue("0"  );
+    m_textCtrlYStartCord  ->SetValue("0"  );
+    m_textCtrlXAbstand    ->SetValue("10" );
+    m_textCtrlYAbstand    ->SetValue("10" );
+    m_textCtrlStrtFreq    ->SetValue("50" );
+    m_choiceEinheitFreq1  ->SetSelection(1);
+    m_textCtrlEndFreq     ->SetValue("100");
+    m_choiceEinheitFreq2  ->SetSelection(1);
+    m_textCtrlAnzahlSweep ->SetValue("512");
 }

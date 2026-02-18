@@ -63,18 +63,12 @@ enum class ScpiCmd {
 
     // Frequency Commands
     FREQ_CENT,          // Syntax: FREQ:CENT <freq> | Setzt die Mittenfrequenz (z.B. 1GHZ)
-    FREQ_CENT_QUERY,    // Syntax: FREQ:CENT? | Abfrage der Mittenfrequenz
     FREQ_SPAN,          // Syntax: FREQ:SPAN <freq> | Setzt die Frequenzspanne
-    FREQ_SPAN_QUERY,    // Syntax: FREQ:SPAN? | Abfrage der Frequenzspanne
     FREQ_STAR,          // Syntax: FREQ:STAR <freq> | Setzt die Startfrequenz
-    FREQ_STAR_QUERY,    // Syntax: FREQ:STAR? | Abfrage der Startfrequenz
     FREQ_STOP,          // Syntax: FREQ:STOP <freq> | Setzt die Stoppfrequenz
-    FREQ_STOP_QUERY,    // Syntax: FREQ:STOP? | Abfrage der Stoppfrequenz
 
     // Markers/Calculations
     CALC_MARK_MAX,      // Syntax: CALC:MARK:MAX | Setzt den Marker auf den höchsten Peak
-    CALC_MARK1_Y,       // Syntax: CALC:MARK1:Y? | Abfrage des Pegels (Amplitude) an Marker 1
-    CALC_MARK1_X,       // Syntax: CALC:MARK1:X? | Abfrage der Frequenz an Marker 1
 
     // Bandwidth
     BAND_RES,           // Syntax: BAND:RES <freq> | Auflösebandbreite (RBW)
@@ -84,7 +78,6 @@ enum class ScpiCmd {
 
     // Display/Trace
     DISP_TRAC_Y_RLEV,   // Syntax: DISP:TRAC:Y:RLEV <val> | Referenzpegel (meist in dBm)
-    DISP_TRAC_Y_RLEV_QUERY, // Syntax: DISP:TRAC:Y:RLEV? | Abfrage des Referenzpegels
     DISP_TRAC_Y_OFFS,   // Syntax: DISP:TRAC:Y:RLEV:OFFS <val> | Referenzpegel-Offset
     DISP_TRAC_MODE,     // Syntax: DISP:TRAC:MODE [WRIT|MAXH|MINH|VIEW|BLANK] | Trace-Modus
 
@@ -92,7 +85,6 @@ enum class ScpiCmd {
     SWE_POIN,           // Syntax: SWE:POIN <val> | Anzahl der Messpunkte pro Sweep
     SWE_COUN,           // Syntax: SWE:COUN <val> | Anzahl der Sweeps für Average/MaxHold
     SWE_TIME,           // Syntax: SWE:TIME <time> | Manuelle Einstellung der Sweep-Zeit
-    SWE_TIME_QUERY,     // Syntax: SWE:TIME? | Abfrage der aktuellen Sweep-Zeit
 
     // Initialization
     INIT_CONT,          // Syntax: INIT:CONT [ON|OFF] | Kontinuierlicher Sweep ein/aus
@@ -102,44 +94,68 @@ enum class ScpiCmd {
     FORM_DATA,          // Syntax: FORM:DATA [ASC|REAL] | Datenformat (ASCII oder Binär)
     FORM_BORD,          // Syntax: FORM:BORD [NORM|SWAP] | Byte-Reihenfolge (Little/Big Endian)
     FORM_ASC,           // Syntax: FORM:ASC | Schaltet explizit auf ASCII-Format um
-
-    // Trace
-    TRAC_DATA,          // Syntax: TRAC:DATA? TRACE1 | Abfrage der rohen Messdaten von Trace 1
 };
 
 static const std::map<ScpiCmd, std::string> ScpiCmdLookup = {
+    // Universal commands
     {ScpiCmd::IDN, "*IDN?"},
     {ScpiCmd::CLR, "*CLS"},
     {ScpiCmd::RST, "*RST"},
     {ScpiCmd::WAI, "*WAI"},
     {ScpiCmd::OPC, "*OPC?"},
+    // Device specific Commands
     {ScpiCmd::FREQ_CENT, "FREQ:CENT"},
-    {ScpiCmd::FREQ_CENT_QUERY, "FREQ:CENT?"},
     {ScpiCmd::FREQ_SPAN, "FREQ:SPAN"},
-    {ScpiCmd::FREQ_SPAN_QUERY, "FREQ:SPAN?"},
     {ScpiCmd::FREQ_STAR, "FREQ:STAR"},
-    {ScpiCmd::FREQ_STAR_QUERY, "FREQ:STAR?"},
     {ScpiCmd::FREQ_STOP, "FREQ:STOP"},
-    {ScpiCmd::FREQ_STOP_QUERY, "FREQ:STOP?"},
     {ScpiCmd::CALC_MARK_MAX, "CALC:MARK:MAX"},
-    {ScpiCmd::CALC_MARK1_Y, "CALC:MARK1:Y?"},
-    {ScpiCmd::CALC_MARK1_X, "CALC:MARK1:X?"},
     {ScpiCmd::BAND_RES, "BAND:RES"},
     {ScpiCmd::BAND_VID_AUTO, "BAND:VID:AUTO"},
     {ScpiCmd::BAND_RATIO, "BAND:RAT"},
     {ScpiCmd::BAND_TYPE, "BAND:TYPE"},
     {ScpiCmd::DISP_TRAC_Y_RLEV, "DISP:TRAC:Y:RLEV"},
-    {ScpiCmd::DISP_TRAC_Y_RLEV_QUERY, "DISP:TRAC:Y:RLEV?"},
     {ScpiCmd::DISP_TRAC_Y_OFFS, "DISP:TRAC:Y:RLEV:OFFS"},
     {ScpiCmd::DISP_TRAC_MODE, "DISP:TRAC:MODE"},
     {ScpiCmd::SWE_POIN, "SWE:POIN"},
     {ScpiCmd::SWE_COUN, "SWE:COUN"},
     {ScpiCmd::SWE_TIME, "SWE:TIME"},
-    {ScpiCmd::SWE_TIME_QUERY, "SWE:TIME?"},
     {ScpiCmd::INIT_CONT, "INIT:CONT"},
     {ScpiCmd::INIT_IMM, "INIT:IMM"},
     {ScpiCmd::FORM_DATA, "FORM:DATA"},
     {ScpiCmd::FORM_BORD, "FORM:BORD"},
     {ScpiCmd::FORM_ASC, "FORM:ASC"},
-    {ScpiCmd::TRAC_DATA, "TRAC:DATA?"}
+};
+
+// Seperated
+enum class ScpiQueryCmd {
+    // Frequency Queries
+    FREQ_CENT,          // Syntax: FREQ:CENT? | Abfrage der Mittenfrequenz
+    FREQ_SPAN,          // Syntax: FREQ:SPAN? | Abfrage der Frequenzspanne
+    FREQ_STAR,          // Syntax: FREQ:STAR? | Abfrage der Startfrequenz
+    FREQ_STOP,          // Syntax: FREQ:STOP? | Abfrage der Stoppfrequenz
+
+    // Markers/Calculations Queries
+    CALC_MARK1_Y,       // Syntax: CALC:MARK1:Y? | Abfrage des Pegels (Amplitude) an Marker 1
+    CALC_MARK1_X,       // Syntax: CALC:MARK1:X? | Abfrage der Frequenz an Marker 1
+
+    // Display/Trace Queries
+    DISP_TRAC_Y_RLEV,   // Syntax: DISP:TRAC:Y:RLEV? | Abfrage des Referenzpegels
+
+    // Sweep Queries
+    SWE_TIME,           // Syntax: SWE:TIME? | Abfrage der aktuellen Sweep-Zeit
+
+    // Trace Data Query
+    TRAC_DATA,          // Syntax: TRAC:DATA? TRACE1 | Abfrage der rohen Messdaten von Trace 1
+};
+
+static const std::map<ScpiQueryCmd, std::string> ScpiQueryCmdLookup = {
+    {ScpiQueryCmd::FREQ_CENT, "FREQ:CENT?"},
+    {ScpiQueryCmd::FREQ_SPAN, "FREQ:SPAN?"},
+    {ScpiQueryCmd::FREQ_STAR, "FREQ:STAR?"},
+    {ScpiQueryCmd::FREQ_STOP, "FREQ:STOP?"},
+    {ScpiQueryCmd::CALC_MARK1_Y, "CALC:MARK1:Y?"},
+    {ScpiQueryCmd::CALC_MARK1_X, "CALC:MARK1:X?"},
+    {ScpiQueryCmd::DISP_TRAC_Y_RLEV, "DISP:TRAC:Y:RLEV?"},
+    {ScpiQueryCmd::SWE_TIME, "SWE:TIME?"},
+    {ScpiQueryCmd::TRAC_DATA, "TRAC:DATA?"},
 };

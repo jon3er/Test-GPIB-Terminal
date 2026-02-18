@@ -2,6 +2,13 @@
 
 #include <wx/wx.h>
 #include <wx/notebook.h>
+#include "SettingsDocument.h"
+
+
+//------Subtabs (forward declarations)------
+class SettingsTabDisplay;
+class SettingsTabAdapter;
+class SettingsTabGeneral;
 
 
 //-----Settings Window-----
@@ -9,47 +16,43 @@ class SettingsWindow : public wxDialog
 {
 public:
     SettingsWindow(wxWindow *parent);
-    //virtual ~SettingsWindow();
+
+    /**
+     * Attach/detach the document. Forwards to the Display tab.
+     * Call SetDocument(&doc) before ShowModal() and
+     * SetDocument(nullptr) before Destroy().
+     */
+    void SetDocument(SettingsDocument* doc);
 
 private:
-
+    SettingsTabDisplay* m_displayTab = nullptr;
 };
 
 
 //------Subtabs------
-class SettingsTabDisplay : public wxPanel
+class SettingsTabDisplay : public wxPanel, public ISettingsObserver
 {
 public:
     SettingsTabDisplay(wxNotebook *parent, const wxString &label);
 
+    // Document/View wiring
+    void SetDocument(SettingsDocument* doc);
+
+    // ISettingsObserver
+    void OnDocumentChanged(const std::string& changeType) override;
+
 private:
-    void anwendenButton(wxCommandEvent& event);
-    void getCurrentButton(wxCommandEvent& event);
-    void toggleSelectionEvent(wxCommandEvent& event);
-    void toggleSelection();
-    void getValues();
-    void setValues();
+    // Event handlers
+    void OnAnwenden(wxCommandEvent& event);
+    void OnGetCurrent(wxCommandEvent& event);
+    void OnToggleSelection(wxCommandEvent& event);
 
-    std::string getGpibCmdFreq(wxString NumVal, wxString Selection);
-    std::string getGpibCmdPegel(wxString NumVal, wxString Selection);
+    // View helpers
+    void RefreshFromDocument();
+    void UpdateToggleWidgetState();
 
-    //Units
-    wxString m_FreqStartSetUnit;
-    wxString m_FreqEndeSetUnit;
-    wxString m_FreqCenterSetUnit;
-    wxString m_FreqSpanSetUnit;
-    wxString m_pegelSetUnit;
-    wxString m_scalingYSetUnit;
-    //Text Input
-    wxString m_FreqStartSet;
-    wxString m_FreqEndeSet;
-    wxString m_FreqCenterSet;
-    wxString m_FreqSpanSet;
-    wxString m_pegelSet;
-    wxString m_refPegelSet;
-    //Bool
-    bool m_useStartEnde = false;
-    bool m_useCenterSpan = false;
+    // Non-owning pointer to the document (owned by main.cpp)
+    SettingsDocument* m_doc = nullptr;
 
     //Elemente
     wxCheckBox* m_startEndeCheck;
@@ -68,20 +71,17 @@ private:
     wxTextCtrl* m_inputText_4;
     wxTextCtrl* m_inputText_5;
     wxTextCtrl* m_inputText_7;
-
 };
 
 class SettingsTabAdapter : public wxPanel
 {
 public:
     SettingsTabAdapter(wxNotebook *parent, const wxString &label);
-
 };
 
 class SettingsTabGeneral : public wxPanel
 {
 public:
     SettingsTabGeneral(wxNotebook *parent, const wxString &label);
-
 };
 //-----end Subtabs-----

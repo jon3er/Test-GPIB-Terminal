@@ -16,7 +16,9 @@ class fsuMesurement
 {
 public:
     fsuMesurement();
+
     void seperateDataBlock(const wxString& receivedString);
+    
     std::vector<double> calcYdata(); //TODO umbennen ist eigendlich x und ich erhalte vom gerät nur Y die amplitude.
 
     wxString getMesurmentTime() { return m_lastMesurementTime; };

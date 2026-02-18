@@ -317,7 +317,7 @@ std::vector<double> sData3D::getSingleArray(int x, int y)
 
 // save Csv Functions
 
-bool saveToCsvFile(wxString& filename, sData& data, int mesurementNumb)
+bool CsvFile::saveToCsvFile(wxString& filename, sData& data, int mesurementNumb)
 {
     std::vector<double> real;
     std::vector<double> imag;
@@ -403,7 +403,7 @@ bool saveToCsvFile(wxString& filename, sData& data, int mesurementNumb)
     return true;
 }
 
-bool saveHeaderCsv(wxTextFile &file, sData& data)
+bool CsvFile::saveHeaderCsv(wxTextFile &file, sData& data)
 {
     sData::sParam* dsParam = data.GetParameter();
     //data.setNumberofPts_Array();
@@ -445,7 +445,7 @@ bool saveHeaderCsv(wxTextFile &file, sData& data)
     return true;
 }
 
-bool saveDataCsv(wxTextFile& file, sData data, int mesurementNumb, bool cont)
+bool CsvFile::saveDataCsv(wxTextFile& file, sData data, int mesurementNumb, bool cont)
 {
     if (!file.IsOpened())
     {
@@ -485,7 +485,7 @@ bool saveDataCsv(wxTextFile& file, sData data, int mesurementNumb, bool cont)
 // Read Csv functions
 
 
-bool readCsvFile(wxString filename, sData& data)
+bool CsvFile::readCsvFile(wxString filename, sData& data)
 {
     std::cerr << "read CSV" << std::endl;
 
@@ -503,7 +503,7 @@ bool readCsvFile(wxString filename, sData& data)
     return true;
 }
 
-bool readCsvHeader(wxTextFile&file, sData& data)
+bool CsvFile::readCsvHeader(wxTextFile&file, sData& data)
 {
     if (!file.Open())
     {
@@ -553,7 +553,7 @@ bool readCsvHeader(wxTextFile&file, sData& data)
     return true;
 }
 
-bool readDataCsv(wxTextFile& file, sData& data)
+bool CsvFile::readDataCsv(wxTextFile& file, sData& data)
 {
     int xPoints = data.getNumberOfPts_X();
     int yPoints = data.getNumberOfPts_Y();
@@ -666,7 +666,7 @@ bool readDataCsv(wxTextFile& file, sData& data)
 
 // Helper functions Index
 
-bool writeMatrixIndexCsv(wxTextFile& file, sData data)
+bool CsvFile::writeMatrixIndexCsv(wxTextFile& file, sData data)
 {
     // ID Für Real Nummern einfügen
     int xPoints = data.getNumberOfPts_X();
@@ -690,7 +690,7 @@ bool writeMatrixIndexCsv(wxTextFile& file, sData data)
     return true;
 }
 
-std::string getIndexNumbers(int xPoints, int yPoints, int mesurementNumb, bool continuous)
+std::string CsvFile::getIndexNumbers(int xPoints, int yPoints, int mesurementNumb, bool continuous)
 {
     int xPosition;
     int yPosition;
@@ -728,7 +728,7 @@ std::string getIndexNumbers(int xPoints, int yPoints, int mesurementNumb, bool c
     return  text;
 }
 
-int findLineCsv(wxTextFile& file, wxString findText)
+int CsvFile::findLineCsv(wxTextFile& file, wxString findText)
 {
     size_t count = file.GetLineCount();
 

@@ -19,7 +19,7 @@ PrologixUsbGpibAdapter::~PrologixUsbGpibAdapter()
 
 std::string PrologixUsbGpibAdapter::read(int forceReadBytes)
 {
-    wxString Text;
+    std::string Text;
 
     if (m_Connected)
     {
@@ -34,7 +34,7 @@ std::string PrologixUsbGpibAdapter::read(int forceReadBytes)
         if (ftStatus == FT_OK)
         {
             m_lastMsgReceived = std::string(BigBuffer.data(),BigBuffer.size());
-            Text = "Msg received: " + m_lastMsgReceived + "\n";
+            Text = m_lastMsgReceived + "\n";
 
             if (BigBuffer.size() == 0)
             {
@@ -54,7 +54,7 @@ std::string PrologixUsbGpibAdapter::read(int forceReadBytes)
         m_Connected = false;
     }
 
-    return std::string(Text.ToUTF8());
+    return Text;
 }
 
 std::string PrologixUsbGpibAdapter::write(std::string msg)

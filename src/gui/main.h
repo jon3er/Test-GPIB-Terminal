@@ -16,9 +16,13 @@
 // Gui header
 #include "mathplot.h"
 #include "Mesurement.h"
+#include "MeasurementDocument.h"
+#include "MultiMessDocument.h"
 #include "TerminalWindow.h"
+#include "TerminalDocument.h"
 #include "FunctionWindow.h"
 #include "SettingsWindow.h"
+#include "SettingsDocument.h"
 // Data
 #include "dataManagement.h"
 // info header
@@ -44,6 +48,8 @@ private:
     wxString m_filePathCurrentFile;
     sData m_OpendData;
     bool m_fileOpen;
+    CsvFile m_csvFile;
+
 protected:
 	wxMenuBar* m_menubarMainProg;
 
