@@ -1,5 +1,6 @@
 #include "main.h"
 #include "cmdGpib.h"
+#include <cstdio>
 
 
 wxIMPLEMENT_APP(MainWin);
@@ -7,13 +8,65 @@ wxIMPLEMENT_APP(MainWin);
 //-----MainWin Methodes-----
 bool MainWin::OnInit()
 {
-    //Enable Debug output window
-    wxLog::SetActiveTarget(new wxLogStderr());
+    try
+    {
+        // Log to file for debugging
+        FILE* debugLog = fopen("C:\\temp\\debug.log", "w");
+        if (debugLog)
+        {
+            fprintf(debugLog, "TEST-GPIB-Terminal starting...\n");
+            fflush(debugLog);
+        }
 
-    MainProgrammWin *MainProgFrame = new MainProgrammWin(nullptr);
-    MainProgFrame->Show();
+        //Enable Debug output window
+        wxLog::SetActiveTarget(new wxLogStderr());
 
-    return true;
+        if (debugLog)
+        {
+            fprintf(debugLog, "Creating main frame...\n");
+            fflush(debugLog);
+        }
+
+        MainProgrammWin *MainProgFrame = new MainProgrammWin(nullptr);
+
+        if (debugLog)
+        {
+            fprintf(debugLog, "Main frame created, showing...\n");
+            fflush(debugLog);
+        }
+
+        MainProgFrame->Show();
+
+        if (debugLog)
+        {
+            fprintf(debugLog, "Main frame shown, returning true\n");
+            fclose(debugLog);
+        }
+
+        return true;
+    }
+    catch (const std::exception& e)
+    {
+        FILE* debugLog = fopen("C:\\temp\\debug.log", "a");
+        if (debugLog)
+        {
+            fprintf(debugLog, "Exception caught: %s\n", e.what());
+            fclose(debugLog);
+        }
+        wxLogError(wxT("Fatal error during initialization: %s"), wxString::FromUTF8(e.what()));
+        return false;
+    }
+    catch (...)
+    {
+        FILE* debugLog = fopen("C:\\temp\\debug.log", "a");
+        if (debugLog)
+        {
+            fprintf(debugLog, "Unknown exception caught\n");
+            fclose(debugLog);
+        }
+        wxLogError(wxT("Unknown fatal error during initialization"));
+        return false;
+    }
 }
 //-----MainWin Methodes ende-----
 

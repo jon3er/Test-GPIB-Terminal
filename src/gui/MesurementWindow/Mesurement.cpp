@@ -1,6 +1,7 @@
 #include "Mesurement.h"
 #include "SettingsWindow.h"
 #include "cmdGpib.h"
+#include "mainHelper.h"
 
 //-----Plot Window BEGIN--------
 PlotWindow::PlotWindow(wxWindow *parent) : wxDialog(parent, wxID_ANY, "Plot Window", wxDefaultPosition, wxSize(1000,750))
@@ -72,6 +73,20 @@ PlotWindow::PlotWindow(wxWindow *parent) : wxDialog(parent, wxID_ANY, "Plot Wind
     // 7. Zoom auf Daten anpassen
     m_plot->Fit();
 
+    // Set controller's callbacks
+    m_MeasurementLogic.setDataUpdateCallback([this](const std::vector<double>& x, const std::vector<double>& y) {
+        m_x = x;
+        m_y = y;
+        updatePlotData();
+    });
+
+    m_MeasurementLogic.setProgressCallback([this](int current, int total) {
+        std::cerr << "Progress: " << current << "/" << total << std::endl;
+    });
+
+    m_MeasurementLogic.setOutputCallback([this](const std::string& output) {
+        std::cerr << output;
+    });
 }
 PlotWindow::~PlotWindow()
 {
@@ -85,6 +100,11 @@ PlotWindow::~PlotWindow()
     }
 
     Global::AdapterInstance.disconnect();
+}
+
+wxString PlotWindow::formatOutput(const std::string& text)
+{
+    return terminalTimestampOutput(wxString::FromUTF8(text.c_str()));
 }
 
 void PlotWindow::getFileNames(const wxString& dirPath, wxArrayString& files)
@@ -640,6 +660,21 @@ Mesurement2D::Mesurement2D( wxWindow* parent, wxWindowID id, const wxString& tit
     updateProgressBar();
     SetSliderValues();
 
+    // Set controller's callbacks
+    m_MeasuementLogic.setProgressCallback([this](int current, int total) {
+        m_currentMesurmentPoint = current;
+        m_totalMesurmentPoints = total;
+        updateProgressBar();
+    });
+
+    m_MeasuementLogic.setOutputCallback([this](const std::string& output) {
+        std::cerr << output;
+    });
+
+    m_MeasuementLogic.setUpdateCallback([this]() {
+        SetSliderValues();
+        updateProgressBar();
+    });
 }
 void Mesurement2D::OnReset(wxCommandEvent& event)
 {
@@ -951,6 +986,21 @@ MultiMessWindow::MultiMessWindow( wxWindow* parent, wxWindowID id, const wxStrin
 	this->Layout();
 
 	this->Centre( wxBOTH );
+
+    // Set controller's callbacks
+    m_MultiMessLogic.setProgressCallback([this](int current, int total) {
+        m_currentMesurmentPoint = current;
+        m_totalMesurmentPoints = total;
+        UpdateProgressBar();
+    });
+
+    m_MultiMessLogic.setOutputCallback([this](const std::string& output) {
+        std::cerr << output;
+    });
+
+    m_MultiMessLogic.setUpdateCallback([this]() {
+        UpdateProgressBar();
+    });
 }
 
 MultiMessWindow::~MultiMessWindow()

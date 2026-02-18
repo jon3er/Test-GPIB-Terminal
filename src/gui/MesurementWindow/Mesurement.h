@@ -16,6 +16,10 @@
 #include "systemInfo.h"
 
 #include "mathplot.h"
+// Temporarily disabled for debugging
+#include "MeasurementController.h"
+#include "Measurement2DController.h"
+#include "MultiMessWindowController.h"
 
 
 class PlotWindow : public wxDialog
@@ -53,6 +57,12 @@ private:
 
     int m_ptsX;
     int m_ptsY;
+
+    // Business logic controller - disabled for debugging
+    MeasurementController m_MeasurementLogic;
+
+    // Helper for formatting output with timestamp
+    wxString formatOutput(const std::string& text);
 
     //device Class
     //GpibDevice Adapter;
@@ -142,6 +152,9 @@ class Mesurement2D : public wxDialog
 
 		wxGauge* m_gauge1;
 
+        // Business logic controller - disabled for debugging
+        Measurement2DController m_MeasuementLogic;
+
 	public:
 
 		Mesurement2D( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("2D Mesurement"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 421,345 ), long style = wxDEFAULT_DIALOG_STYLE );
@@ -185,7 +198,7 @@ class MultiMessWindow : public wxDialog
 
         void testMessFunction();
 
-        // Set Default values
+        // Set Default values (now managed by controller)
         wxString m_X_Messpunkte   = "1";
         wxString m_Y_Messpunkte   = "1";
         wxString m_X_Cord         = "0";
@@ -201,6 +214,9 @@ class MultiMessWindow : public wxDialog
 
         int unsigned m_currentMesurmentPoint = 0;
         int unsigned m_totalMesurmentPoints;
+
+        // Business logic controller - disabled for debugging
+        // MultiMessWindowController m_MultiMessLogic;
 
         //sData Data1D;
         //sData3D Data3D;
