@@ -462,26 +462,9 @@ void fsuMesurement::setFreqStartEnd(double FreqS, double FreqE)
     m_FreqStart = FreqS;
     m_FreqEnd = FreqE;
 }
-/*
-sData::sParam fsuMesurement::getMesurmentData()
-{
-    sData::sParam *tempOld = tempData.GetParameter();
-    return *tempOld;
-
-}
-*/
-
 //------fsuMesurement Ende-----
 
 // Helper functions
-wxString terminalTimestampOutput(wxString Text)
-{
-    //Set Terminal Output Format
-    wxDateTime zeitJetzt = wxDateTime::Now();
-    wxString timestamp = zeitJetzt.Format("%H:%M:%S");
-    wxString FormatText = "[" + timestamp + "] " + Text;
 
-    return FormatText;
-}
 
 

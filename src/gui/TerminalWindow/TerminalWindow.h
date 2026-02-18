@@ -19,6 +19,6 @@ private:
     // GUI Components
     wxTextCtrl* m_TerminalDisplay;
 
-    // Business Logic (Model)
-    TerminalController m_controller;
+    // Terminal Logic
+    TerminalController m_TerminalLogic;
 };

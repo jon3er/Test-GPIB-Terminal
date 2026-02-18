@@ -42,6 +42,7 @@ public:
     std::string testDevice(const std::string& args = "");
 
 private:
+
     OutputCallback m_outputCallback;
 
     // Command map setup

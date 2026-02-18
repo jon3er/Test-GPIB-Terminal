@@ -24,8 +24,9 @@ void TerminalController::setOutputCallback(OutputCallback callback)
 
 void TerminalController::output(const std::string& text)
 {
-    if (m_outputCallback)
+    if (m_outputCallback != nullptr)
     {
+        // updates text display and appends line
         m_outputCallback(text);
     }
     std::cerr << text; // Also log to stderr
@@ -70,6 +71,7 @@ void TerminalController::processCommand(const std::string& input)
 
     if (match != m_cmds.end())
     {
+        // Exectue found function from map and return data string
         std::string result = match->second(args);
         output(result);
     }
@@ -304,7 +306,8 @@ std::string TerminalController::testDevice(const std::string& args)
         // Measurement test
         writeToDevice(ProLogixCmdLookup.at(ProLogixCmd::AUTO) + " 0");
 
-        writeToDevice("RST");
+        writeToDevice(ProLogixCmdLookup.at(ProLogixCmd::RST));
+
         writeToDevice(ScpiCmdLookup.at(ScpiCmd::CLR));
         writeToDevice(ScpiCmdLookup.at(ScpiCmd::FREQ_CENT) + " 1 GHZ");
         writeToDevice(ScpiCmdLookup.at(ScpiCmd::FREQ_SPAN) + " 10 MHZ");
@@ -348,8 +351,8 @@ std::string TerminalController::testDevice(const std::string& args)
             i++;
         }
 
-        writeToDevice(ScpiCmdLookup.at(ScpiCmd::TRAC_DATA) + " TRACE1");
-        writeToDevice(ProLogixCmdLookup.at(ProLogixCmd::READ) + " eoi");
+        writeToDevice(ScpiCmdLookup.at(ScpiCmd::TRAC_DATA) + " " + "TRACE1");
+        writeToDevice(ProLogixCmdLookup.at(ProLogixCmd::READ) + " " + "eoi");
 
         sleepMs(100);
         std::string trace = readFromDevice();

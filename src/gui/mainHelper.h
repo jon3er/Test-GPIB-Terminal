@@ -15,4 +15,6 @@
 
 bool PlotterMesurement(sData* data, int mesurementNumber);
 
+wxString terminalTimestampOutput(wxString Text);
+
 void sleepMs(int timeMs);

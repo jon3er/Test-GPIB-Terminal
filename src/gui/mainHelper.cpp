@@ -42,6 +42,16 @@ bool PlotterMesurement(sData* data, int mesurementNumber)
 
 }
 
+wxString terminalTimestampOutput(wxString Text)
+{
+    //Set Terminal Output Format
+    wxDateTime zeitJetzt = wxDateTime::Now();
+    wxString timestamp = zeitJetzt.Format("%H:%M:%S");
+    wxString FormatText = "[" + timestamp + "] " + Text;
+
+    return FormatText;
+}
+
 void sleepMs(int timeMs)
 {
     std::this_thread::sleep_for(std::chrono::milliseconds(timeMs));

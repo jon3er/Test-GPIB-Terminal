@@ -1,5 +1,6 @@
 
 #include "TerminalWindow.h"
+#include "mainHelper.h"
 #include "systemInfo.h"
 
 //----- Terminal Window Constructor -----
@@ -31,7 +32,8 @@ TerminalWindow::TerminalWindow(wxWindow *parent)
     TerminalInput->Bind(wxEVT_TEXT_ENTER, &TerminalWindow::OnEnterTerminal, this);
 
     // Set controller's output callback to update display
-    m_controller.setOutputCallback([this](const std::string& output) {
+    m_TerminalLogic.setOutputCallback([this](const std::string& output) {
+        // Each time output is updated with the output func a new line gets append here
         m_TerminalDisplay->AppendText(formatOutput(output));
     });
 }
@@ -66,5 +68,5 @@ void TerminalWindow::OnEnterTerminal(wxCommandEvent& event)
 
     // Process command through the controller
     std::string input(TText.ToUTF8());
-    m_controller.processCommand(input);
+    m_TerminalLogic.processCommand(input);
 }

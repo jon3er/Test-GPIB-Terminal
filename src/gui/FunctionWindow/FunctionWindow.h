@@ -1,8 +1,7 @@
 #pragma once
 
 #include <wx/wx.h>
-
-
+#include "FunctionController.h"
 
 class FunctionWindow : public wxDialog
 {
@@ -11,7 +10,7 @@ public:
     virtual ~FunctionWindow();
 
 private:
-    //Button Functions
+    // Event handlers
     void OnWriteGpib(wxCommandEvent& event);
     void OnReadGpib(wxCommandEvent& event);
     void OnReadWriteGpib(wxCommandEvent& event);
@@ -22,10 +21,13 @@ private:
     void OnTestMultiMess(wxCommandEvent& event);
     void OnTest(wxCommandEvent& event);
 
-    //Text Boxes
+    // Helper to format output with timestamp
+    wxString formatOutput(const std::string& text);
+
+    // GUI Components
     wxTextCtrl* m_textFuncOutput;
     wxTextCtrl* m_writeFuncInput;
 
-    //device Class
-    //GpibDevice Adapter;
+    // Function Logic
+    FunctionController m_FunctionLogic;
 };
