@@ -25,6 +25,8 @@
 #include "SettingsDocument.h"
 // Data
 #include "dataManagement.h"
+// Doc/View
+#include "MainDocument.h"
 // info header
 #include "systemInfo.h"
 #include "cmdGpib.h"
@@ -42,13 +44,11 @@ public:
 
 
 //-----Main Programm Window
-class MainProgrammWin : public wxFrame
+class MainProgrammWin : public wxFrame, public IMainObserver
 {
 private:
-    wxString m_filePathCurrentFile;
-    sData m_OpendData;
-    bool m_fileOpen;
-    CsvFile m_csvFile;
+    // Non-owning pointer to application-level document (owned by MainWin::OnInit)
+    MainDocument* m_doc = nullptr;
 
 protected:
 	wxMenuBar* m_menubarMainProg;
@@ -96,11 +96,19 @@ protected:
 
 public:
 
-	MainProgrammWin( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("GPIB Messurement"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 814,454 ), long style = wxDEFAULT_FRAME_STYLE|wxTAB_TRAVERSAL );
+	MainProgrammWin( wxWindow* parent, MainDocument* doc, wxWindowID id = wxID_ANY, const wxString& title = wxT("GPIB Messurement"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 814,454 ), long style = wxDEFAULT_FRAME_STYLE|wxTAB_TRAVERSAL );
 	~MainProgrammWin();
-    //PassData
-    sData returnOpendData() { return m_OpendData; };
-    bool isFileOpen() { return m_fileOpen; };
+
+    // Document access
+    MainDocument* GetDocument() const { return m_doc; }
+
+    // Legacy convenience delegates (keep callers compiling)
+    sData& returnOpendData() { return m_doc->GetData(); }
+    bool   isFileOpen()      { return m_doc->IsFileOpen(); }
+
+    // IMainObserver — updates window title and menu-item enabled states
+    void OnFileChanged(const sData& data, bool isOpen) override;
+    void OnFilePathChanged(const wxString& path) override;
     // Button func
     void ButtonRefresh(wxCommandEvent& event);
     // Menubar items

@@ -4,7 +4,9 @@
 #include "mainHelper.h"
 
 //-----Plot Window BEGIN--------
-PlotWindow::PlotWindow(wxWindow *parent) : wxDialog(parent, wxID_ANY, "Plot Window", wxDefaultPosition, wxSize(1000,750))
+PlotWindow::PlotWindow(wxWindow *parent, MainDocument* mainDoc)
+    : wxDialog(parent, wxID_ANY, "Plot Window", wxDefaultPosition, wxSize(1000,750))
+    , m_mainDoc(mainDoc)
 {
     getFileNames(m_filePath, m_fileNames);
 
@@ -32,15 +34,10 @@ PlotWindow::PlotWindow(wxWindow *parent) : wxDialog(parent, wxID_ANY, "Plot Wind
     // 3. Daten vorbereiten (std::vector laut Header Definition von mpFXYVector)
 
     //Holt in dem Haupt menu geladene daten
-    MainProgrammWin* MainFrame = dynamic_cast<MainProgrammWin*>(parent);
-    if (MainFrame != nullptr)
+    if (m_mainDoc != nullptr && m_mainDoc->IsFileOpen())
     {
-        if (MainFrame->isFileOpen())
-        {
-            sData temp = MainFrame->returnOpendData();
-            sData::sParam *tempStruct = temp.GetParameter();
-            temp.GetData(tempStruct, m_x, m_y);
-        }
+        sData::sParam* tempStruct = m_mainDoc->GetData().GetParameter();
+        m_mainDoc->GetData().GetData(tempStruct, m_x, m_y);
     }
 
 

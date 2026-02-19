@@ -27,7 +27,7 @@ bool MainWin::OnInit()
             fflush(debugLog);
         }
 
-        MainProgrammWin *MainProgFrame = new MainProgrammWin(nullptr);
+        MainProgrammWin *MainProgFrame = new MainProgrammWin(nullptr, new MainDocument());
 
         if (debugLog)
         {
@@ -71,9 +71,14 @@ bool MainWin::OnInit()
 //-----MainWin Methodes ende-----
 
 //-----Main Programm Window-----
-MainProgrammWin::MainProgrammWin( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style )
+MainProgrammWin::MainProgrammWin( wxWindow* parent, MainDocument* doc, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style )
     : wxFrame( parent, id, title, pos, size, style )
 {
+    // Store and observe document
+    m_doc = doc;
+    if (m_doc)
+        m_doc->AddObserver(this);
+
     //TODO set new Functions
 
     // File Main binds
@@ -267,6 +272,8 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, wxWindowID id, const wxStrin
 }
 MainProgrammWin::~MainProgrammWin()
 {
+    if (m_doc)
+        m_doc->RemoveObserver(this);
     this->Destroy();
 }
 // Button functions
@@ -320,30 +327,17 @@ void MainProgrammWin::MenuFileOpen(wxCommandEvent& event)
         "CSV Files (*.csv)|*.csv|All Files (*.*)|*.*",
         wxFD_OPEN);
 
-    if (openFileDialog.ShowModal()== wxID_CANCEL)
-    {
+    if (openFileDialog.ShowModal() == wxID_CANCEL)
         return;
-    }
 
-    m_filePathCurrentFile = openFileDialog.GetPath();
-
-    if (m_csvFile.readCsvFile(m_filePathCurrentFile, m_OpendData))
-    {
-        m_fileOpen = true;
-    }
-    else
-    {
-        m_fileOpen = false;
-    }
-
-    std::cerr << m_filePathCurrentFile << std::endl;
+    m_doc->OpenFile(openFileDialog.GetPath());
 }
 
 void MainProgrammWin::MenuFileSave(wxCommandEvent& event)
 {
-    if (m_fileOpen)
+    if (m_doc->IsFileOpen())
     {
-        m_csvFile.saveToCsvFile(m_filePathCurrentFile, m_OpendData, 0);
+        m_doc->SaveFile();
     }
     else
     {
@@ -355,39 +349,20 @@ void MainProgrammWin::MenuFileSaveAs(wxCommandEvent& event)
     std::cerr << "Try to Open save as dialog..." << std::endl;
 
     wxFileDialog saveAsFileDialog(nullptr, _("File Save As..."),
-        "",//filePathRoot,
+        "",
         "",
         "CSV Files (*.csv)|*.csv|All Files (*.*)|*.*",
         wxFD_SAVE);
 
-    if (saveAsFileDialog.ShowModal()== wxID_CANCEL)
-    {
+    if (saveAsFileDialog.ShowModal() == wxID_CANCEL)
         return;
-    }
 
-    std::cerr << "Opend save as window" << std::endl;
-
-    m_filePathCurrentFile = saveAsFileDialog.GetPath();
-    if (!m_csvFile.saveToCsvFile(m_filePathCurrentFile, m_OpendData, 0))
-    {
-        std::cerr << "failed to save" << std::endl;
-        m_fileOpen = false;
-        return;
-    }
-    else
-    {
-        m_fileOpen = true;
-    }
-
-    std::cerr << m_filePathCurrentFile << std::endl;
-    std::cerr << "saved data" << std::endl;
+    m_doc->SaveFileAs(saveAsFileDialog.GetPath());
 }
 
 void MainProgrammWin::MenuFileClose(wxCommandEvent& event)
 {
-    m_fileOpen = false;
-    sData OpendDataTemp;
-    m_OpendData = OpendDataTemp;
+    m_doc->CloseFile();
 }
 void MainProgrammWin::MenuFileExit(wxCommandEvent& event)
 {
@@ -399,7 +374,7 @@ void MainProgrammWin::MenuMesurementNew(wxCommandEvent& event)
     // Document owns hardware state, independent of the view
     MeasurementDocument measDoc(Global::AdapterInstance, Global::Messung);
 
-    PlotWindow* PlotWin = new PlotWindow(this);
+    PlotWindow* PlotWin = new PlotWindow(this, m_doc);
     PlotWin->SetDocument(&measDoc);
 
     PlotWin->ShowModal();
@@ -484,3 +459,24 @@ void MainProgrammWin::MenuHelpAbout(wxCommandEvent& event)
 
 
 //Helper Functions
+// -----------------------------------------------------------------------
+// IMainObserver implementation
+// -----------------------------------------------------------------------
+void MainProgrammWin::OnFileChanged(const sData& data, bool isOpen)
+{
+    // Enable/disable file-menu items that require an open file
+    if (m_menuFile_Item_Close)
+        m_menuFile_Item_Close->Enable(isOpen);
+    if (m_menuFile_Item_Save)
+        m_menuFile_Item_Save->Enable(isOpen);
+    if (m_menuFile_Item_SaveAs)
+        m_menuFile_Item_SaveAs->Enable(isOpen);
+}
+
+void MainProgrammWin::OnFilePathChanged(const wxString& path)
+{
+    if (path.IsEmpty())
+        SetTitle(wxT("GPIB Messurement"));
+    else
+        SetTitle(wxT("GPIB Messurement — ") + path.AfterLast('\\').AfterLast('/'));
+}

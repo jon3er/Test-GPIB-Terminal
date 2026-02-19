@@ -5,8 +5,11 @@
 #include <vector>
 #include <wx/wx.h>
 #include <wx/tokenzr.h>
+#include <wx/dir.h>
+#include <wx/textfile.h>
+#include <wx/msgdlg.h>
 
-#include "main.h"
+#include "MainDocument.h"
 #include "dataManagement.h"
 #include "fkt_GPIB.h"
 #include "fkt_d2xx.h"
@@ -23,7 +26,12 @@
 class PlotWindow : public wxDialog, public IMeasurementObserver
 {
 public:
-    explicit PlotWindow(wxWindow* parent);
+    /**
+     * @param parent     wx parent window (for layout / modality)
+     * @param mainDoc    pointer to the application-level MainDocument
+     *                   (may be nullptr; used to pre-populate the plot).
+     */
+    explicit PlotWindow(wxWindow* parent, MainDocument* mainDoc = nullptr);
     virtual ~PlotWindow();
 
     /** Attach / detach document. Registers/unregisters this as observer. */
@@ -50,6 +58,9 @@ private:
 
     // Non-owning pointer to document (owned by caller)
     MeasurementDocument* m_document = nullptr;
+
+    // Non-owning pointer to application-level document (for pre-load)
+    MainDocument* m_mainDoc = nullptr;
 
     int m_mesurementNumber = 1;
 };
