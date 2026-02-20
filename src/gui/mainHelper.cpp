@@ -13,7 +13,7 @@ bool PlotterMesurement(sData* data, int mesurementNumber)
     int x;
     int y;
 
-    Global::AdapterInstance.readScriptFile(System::filePathSystem, "PlotMessung.txt", logAdapterReceived);
+    PrologixUsbGpibAdapter::get_instance().readScriptFile(System::filePathSystem, "PlotMessung.txt", logAdapterReceived);
     // Output received messages to debug log
     for (size_t i = 0; i < logAdapterReceived.GetCount(); i++)
     {
@@ -23,12 +23,12 @@ bool PlotterMesurement(sData* data, int mesurementNumber)
     }
 
 
-    MessWerteReal = Global::Messung.getX_Data();
+    MessWerteReal = fsuMesurement::get_instance().getX_Data();
 
     data->getXYCord(x, y, mesurementNumber);
 
     data->set3DDataReal(MessWerteReal, x, y);
-    if (Global::Messung.isImagValues())
+    if (fsuMesurement::get_instance().isImagValues())
     {
         data->set3DDataImag(MessWerteImag, x, y);
     }

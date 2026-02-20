@@ -19,12 +19,6 @@ namespace System
 #endif
 }
 
-namespace Global
-{
-    inline PrologixUsbGpibAdapter&     AdapterInstance = PrologixUsbGpibAdapter::get_instance();
-    inline fsuMesurement   Messung;
-}
-
 enum MainMenuBar
 {
     ID_Hello            = 01,

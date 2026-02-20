@@ -14,8 +14,22 @@
 
 class fsuMesurement
 {
-public:
+protected:
     fsuMesurement();
+
+public:
+
+    // Singelton pattern to prevent multiple calls
+    static fsuMesurement& get_instance()
+    {
+        static fsuMesurement instance;
+        return instance;
+    }
+    // Overload to prevent second two instance
+    fsuMesurement(const fsuMesurement&) = delete;
+    fsuMesurement(fsuMesurement&&) = delete;
+    fsuMesurement operator=(const fsuMesurement&) = delete;
+    fsuMesurement operator=(fsuMesurement&&) = delete;
 
     void seperateDataBlock(const wxString& receivedString);
     
@@ -87,8 +101,6 @@ public:
     std::string getLastMsgReseived();
 
     void setBaudrate(int BaudrateNew);
-    
-    fsuMesurement getMesurement() { return m_Messung; };
 
     
 private:
@@ -101,8 +113,6 @@ private:
     int m_sendDelayMs     = 100;
     std::string m_lastMsgReceived = "";
     DWORD m_BytesToRead   = 0;
-
-    fsuMesurement m_Messung;
 
     // helper Functionen
     std::vector<char> checkAscii(std::string input);

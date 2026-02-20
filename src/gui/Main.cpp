@@ -283,15 +283,15 @@ void MainProgrammWin::ButtonRefresh(wxCommandEvent& event)
     m_textCtrlAdapterStatus->SetValue(Text);
     m_textCtrlDeviceStatus->SetValue(Text);
 
-    if (!Global::AdapterInstance.getConnected())
+    if (!PrologixUsbGpibAdapter::get_instance().getConnected())
     {
-        Global::AdapterInstance.connect();
+        PrologixUsbGpibAdapter::get_instance().connect();
     }
 
-    if (Global::AdapterInstance.getConnected())
+    if (PrologixUsbGpibAdapter::get_instance().getConnected())
     {
 
-        Text = Global::AdapterInstance.send(ProLogixCmdLookup.at(ProLogixCmd::VER));
+        Text = PrologixUsbGpibAdapter::get_instance().send(ProLogixCmdLookup.at(ProLogixCmd::VER));
         if (Text.substr(0,6) == "Failed")
         {
             m_textCtrlAdapterStatus->SetValue("Error Check Connection");
@@ -301,7 +301,7 @@ void MainProgrammWin::ButtonRefresh(wxCommandEvent& event)
             m_textCtrlAdapterStatus->SetValue(Text.substr(14));
         }
 
-        Text = Global::AdapterInstance.send(ScpiCmdLookup.at(ScpiCmd::IDN));
+        Text = PrologixUsbGpibAdapter::get_instance().send(ScpiCmdLookup.at(ScpiCmd::IDN));
         if (Text == "No Message to Read\n")
         {
             Text = "No GPIB Device Found Check Connection";
@@ -372,7 +372,7 @@ void MainProgrammWin::MenuFileExit(wxCommandEvent& event)
 void MainProgrammWin::MenuMesurementNew(wxCommandEvent& event)
 {
     // Document owns hardware state, independent of the view
-    MeasurementDocument measDoc(Global::AdapterInstance, Global::Messung);
+    MeasurementDocument measDoc(PrologixUsbGpibAdapter::get_instance(), fsuMesurement::get_instance());
 
     PlotWindow* PlotWin = new PlotWindow(this, m_doc);
     PlotWin->SetDocument(&measDoc);
@@ -390,7 +390,7 @@ void MainProgrammWin::MenuMesurementLoad(wxCommandEvent& event)
 void MainProgrammWin::MenuMesurementSettings(wxCommandEvent& event)
 {
     // Document owns hardware state; created on the stack to match the lifecycle of the dialog
-    SettingsDocument settingsDoc(Global::AdapterInstance);
+    SettingsDocument settingsDoc(PrologixUsbGpibAdapter::get_instance());
 
     SettingsWindow* SettingsWin = new SettingsWindow(this);
     SettingsWin->SetDocument(&settingsDoc);   // register observer + initial refresh
@@ -401,7 +401,7 @@ void MainProgrammWin::MenuMesurementSettings(wxCommandEvent& event)
 void MainProgrammWin::MenuTestTerminal(wxCommandEvent& event)
 {
     // Document owns hardware state and is independent of the view
-    TerminalDocument termDoc(Global::AdapterInstance);
+    TerminalDocument termDoc(PrologixUsbGpibAdapter::get_instance());
 
     // Create view and attach document
     TerminalWindow* TWin = new TerminalWindow(this);
@@ -418,7 +418,7 @@ void MainProgrammWin::MenuTestTerminal(wxCommandEvent& event)
 void MainProgrammWin::MenuTestFunc(wxCommandEvent& event)
 {
     // Document owns all function-test state and the adapter reference.
-    FunctionDocument funcDoc(Global::AdapterInstance);
+    FunctionDocument funcDoc(PrologixUsbGpibAdapter::get_instance());
 
     FunctionWindow* FuncWin = new FunctionWindow(this);
     FuncWin->SetDocument(&funcDoc);
@@ -437,7 +437,7 @@ void MainProgrammWin::MenuTestPloter(wxCommandEvent& event)
 void MainProgrammWin::MenuMesurementSetMarker(wxCommandEvent& event)
 {
     // Reuse the same adapter — marker dialog only needs to write SCPI commands
-    MeasurementDocument markerDoc(Global::AdapterInstance, Global::Messung);
+    MeasurementDocument markerDoc(PrologixUsbGpibAdapter::get_instance(), fsuMesurement::get_instance());
 
     PlotWindowSetMarker* PlotWinMarker = new PlotWindowSetMarker(this);
     PlotWinMarker->SetDocument(&markerDoc);
@@ -458,7 +458,6 @@ void MainProgrammWin::MenuHelpAbout(wxCommandEvent& event)
 }
 
 
-//Helper Functions
 // -----------------------------------------------------------------------
 // IMainObserver implementation
 // -----------------------------------------------------------------------

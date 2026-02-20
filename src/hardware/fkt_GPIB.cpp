@@ -243,8 +243,8 @@ void PrologixUsbGpibAdapter::readScriptFile(const wxString& dirPath, const wxStr
                 sleepMs(300);
                 logAdapterReceived.Add(read());
                 std::cerr << "responce: " << logAdapterReceived.Last() << std::endl;
-                m_Messung.seperateDataBlock(logAdapterReceived.Last());
-                m_Messung.setFreqStartEnd(75'000'000,125'000'000);
+                fsuMesurement::get_instance().seperateDataBlock(logAdapterReceived.Last());
+                fsuMesurement::get_instance().setFreqStartEnd(75'000'000,125'000'000);
                 //Messung.calcYdata(); //start und end frequenz angeben
 
             }
@@ -396,8 +396,10 @@ std::vector<char> PrologixUsbGpibAdapter::checkAscii(std::string input)
 }
 
 //------fsuMesurement Beginn-----
+
 fsuMesurement::fsuMesurement()
 {
+    /*
     m_x_Data = {0};
     m_y_Data = {0};
 
@@ -406,7 +408,9 @@ fsuMesurement::fsuMesurement()
 
     m_NoPoints_x = 0;
     m_NoPoints_y = 0;
+    */
 }
+
 void fsuMesurement::seperateDataBlock(const wxString& receivedString)
 {
     wxArrayString seperatedStrings = wxStringTokenize(receivedString, ",");

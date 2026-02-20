@@ -6,6 +6,7 @@
 
 // Forward declaration — keep this header wxWidgets-free
 class PrologixUsbGpibAdapter;
+class fsuMesurement;
 
 /**
  * @brief Observer interface for MultiMessDocument.
@@ -37,7 +38,7 @@ public:
 class MultiMessDocument
 {
 public:
-    explicit MultiMessDocument(PrologixUsbGpibAdapter& adapter);
+    explicit MultiMessDocument(PrologixUsbGpibAdapter& adapter, fsuMesurement& fsuMesurement);
     ~MultiMessDocument();
 
     // ---- Observer management ----
@@ -91,6 +92,7 @@ private:
 
     // ---- Injected dependency ----
     PrologixUsbGpibAdapter& m_adapter;
+    fsuMesurement& m_fsuMesurement;
 
     // ---- Configuration state ----
     std::string m_X_Messpunkte   = "1";

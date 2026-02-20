@@ -10,8 +10,8 @@
 // Construction / Destruction
 // ---------------------------------------------------------------------------
 
-MultiMessDocument::MultiMessDocument(PrologixUsbGpibAdapter& adapter)
-    : m_adapter(adapter)
+MultiMessDocument::MultiMessDocument(PrologixUsbGpibAdapter& adapter, fsuMesurement& fsuMesurement)
+    : m_adapter(adapter), m_fsuMesurement(fsuMesurement)
 {
     RecalculateTotalPoints();
 }
@@ -192,7 +192,8 @@ void MultiMessDocument::ExecuteMeasurement()
 {
     if (m_totalPoints == 1)
     {
-        m_adapter.getMesurement();
+        // TODO: Implent multi mesurement
+        // m_fsuMesurement.getMesurement();
         std::cerr << "MultiMessDocument: single-point measurement executed" << std::endl;
     }
     else
