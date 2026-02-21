@@ -10,7 +10,10 @@
 #include "ftd2xx.h"
 #include <wx/textfile.h>
 
-
+/*
+ * @brief fsuMesurement
+ *  
+*/
 
 class fsuMesurement
 {
@@ -33,7 +36,7 @@ public:
 
     void seperateDataBlock(const wxString& receivedString);
     
-    std::vector<double> calcYdata(); //TODO umbennen ist eigendlich x und ich erhalte vom gerät nur Y die amplitude.
+    std::vector<double> calcFreqData(); //TODO umbennen ist eigendlich x und ich erhalte vom gerät nur Y die amplitude.
 
     wxString getMesurmentTime() { return m_lastMesurementTime; };
     std::vector<double> getX_Data() {return m_x_Data; };
@@ -42,7 +45,6 @@ public:
     unsigned int getNoPoints_y() { return m_NoPoints_y; };
     //sData::sParam getMesurmentData();
     bool isImagValues() { return m_ImagValues; };
-
 
     void setFreqStartEnd(double FreqS, double FreqE);
 
@@ -58,6 +60,18 @@ private:
 
     bool m_ImagValues = false;
     //sData tempData;
+};
+
+struct PrologixDeviceInfo {
+    FT_HANDLE ftHandle  = NULL;
+    FT_STATUS ftStatus  = FT_OK;
+    DWORD numDev        = 0;
+    int BaudRate        = 921600;
+    bool Connected      = false;
+    bool configFin      = false;
+    int sendDelayMs     = 100;
+    std::string lastMsgReceived = "";
+    DWORD BytesToRead   = 0;
 };
 
 class PrologixUsbGpibAdapter
@@ -104,15 +118,7 @@ public:
 
     
 private:
-    FT_HANDLE m_ftHandle  = NULL;
-    FT_STATUS m_ftStatus  = FT_OK;
-    DWORD m_numDev        = 0;
-    int m_BaudRate        = 921600;
-    bool m_Connected      = false;
-    bool m_configFin      = false;
-    int m_sendDelayMs     = 100;
-    std::string m_lastMsgReceived = "";
-    DWORD m_BytesToRead   = 0;
+    PrologixDeviceInfo m_deviceInfo;
 
     // helper Functionen
     std::vector<char> checkAscii(std::string input);

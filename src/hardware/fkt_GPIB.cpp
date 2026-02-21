@@ -11,7 +11,7 @@ PrologixUsbGpibAdapter::PrologixUsbGpibAdapter()
 
 PrologixUsbGpibAdapter::~PrologixUsbGpibAdapter()
 {
-    if (m_Connected)
+    if (m_deviceInfo.Connected)
     {
         disconnect();
     }
@@ -21,7 +21,7 @@ std::string PrologixUsbGpibAdapter::read(int forceReadBytes)
 {
     std::string Text;
 
-    if (m_Connected)
+    if (m_deviceInfo.Connected)
     {
         std::vector<char> BigBuffer;
         DWORD BufferSize;
@@ -29,12 +29,12 @@ std::string PrologixUsbGpibAdapter::read(int forceReadBytes)
 
         std::cerr << "Reading from Device..." << std::endl;
 
-        ftStatus = readUsbDev(m_ftHandle, BigBuffer, BufferSize, forceReadBytes);
+        ftStatus = readUsbDev(m_deviceInfo.ftHandle, BigBuffer, BufferSize, forceReadBytes);
 
         if (ftStatus == FT_OK)
         {
-            m_lastMsgReceived = std::string(BigBuffer.data(),BigBuffer.size());
-            Text = m_lastMsgReceived + "\n";
+            m_deviceInfo.lastMsgReceived = std::string(BigBuffer.data(),BigBuffer.size());
+            Text = m_deviceInfo.lastMsgReceived + "\n";
 
             if (BigBuffer.size() == 0)
             {
@@ -44,14 +44,14 @@ std::string PrologixUsbGpibAdapter::read(int forceReadBytes)
         else
         {
             Text = "Failed to Receive Data - TimeOut after 5s\n";
-            m_Connected = false;
+            m_deviceInfo.Connected = false;
         }
     }
     else
     {
         std::cerr << "No Device to send too" << std::endl;
         Text = "Failed to Connect to a Device\n";
-        m_Connected = false;
+        m_deviceInfo.Connected = false;
     }
 
     return Text;
@@ -63,7 +63,7 @@ std::string PrologixUsbGpibAdapter::write(std::string msg)
 
     std::cerr << "Write Command Entered" << std::endl;
 
-    if (m_Connected)
+    if (m_deviceInfo.Connected)
     {
         DWORD bytesWritten;
         wxString GPIBText = msg;
@@ -73,7 +73,7 @@ std::string PrologixUsbGpibAdapter::write(std::string msg)
 
         std::cerr << "Trying to write to Device... " << std::string(charArrWriteGpib.begin(),charArrWriteGpib.end()) << std::endl;
 
-        FT_STATUS ftStatus =writeUsbDev(m_ftHandle, charArrWriteGpib, bytesWritten);
+        FT_STATUS ftStatus =writeUsbDev(m_deviceInfo.ftHandle, charArrWriteGpib, bytesWritten);
 
         if (ftStatus == FT_OK)
         {
@@ -105,25 +105,25 @@ std::string PrologixUsbGpibAdapter::send(std::string msg, int DelayMs)
 DWORD PrologixUsbGpibAdapter::quaryBuffer()
 {
     //Get Number of bytes to read from receive queue
-    m_ftStatus = FT_GetQueueStatus(m_ftHandle,&m_BytesToRead);
-    std::cerr << "Bytes in Queue: " << m_BytesToRead << std::endl;
-    printErr(m_ftStatus,"Failed to Get Queue Status");
+    m_deviceInfo.ftStatus = FT_GetQueueStatus(m_deviceInfo.ftHandle,&m_deviceInfo.BytesToRead);
+    std::cerr << "Bytes in Queue: " << m_deviceInfo.BytesToRead << std::endl;
+    printErr(m_deviceInfo.ftStatus,"Failed to Get Queue Status");
 
-    return m_BytesToRead;
+    return m_deviceInfo.BytesToRead;
 }
 
 void PrologixUsbGpibAdapter::connect(std::string args)
 {
-    if (!m_Connected)
+    if (!m_deviceInfo.Connected)
     {
-        m_ftStatus = FT_Open(m_numDev,&m_ftHandle);
-        printErr(m_ftStatus,"Failed to Connect");
+        m_deviceInfo.ftStatus = FT_Open(m_deviceInfo.numDev,&m_deviceInfo.ftHandle);
+        printErr(m_deviceInfo.ftStatus,"Failed to Connect");
         write("SYST:DISP:UDP ON"); //Turn on monitor
 
-        if (m_ftStatus == FT_OK)
+        if (m_deviceInfo.ftStatus == FT_OK)
         {
-            std::cerr << "Connected to " << m_numDev << std::endl;
-            m_Connected = true;
+            std::cerr << "Connected to " << m_deviceInfo.numDev << std::endl;
+            m_deviceInfo.Connected = true;
         }
     }
 }
@@ -137,38 +137,38 @@ void PrologixUsbGpibAdapter::disconnect(std::string args)
     sleepMs(200);
 
 
-    m_ftStatus = FT_Close(m_ftHandle);
-    printErr(m_ftStatus,"Failed to Disconnect");
-    if (m_ftStatus == FT_OK)
+    m_deviceInfo.ftStatus = FT_Close(m_deviceInfo.ftHandle);
+    printErr(m_deviceInfo.ftStatus,"Failed to Disconnect");
+    if (m_deviceInfo.ftStatus == FT_OK)
     {
-        std::cerr << "Connected to " << m_numDev << std::endl;
-        m_Connected = false;
+        std::cerr << "Connected to " << m_deviceInfo.numDev << std::endl;
+        m_deviceInfo.Connected = false;
     }
 }
 void PrologixUsbGpibAdapter::config()
 {
     //set Baudrate
-    m_ftStatus = FT_SetBaudRate(m_ftHandle,m_BaudRate);
-    printErr(m_ftStatus,"Failed to set Baudrate");
+    m_deviceInfo.ftStatus = FT_SetBaudRate(m_deviceInfo.ftHandle,m_deviceInfo.BaudRate);
+    printErr(m_deviceInfo.ftStatus,"Failed to set Baudrate");
 
-    m_ftStatus = FT_SetDataCharacteristics(m_ftHandle, FT_BITS_8, FT_STOP_BITS_1, FT_PARITY_NONE);
-    printErr(m_ftStatus,"Failed to set Data Characteristics");
+    m_deviceInfo.ftStatus = FT_SetDataCharacteristics(m_deviceInfo.ftHandle, FT_BITS_8, FT_STOP_BITS_1, FT_PARITY_NONE);
+    printErr(m_deviceInfo.ftStatus,"Failed to set Data Characteristics");
 
-    m_ftStatus = FT_SetFlowControl(m_ftHandle, FT_FLOW_NONE, 0, 0);
-    printErr(m_ftStatus,"Failed to set flow Characteristics");
+    m_deviceInfo.ftStatus = FT_SetFlowControl(m_deviceInfo.ftHandle, FT_FLOW_NONE, 0, 0);
+    printErr(m_deviceInfo.ftStatus,"Failed to set flow Characteristics");
 
-    m_ftStatus =  FT_SetTimeouts(m_ftHandle, 500,500);
-    printErr(m_ftStatus,"Failed to set TimeOut");
+    m_deviceInfo.ftStatus =  FT_SetTimeouts(m_deviceInfo.ftHandle, 500,500);
+    printErr(m_deviceInfo.ftStatus,"Failed to set TimeOut");
 
     std::cerr << "FT-Config complete" << std::endl;
 
-    if (m_ftStatus == FT_OK)
+    if (m_deviceInfo.ftStatus == FT_OK)
     {
-        m_configFin = true;
+        m_deviceInfo.configFin = true;
     }
     else
     {
-        m_configFin = false;
+        m_deviceInfo.configFin = false;
     }
 }
 void PrologixUsbGpibAdapter::readScriptFile(const wxString& dirPath, const wxString& file, wxArrayString& logAdapterReceived, const std::atomic<bool>* stopFlag)
@@ -267,7 +267,7 @@ std::string PrologixUsbGpibAdapter::statusText()
 {
     std::string Text;
 
-    if (m_Connected)
+    if (m_deviceInfo.Connected)
     {
         Text = "Connected to a Device ";
     }
@@ -275,48 +275,48 @@ std::string PrologixUsbGpibAdapter::statusText()
     {
         Text = "Not connected to a device";
     }
-    if (m_Connected && m_configFin)
+    if (m_deviceInfo.Connected && m_deviceInfo.configFin)
     {
         Text = Text + " and ";
     }
-    if (m_configFin)
+    if (m_deviceInfo.configFin)
     {
-        Text = Text + "Device config set Baudrate to: " + std::to_string(m_BaudRate);
+        Text = Text + "Device config set Baudrate to: " + std::to_string(m_deviceInfo.BaudRate);
     }
 
-    Text += "\nLast Status code:" + wxString(statusString(m_ftStatus)) + "\n";
+    Text += "\nLast Status code:" + wxString(statusString(m_deviceInfo.ftStatus)) + "\n";
 
     return Text;
 }
 
 FT_STATUS PrologixUsbGpibAdapter::getStatus()
 {
-    return m_ftStatus;
+    return m_deviceInfo.ftStatus;
 }
 
 FT_HANDLE PrologixUsbGpibAdapter::getHandle()
 {
-    return m_ftHandle;
+    return m_deviceInfo.ftHandle;
 }
 
 bool PrologixUsbGpibAdapter::getConnected()
 {
-    return m_Connected;
+    return m_deviceInfo.Connected;
 }
 
 std::string PrologixUsbGpibAdapter::getLastMsgReseived()
 {
-    return m_lastMsgReceived;
+    return m_deviceInfo.lastMsgReceived;
 }
 
 int PrologixUsbGpibAdapter::getBaudrate()
 {
-    return m_BaudRate;
+    return m_deviceInfo.BaudRate;
 }
 
 void PrologixUsbGpibAdapter::setBaudrate(int BaudrateNew)
 {
-    m_BaudRate = BaudrateNew;
+    m_deviceInfo.BaudRate = BaudrateNew;
 }
 
 std::vector<char> PrologixUsbGpibAdapter::checkAscii(std::string input)
@@ -437,7 +437,7 @@ void fsuMesurement::seperateDataBlock(const wxString& receivedString)
     m_x_Data.resize(x.size());
     m_x_Data=x;
 }
-std::vector<double> fsuMesurement::calcYdata()
+std::vector<double> fsuMesurement::calcFreqData()
 {
     int totalPoints = m_x_Data.size();
     m_NoPoints_x = totalPoints;
