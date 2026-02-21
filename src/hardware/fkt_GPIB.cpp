@@ -17,7 +17,7 @@ PrologixUsbGpibAdapter::~PrologixUsbGpibAdapter()
     }
 }
 
-std::string PrologixUsbGpibAdapter::read(int forceReadBytes)
+std::string PrologixUsbGpibAdapter::read(unsigned int forceReadBytes)
 {
     std::string Text;
 
@@ -107,17 +107,17 @@ DWORD PrologixUsbGpibAdapter::quaryBuffer()
     //Get Number of bytes to read from receive queue
     m_deviceInfo.ftStatus = FT_GetQueueStatus(m_deviceInfo.ftHandle,&m_deviceInfo.BytesToRead);
     std::cerr << "Bytes in Queue: " << m_deviceInfo.BytesToRead << std::endl;
-    printErr(m_deviceInfo.ftStatus,"Failed to Get Queue Status");
+    printErrD2XX(m_deviceInfo.ftStatus,"Failed to Get Queue Status");
 
     return m_deviceInfo.BytesToRead;
 }
 
-void PrologixUsbGpibAdapter::connect(std::string args)
+void PrologixUsbGpibAdapter::connect()
 {
     if (!m_deviceInfo.Connected)
     {
         m_deviceInfo.ftStatus = FT_Open(m_deviceInfo.numDev,&m_deviceInfo.ftHandle);
-        printErr(m_deviceInfo.ftStatus,"Failed to Connect");
+        printErrD2XX(m_deviceInfo.ftStatus,"Failed to Connect");
         write("SYST:DISP:UDP ON"); //Turn on monitor
 
         if (m_deviceInfo.ftStatus == FT_OK)
@@ -127,7 +127,7 @@ void PrologixUsbGpibAdapter::connect(std::string args)
         }
     }
 }
-void PrologixUsbGpibAdapter::disconnect(std::string args)
+void PrologixUsbGpibAdapter::disconnect()
 {
     write(ProLogixCmdLookup.at(ProLogixCmd::AUTO) + " 0");
     write(ScpiCmdLookup.at(ScpiCmd::CLR));
@@ -138,7 +138,7 @@ void PrologixUsbGpibAdapter::disconnect(std::string args)
 
 
     m_deviceInfo.ftStatus = FT_Close(m_deviceInfo.ftHandle);
-    printErr(m_deviceInfo.ftStatus,"Failed to Disconnect");
+    printErrD2XX(m_deviceInfo.ftStatus,"Failed to Disconnect");
     if (m_deviceInfo.ftStatus == FT_OK)
     {
         std::cerr << "Connected to " << m_deviceInfo.numDev << std::endl;
@@ -149,16 +149,16 @@ void PrologixUsbGpibAdapter::config()
 {
     //set Baudrate
     m_deviceInfo.ftStatus = FT_SetBaudRate(m_deviceInfo.ftHandle,m_deviceInfo.BaudRate);
-    printErr(m_deviceInfo.ftStatus,"Failed to set Baudrate");
+    printErrD2XX(m_deviceInfo.ftStatus,"Failed to set Baudrate");
 
     m_deviceInfo.ftStatus = FT_SetDataCharacteristics(m_deviceInfo.ftHandle, FT_BITS_8, FT_STOP_BITS_1, FT_PARITY_NONE);
-    printErr(m_deviceInfo.ftStatus,"Failed to set Data Characteristics");
+    printErrD2XX(m_deviceInfo.ftStatus,"Failed to set Data Characteristics");
 
     m_deviceInfo.ftStatus = FT_SetFlowControl(m_deviceInfo.ftHandle, FT_FLOW_NONE, 0, 0);
-    printErr(m_deviceInfo.ftStatus,"Failed to set flow Characteristics");
+    printErrD2XX(m_deviceInfo.ftStatus,"Failed to set flow Characteristics");
 
     m_deviceInfo.ftStatus =  FT_SetTimeouts(m_deviceInfo.ftHandle, 500,500);
-    printErr(m_deviceInfo.ftStatus,"Failed to set TimeOut");
+    printErrD2XX(m_deviceInfo.ftStatus,"Failed to set TimeOut");
 
     std::cerr << "FT-Config complete" << std::endl;
 
@@ -171,11 +171,11 @@ void PrologixUsbGpibAdapter::config()
         m_deviceInfo.configFin = false;
     }
 }
-void PrologixUsbGpibAdapter::readScriptFile(const wxString& dirPath, const wxString& file, wxArrayString& logAdapterReceived, const std::atomic<bool>* stopFlag)
+void PrologixUsbGpibAdapter::readScriptFile(const wxString& dirPath, const wxString& fileName, wxArrayString& logAdapterReceived, const std::atomic<bool>* stopFlag)
 {
     wxTextFile textFile;
 
-    if (textFile.Open(dirPath + file))
+    if (textFile.Open(dirPath + fileName))
     {
         if (!getConnected())
         {
@@ -236,14 +236,16 @@ void PrologixUsbGpibAdapter::readScriptFile(const wxString& dirPath, const wxStr
             }
             else if(line.Contains("?") && line.substr(0,4) == "TRAC")
             {
+                std::vector<double> buffer;
                 std::cerr << "line " << i << ": send: " << line << std::endl;
 
                 write(std::string(line.ToUTF8()));
                 write(ProLogixCmdLookup.at(ProLogixCmd::READ) + " eoi");
-                sleepMs(300);
+                sleepMs(300); // TODO change logic to be more efficent
                 logAdapterReceived.Add(read());
                 std::cerr << "responce: " << logAdapterReceived.Last() << std::endl;
-                fsuMesurement::get_instance().seperateDataBlock(logAdapterReceived.Last());
+                fsuMesurement::get_instance().seperateDataBlock(logAdapterReceived.Last(), buffer);
+                fsuMesurement::get_instance().setX_Data(buffer);
                 fsuMesurement::get_instance().setFreqStartEnd(75'000'000,125'000'000);
                 //Messung.calcYdata(); //start und end frequenz angeben
 
@@ -411,13 +413,12 @@ fsuMesurement::fsuMesurement()
     */
 }
 
-void fsuMesurement::seperateDataBlock(const wxString& receivedString)
+void fsuMesurement::seperateDataBlock(const wxString& receivedString, std::vector<double>& x)
 {
     wxArrayString seperatedStrings = wxStringTokenize(receivedString, ",");
 
     double value;
     wxString data;
-    std::vector<double> x;
 
     for (long unsigned int i = 0; i < seperatedStrings.Count(); i++)
     {
@@ -433,15 +434,17 @@ void fsuMesurement::seperateDataBlock(const wxString& receivedString)
             std::cerr << "Failed to convert" << std::endl;
         }
     }
-
+    /*
     m_x_Data.resize(x.size());
     m_x_Data=x;
+    */
 }
 std::vector<double> fsuMesurement::calcFreqData()
 {
     int totalPoints = m_x_Data.size();
     m_NoPoints_x = totalPoints;
-    m_y_Data.clear();
+    std::vector<double> freqRange;
+    freqRange.clear();
 
     std::cerr << "Total points: " << totalPoints << std::endl;
     double range = m_FreqEnd-m_FreqStart;
@@ -453,13 +456,11 @@ std::vector<double> fsuMesurement::calcFreqData()
     for(int i = 0; i < totalPoints; i++)
     {
         newYPoint = newYPoint + step;
-        m_y_Data.push_back(newYPoint);
-        std::cerr << "Y Berechnet: " << m_y_Data[i] << std::endl;
+        freqRange.push_back(newYPoint);
+        std::cerr << "Y Berechnet: " << freqRange[i] << std::endl;
     }
 
-    m_NoPoints_y = m_y_Data.size();
-
-    return m_y_Data;
+    return freqRange;
 }
 void fsuMesurement::setFreqStartEnd(double FreqS, double FreqE)
 {

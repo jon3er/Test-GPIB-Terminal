@@ -3,17 +3,17 @@
 
 
 
-int printErr(FT_STATUS status, const std::string& msg) //Checks for Error and prints Error msg
+bool printErrD2XX(FT_STATUS status, const std::string& msg) //Checks for Error and prints Error msg
 {
     if (status != FT_OK)
     {
 
         wxString Text = "Error:" + msg + " (FT_Status Code: " + statusString(status) + ")";
         std::cerr << Text << std::endl;
-        return 1;
+        return true;
     }
 
-    return 0;
+    return false;
 }
 
 DWORD scanUsbDev()  //Scans for USB Devices
@@ -24,27 +24,28 @@ DWORD scanUsbDev()  //Scans for USB Devices
 
     std::cerr << "Number of Devices Found: " << numDevs << std::endl;
 
-    printErr(ftStatus, "Create Info List");
+    printErrD2XX(ftStatus, "Create Info List");
 
     return numDevs;
 }
 
+// TODO: expand settings
 FT_STATUS configUsbDev(DWORD numDev, FT_HANDLE &ftHandle,int BaudRate)  //Sets Baudrate, Timeouts etc.
 {
     FT_STATUS ftStatus;
 
     //set Baud rate
     ftStatus = FT_SetBaudRate(ftHandle,BaudRate);
-    printErr(ftStatus,"Failed to set Baudrate");
+    printErrD2XX(ftStatus,"Failed to set Baudrate");
 
     ftStatus = FT_SetDataCharacteristics(ftHandle, FT_BITS_8, FT_STOP_BITS_1, FT_PARITY_NONE);
-    printErr(ftStatus,"Failed to set Data Characteristics");
+    printErrD2XX(ftStatus,"Failed to set Data Characteristics");
 
     ftStatus = FT_SetFlowControl(ftHandle, FT_FLOW_NONE, 0, 0);
-    printErr(ftStatus,"Failed to set Data Characteristics");
+    printErrD2XX(ftStatus,"Failed to set Data Characteristics");
 
     ftStatus =  FT_SetTimeouts(ftHandle, 500,500);
-    printErr(ftStatus,"Failed to set TimeOut");
+    printErrD2XX(ftStatus,"Failed to set TimeOut");
 
     std::cerr << "FT-Config complete" << std::endl;
 
@@ -63,7 +64,7 @@ FT_STATUS writeUsbDev(FT_HANDLE ftHandle, std::vector<char> cmdText,DWORD& bytes
 
     ftStatus = FT_Write(ftHandle, charPtrCmdText, dataSize, &bytesWritten);
 
-    printErr(ftStatus,"Failed to write");
+    printErrD2XX(ftStatus,"Failed to write");
 
     if (bytesWritten != dataSize)
     {
@@ -87,7 +88,7 @@ FT_STATUS readUsbDev(FT_HANDLE ftHandle,std::vector<char>& RPBuffer,DWORD &Bytes
     if (forceReadBytes == 0)
     {
         ftStatus = FT_GetQueueStatus(ftHandle,&BytesToRead);
-        printErr(ftStatus,"Failed to Get Queue Status");
+        printErrD2XX(ftStatus,"Failed to Get Queue Status");
     }
     else
     {
@@ -109,13 +110,13 @@ FT_STATUS readUsbDev(FT_HANDLE ftHandle,std::vector<char>& RPBuffer,DWORD &Bytes
 
     ftStatus = FT_Read(ftHandle, ptrRPBuffer, BytesToRead, &BytesReturned);
 
-    printErr(ftStatus,"Failed to Read data");
+    printErrD2XX(ftStatus,"Failed to Read data");
 
     DWORD dataSize = RPBuffer.size();
 
     if (BytesReturned != dataSize)
     {
-        printErr(ftStatus,"Failed to recive all of the Data");
+        printErrD2XX(ftStatus,"Failed to recive all of the Data");
 
         std::cerr << "Received data Size: " << dataSize << " Bytes Returned: " << BytesReturned << std::endl;
     }

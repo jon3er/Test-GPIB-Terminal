@@ -11,11 +11,46 @@
 #include <wx/tokenzr.h>
 
 
-// Class to save big Data blocks
+/** 
+ * @brief Class to save big 3-Dimentions
+ * [x;y] matrix with n values in each element
+*/
 class sData3D
 {
-private:
+public:
+    // Constructor
+    sData3D(int x = 1, int y = 1, int Anzahl = 512);
 
+    /**
+     * @brief change size of the data array
+     */
+    void resize(int x, int y, int Anzahl);
+
+    /**
+     * @brief get pointer to specific data point
+     * @param x x-coordinte (column)
+     * @param y y-coordinte (row)
+     * @param dataIndex index of the selected array
+     */
+    double& at(int x, int y, int dataIndex);
+
+    /**
+     * @brief get pointer to first element of selected array
+     * @param x x-coordinte (column)
+     * @param y y-coordinte (row)
+     * @return pointer to first array element
+     */
+    double* getDataPtr(int x, int y);
+
+    /**
+     * @brief returns entire selected array [x;y]
+     * @param x x-coordinte (column)
+     * @param y y-coordinte (row)
+     * @return selected Array as std::vector
+     */
+    std::vector<double> getSingleArray(int x, int y);
+private:
+    // Array scaling variables
     int m_X_Messpunkte;
     int m_Y_Messpunkte;
     int m_Messpunkte;
@@ -23,23 +58,13 @@ private:
     //Ein Großes array mit allen Messdaten hintereinander geschrieben
     // index fängt mit null an in beiden fällen
     std::vector<double> m_dataArray;
-public:
-    sData3D(int x = 1, int y = 1, int Anzahl = 512);
-
-    void resize(int x, int y, int Anzahl);
-
-    double& at(int x, int y, int dataIndex);
-
-    double* getDataPtr(int x, int y);
-
-    std::vector<double> getSingleArray(int x, int y);
 };
 
 class sData
 {
 public:
-    //Struktur für ein Datenobjekt
-    struct sParam                                   //structure for 1D and 3D dataset parameters
+    // header data for mesurements
+    struct sParam                                   
     {
         wxString        File;
         wxString        Date;
@@ -53,16 +78,17 @@ public:
         unsigned int    endFreq;
     };
 
-    //Konstruktor
+    // constructor
 
     sData(const char* type = "Line" );
-    //Destruktor
+    // destruktor
     ~sData();
 
     bool SetData(sParam *par, std::vector<double> re, std::vector<double> im);
     bool GetData(sParam *par,std::vector<double>& re, std::vector<double>& im);
 
-    //get data
+    //get methodes
+    //get parameter
     sParam* GetParameter() { return(m_dsParam); };
     wxString GetFile() { return m_dsParam->File; };
     wxString GetDate() { return m_dsParam->Date; };
@@ -74,11 +100,12 @@ public:
     unsigned int getTotalNumberOfPts() {return m_dsParam->NoPoints_X * m_dsParam->NoPoints_Y; };
     unsigned int getNumberOfPts_Array() {return m_dsParam->NoPoints_Array; };
     std::vector<double> GetFreqStepVector();
-    void getXYCord(int& x, int& y, int MesurementNumber);
 
     std::vector<double> getRealArray() { return m_dsR; };
     std::vector<double> getImagArray() { return m_dsI; };
 
+
+    // set methodes
     // set File Var
     bool setFileName(wxString Name);
     bool setFileType(wxString Type);
@@ -91,21 +118,29 @@ public:
     bool setStartFreq(unsigned int StartFreq);
     bool setEndFreq(unsigned int EndFreq);
     bool setTimeAndDate();
-
-    //virtual bool LoadFile(const wxString &name);
+    // set data array
     bool set3DDataReal(std::vector<double> Array , int x, int y);
     bool set3DDataImag(std::vector<double> Array , int x, int y);
+    
+    // get methodes
     std::vector<double> get3DDataReal(int x, int y);
     std::vector<double> get3DDataImag(int x, int y);
 
+    // helper methodes
     void resize3DData(int x, int y, int Anzahl) { m_Real3D.resize(x, y, Anzahl); m_Imag3D.resize(x, y, Anzahl); };
 
+    /**
+     * @brief gets x, y Coodinates for current mesurement number
+    */
+    void getXYCord(int& x, int& y, int MesurementNumber);
 
 private:
-    sParam*                 m_dsParam;                            //parameters
-    std::vector<double>     m_dsR;                                //data
+    // header data
+    sParam*                 m_dsParam;
+    // last stored arrays
+    std::vector<double>     m_dsR;                                
     std::vector<double>     m_dsI;
-
+    // all stored arrays
     sData3D m_Real3D;
     sData3D m_Imag3D;
 
@@ -113,7 +148,9 @@ private:
 
 
 
-
+/**
+ * @brief Save mesurement data to csv file
+ */
 class CsvFile
 {
     public:
@@ -122,12 +159,7 @@ class CsvFile
         bool saveToCsvFile(wxString& Filename, sData& data, int mesurementNumb);
         // read
         bool readCsvFile(wxString filename, sData& data);
-
-    private:
-
-        wxTextFile m_file;
-        sData m_data;
-
+    protected:
         // save Helper Functions
         bool saveHeaderCsv(wxTextFile& file, sData& data);
         bool saveDataCsv(wxTextFile& file, sData data, int mesurementNumb, bool cont = false);
@@ -140,4 +172,11 @@ class CsvFile
         std::string getIndexNumbers(int xPoints, int yPoints, int mesurementNumb, bool continuous = false);
         bool writeMatrixIndexCsv(wxTextFile& file, sData data);
         int findLineCsv(wxTextFile& file, wxString findText);
+
+    private:
+
+        wxTextFile m_file;
+        sData m_data;
+
+
 };

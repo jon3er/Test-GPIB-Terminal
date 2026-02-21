@@ -10,46 +10,68 @@
 #include "ftd2xx.h"
 #include <wx/textfile.h>
 
-/*
- * @brief fsuMesurement
- *  
+/**
+ * @brief single instance class to Performe frequency mesurements with a R&S instrument
+ *
 */
-
 class fsuMesurement
 {
 protected:
+    // Constructor (Protected for Singleton)
     fsuMesurement();
 
 public:
 
-    // Singelton pattern to prevent multiple calls
+    /**
+     * @brief get singleton instance of the Class
+     */
     static fsuMesurement& get_instance()
     {
         static fsuMesurement instance;
         return instance;
     }
-    // Overload to prevent second two instance
+    // Overloads to prevent second instance
     fsuMesurement(const fsuMesurement&) = delete;
     fsuMesurement(fsuMesurement&&) = delete;
     fsuMesurement operator=(const fsuMesurement&) = delete;
     fsuMesurement operator=(fsuMesurement&&) = delete;
 
-    void seperateDataBlock(const wxString& receivedString);
-    
-    std::vector<double> calcFreqData(); //TODO umbennen ist eigendlich x und ich erhalte vom gerät nur Y die amplitude.
+    ~fsuMesurement();
 
-    wxString getMesurmentTime() { return m_lastMesurementTime; };
-    std::vector<double> getX_Data() {return m_x_Data; };
-    std::vector<double> getY_Data() {return m_y_Data; };
-    unsigned int getNoPoints_x() { return m_NoPoints_x; };
-    unsigned int getNoPoints_y() { return m_NoPoints_y; };
-    //sData::sParam getMesurmentData();
+    /**
+     * @brief Seperates comma seperated vaules
+     * @param receivedString Input raw data
+     * @param seperatedValues pass seperated values
+     */
+    void seperateDataBlock(const wxString& receivedString, std::vector<double>& seperatedValues);
+    
+    /**
+     * @brief Caluculates Frequancy range array with set start and stop Frequancy and number of mesurement points
+     * @return Frequancy range
+     */
+    std::vector<double> calcFreqData();
+
+    /**
+     * @brief To check if the last mesurement had complex values
+     */
     bool isImagValues() { return m_ImagValues; };
 
+    // Get Methodes
+
+    std::vector<double> getX_Data() {return m_x_Data; };
+    std::vector<double> getY_Data() {return m_y_Data; };
+
+    wxString getMesurmentTime() { return m_lastMesurementTime; };
+    unsigned int getNoPoints_x() { return m_NoPoints_x; };
+    unsigned int getNoPoints_y() { return m_NoPoints_y; };
+
+    // Set Methodes
+
+    void setX_Data(std::vector<double> x) { m_x_Data = x; };
+    void setY_Data(std::vector<double> y) { m_y_Data = y; };
     void setFreqStartEnd(double FreqS, double FreqE);
 
 private:
-
     std::vector<double> m_x_Data;
     std::vector<double> m_y_Data;
     double m_FreqStart;
@@ -59,7 +81,6 @@ private:
     unsigned int m_NoPoints_y;
 
     bool m_ImagValues = false;
-    //sData tempData;
 };
 
 struct PrologixDeviceInfo {
@@ -77,9 +98,9 @@ struct PrologixDeviceInfo {
 class PrologixUsbGpibAdapter
 {
 protected:
+    // Constructor (Protected for Singleton)
     PrologixUsbGpibAdapter();
 
-    
 public:
     // Singelton pattern to prevent multiple calls
     static PrologixUsbGpibAdapter& get_instance()
@@ -95,18 +116,44 @@ public:
 
     ~PrologixUsbGpibAdapter();
 
-    std::string read(int forceReadBytes = 0);
+    void connect();
+    void disconnect();
+    void config();
+
+    /**
+     * @brief Reads avalible data from Adapter
+     * @param forceReadBytes (optional) reads until set number of read bytes is reached 
+     */
+    std::string read(unsigned int forceReadBytes = 0);
+
+    /**
+     * @brief writes string to Adapter
+     */
     std::string write(std::string msg);
+
+    /**
+     * @brief send string to Adapter and listens for a responce
+     * @param msg Message to write to device
+     * @param DelayMs (Optional) change wait time before expecting a responce
+     */
     std::string send(std::string msg, int DelayMs = 100);
+
+    /**
+     * @brief retuns current Adapter status
+     */
     std::string statusText();
+
+    /**
+     * @brief checks if Adapter buffer has data avalibe to read
+     */
     DWORD       quaryBuffer();
     
-
-    void connect(std::string args = "");
-    void disconnect(std::string args = "");
-    void config();
+    /**
+     * @brief reads command from a .txt file
+     */
     void readScriptFile(const wxString& dirPath, const wxString& file, wxArrayString& logAdapterReceived, const std::atomic<bool>* stopFlag = nullptr);
  
+    // get methodes
     FT_STATUS getStatus();
     FT_HANDLE getHandle();
 
@@ -114,17 +161,25 @@ public:
     int getBaudrate();
     std::string getLastMsgReseived();
 
+    // set methodes
     void setBaudrate(int BaudrateNew);
-
     
 private:
     PrologixDeviceInfo m_deviceInfo;
 
     // helper Functionen
+
+    /**
+     * @brief Checks input string and modifies it to fix Adapter specifikation
+     * @param input raw input text
+     * @return modified string
+     */
     std::vector<char> checkAscii(std::string input);
 };
 
-
+/**
+ * @brief Appends current timestamp to text input
+ */
 wxString terminalTimestampOutput(wxString Text);
 
 

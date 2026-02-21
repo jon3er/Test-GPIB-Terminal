@@ -5,7 +5,7 @@
 #include "dataManagement.h"
 #include "fkt_GPIB.h"
 
-// keyword inline um in den header definieren zu können
+// defines path for linux and windows systems
 namespace System
 {
 #if defined(_WIN32)
@@ -19,6 +19,7 @@ namespace System
 #endif
 }
 
+// ID for main Window menu bar
 enum MainMenuBar
 {
     ID_Hello            = 01,
