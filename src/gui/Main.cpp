@@ -144,7 +144,7 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, MainDocument* doc, wxWindowI
     //------------------ Mesurement menu --------------------
 	m_menu_Mesurement = new wxMenu();
 
-    // create submenu elemets
+    // create submenu elements
 	m_menuMesure_Item_New           = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_New,        wxString( wxT("New Mesurement") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menuMesure_Item_Open          = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_Open,       wxString( wxT("Open Saved Mesurement") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menuMesure_Item_Load          = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_Load,       wxString( wxT("Load config") ) , wxEmptyString, wxITEM_NORMAL );
@@ -155,15 +155,20 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, MainDocument* doc, wxWindowI
 	m_menuMesure_Item_SetMarker     = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_SetMarker,  wxString( wxT("Set Marker") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menuMesure_Item_Settings      = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_Settings,   wxString( wxT("Settings") ) , wxEmptyString, wxITEM_NORMAL );
 
+    // "New Mesurement" submenu with Load config and Presets
+    wxMenu* m_submenu_NewMesurement = new wxMenu();
+    m_submenu_NewMesurement->Append( m_menuMesure_Item_New );
+    m_submenu_NewMesurement->AppendSeparator();
+    m_submenu_NewMesurement->Append( m_menuMesure_Item_Load );
+    m_submenu_NewMesurement->AppendSeparator();
+    m_submenu_NewMesurement->Append( m_menuMesure_Item_Preset_1 );
+    m_submenu_NewMesurement->Append( m_menuMesure_Item_Preset_2 );
+    m_submenu_NewMesurement->Append( m_menuMesure_Item_Preset_3 );
+
     // set submenu order
-    m_menu_Mesurement->Append( m_menuMesure_Item_New );
+    m_menu_Mesurement->AppendSubMenu( m_submenu_NewMesurement, wxT("New Mesurement") );
 	m_menu_Mesurement->AppendSeparator();
 	m_menu_Mesurement->Append( m_menuMesure_Item_Open );
-	m_menu_Mesurement->AppendSeparator();
-	m_menu_Mesurement->Append( m_menuMesure_Item_Load );
-	m_menu_Mesurement->Append( m_menuMesure_Item_Preset_1 );
-	m_menu_Mesurement->Append( m_menuMesure_Item_Preset_2 );
-	m_menu_Mesurement->Append( m_menuMesure_Item_Preset_3 );
     m_menu_Mesurement->AppendSeparator();
 	m_menu_Mesurement->Append( m_menuMesure_Item_2DMesurment );
     m_menu_Mesurement->AppendSeparator();
@@ -401,7 +406,47 @@ void MainProgrammWin::MenuMesurementNew(wxCommandEvent& event)
 }
 void MainProgrammWin::MenuMesurementLoad(wxCommandEvent& event)
 {
-    
+    wxFileDialog openFileDialog(this, _("Open CSV File"),
+        System::filePathRoot,
+        "",
+        "CSV Files (*.csv)|*.csv|All Files (*.*)|*.*",
+        wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+
+    if (openFileDialog.ShowModal() == wxID_CANCEL)
+        return;
+
+    wxString filePath = openFileDialog.GetPath();
+
+    // Read CSV into a temporary sData — does NOT affect the main document
+    sData importedData;
+    CsvFile csvFile;
+    if (!csvFile.readCsvFile(filePath, importedData))
+    {
+        wxMessageBox("Failed to read CSV file:\n" + filePath,
+                     "Import Error", wxOK | wxICON_ERROR, this);
+        return;
+    }
+
+    // Create a new PlotWindow with its own MeasurementDocument
+    MeasurementDocument* measDoc = new MeasurementDocument(
+        PrologixUsbGpibAdapter::get_instance(), fsuMesurement::get_instance());
+
+    PlotWindow* PlotWin = new PlotWindow(this, nullptr);  // no mainDoc — data comes from import
+    PlotWin->SetDocument(measDoc);
+    PlotWin->SetOwnsDocument(true);
+
+    // Push the imported data into the plot
+    sData::sParam* param = importedData.GetParameter();
+    std::vector<double> x, y;
+    importedData.GetData(param, x, y);
+    PlotWin->GetVectorLayer()->SetData(x, y);
+    PlotWin->GetPlot()->Fit();
+    PlotWin->SetTitle(wxString::Format("Measurement Window — %s",
+                      filePath.AfterLast('\\').AfterLast('/')));
+
+    // Track and show
+    m_openMeasurementWindows.insert(PlotWin);
+    PlotWin->Show();
 }
 void MainProgrammWin::MenuMesurementSettings(wxCommandEvent& event)
 {

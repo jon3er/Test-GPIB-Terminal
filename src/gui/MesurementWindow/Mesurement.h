@@ -49,10 +49,15 @@ public:
     /** Static counter for unique window titles */
     static int s_windowCounter;
 
+    /** Public accessors for plot components (used when pushing imported data) */
+    mpWindow*    GetPlot()        const { return m_plot; }
+    mpFXYVector* GetVectorLayer() const { return m_vectorLayer; }
+
 protected:
     wxChoice*    m_selectMesurement;
     mpWindow*    m_plot;
     mpFXYVector* m_vectorLayer;
+    wxMenuBar*   m_menuBar;
 
 private:
     wxString      m_filePath = System::filePathSystem;
@@ -60,9 +65,26 @@ private:
 
     void getFileNames(const wxString& dirPath, wxArrayString& files);
     void executeScriptEvent(wxCommandEvent& event);
-    void importCsvEvent(wxCommandEvent& event);
     void updatePlotData();
     void OnClose(wxCloseEvent& event);
+
+    // Menu handlers (File)
+    void OnMenuFileOpen(wxCommandEvent& event);
+    void OnMenuFileClose(wxCommandEvent& event);
+    void OnMenuFileSave(wxCommandEvent& event);
+    void OnMenuFileSaveAs(wxCommandEvent& event);
+    void OnMenuFileExit(wxCommandEvent& event);
+
+    // Menu handlers (Measurement) — forward to parent MainProgrammWin
+    void OnMenuMesurementNew(wxCommandEvent& event);
+    void OnMenuMesurementOpen(wxCommandEvent& event);
+    void OnMenuMesurementLoad(wxCommandEvent& event);
+    void OnMenuMesurementPreset1(wxCommandEvent& event);
+    void OnMenuMesurementPreset2(wxCommandEvent& event);
+    void OnMenuMesurementPreset3(wxCommandEvent& event);
+    void OnMenuMesurement2DMess(wxCommandEvent& event);
+    void OnMenuMesurementSetMarker(wxCommandEvent& event);
+    void OnMenuMesurementSettings(wxCommandEvent& event);
 
     // Helper for formatting output with timestamp
     wxString formatOutput(const std::string& text);

@@ -17,10 +17,68 @@ PlotWindow::PlotWindow(wxWindow *parent, MainDocument* mainDoc)
 {
     getFileNames(m_filePath, m_fileNames);
 
+    //------------------ Menubar --------------------
+    m_menuBar = new wxMenuBar(0);
+
+    //------------------ File menu --------------------
+    wxMenu* menuFile = new wxMenu();
+    menuFile->Append(MainMenuBar::ID_Plot_File_Open,    wxT("Open") + wxString(wxT("\t")) + wxT("Ctrl+O"));
+    menuFile->AppendSeparator();
+    menuFile->Append(MainMenuBar::ID_Plot_File_Close,   wxT("Close"));
+    menuFile->AppendSeparator();
+    menuFile->Append(MainMenuBar::ID_Plot_File_Save,    wxT("Save") + wxString(wxT("\t")) + wxT("Ctrl+S"));
+    menuFile->Append(MainMenuBar::ID_Plot_File_SaveAs,  wxT("Save as ..."));
+    menuFile->AppendSeparator();
+    menuFile->Append(MainMenuBar::ID_Plot_File_Exit,    wxT("Exit"));
+
+    //------------------ Measurement menu --------------------
+    wxMenu* menuMesurement = new wxMenu();
+
+    // "New Mesurement" submenu with Load config and Presets
+    wxMenu* subMenuNew = new wxMenu();
+    subMenuNew->Append(MainMenuBar::ID_Main_Mesurement_New,        wxT("New Mesurement"));
+    subMenuNew->AppendSeparator();
+    subMenuNew->Append(MainMenuBar::ID_Main_Mesurement_Load,       wxT("Load config"));
+    subMenuNew->AppendSeparator();
+    subMenuNew->Append(MainMenuBar::ID_Main_Mesurement_Preset_1,   wxT("Preset 1"));
+    subMenuNew->Append(MainMenuBar::ID_Main_Mesurement_Preset_2,   wxT("Preset 2"));
+    subMenuNew->Append(MainMenuBar::ID_Main_Mesurement_Preset_3,   wxT("Preset 3"));
+
+    menuMesurement->AppendSubMenu(subMenuNew, wxT("New Mesurement"));
+    menuMesurement->AppendSeparator();
+    menuMesurement->Append(MainMenuBar::ID_Main_Mesurement_Open,       wxT("Open Saved Mesurement"));
+    menuMesurement->AppendSeparator();
+    menuMesurement->Append(MainMenuBar::ID_Main_Mesurement_2D_Mess,    wxT("2D Plot Mesurment"));
+    menuMesurement->AppendSeparator();
+    menuMesurement->Append(MainMenuBar::ID_Main_Mesurement_SetMarker,  wxT("Set Marker"));
+    menuMesurement->AppendSeparator();
+    menuMesurement->Append(MainMenuBar::ID_Main_Mesurement_Settings,   wxT("Settings"));
+
+    m_menuBar->Append(menuFile,        wxT("File"));
+    m_menuBar->Append(menuMesurement,  wxT("Mesurement"));
+    this->SetMenuBar(m_menuBar);
+
+    // Bind File menu handlers (local to this window)
+    Bind(wxEVT_MENU, &PlotWindow::OnMenuFileOpen,    this, MainMenuBar::ID_Plot_File_Open);
+    Bind(wxEVT_MENU, &PlotWindow::OnMenuFileClose,   this, MainMenuBar::ID_Plot_File_Close);
+    Bind(wxEVT_MENU, &PlotWindow::OnMenuFileSave,    this, MainMenuBar::ID_Plot_File_Save);
+    Bind(wxEVT_MENU, &PlotWindow::OnMenuFileSaveAs,  this, MainMenuBar::ID_Plot_File_SaveAs);
+    Bind(wxEVT_MENU, &PlotWindow::OnMenuFileExit,    this, MainMenuBar::ID_Plot_File_Exit);
+
+    // Bind Measurement menu handlers (forward to parent MainProgrammWin)
+    Bind(wxEVT_MENU, &PlotWindow::OnMenuMesurementNew,       this, MainMenuBar::ID_Main_Mesurement_New);
+    Bind(wxEVT_MENU, &PlotWindow::OnMenuMesurementOpen,      this, MainMenuBar::ID_Main_Mesurement_Open);
+    Bind(wxEVT_MENU, &PlotWindow::OnMenuMesurementLoad,      this, MainMenuBar::ID_Main_Mesurement_Load);
+    Bind(wxEVT_MENU, &PlotWindow::OnMenuMesurementPreset1,   this, MainMenuBar::ID_Main_Mesurement_Preset_1);
+    Bind(wxEVT_MENU, &PlotWindow::OnMenuMesurementPreset2,   this, MainMenuBar::ID_Main_Mesurement_Preset_2);
+    Bind(wxEVT_MENU, &PlotWindow::OnMenuMesurementPreset3,   this, MainMenuBar::ID_Main_Mesurement_Preset_3);
+    Bind(wxEVT_MENU, &PlotWindow::OnMenuMesurement2DMess,    this, MainMenuBar::ID_Main_Mesurement_2D_Mess);
+    Bind(wxEVT_MENU, &PlotWindow::OnMenuMesurementSetMarker, this, MainMenuBar::ID_Main_Mesurement_SetMarker);
+    Bind(wxEVT_MENU, &PlotWindow::OnMenuMesurementSettings,  this, MainMenuBar::ID_Main_Mesurement_Settings);
+    //------------------ End Menubar --------------------
+
     wxButton* executeMesurment = new wxButton(this, wxID_ANY, "Execute Mesurement");
     executeMesurment->Bind(wxEVT_BUTTON, &PlotWindow::executeScriptEvent, this);
-    wxButton* importCsvBtn = new wxButton(this, wxID_ANY, "Import CSV");
-    importCsvBtn->Bind(wxEVT_BUTTON, &PlotWindow::importCsvEvent, this);
     m_selectMesurement = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, m_fileNames);
     m_selectMesurement->SetSelection(0);
     // 1. mpWindow (Zeichenfläche) erstellen
@@ -72,7 +130,6 @@ PlotWindow::PlotWindow(wxWindow *parent, MainDocument* mainDoc)
 
     wxBoxSizer* sizerButtons = new wxBoxSizer(wxHORIZONTAL);
     sizerButtons->Add(executeMesurment, 0, wxEXPAND | wxALL);
-    sizerButtons->Add(importCsvBtn, 0, wxEXPAND | wxALL, 5);
     sizerButtons->Add(m_selectMesurement, 0, wxEXPAND | wxALL);
 
     wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
@@ -203,7 +260,10 @@ void PlotWindow::updatePlotData()
     m_plot->Fit();
 }
 
-void PlotWindow::importCsvEvent(wxCommandEvent& event)
+// -----------------------------------------------------------------------
+// File menu handlers (local to this PlotWindow)
+// -----------------------------------------------------------------------
+void PlotWindow::OnMenuFileOpen(wxCommandEvent& event)
 {
     wxFileDialog openFileDialog(this, _("Import CSV Data"),
         System::filePathRoot,
@@ -233,11 +293,103 @@ void PlotWindow::importCsvEvent(wxCommandEvent& event)
     m_vectorLayer->SetData(x, y);
     m_plot->Fit();
 
-    SetTitle(wxString::Format("Measurement Window %d — %s",
+    SetTitle(wxString::Format("Measurement Window %d \u2014 %s",
              m_windowId, filePath.AfterLast('\\').AfterLast('/')));
 
     std::cout << "[PlotWindow " << m_windowId << "] Imported CSV: "
               << filePath << std::endl;
+}
+
+void PlotWindow::OnMenuFileClose(wxCommandEvent& event)
+{
+    Close();
+}
+
+void PlotWindow::OnMenuFileSave(wxCommandEvent& event)
+{
+    // Forward to parent MainProgrammWin
+    MainProgrammWin* parent = dynamic_cast<MainProgrammWin*>(GetParent());
+    if (parent)
+        parent->MenuFileSave(event);
+}
+
+void PlotWindow::OnMenuFileSaveAs(wxCommandEvent& event)
+{
+    // Forward to parent MainProgrammWin
+    MainProgrammWin* parent = dynamic_cast<MainProgrammWin*>(GetParent());
+    if (parent)
+        parent->MenuFileSaveAs(event);
+}
+
+void PlotWindow::OnMenuFileExit(wxCommandEvent& event)
+{
+    Close();
+}
+
+// -----------------------------------------------------------------------
+// Measurement menu handlers (forward to parent MainProgrammWin)
+// -----------------------------------------------------------------------
+void PlotWindow::OnMenuMesurementNew(wxCommandEvent& event)
+{
+    MainProgrammWin* parent = dynamic_cast<MainProgrammWin*>(GetParent());
+    if (parent)
+        parent->MenuMesurementNew(event);
+}
+
+void PlotWindow::OnMenuMesurementOpen(wxCommandEvent& event)
+{
+    MainProgrammWin* parent = dynamic_cast<MainProgrammWin*>(GetParent());
+    if (parent)
+        parent->MenuMesurementLoad(event);
+}
+
+void PlotWindow::OnMenuMesurementLoad(wxCommandEvent& event)
+{
+    MainProgrammWin* parent = dynamic_cast<MainProgrammWin*>(GetParent());
+    if (parent)
+        parent->MenuMesurementLoad(event);
+}
+
+void PlotWindow::OnMenuMesurementPreset1(wxCommandEvent& event)
+{
+    MainProgrammWin* parent = dynamic_cast<MainProgrammWin*>(GetParent());
+    if (parent)
+        parent->MenuMesurementLoad(event);
+}
+
+void PlotWindow::OnMenuMesurementPreset2(wxCommandEvent& event)
+{
+    MainProgrammWin* parent = dynamic_cast<MainProgrammWin*>(GetParent());
+    if (parent)
+        parent->MenuMesurementLoad(event);
+}
+
+void PlotWindow::OnMenuMesurementPreset3(wxCommandEvent& event)
+{
+    MainProgrammWin* parent = dynamic_cast<MainProgrammWin*>(GetParent());
+    if (parent)
+        parent->MenuMesurementLoad(event);
+}
+
+void PlotWindow::OnMenuMesurement2DMess(wxCommandEvent& event)
+{
+    MainProgrammWin* parent = dynamic_cast<MainProgrammWin*>(GetParent());
+    if (parent)
+        parent->MenuMesurement2DMess(event);
+}
+
+void PlotWindow::OnMenuMesurementSetMarker(wxCommandEvent& event)
+{
+    MainProgrammWin* parent = dynamic_cast<MainProgrammWin*>(GetParent());
+    if (parent)
+        parent->MenuMesurementSetMarker(event);
+}
+
+void PlotWindow::OnMenuMesurementSettings(wxCommandEvent& event)
+{
+    MainProgrammWin* parent = dynamic_cast<MainProgrammWin*>(GetParent());
+    if (parent)
+        parent->MenuMesurementSettings(event);
 }
 
 void PlotWindow::OnClose(wxCloseEvent& event)

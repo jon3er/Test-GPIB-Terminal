@@ -54,5 +54,12 @@ enum MainMenuBar
 
 
     ID_Main_Help            = 60,
-    ID_Main_Help_About      = 61
+    ID_Main_Help_About      = 61,
+
+    // PlotWindow-local menu IDs (must not collide with main menu IDs)
+    ID_Plot_File_Open       = 70,
+    ID_Plot_File_Close      = 71,
+    ID_Plot_File_Save       = 72,
+    ID_Plot_File_SaveAs     = 73,
+    ID_Plot_File_Exit       = 74
 };
