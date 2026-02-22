@@ -3,6 +3,7 @@
 #include "SettingsWindow.h"
 #include "cmdGpib.h"
 #include "mainHelper.h"
+#include "GenericInputDialog.h"
 
 int PlotWindow::s_windowCounter = 0;
 
@@ -81,8 +82,13 @@ PlotWindow::PlotWindow(wxWindow *parent, MainDocument* mainDoc)
     executeMesurment->Bind(wxEVT_BUTTON, &PlotWindow::executeScriptEvent, this);
     m_selectMesurement = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, m_fileNames);
     m_selectMesurement->SetSelection(0);
-    // 1. mpWindow (Zeichenfläche) erstellen
-    m_plot = new mpWindow(this, wxID_ANY);
+
+    // Plot container panel — the mpWindow will be kept square and centred
+    // inside this panel via the wxEVT_SIZE handler below.
+    m_plotPanel = new wxPanel(this, wxID_ANY);
+
+    // 1. mpWindow (Zeichenfläche) erstellen — parented to m_plotPanel
+    m_plot = new mpWindow(m_plotPanel, wxID_ANY);
 
     // Farbeinstellungen (Optional)
     m_plot->SetMargins(30, 30, 50, 50);
@@ -128,14 +134,58 @@ PlotWindow::PlotWindow(wxWindow *parent, MainDocument* mainDoc)
     // Close handler for modeless window self-cleanup
     Bind(wxEVT_CLOSE_WINDOW, &PlotWindow::OnClose, this);
 
-    wxBoxSizer* sizerButtons = new wxBoxSizer(wxHORIZONTAL);
-    sizerButtons->Add(executeMesurment, 0, wxEXPAND | wxALL);
-    sizerButtons->Add(m_selectMesurement, 0, wxEXPAND | wxALL);
+    // Let m_plot fill the entire plot panel
+    wxBoxSizer* plotPanelSizer = new wxBoxSizer(wxVERTICAL);
+    plotPanelSizer->Add(m_plot, 1, wxEXPAND);
+    m_plotPanel->SetSizer(plotPanelSizer);
 
-    wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
-    sizer->Add(m_plot, 1, wxEXPAND | wxALL, 5);
-    sizer->Add(sizerButtons, 0, wxEXPAND| wxALL , 5);
-    this->SetSizer(sizer);
+    // ---- Bottom 1/3: left = controls, right = info ----
+
+    // Left: control buttons and [x ; y] selector
+    wxBoxSizer* leftSizer = new wxBoxSizer(wxVERTICAL);
+    leftSizer->Add(executeMesurment,   0, wxEXPAND | wxALL, 3);
+    leftSizer->Add(m_selectMesurement, 0, wxEXPAND | wxALL, 3);
+
+    // [x ; y] matrix measurement selector row
+    wxBoxSizer* matrixSizer = new wxBoxSizer(wxHORIZONTAL);
+    wxStaticText* matrixLabel = new wxStaticText(this, wxID_ANY, "Select [x ; y]:");
+    m_textXSelector = new wxTextCtrl(this, wxID_ANY, "0", wxDefaultPosition, wxSize(50, -1));
+    wxStaticText* matrixSep = new wxStaticText(this, wxID_ANY, ";");
+    m_textYSelector = new wxTextCtrl(this, wxID_ANY, "0", wxDefaultPosition, wxSize(50, -1));
+    wxButton* selectBtn = new wxButton(this, wxID_ANY, "Go");
+    selectBtn->Bind(wxEVT_BUTTON, &PlotWindow::OnSelectMeasurement, this);
+    matrixSizer->Add(matrixLabel,     0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
+    matrixSizer->Add(m_textXSelector, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 3);
+    matrixSizer->Add(matrixSep,       0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, 3);
+    matrixSizer->Add(m_textYSelector, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 3);
+    matrixSizer->Add(selectBtn,       0, wxALIGN_CENTER_VERTICAL);
+    leftSizer->Add(matrixSizer, 0, wxEXPAND | wxALL, 3);
+    leftSizer->AddStretchSpacer(1);
+
+    // Right: info panel (placeholder)
+    m_infoPanel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_SIMPLE);
+    wxBoxSizer* infoSizer = new wxBoxSizer(wxVERTICAL);
+    wxStaticText* infoTitle = new wxStaticText(m_infoPanel, wxID_ANY, "Measurement Info",
+        wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER_HORIZONTAL);
+    infoTitle->SetFont(infoTitle->GetFont().Bold());
+    infoSizer->Add(infoTitle, 0, wxEXPAND | wxALL, 8);
+    infoSizer->Add(new wxStaticLine(m_infoPanel), 0, wxEXPAND | wxLEFT | wxRIGHT, 5);
+    m_infoText = new wxStaticText(m_infoPanel, wxID_ANY,
+        "--- No measurement loaded ---\n\nPlaceholder for measurement details.",
+        wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT);
+    infoSizer->Add(m_infoText, 1, wxEXPAND | wxALL, 8);
+    m_infoPanel->SetSizer(infoSizer);
+
+    // Bottom sizer: left info | right controls (equal halves)
+    wxBoxSizer* bottomSizer = new wxBoxSizer(wxHORIZONTAL);
+    bottomSizer->Add(m_infoPanel,  1, wxEXPAND | wxALL, 5);
+    bottomSizer->Add(leftSizer,    1, wxEXPAND | wxALL, 5);
+
+    // Main sizer: plot (proportion 2) on top, controls (proportion 1) at bottom
+    wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
+    mainSizer->Add(m_plotPanel,   2, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, 5);
+    mainSizer->Add(bottomSizer,   1, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 5);
+    this->SetSizer(mainSizer);
     this->Layout();
     // 7. Zoom auf Daten anpassen
     m_plot->Fit();
@@ -260,6 +310,27 @@ void PlotWindow::updatePlotData()
     m_plot->Fit();
 }
 
+void PlotWindow::OnSelectMeasurement(wxCommandEvent& /*event*/)
+{
+    long x = 0, y = 0;
+
+    if (!m_textXSelector->GetValue().ToLong(&x) ||
+        !m_textYSelector->GetValue().ToLong(&y))
+    {
+        wxMessageBox("Please enter valid integer values for x and y.",
+                     "Invalid Input", wxOK | wxICON_WARNING, this);
+        return;
+    }
+
+    // TODO: load the measurement at matrix position [x; y] from the data set.
+    // For now, update the info placeholder with the selected coordinates.
+    m_infoText->SetLabel(wxString::Format(
+        "Selected: [%ld ; %ld]\n\n--- Placeholder: measurement details will appear here ---", x, y));
+    m_infoPanel->Layout();
+
+    wxLogMessage("PlotWindow: selected measurement [%ld ; %ld]", x, y);
+}
+
 // -----------------------------------------------------------------------
 // File menu handlers (local to this PlotWindow)
 // -----------------------------------------------------------------------
@@ -350,25 +421,76 @@ void PlotWindow::OnMenuMesurementLoad(wxCommandEvent& event)
         parent->MenuMesurementLoad(event);
 }
 
-void PlotWindow::OnMenuMesurementPreset1(wxCommandEvent& event)
+void PlotWindow::OnMenuMesurementPreset1(wxCommandEvent& /*event*/)
 {
-    MainProgrammWin* parent = dynamic_cast<MainProgrammWin*>(GetParent());
-    if (parent)
-        parent->MenuMesurementLoad(event);
+    std::vector<InputFieldDef> fields = {
+        { "Start Frequency:",    "1000000",   "SENS:FREQ:STAR {}"     },
+        { "Stop Frequency:",     "100000000", "SENS:FREQ:STOP {}"     },
+        { "Sweep Points:",       "512",       "SENS:SWE:POIN {}"      },
+        { "IF Bandwidth (Hz):",  "1000",      "SENS:BWID {}"          },
+        { "Power Level (dBm):",  "-10",       "SOUR:POW {}"           },
+        { "Averaging:",          "1",         "SENS:AVER:COUN {}"     },
+        { "Port:",               "1",         "SENS:PORT {}"          },
+        { "Cal Group:",          "",          "SENS:CORR:CKIT:SEL {}" },
+    };
+
+    auto* dlg = new GenericInputDialog(this, "Preset 1 \u2014 Frequency Sweep", fields,
+        [this](const std::vector<wxString>& vals)
+        {
+            // TODO: apply Preset 1 values to document / hardware
+            wxLogMessage("Preset 1 confirmed: Start=%s  Stop=%s  Points=%s",
+                vals[0], vals[1], vals[2]);
+        });
+    dlg->ShowModal();
+    dlg->Destroy();
 }
 
-void PlotWindow::OnMenuMesurementPreset2(wxCommandEvent& event)
+void PlotWindow::OnMenuMesurementPreset2(wxCommandEvent& /*event*/)
 {
-    MainProgrammWin* parent = dynamic_cast<MainProgrammWin*>(GetParent());
-    if (parent)
-        parent->MenuMesurementLoad(event);
+    std::vector<InputFieldDef> fields = {
+        { "X Measurement Points:",  "5",   ""  },
+        { "Y Measurement Points:",  "5",   ""  },
+        { "X Start Coordinate:",    "0",   ""  },
+        { "Y Start Coordinate:",    "0",   ""  },
+        { "X Spacing (mm):",        "10",  ""  },
+        { "Y Spacing (mm):",        "10",  ""  },
+        { "Speed (mm/s):",          "50",  ""  },
+        { "Dwell Time (ms):",       "200", ""  },
+    };
+
+    auto* dlg = new GenericInputDialog(this, "Preset 2 \u2014 2D Grid Scan", fields,
+        [this](const std::vector<wxString>& vals)
+        {
+            // TODO: apply Preset 2 values to document / hardware
+            wxLogMessage("Preset 2 confirmed: Grid %sx%s, spacing %s x %s",
+                vals[0], vals[1], vals[4], vals[5]);
+        });
+    dlg->ShowModal();
+    dlg->Destroy();
 }
 
-void PlotWindow::OnMenuMesurementPreset3(wxCommandEvent& event)
+void PlotWindow::OnMenuMesurementPreset3(wxCommandEvent& /*event*/)
 {
-    MainProgrammWin* parent = dynamic_cast<MainProgrammWin*>(GetParent());
-    if (parent)
-        parent->MenuMesurementLoad(event);
+    std::vector<InputFieldDef> fields = {
+        { "Center Frequency (Hz):", "50000000", "SENS:FREQ:CENT {}"  },
+        { "Span (Hz):",             "10000000", "SENS:FREQ:SPAN {}"  },
+        { "Resolution BW (Hz):",    "100000",   "SENS:BWID:RES {}"   },
+        { "Video BW (Hz):",         "10000",    "SENS:BWID:VID {}"   },
+        { "Reference Level (dBm):", "0",        "DISP:WIND:TRAC:Y:RLEV {}" },
+        { "Attenuation (dB):",      "10",       "INP:ATT {}"         },
+        { "Sweep Time (ms):",       "0",        "SENS:SWE:TIME {}"   },
+        { "Marker Count:",          "1",        "CALC:MARK:COUN {}"  },
+    };
+
+    auto* dlg = new GenericInputDialog(this, "Preset 3 \u2014 Spectrum Analyser", fields,
+        [this](const std::vector<wxString>& vals)
+        {
+            // TODO: apply Preset 3 values to document / hardware
+            wxLogMessage("Preset 3 confirmed: Centre=%s  Span=%s  RBW=%s",
+                vals[0], vals[1], vals[2]);
+        });
+    dlg->ShowModal();
+    dlg->Destroy();
 }
 
 void PlotWindow::OnMenuMesurement2DMess(wxCommandEvent& event)

@@ -8,6 +8,7 @@
 #include <wx/dir.h>
 #include <wx/textfile.h>
 #include <wx/msgdlg.h>
+#include <wx/statline.h>
 
 #include "MainDocument.h"
 #include "dataManagement.h"
@@ -54,10 +55,19 @@ public:
     mpFXYVector* GetVectorLayer() const { return m_vectorLayer; }
 
 protected:
-    wxChoice*    m_selectMesurement;
-    mpWindow*    m_plot;
-    mpFXYVector* m_vectorLayer;
-    wxMenuBar*   m_menuBar;
+    wxChoice*     m_selectMesurement;
+    mpWindow*     m_plot;
+    mpFXYVector*  m_vectorLayer;
+    wxMenuBar*    m_menuBar;
+
+    // Layout panels
+    wxPanel*      m_plotPanel;   ///< Container that constrains the plot to a square
+    wxPanel*      m_infoPanel;   ///< Right-side info area (placeholder)
+    wxStaticText* m_infoText;    ///< Placeholder text inside the info panel
+
+    // Matrix measurement selector [x ; y]
+    wxTextCtrl*   m_textXSelector;
+    wxTextCtrl*   m_textYSelector;
 
 private:
     wxString      m_filePath = System::filePathSystem;
@@ -65,6 +75,7 @@ private:
 
     void getFileNames(const wxString& dirPath, wxArrayString& files);
     void executeScriptEvent(wxCommandEvent& event);
+    void OnSelectMeasurement(wxCommandEvent& event);
     void updatePlotData();
     void OnClose(wxCloseEvent& event);
 
