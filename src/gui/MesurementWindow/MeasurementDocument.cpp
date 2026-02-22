@@ -25,12 +25,9 @@ MeasurementDocument::MeasurementDocument(PrologixUsbGpibAdapter& adapter,
 MeasurementDocument::~MeasurementDocument()
 {
     StopMeasurement();
-
-    if (m_adapter.getConnected())
-    {
-        m_adapter.disconnect();
-        std::cerr << "MeasurementDocument: adapter disconnected on destruction" << std::endl;
-    }
+    // NOTE: Do NOT disconnect the shared adapter singleton here.
+    // Multiple MeasurementDocuments may share the same adapter.
+    // The adapter lifecycle is managed at the application level.
 }
 
 // ---------------------------------------------------------------------------

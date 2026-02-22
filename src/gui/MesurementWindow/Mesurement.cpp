@@ -1,17 +1,26 @@
 #include "Mesurement.h"
+#include "main.h"
 #include "SettingsWindow.h"
 #include "cmdGpib.h"
 #include "mainHelper.h"
 
+int PlotWindow::s_windowCounter = 0;
+
 //-----Plot Window BEGIN--------
 PlotWindow::PlotWindow(wxWindow *parent, MainDocument* mainDoc)
-    : wxDialog(parent, wxID_ANY, "Plot Window", wxDefaultPosition, wxSize(1000,750))
+    : wxFrame(parent, wxID_ANY,
+              wxString::Format("Measurement Window %d", ++s_windowCounter),
+              wxDefaultPosition, wxSize(1000,750),
+              wxDEFAULT_FRAME_STYLE)
     , m_mainDoc(mainDoc)
+    , m_windowId(s_windowCounter)
 {
     getFileNames(m_filePath, m_fileNames);
 
     wxButton* executeMesurment = new wxButton(this, wxID_ANY, "Execute Mesurement");
-    executeMesurment->Bind(wxEVT_BUTTON, &PlotWindow::executeScriptEvent,this);
+    executeMesurment->Bind(wxEVT_BUTTON, &PlotWindow::executeScriptEvent, this);
+    wxButton* importCsvBtn = new wxButton(this, wxID_ANY, "Import CSV");
+    importCsvBtn->Bind(wxEVT_BUTTON, &PlotWindow::importCsvEvent, this);
     m_selectMesurement = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, m_fileNames);
     m_selectMesurement->SetSelection(0);
     // 1. mpWindow (Zeichenfläche) erstellen
@@ -58,8 +67,12 @@ PlotWindow::PlotWindow(wxWindow *parent, MainDocument* mainDoc)
     m_plot->AddLayer(legend);
 
     // 6. Layout-Management
+    // Close handler for modeless window self-cleanup
+    Bind(wxEVT_CLOSE_WINDOW, &PlotWindow::OnClose, this);
+
     wxBoxSizer* sizerButtons = new wxBoxSizer(wxHORIZONTAL);
     sizerButtons->Add(executeMesurment, 0, wxEXPAND | wxALL);
+    sizerButtons->Add(importCsvBtn, 0, wxEXPAND | wxALL, 5);
     sizerButtons->Add(m_selectMesurement, 0, wxEXPAND | wxALL);
 
     wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
@@ -75,19 +88,32 @@ PlotWindow::PlotWindow(wxWindow *parent, MainDocument* mainDoc)
 
 PlotWindow::~PlotWindow()
 {
-    // Document handles StopMeasurement + disconnect in its destructor
     if (m_document)
+    {
         m_document->RemoveObserver(this);
+        if (m_ownsDocument)
+        {
+            delete m_document;
+            m_document = nullptr;
+        }
+    }
 
-    std::cerr << "PlotWindow closed" << std::endl;
+    std::cerr << "PlotWindow " << m_windowId << " closed" << std::endl;
 }
 
 void PlotWindow::SetDocument(MeasurementDocument* doc)
 {
     if (m_document)
+    {
         m_document->RemoveObserver(this);
+        if (m_ownsDocument)
+        {
+            delete m_document;
+        }
+    }
 
     m_document = doc;
+    m_ownsDocument = false;  // caller-owned by default
 
     if (m_document)
         m_document->AddObserver(this);
@@ -175,6 +201,53 @@ void PlotWindow::updatePlotData()
         m_vectorLayer->SetData(x, y);
     }
     m_plot->Fit();
+}
+
+void PlotWindow::importCsvEvent(wxCommandEvent& event)
+{
+    wxFileDialog openFileDialog(this, _("Import CSV Data"),
+        System::filePathRoot,
+        "",
+        "CSV Files (*.csv)|*.csv|All Files (*.*)|*.*",
+        wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+
+    if (openFileDialog.ShowModal() == wxID_CANCEL)
+        return;
+
+    wxString filePath = openFileDialog.GetPath();
+    sData importedData;
+    CsvFile csvFile;
+
+    if (!csvFile.readCsvFile(filePath, importedData))
+    {
+        wxMessageBox("Failed to read CSV file: " + filePath,
+                     "Import Error", wxOK | wxICON_ERROR, this);
+        return;
+    }
+
+    // Extract data from the imported sData and update the plot
+    sData::sParam* param = importedData.GetParameter();
+    std::vector<double> x, y;
+    importedData.GetData(param, x, y);
+
+    m_vectorLayer->SetData(x, y);
+    m_plot->Fit();
+
+    SetTitle(wxString::Format("Measurement Window %d — %s",
+             m_windowId, filePath.AfterLast('\\').AfterLast('/')));
+
+    std::cout << "[PlotWindow " << m_windowId << "] Imported CSV: "
+              << filePath << std::endl;
+}
+
+void PlotWindow::OnClose(wxCloseEvent& event)
+{
+    // Notify parent (MainProgrammWin) to remove us from its tracking set
+    MainProgrammWin* parent = dynamic_cast<MainProgrammWin*>(GetParent());
+    if (parent)
+        parent->UnregisterMeasurementWindow(this);
+
+    Destroy();
 }
 
 //-----Plot Window Set Marker-------

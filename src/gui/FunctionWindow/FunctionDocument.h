@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-// Forward declaration — no wxWidgets in the document
+// Forward declaration
 class PrologixUsbGpibAdapter;
 
 /**

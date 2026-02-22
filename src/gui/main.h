@@ -9,6 +9,7 @@
 #include <wx/msgdlg.h>
 
 #include <map>
+#include <set>
 #include <thread>
 // Hardware header
 #include "fkt_GPIB.h"
@@ -49,6 +50,15 @@ class MainProgrammWin : public wxFrame, public IMainObserver
 private:
     // Non-owning pointer to application-level document (owned by MainWin::OnInit)
     MainDocument* m_doc = nullptr;
+
+    // Track all open measurement windows for proper cleanup
+    std::set<PlotWindow*> m_openMeasurementWindows;
+
+public:
+    /** Called by PlotWindow to unregister itself when closing */
+    void UnregisterMeasurementWindow(PlotWindow* win) { m_openMeasurementWindows.erase(win); }
+
+private:
 
 protected:
 	wxMenuBar* m_menubarMainProg;

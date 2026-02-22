@@ -272,9 +272,16 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, MainDocument* doc, wxWindowI
 }
 MainProgrammWin::~MainProgrammWin()
 {
+    // Close all open measurement windows
+    for (PlotWindow* win : m_openMeasurementWindows)
+    {
+        if (win)
+            win->Destroy();
+    }
+    m_openMeasurementWindows.clear();
+
     if (m_doc)
         m_doc->RemoveObserver(this);
-    this->Destroy();
 }
 // Button functions
 void MainProgrammWin::ButtonRefresh(wxCommandEvent& event)
@@ -366,22 +373,31 @@ void MainProgrammWin::MenuFileClose(wxCommandEvent& event)
 }
 void MainProgrammWin::MenuFileExit(wxCommandEvent& event)
 {
+    // Close all open measurement windows first
+    for (PlotWindow* win : m_openMeasurementWindows)
+    {
+        if (win)
+            win->Destroy();
+    }
+    m_openMeasurementWindows.clear();
+
     this->Destroy();
 }
 
 void MainProgrammWin::MenuMesurementNew(wxCommandEvent& event)
 {
-    // Document owns hardware state, independent of the view
-    MeasurementDocument measDoc(PrologixUsbGpibAdapter::get_instance(), fsuMesurement::get_instance());
+    // Each window gets its own heap-allocated document so it can live independently
+    MeasurementDocument* measDoc = new MeasurementDocument(
+        PrologixUsbGpibAdapter::get_instance(), fsuMesurement::get_instance());
 
     PlotWindow* PlotWin = new PlotWindow(this, m_doc);
-    PlotWin->SetDocument(&measDoc);
+    PlotWin->SetDocument(measDoc);
+    PlotWin->SetOwnsDocument(true);  // PlotWindow takes ownership
 
-    PlotWin->ShowModal();
-
-    PlotWin->SetDocument(nullptr);
-    PlotWin->Destroy();
-    // measDoc goes out of scope: destructor handles disconnect + thread join
+    // Track and show as modeless (non-blocking)
+    m_openMeasurementWindows.insert(PlotWin);
+    PlotWin->Show();
+    // Window self-destructs on close; MenuMesurementNew returns immediately
 }
 void MainProgrammWin::MenuMesurementLoad(wxCommandEvent& event)
 {

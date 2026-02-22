@@ -413,6 +413,10 @@ fsuMesurement::fsuMesurement()
     */
 }
 
+fsuMesurement::~fsuMesurement()
+{
+}
+
 void fsuMesurement::seperateDataBlock(const wxString& receivedString, std::vector<double>& x)
 {
     wxArrayString seperatedStrings = wxStringTokenize(receivedString, ",");

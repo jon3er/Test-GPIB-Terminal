@@ -22,12 +22,15 @@
 
 /**
  * @brief Pure View for measurement plots. Observes a MeasurementDocument.
+ *
+ * This is a modeless wxFrame so multiple instances can be open simultaneously,
+ * each with its own MeasurementDocument and independently imported data.
  */
-class PlotWindow : public wxDialog, public IMeasurementObserver
+class PlotWindow : public wxFrame, public IMeasurementObserver
 {
 public:
     /**
-     * @param parent     wx parent window (for layout / modality)
+     * @param parent     wx parent window
      * @param mainDoc    pointer to the application-level MainDocument
      *                   (may be nullptr; used to pre-populate the plot).
      */
@@ -37,8 +40,14 @@ public:
     /** Attach / detach document. Registers/unregisters this as observer. */
     void SetDocument(MeasurementDocument* doc);
 
+    /** Set document ownership: if true, this window deletes the document on close. */
+    void SetOwnsDocument(bool owns) { m_ownsDocument = owns; }
+
     // IMeasurementObserver
     void OnDocumentChanged(const std::string& changeType) override;
+
+    /** Static counter for unique window titles */
+    static int s_windowCounter;
 
 protected:
     wxChoice*    m_selectMesurement;
@@ -51,18 +60,22 @@ private:
 
     void getFileNames(const wxString& dirPath, wxArrayString& files);
     void executeScriptEvent(wxCommandEvent& event);
+    void importCsvEvent(wxCommandEvent& event);
     void updatePlotData();
+    void OnClose(wxCloseEvent& event);
 
     // Helper for formatting output with timestamp
     wxString formatOutput(const std::string& text);
 
-    // Non-owning pointer to document (owned by caller)
+    // Owning pointer to document — each window owns its own document
     MeasurementDocument* m_document = nullptr;
+    bool m_ownsDocument = false;
 
     // Non-owning pointer to application-level document (for pre-load)
     MainDocument* m_mainDoc = nullptr;
 
     int m_mesurementNumber = 1;
+    int m_windowId = 0;
 };
 
 /**
