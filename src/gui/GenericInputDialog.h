@@ -77,6 +77,7 @@ private:
     std::vector<InputFieldDef> m_fieldDefs;
     std::vector<wxTextCtrl*>                          m_inputs;
     std::function<void(const std::vector<wxString>&)> m_onConfirm; // TODO entfernen daten müssen nicht weitergeleitet werden
+    bool                                              m_isPlotterMesurement;
 
     void OnConfirm(wxCommandEvent& event);
 };

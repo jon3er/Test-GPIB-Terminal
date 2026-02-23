@@ -85,7 +85,7 @@ public:
     ~sData();
 
     bool SetData(sParam *par, std::vector<double> re, std::vector<double> im);
-    bool GetData(sParam *par,std::vector<double>& re, std::vector<double>& im);
+    bool GetData(sParam *par,std::vector<double>& re, std::vector<double>& im, std::vector<double>& freq);
 
     //get methodes
     //get parameter

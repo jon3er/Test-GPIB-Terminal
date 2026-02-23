@@ -100,6 +100,10 @@ private:
     // Helper for formatting output with timestamp
     wxString formatOutput(const std::string& text);
 
+    // Update the info panel with data from a sParam header struct.
+    // Pass nullptr to show the default "no data" placeholder.
+    void UpdateInfoPanel(sData::sParam* param);
+
     // Owning pointer to document — each window owns its own document
     MeasurementDocument* m_document = nullptr;
     bool m_ownsDocument = false;

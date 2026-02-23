@@ -1,5 +1,7 @@
 #include "GenericInputDialog.h"
 #include "fkt_GPIB.h"
+#include "PlotterFrame.h"
+#include "main.h"
 
 
 GenericInputDialog::GenericInputDialog(
@@ -13,6 +15,7 @@ GenericInputDialog::GenericInputDialog(
     , m_onConfirm(onConfirm)
 {
     m_fieldDefs = fieldDefs;
+    m_parent = parent;
 
     wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
 
@@ -95,5 +98,33 @@ void GenericInputDialog::OnConfirm(wxCommandEvent& /*event*/)
     }
     EndModal(wxID_OK);
 
-    // TODO add check if Plotter is connected
+    // TODO Make diffent selection trees for plotter and no plotter mesurement
+    if (m_isPlotterMesurement)
+    {
+        PlotterFrame* Plotframe = new PlotterFrame();
+        Plotframe->ShowModal();
+        Plotframe->Destroy();
+    }
+    else // open Mesurement without plotter menu
+    {
+        // Walk up parent chain to find MainProgrammWin
+        MainProgrammWin* mainWin = nullptr;
+        wxWindow* win = m_parent;
+        while (win)
+        {
+            mainWin = dynamic_cast<MainProgrammWin*>(win);
+            if (mainWin) break;
+            win = win->GetParent();
+        }
+
+        if (mainWin)
+        {
+            wxCommandEvent evt;
+            mainWin->MenuMesurementNew(evt);
+        }
+        else
+        {
+            std::cerr << "[GenericInputDialog] Could not find MainProgrammWin in parent chain!" << std::endl;
+        }
+    }
 }

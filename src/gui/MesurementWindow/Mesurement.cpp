@@ -90,43 +90,56 @@ PlotWindow::PlotWindow(wxWindow *parent, MainDocument* mainDoc)
     // 1. mpWindow (Zeichenfläche) erstellen — parented to m_plotPanel
     m_plot = new mpWindow(m_plotPanel, wxID_ANY);
 
-    // Farbeinstellungen (Optional)
-    m_plot->SetMargins(30, 30, 50, 50);
+    // Helles Theme: weißer Hintergrund, dunkle Achsen, dezentes Gitter
+    m_plot->SetColourTheme(
+        wxColour(255, 255, 255),     // Hintergrund: weiß
+        wxColour(40,  40,  40),      // Achsen/Text: dunkelgrau
+        wxColour(210, 210, 220)      // Gitterlinien: hellgrau
+    );
+    m_plot->SetMargins(40, 30, 55, 65);
+    m_plot->EnableDoubleBuffer(true); // kein Flimmern
 
     // 2. Achsen als Layer hinzufügen
-    // mpScaleX(Name, Ausrichtung, Ticks anzeigen, Typ)
-    mpScaleX* xAxis = new mpScaleX("X-Achse", mpALIGN_BORDER_BOTTOM, true, mpX_NORMAL);
-    mpScaleY* yAxis = new mpScaleY("Y-Achse", mpALIGN_BORDER_LEFT, true);
+    wxFont axisFont(9, wxFONTFAMILY_SWISS, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
+    wxPen  axisPen(wxColour(40, 40, 40), 1);
+
+    mpScaleX* xAxis = new mpScaleX("Frequenz", mpALIGN_BORDER_BOTTOM, true, mpX_NORMAL);
+    xAxis->SetFont(axisFont);
+    xAxis->SetPen(axisPen);
+
+    mpScaleY* yAxis = new mpScaleY("Amplitude", mpALIGN_BORDER_LEFT, true);
+    yAxis->SetFont(axisFont);
+    yAxis->SetPen(axisPen);
 
     m_plot->AddLayer(xAxis);
     m_plot->AddLayer(yAxis);
 
-    std::vector<double> m_x = {0.0, 1.0, 2.0, 3.0, 4.0, 5.0 };
-    std::vector<double> m_y = {0.0, 1.0, 4.0, 2.0, 5.0, 3.0 };
-
+    std::vector<double> realAmp = {0.0, 1.0, 2.0, 3.0, 4.0, 5.0 };
+    std::vector<double> imagAmp = {0.0, 1.0, 4.0, 2.0, 5.0, 3.0 };
+    std::vector<double> freq = {0.0, 1.0, 2.0, 3.0, 4.0, 5.0 };
     // 3. Daten vorbereiten (std::vector laut Header Definition von mpFXYVector)
 
     //Holt in dem Haupt menu geladene daten
     if (m_mainDoc != nullptr && m_mainDoc->IsFileOpen())
     {
         sData::sParam* tempStruct = m_mainDoc->GetData().GetParameter();
-        m_mainDoc->GetData().GetData(tempStruct, m_x, m_y);
+        m_mainDoc->GetData().GetData(tempStruct, realAmp, imagAmp, freq);
     }
 
 
 
     // 4. Vektor-Layer erstellen
     m_vectorLayer = new mpFXYVector("Messdaten");
-    m_vectorLayer->SetData(m_x, m_y);
+    m_vectorLayer->SetData(freq, realAmp);
     m_vectorLayer->SetContinuity(true); // True = Linie zeichnen
-    m_vectorLayer->SetPen(wxPen(*wxBLUE, 2, wxPENSTYLE_SOLID));
+    m_vectorLayer->SetPen(wxPen(wxColour(30, 100, 200), 2, wxPENSTYLE_SOLID)); // kräftiges Blau
     m_vectorLayer->ShowName(true);      // Wichtig für die Legende
 
     m_plot->AddLayer(m_vectorLayer);
 
     // 5. Legende hinzufügen (mpInfoLegend ist ein Layer)
-    // wxRect definiert Startposition und ungefähre Größe
-    mpInfoLegend* legend = new mpInfoLegend(wxRect(20, 20, 10, 10), wxTRANSPARENT_BRUSH);
+    static wxBrush legendBrush(wxColour(248, 248, 252), wxBRUSHSTYLE_SOLID);
+    mpInfoLegend* legend = new mpInfoLegend(wxRect(25, 25, 90, 35), &legendBrush);
     legend->SetItemMode(mpLEGEND_LINE); // Zeigt Linie statt Quadrat in der Legende
     m_plot->AddLayer(legend);
 
@@ -170,11 +183,16 @@ PlotWindow::PlotWindow(wxWindow *parent, MainDocument* mainDoc)
     infoTitle->SetFont(infoTitle->GetFont().Bold());
     infoSizer->Add(infoTitle, 0, wxEXPAND | wxALL, 8);
     infoSizer->Add(new wxStaticLine(m_infoPanel), 0, wxEXPAND | wxLEFT | wxRIGHT, 5);
-    m_infoText = new wxStaticText(m_infoPanel, wxID_ANY,
-        "--- No measurement loaded ---\n\nPlaceholder for measurement details.",
+    m_infoText = new wxStaticText(m_infoPanel, wxID_ANY, wxEmptyString,
         wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT);
     infoSizer->Add(m_infoText, 1, wxEXPAND | wxALL, 8);
     m_infoPanel->SetSizer(infoSizer);
+
+    // Populate info panel from pre-loaded document (or show placeholder)
+    if (m_mainDoc != nullptr && m_mainDoc->IsFileOpen())
+        UpdateInfoPanel(m_mainDoc->GetData().GetParameter());
+    else
+        UpdateInfoPanel(nullptr);
 
     // Bottom sizer: left info | right controls (equal halves)
     wxBoxSizer* bottomSizer = new wxBoxSizer(wxHORIZONTAL);
@@ -323,12 +341,40 @@ void PlotWindow::OnSelectMeasurement(wxCommandEvent& /*event*/)
     }
 
     // TODO: load the measurement at matrix position [x; y] from the data set.
-    // For now, update the info placeholder with the selected coordinates.
-    m_infoText->SetLabel(wxString::Format(
-        "Selected: [%ld ; %ld]\n\n--- Placeholder: measurement details will appear here ---", x, y));
-    m_infoPanel->Layout();
+    wxLogMessage("PlotWindow: selected measurement [%ld ; %ld]", x, y);
 
     wxLogMessage("PlotWindow: selected measurement [%ld ; %ld]", x, y);
+}
+
+void PlotWindow::UpdateInfoPanel(sData::sParam* param)
+{
+    if (!param)
+    {
+        m_infoText->SetLabel("--- No measurement loaded ---");
+        m_infoPanel->Layout();
+        return;
+    }
+
+    auto freqStr = [](unsigned int hz) -> wxString {
+        if (hz < 0)         return wxT("---");
+        if (hz >= 1000000u) return wxString::Format("%g MHz", hz / 1e6);
+        if (hz >= 1000u)    return wxString::Format("%g kHz", hz / 1e3);
+        return wxString::Format("%u Hz", hz);
+    };
+
+    wxString info;
+    info += wxString::Format("File Name:          %s\n", param->File);
+    info += wxString::Format("Measurement Type:   %s\n", param->Type);
+    info += wxString::Format("Date:               %s\n", param->Date);
+    info += wxString::Format("Time:               %s\n", param->Time);
+    info += wxString::Format("X Points:           %u\n", param->NoPoints_X);
+    info += wxString::Format("Y Points:           %u\n", param->NoPoints_Y);
+    info += wxString::Format("Measurement Points: %u\n", param->NoPoints_Array);
+    info += wxString::Format("Start Frequency:    %s\n", freqStr(param->startFreq));
+    info += wxString::Format("End Frequency:      %s",   freqStr(param->endFreq));
+
+    m_infoText->SetLabel(info);
+    m_infoPanel->Layout();
 }
 
 // -----------------------------------------------------------------------
@@ -358,11 +404,29 @@ void PlotWindow::OnMenuFileOpen(wxCommandEvent& event)
 
     // Extract data from the imported sData and update the plot
     sData::sParam* param = importedData.GetParameter();
-    std::vector<double> x, y;
-    importedData.GetData(param, x, y);
+    std::vector<double> realAmp, imagAmp, freq;
+    importedData.GetData(param, realAmp, imagAmp, freq);
+    // add Loaded data to document data
+        // Update the document with the loaded data
+    if (m_document)
+    {
+        // Copy the full sData into the document's result store
+        m_document->GetResultsMutable() = importedData;
 
-    m_vectorLayer->SetData(x, y);
+        // Push the x/y vectors so observers (e.g. live plot refresh) are notified
+        m_document->SetXData(freq);
+        m_document->SetYData(realAmp); // amplitude
+    }
+    
+    m_vectorLayer->SetData(freq, realAmp);
+    m_plot->AddLayer(m_vectorLayer);
     m_plot->Fit();
+    m_plot->Refresh();
+
+    sData::sParam* docParam = m_document
+        ? m_document->GetResultsMutable().GetParameter()
+        : param;
+    UpdateInfoPanel(docParam);
 
     SetTitle(wxString::Format("Measurement Window %d \u2014 %s",
              m_windowId, filePath.AfterLast('\\').AfterLast('/')));

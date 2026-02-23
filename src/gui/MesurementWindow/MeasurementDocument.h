@@ -52,12 +52,16 @@ public:
     void RemoveObserver(IMeasurementObserver* observer);
 
     // ---- Read-only data accessors ----
-    const std::vector<double>& GetXData()            const { return m_x; }
+    const std::vector<double>& GetXData()            const {  return m_x; }
     const std::vector<double>& GetYData()            const { return m_y; }
     bool                       IsMeasuring()         const { return m_measuring.load(); }
     int                        GetMeasurementNumber()const { return m_measurementNumber; }
     const sData&               GetResults()          const { return m_results; }
     sData&                     GetResultsMutable()         { return m_results; }
+
+    // ---- Write data ----
+    void SetXData(const std::vector<double>& x)      { m_x = x; }
+    void SetYData(const std::vector<double>& y)      { m_y = y; }
 
     // ---- Commands ----
 
@@ -77,7 +81,7 @@ public:
     /**
      * Send a SCPI marker-1 command via the adapter.
      * @param setToMax  true  → CALC:MARK:MAX
-     *                  false → CALC:MARK:MAX <freqRaw>
+     *                  false → CALC:MARK:MAX freqRaw
      * @param freqRaw   Pre-computed frequency in Hz as string.
      */
     void WriteMarker1(bool setToMax, const std::string& freqRaw);

@@ -42,13 +42,14 @@ bool sData::SetData(sParam *par, std::vector<double> re, std::vector<double> im)
     return true;
 
 }
-bool sData::GetData(sParam *par,std::vector<double>& re, std::vector<double>& im)
+bool sData::GetData(sParam *par,std::vector<double>& re, std::vector<double>& im, std::vector<double>& freq)
 {
     try
     {
         par = m_dsParam;
         re = m_dsR;
         im = m_dsI;
+        freq = GetFreqStepVector();
     }
     catch(const std::exception& e)
     {

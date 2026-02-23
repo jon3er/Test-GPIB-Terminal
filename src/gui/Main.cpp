@@ -437,9 +437,9 @@ void MainProgrammWin::MenuMesurementLoad(wxCommandEvent& event)
 
     // Push the imported data into the plot
     sData::sParam* param = importedData.GetParameter();
-    std::vector<double> x, y;
-    importedData.GetData(param, x, y);
-    PlotWin->GetVectorLayer()->SetData(x, y);
+    std::vector<double> realAmp, imagAmp , freq;
+    importedData.GetData(param, realAmp, imagAmp, freq);
+    PlotWin->GetVectorLayer()->SetData(freq, realAmp);
     PlotWin->GetPlot()->Fit();
     PlotWin->SetTitle(wxString::Format("Measurement Window — %s",
                       filePath.AfterLast('\\').AfterLast('/')));
