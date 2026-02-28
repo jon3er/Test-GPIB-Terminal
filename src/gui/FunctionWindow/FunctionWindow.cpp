@@ -114,7 +114,12 @@ void FunctionWindow::OnConDisconGpib(wxCommandEvent& event)
 
 void FunctionWindow::OnTestSaveFile(wxCommandEvent& event)
 {
-    if (m_document) m_document->TestSaveFile();
+    if (m_document)
+    {
+        std::thread Test = std::thread(&FunctionDocument::TestSaveFile, m_document);
+        Test.detach();
+    }
+    //m_document->TestSaveFile();
 }
 
 void FunctionWindow::OnWriteGpib(wxCommandEvent& event)

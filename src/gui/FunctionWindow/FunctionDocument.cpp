@@ -4,6 +4,7 @@
 
 #include <ctime>
 #include <iostream>
+#include <random>
 
 // --------------------------------------------------------------------------
 // Internal helpers
@@ -171,9 +172,9 @@ void FunctionDocument::TestSaveFile()
     sData TestObjekt2;
     CsvFile csvFile1;
 
-    int xpt      = 1;
-    int ypt      = 1;
-    int count    = 10000;
+    int xpt      = 10;
+    int ypt      = 10;
+    int count    = 625;
     int endFreq  = 50'000;
 
     TestObjekt.setTimeAndDate();
@@ -182,9 +183,14 @@ void FunctionDocument::TestSaveFile()
     TestObjekt.setEndFreq(endFreq);
 
     std::vector<double> TestArray;
+    // Generates random values
+    std::random_device rd; // obtain a random number from hardware
+    std::mt19937 gen(rd()); // seed the generator
+    std::uniform_real_distribution<> distr(0.0, 100.0); // define the range
+
     for (int i = 0; i < count; i++)
     {
-        try   { TestArray.push_back(double(i)); }
+        try   { TestArray.push_back(double(distr(gen))); }
         catch (const std::exception& e)
               { std::cerr << "pushback failed: " << e.what() << '\n'; }
     }
