@@ -108,7 +108,7 @@ public:
         static PrologixUsbGpibAdapter instance;
         return instance;
     }
-    // Overload to prevent second two instance
+    // Overload to prevent second two instances
     PrologixUsbGpibAdapter(const PrologixUsbGpibAdapter&) = delete;
     PrologixUsbGpibAdapter(PrologixUsbGpibAdapter&&) = delete;
     PrologixUsbGpibAdapter operator=(const PrologixUsbGpibAdapter&) = delete;
@@ -153,6 +153,11 @@ public:
      */
     void readScriptFile(const wxString& dirPath, const wxString& file, wxArrayString& logAdapterReceived, const std::atomic<bool>* stopFlag = nullptr);
  
+    /**
+     * @brief unloads VCP drivers to solve drive conficts on linux/gnu
+     */
+    void prepareFTDIDevice();
+
     // get methodes
     FT_STATUS getStatus();
     FT_HANDLE getHandle();

@@ -397,6 +397,28 @@ std::vector<char> PrologixUsbGpibAdapter::checkAscii(std::string input)
     return vCharOutputGpib;
 }
 
+void prepareFTDIDevice() {
+    std::cout << "Prüfe auf aktive VCP-Treiber (ftdi_sio)..." << std::endl;
+
+    // check if module is loaded (lsmod | grep)
+    // 0 means found
+    if (std::system("lsmod | grep ftdi_sio > /dev/null") == 0) {
+        std::cout << "Treiber ftdi_sio gefunden. Versuche zu entladen..." << std::endl;
+
+        // unload module
+        int res1 = std::system("sudo rmmod ftdi_sio");
+        int res2 = std::system("sudo rmmod usbserial");
+
+        if (res1 == 0) {
+            std::cout << "VCP-Treiber erfolgreich entladen." << std::endl;
+        } else {
+            std::cerr << "Fehler beim Entladen. Wurde das Passwort eingegeben?" << std::endl;
+        }
+    } else {
+        std::cout << "Keine blockierenden Treiber aktiv. D2XX Zugriff bereit." << std::endl;
+    }
+}
+
 //------fsuMesurement Beginn-----
 
 fsuMesurement::fsuMesurement()
