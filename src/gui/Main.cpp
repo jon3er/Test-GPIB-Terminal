@@ -26,7 +26,8 @@ bool MainWin::OnInit()
             fprintf(debugLog, "Creating main frame...\n");
             fflush(debugLog);
         }
-
+    
+        // Create main frame
         MainProgrammWin *MainProgFrame = new MainProgrammWin(nullptr, new MainDocument());
 
         if (debugLog)

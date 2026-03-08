@@ -177,12 +177,14 @@ void FunctionDocument::TestSaveFile()
     int count    = 625;
     int endFreq  = 50'000;
 
+    
     TestObjekt.setTimeAndDate();
     TestObjekt.setNumberOfPts_X(xpt);
     TestObjekt.setNumberOfPts_Y(ypt);
     TestObjekt.setEndFreq(endFreq);
 
     std::vector<double> TestArray;
+    
     // Generates random values
     std::random_device rd; // obtain a random number from hardware
     std::mt19937 gen(rd()); // seed the generator
@@ -220,7 +222,7 @@ void FunctionDocument::TestSaveFile()
     int messungen = TestObjekt.getNumberOfPts_X() * TestObjekt.getNumberOfPts_Y();
     for (int i = 1; i <= messungen; i++)
     {
-        if (!csvFile1.saveToCsvFile(Dateiname, TestObjekt, i))
+        if (!csvFile1.saveCsvFile(Dateiname, TestObjekt, i))
             std::cerr << "Failed to save file" << std::endl;
     }
 
@@ -236,7 +238,7 @@ void FunctionDocument::TestSaveFile()
 
     for (int i = 1; i <= totalpoints; i++)
     {
-        if (!csvFile1.saveToCsvFile(Dateiname2, TestObjekt2, i))
+        if (!csvFile1.saveCsvFile(Dateiname2, TestObjekt2, i))
             std::cerr << "Failed to save file" << std::endl;
     }
 

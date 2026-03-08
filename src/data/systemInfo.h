@@ -1,6 +1,7 @@
 #pragma once
 
 #include <wx/wx.h>
+#include <unordered_map>
 #include "mathplot.h"
 #include "dataManagement.h"
 #include "fkt_GPIB.h"
@@ -62,4 +63,41 @@ enum MainMenuBar
     ID_Plot_File_Save       = 72,
     ID_Plot_File_SaveAs     = 73,
     ID_Plot_File_Exit       = 74
+};
+
+// Error Prefixes
+enum class ErrorPrefix
+{
+    CsvRead,
+    CsvSave,
+    CsvHelper,
+    Prologix,
+    Measurement,
+    GuiMain,
+    GuiFunc,
+    GuiTerminal,
+    GuiMesurement,
+    GuiProcessing,
+    GuiTest,
+    GuiHelp,
+    GuiGeneric,
+
+};
+
+
+static const std::unordered_map<ErrorPrefix, wxString> ErrPrefixString = {
+    {ErrorPrefix::CsvRead,          "[CSV/READ] "},
+    {ErrorPrefix::CsvSave,         "[CSV/SAVE] "},
+    {ErrorPrefix::CsvHelper,        "[CSV/HELPER] "},
+    {ErrorPrefix::Prologix,         "[PROLOGIX] "},
+    {ErrorPrefix::Measurement,      "[MEASUREMENT] "},
+    {ErrorPrefix::GuiMain,          "[GUI/MAIN] "},
+    {ErrorPrefix::GuiFunc,          "[GUI/FUNC] "},
+    {ErrorPrefix::GuiTerminal,      "[GUI/TERMINAL] "},
+    {ErrorPrefix::GuiMesurement,    "[GUI/MEASUREMENT] "},
+    {ErrorPrefix::GuiProcessing,    "[GUI/PROCESSING] "},
+    {ErrorPrefix::GuiTest,          "[GUI/TEST] "},
+    {ErrorPrefix::GuiHelp,          "[GUI/HELP] "},
+    {ErrorPrefix::GuiGeneric,       "[GUI/GENERIC] "},
+
 };

@@ -5,6 +5,7 @@
 #include <chrono>
 #include <format>
 #include <cstring>
+#include <unordered_map>
 
 #include <wx/wx.h>
 #include <wx/textfile.h>
@@ -148,35 +149,4 @@ private:
 
 
 
-/**
- * @brief Save mesurement data to csv file
- */
-class CsvFile
-{
-    public:
-    // file operations
-        // write
-        bool saveToCsvFile(wxString& Filename, sData& data, int mesurementNumb);
-        // read
-        bool readCsvFile(wxString filename, sData& data);
-    protected:
-        // save Helper Functions
-        bool saveHeaderCsv(wxTextFile& file, sData& data);
-        bool saveDataCsv(wxTextFile& file, sData data, int mesurementNumb, bool cont = false);
 
-        // read Helper Functions
-        bool readCsvHeader(wxTextFile& file, sData& data);
-        bool readDataCsv(wxTextFile& file, sData& data);
-
-        // helper functions
-        std::string getIndexNumbers(int xPoints, int yPoints, int mesurementNumb, bool continuous = false);
-        bool writeMatrixIndexCsv(wxTextFile& file, sData data);
-        int findLineCsv(wxTextFile& file, wxString findText);
-
-    private:
-
-        wxTextFile m_file;
-        sData m_data;
-
-
-};

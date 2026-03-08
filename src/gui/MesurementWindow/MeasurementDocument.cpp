@@ -3,6 +3,7 @@
 #include "fkt_GPIB.h"
 #include "systemInfo.h"
 #include "dataManagement.h"
+#include "CsvManagement.h"
 #include "cmdGpib.h"
 
 #include <wx/wx.h>
@@ -176,7 +177,7 @@ void MeasurementDocument::WorkerThread(const std::string& dirPath,
         wxTextFile file(filePath);
         file.Create();
         if (!file.Open())
-            csvFile.saveToCsvFile(filePath, m_results, measurementNumber);
+            csvFile.saveCsvFile(filePath, m_results, measurementNumber);
 
         std::cout << "MeasurementDocument: worker thread completed" << std::endl;
     }

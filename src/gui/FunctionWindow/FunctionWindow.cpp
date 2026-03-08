@@ -39,6 +39,9 @@ FunctionWindow::FunctionWindow(wxWindow* parent)
     TestSaveFileButton->   Bind(wxEVT_BUTTON, &FunctionWindow::OnTestSaveFile,   this);
     TestMultiMessButton->  Bind(wxEVT_BUTTON, &FunctionWindow::OnTestMultiMess,  this);
     TestButton->           Bind(wxEVT_BUTTON, &FunctionWindow::OnTest,           this);
+    
+    // Exit button
+    Bind(wxEVT_CLOSE_WINDOW, &FunctionWindow::OnClose, this);
 
     // Layout
     wxBoxSizer* sizerFunc = new wxBoxSizer(wxVERTICAL);
@@ -65,6 +68,8 @@ FunctionWindow::~FunctionWindow()
 {
     // Disconnection is handled by FunctionDocument's destructor.
     std::cerr << "Function Window Closed" << std::endl;
+
+    
 }
 
 //----- Document binding -----
@@ -114,12 +119,29 @@ void FunctionWindow::OnConDisconGpib(wxCommandEvent& event)
 
 void FunctionWindow::OnTestSaveFile(wxCommandEvent& event)
 {
-    if (m_document)
+    if (!m_document)
     {
-        std::thread Test = std::thread(&FunctionDocument::TestSaveFile, m_document);
-        Test.detach();
+        return;
     }
-    //m_document->TestSaveFile();
+
+    if (m_csvThreadRunning)
+    {
+        wxMessageBox("Save is already in progress.", "Busy", wxOK | wxICON_WARNING, this);
+        return;
+    }
+    
+    if (m_csvThread.joinable())
+    {
+        m_csvThread.detach();
+    }
+    
+    m_csvThreadRunning = true;
+    m_csvThread = std::thread([this]() 
+    {
+        m_document->TestSaveFile();
+        m_csvThreadRunning = false;
+    });
+    
 }
 
 void FunctionWindow::OnWriteGpib(wxCommandEvent& event)
@@ -166,4 +188,32 @@ void FunctionWindow::OnTestMultiMess(wxCommandEvent& event)
 void FunctionWindow::OnTest(wxCommandEvent& event)
 {
     if (m_document) m_document->Test();
+}
+
+void FunctionWindow::OnClose(wxCloseEvent& event)
+{
+    if (m_csvThreadRunning)
+    {
+        int answer = wxMessageBox(
+            "A save operation is still running.\nDo you want to wait for it to finish before closing?",
+            "Operation in progress",
+            wxYES_NO | wxICON_WARNING, this);
+
+        if (answer == wxYES)
+        {
+            if (m_csvThread.joinable())
+                m_csvThread.join();
+        }
+        else
+        {
+            // User chose not to wait — veto the close
+            event.Veto();
+            return;
+        }
+    }
+
+    if (m_csvThread.joinable())
+        m_csvThread.join();
+
+    event.Skip(); // proceed with normal close
 }

@@ -9,6 +9,7 @@
 #include <wx/tokenzr.h>
 
 #include "dataManagement.h"
+#include "CsvManagement.h"
 #include "systemInfo.h"
 
 // Helper functions for komplex main functions

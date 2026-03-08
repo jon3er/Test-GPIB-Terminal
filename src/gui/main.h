@@ -26,6 +26,7 @@
 #include "SettingsDocument.h"
 // Data
 #include "dataManagement.h"
+#include "CsvManagement.h"
 // Doc/View
 #include "MainDocument.h"
 // info header

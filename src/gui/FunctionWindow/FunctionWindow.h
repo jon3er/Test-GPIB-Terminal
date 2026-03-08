@@ -1,5 +1,7 @@
 #pragma once
 
+#include <thread>
+#include <atomic>
 #include <wx/wx.h>
 #include "FunctionDocument.h"
 
@@ -26,6 +28,7 @@ private:
     void OnTestSaveFile    (wxCommandEvent& event);
     void OnTestMultiMess   (wxCommandEvent& event);
     void OnTest            (wxCommandEvent& event);
+    void OnClose           (wxCloseEvent& event);
 
     /** Rebuild the view from current document state. */
     void UpdateView();
@@ -36,4 +39,9 @@ private:
 
     // Document (non-owning pointer)
     FunctionDocument* m_document = nullptr;
+
+    // thread
+    std::thread         m_csvThread;
+    std::atomic<bool>   m_csvThreadRunning;
+
 };

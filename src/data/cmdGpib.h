@@ -1,6 +1,6 @@
 #pragma once
 
-#include <map>
+#include <unordered_map>
 #include <string>
 
 enum class ProLogixCmd {
@@ -28,7 +28,7 @@ enum class ProLogixCmd {
     HELP         // Syntax: ++help | Gibt eine kurze Zusammenfassung der Befehle aus
 };
 
-static const std::map<ProLogixCmd, std::string> ProLogixCmdLookup = {
+static const std::unordered_map<ProLogixCmd, std::string> ProLogixCmdLookup = {
     {ProLogixCmd::ADDR,         "++addr"},
     {ProLogixCmd::AUTO,         "++auto"},
     {ProLogixCmd::CLR,          "++clr"},
@@ -96,7 +96,7 @@ enum class ScpiCmd {
     FORM_ASC,           // Syntax: FORM:ASC | Schaltet explizit auf ASCII-Format um
 };
 
-static const std::map<ScpiCmd, std::string> ScpiCmdLookup = {
+static const std::unordered_map<ScpiCmd, std::string> ScpiCmdLookup = {
     // Universal commands
     {ScpiCmd::IDN, "*IDN?"},
     {ScpiCmd::CLR, "*CLS"},
@@ -148,7 +148,7 @@ enum class ScpiQueryCmd {
     TRAC_DATA,          // Syntax: TRAC:DATA? TRACE1 | Abfrage der rohen Messdaten von Trace 1
 };
 
-static const std::map<ScpiQueryCmd, std::string> ScpiQueryCmdLookup = {
+static const std::unordered_map<ScpiQueryCmd, std::string> ScpiQueryCmdLookup = {
     {ScpiQueryCmd::FREQ_CENT,       "FREQ:CENT?"},
     {ScpiQueryCmd::FREQ_SPAN,       "FREQ:SPAN?"},
     {ScpiQueryCmd::FREQ_STAR,       "FREQ:STAR?"},

@@ -4,6 +4,7 @@
 #include <wx/string.h>
 
 #include "dataManagement.h"
+#include "CsvManagement.h"
 
 // -----------------------------------------------------------------------
 // Observer interface — implemented by any view that watches MainDocument

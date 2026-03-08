@@ -58,7 +58,7 @@ bool MainDocument::SaveFile()
     if (!m_fileOpen || m_filePath.IsEmpty())
         return false;
 
-    const bool ok = m_csvFile.saveToCsvFile(m_filePath, m_data, 0);
+    const bool ok = m_csvFile.saveCsvFile(m_filePath, m_data, 0);
     if (!ok)
         std::cerr << "[MainDocument] Save failed: " << m_filePath << std::endl;
     return ok;
@@ -67,7 +67,7 @@ bool MainDocument::SaveFile()
 bool MainDocument::SaveFileAs(const wxString& filePath)
 {
     wxString path = filePath;
-    if (!m_csvFile.saveToCsvFile(path, m_data, 0))
+    if (!m_csvFile.saveCsvFile(path, m_data, 0))
     {
         std::cerr << "[MainDocument] SaveAs failed: " << filePath << std::endl;
         return false;

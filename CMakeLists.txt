@@ -61,6 +61,7 @@ target_include_directories(TEST-GPIB-Terminal PRIVATE
     "src/gui/MesurementWindow"
     "src/gui/SettingsWindow"
     "src/gui/TerminalWindow"
+    "src/gui/GenericInput"
     "src/hardware"
     "src/Plotter"
     ${FTDI_INCLUDE_DIR}
