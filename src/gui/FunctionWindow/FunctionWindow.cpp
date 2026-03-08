@@ -67,9 +67,9 @@ FunctionWindow::FunctionWindow(wxWindow* parent)
 FunctionWindow::~FunctionWindow()
 {
     // Disconnection is handled by FunctionDocument's destructor.
+    
     std::cerr << "Function Window Closed" << std::endl;
 
-    
 }
 
 //----- Document binding -----

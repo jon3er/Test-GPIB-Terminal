@@ -17,13 +17,18 @@ class CsvFile
 {
     public:
     // file operations
-        CsvFile(std::string separator = ",");
+        CsvFile(char separator = ',');
         ~CsvFile();
 
         // write
         bool saveCsvFile(wxString& Filename, sData& data, int mesurementNumb);
         // read
         bool readCsvFile(wxString filename, sData& data);
+
+        // Separator
+        void setSeparator(char separator)   { m_separator = separator; };
+        char getSeparator()                 { return m_separator; };
+
     protected:
         // save Helper Functions
         bool saveCsvHeader(wxTextFile& file, sData& data);
@@ -48,5 +53,5 @@ class CsvFile
 
         std::unordered_map<std::string, int> m_CsvLookupTable;
 
-        std::string m_separator;
+        char m_separator;
 };

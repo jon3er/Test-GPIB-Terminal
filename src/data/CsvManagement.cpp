@@ -5,7 +5,7 @@
 // Read Csv functions
 //------sData3D Ende------
 
-CsvFile::CsvFile(std::string separator)
+CsvFile::CsvFile(char separator)
 {
     m_separator = separator;
 }
@@ -117,15 +117,15 @@ bool CsvFile::saveCsvHeader(wxTextFile &file, sData& data)
     sData::sParam* dsParam = data.GetParameter();
     //data.setNumberofPts_Array();
 
-    file.AddLine(wxString::Format("File Name,%s", dsParam->File));
-    file.AddLine(wxString::Format("Date,%s", dsParam->Date));
-    file.AddLine(wxString::Format("Time,%s", dsParam->Time));
-    file.AddLine(wxString::Format("Type,%s", dsParam->Type));
-    file.AddLine(wxString::Format("Number Points X,%d", dsParam->NoPoints_X));
-    file.AddLine(wxString::Format("Number Points Y,%d", dsParam->NoPoints_Y));
-    file.AddLine(wxString::Format("Number Points per mesurement,%d", dsParam->NoPoints_Array));
-    file.AddLine(wxString::Format("Start Frequency, %d %s", dsParam->startFreq, dsParam->ampUnit.ToAscii()));
-    file.AddLine(wxString::Format("End Frequency, %d %s", dsParam->endFreq, dsParam->ampUnit.ToAscii()));
+    file.AddLine(wxString::Format("File Name%c%s",m_separator, dsParam->File));
+    file.AddLine(wxString::Format("Date%c%s",m_separator, dsParam->Date));
+    file.AddLine(wxString::Format("Time%c%s",m_separator, dsParam->Time));
+    file.AddLine(wxString::Format("Type%c%s",m_separator, dsParam->Type));
+    file.AddLine(wxString::Format("Number Points X%c%d",m_separator, dsParam->NoPoints_X));
+    file.AddLine(wxString::Format("Number Points Y%c%d",m_separator, dsParam->NoPoints_Y));
+    file.AddLine(wxString::Format("Number Points per mesurement%c%d",m_separator, dsParam->NoPoints_Array));
+    file.AddLine(wxString::Format("Start Frequency%c%d %s",m_separator, dsParam->startFreq, dsParam->ampUnit.ToAscii()));
+    file.AddLine(wxString::Format("End Frequency%c%d %s",m_separator, dsParam->endFreq, dsParam->ampUnit.ToAscii()));
 
     file.AddLine(""); // Leerzeile
 
@@ -216,7 +216,13 @@ bool CsvFile::readCsvFile(wxString filename, sData& data)
         file.Close();
         return false;
     }
-    readCsvData(file, data);
+
+    if (!readCsvData(file, data))
+    {
+        std::cout << ErrPrefixString.at(ErrorPrefix::CsvRead) <<"Failed to read data" << std::endl;
+        file.Close();
+        return false;
+    }
 
     std::cout << ErrPrefixString.at(ErrorPrefix::CsvRead) <<"Finised file read" << std::endl;
 
@@ -242,23 +248,26 @@ bool CsvFile::readCsvHeader(wxTextFile&file, sData& data)
         return false;
     }
 
+    // Detect separator
+    char separator = detectSeparator(file);
+
     // Parse header metadata (lines 0-8)
-    dsParam->File = file.GetLine(0).AfterFirst(',').Trim(false).Trim();
-    dsParam->Date = file.GetLine(1).AfterFirst(',').Trim(false).Trim();
-    dsParam->Time = file.GetLine(2).AfterFirst(',').Trim(false).Trim();
-    dsParam->Type = file.GetLine(3).AfterFirst(',').Trim(false).Trim();
+    dsParam->File = file.GetLine(0).AfterFirst(separator).Trim(false).Trim();
+    dsParam->Date = file.GetLine(1).AfterFirst(separator).Trim(false).Trim();
+    dsParam->Time = file.GetLine(2).AfterFirst(separator).Trim(false).Trim();
+    dsParam->Type = file.GetLine(3).AfterFirst(separator).Trim(false).Trim();
 
     long lVal;
-    if (file.GetLine(4).AfterFirst(',').ToLong(&lVal)) 
+    if (file.GetLine(4).AfterFirst(separator).ToLong(&lVal)) 
         dsParam->NoPoints_X = lVal;
-    if (file.GetLine(5).AfterFirst(',').ToLong(&lVal)) 
+    if (file.GetLine(5).AfterFirst(separator).ToLong(&lVal)) 
         dsParam->NoPoints_Y = lVal;
-    if (file.GetLine(6).AfterFirst(',').ToLong(&lVal)) 
+    if (file.GetLine(6).AfterFirst(separator).ToLong(&lVal)) 
         dsParam->NoPoints_Array = lVal;
 
     // Parse frequency range
-    wxString startFreqStr = file.GetLine(7).AfterFirst(',').Trim(false).Trim().BeforeFirst(' ');
-    wxString endFreqStr = file.GetLine(8).AfterFirst(',').Trim(false).Trim().BeforeFirst(' ');
+    wxString startFreqStr = file.GetLine(7).AfterFirst(separator).Trim(false).Trim().BeforeFirst(' ');
+    wxString endFreqStr = file.GetLine(8).AfterFirst(separator).Trim(false).Trim().BeforeFirst(' ');
     
     long freqVal;
     if (startFreqStr.ToLong(&freqVal)) dsParam->startFreq = freqVal;
@@ -410,10 +419,23 @@ std::string CsvFile::getIndexNumbers(int xPoints, int yPoints, int mesurementNum
 {
     int xPosition;
     int yPosition;
+    std::string matrixSeparator;
+
+    // Set second separator to save Matrix index
+    if (m_separator == ',')
+    {
+        matrixSeparator = ";";
+    }
+    else
+    {
+        matrixSeparator = ","; 
+    }
+    
 
     if (mesurementNumb < 1 || mesurementNumb > xPoints * yPoints)
     {
-        return "[0;0]";
+        std::string text = "[0" + matrixSeparator + "0]";
+        return text;
     }
 
     int idx = mesurementNumb - 1;
@@ -438,7 +460,7 @@ std::string CsvFile::getIndexNumbers(int xPoints, int yPoints, int mesurementNum
     }
     //std::cout << "x pts "<< xPoints << " y pts " << yPoints << std::endl;
 
-    std::string text = "[" + std::to_string(xPosition) + ";" + std::to_string(yPosition) + "]";
+    std::string text = "[" + std::to_string(xPosition) + matrixSeparator + std::to_string(yPosition) + "]";
     //std::cout << text << " Nr. " << mesurementNumb <<std::endl;
 
     return  text;

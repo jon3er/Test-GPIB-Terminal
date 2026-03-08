@@ -170,7 +170,7 @@ void FunctionDocument::TestSaveFile()
 
     sData TestObjekt;
     sData TestObjekt2;
-    CsvFile csvFile1;
+    CsvFile csvFile1(',');
 
     int xpt      = 10;
     int ypt      = 10;
@@ -184,7 +184,7 @@ void FunctionDocument::TestSaveFile()
     TestObjekt.setEndFreq(endFreq);
 
     std::vector<double> TestArray;
-    
+
     // Generates random values
     std::random_device rd; // obtain a random number from hardware
     std::mt19937 gen(rd()); // seed the generator

@@ -5,7 +5,6 @@
 #include <chrono>
 #include <format>
 #include <cstring>
-#include <unordered_map>
 
 #include <wx/wx.h>
 #include <wx/textfile.h>

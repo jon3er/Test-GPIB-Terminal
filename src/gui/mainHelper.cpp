@@ -1,7 +1,7 @@
 #include "mainHelper.h"
 
 
-bool PlotterMesurement(sData* data, int mesurementNumber)
+bool PlotterMesurement(sData* data, int measurementNumber)
 {
     wxArrayString logAdapterReceived;
     CsvFile csvFile;
@@ -25,7 +25,7 @@ bool PlotterMesurement(sData* data, int mesurementNumber)
 
     MessWerteReal = fsuMesurement::get_instance().getX_Data();
 
-    data->getXYCord(x, y, mesurementNumber);
+    data->getXYCord(x, y, measurementNumber);
 
     data->set3DDataReal(MessWerteReal, x, y);
     if (fsuMesurement::get_instance().isImagValues())
@@ -35,7 +35,7 @@ bool PlotterMesurement(sData* data, int mesurementNumber)
 
     // save data to a Csv file
     wxString fileName = System::filePathRoot + "LogFiles" + System::fileSystemSlash + "PlotterMessung.csv";
-    if(!csvFile.saveCsvFile(fileName, *data, mesurementNumber))
+    if(!csvFile.saveCsvFile(fileName, *data, measurementNumber))
     {
         std::cout << "[Error] Failed to save data to CSV file" << std::endl;
     }
