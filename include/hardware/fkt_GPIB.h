@@ -4,8 +4,11 @@
 #include <iomanip>
 #include <format>
 #include <wx/wx.h>
+#include <variant>
+#include <set>
 #include <thread>
 #include <atomic>
+#include "cmdGpib.h"
 #include "fkt_d2xx.h"
 #include "ftd2xx.h"
 #include <wx/textfile.h>
@@ -14,42 +17,29 @@
  * @brief single instance class to Performe frequency mesurements with a R&S instrument
  *
 */
-class fsuMesurement
+class fsuMeasurement
 {
 protected:
     // Constructor (Protected for Singleton)
-    fsuMesurement();
+    fsuMeasurement();
 
 public:
 
     /**
      * @brief get singleton instance of the Class
      */
-    static fsuMesurement& get_instance()
+    static fsuMeasurement& get_instance()
     {
-        static fsuMesurement instance;
+        static fsuMeasurement instance;
         return instance;
     }
     // Overloads to prevent second instance
-    fsuMesurement(const fsuMesurement&) = delete;
-    fsuMesurement(fsuMesurement&&) = delete;
-    fsuMesurement operator=(const fsuMesurement&) = delete;
-    fsuMesurement operator=(fsuMesurement&&) = delete;
+    fsuMeasurement(const fsuMeasurement&) = delete;
+    fsuMeasurement(fsuMeasurement&&) = delete;
+    fsuMeasurement operator=(const fsuMeasurement&) = delete;
+    fsuMeasurement operator=(fsuMeasurement&&) = delete;
 
-    ~fsuMesurement();
-
-    /**
-     * @brief Seperates comma seperated vaules
-     * @param receivedString Input raw data
-     * @param seperatedValues pass seperated values
-     */
-    void seperateDataBlock(const wxString& receivedString, std::vector<double>& seperatedValues);
-    
-    /**
-     * @brief Caluculates Frequancy range array with set start and stop Frequancy and number of mesurement points
-     * @return Frequancy range
-     */
-    std::vector<double> calcFreqData();
+    ~fsuMeasurement();
 
     /**
      * @brief To check if the last mesurement had complex values
@@ -71,6 +61,46 @@ public:
     void setY_Data(std::vector<double> y) { m_y_Data = y; };
     void setFreqStartEnd(double FreqS, double FreqE);
 
+
+    // Sweep Measurement
+
+    /**
+     * @brief Seperates comma seperated vaules
+     * @param receivedString Input raw data
+     * @param seperatedValues pass seperated values
+     */
+    void seperateDataBlock(const wxString& receivedString, std::vector<double>& seperatedValues);
+    
+    /**
+     * @brief Caluculates Frequancy range array with set start and stop Frequancy and number of mesurement points
+     * @return Frequancy range
+     */
+    std::vector<double> calcFreqData();
+
+    // Helper functions
+    // Definition der unterstützten Datentypen für die Parameter
+    struct lastSweepSettings
+    {
+        double startFreq;
+        double stopFreq;
+        double refLevel;
+        int points;
+        int att;
+        std::string unit;
+        int rbw;
+        int vbw;
+        std::string sweepTime;
+        std::string detector;
+    };
+
+    using SettingValue = std::variant<double, int, std::string>;
+    bool checkIfSettingsValidSweep(ScpiCommand command, const SettingValue& value);
+
+    bool writeSweepSettings(lastSweepSettings settings);
+    bool readSweepSettings();
+    auto returnSweepSettings() { return m_lastSwpSettings; };
+
+
 private:
     std::vector<double> m_x_Data;
     std::vector<double> m_y_Data;
@@ -81,6 +111,9 @@ private:
     unsigned int m_NoPoints_y;
 
     bool m_ImagValues = false;
+
+    // Settings
+    lastSweepSettings m_lastSwpSettings;
 };
 
 struct PrologixDeviceInfo {

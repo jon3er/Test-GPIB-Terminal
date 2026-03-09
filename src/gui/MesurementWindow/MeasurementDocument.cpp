@@ -17,7 +17,7 @@
 // ---------------------------------------------------------------------------
 
 MeasurementDocument::MeasurementDocument(PrologixUsbGpibAdapter& adapter,
-                                         fsuMesurement& messung)
+                                         fsuMeasurement& messung)
     : m_adapter(adapter)
     , m_messung(messung)
 {

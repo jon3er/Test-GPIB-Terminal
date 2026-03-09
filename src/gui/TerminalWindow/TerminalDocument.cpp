@@ -387,8 +387,8 @@ std::string TerminalDocument::TestDevice(const std::string& args)
         std::string trace = ReadFromDevice();
 
         std::vector<double> buffer;
-        fsuMesurement::get_instance().seperateDataBlock(trace, buffer);
-        fsuMesurement::get_instance().setX_Data(buffer);
+        fsuMeasurement::get_instance().seperateDataBlock(trace, buffer);
+        fsuMeasurement::get_instance().setX_Data(buffer);
 
         wxFile file;
         if (file.Open("GpibScripts/Z_Log.txt", wxFile::write_append))

@@ -23,12 +23,12 @@ bool PlotterMesurement(sData* data, int measurementNumber)
     }
 
 
-    MessWerteReal = fsuMesurement::get_instance().getX_Data();
+    MessWerteReal = fsuMeasurement::get_instance().getX_Data();
 
     data->getXYCord(x, y, measurementNumber);
 
     data->set3DDataReal(MessWerteReal, x, y);
-    if (fsuMesurement::get_instance().isImagValues())
+    if (fsuMeasurement::get_instance().isImagValues())
     {
         data->set3DDataImag(MessWerteImag, x, y);
     }

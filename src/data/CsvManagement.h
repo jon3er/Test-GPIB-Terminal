@@ -117,17 +117,18 @@ struct HeaderConfig
     static constexpr std::string_view noPointsX     = "Number Points X";
     static constexpr std::string_view noPointsY     = "Number Points Y";
     // Frequenz Parameter
-    static constexpr std::string_view startFreq     = "Start Frequency";
-    static constexpr std::string_view endFreq       = "End Frequency";
+    static constexpr std::string_view startFreq     = "Start Frequency";        // ScpiCmdLookup.at(ScpiCmd::FREQ_STAR)
+    static constexpr std::string_view endFreq       = "End Frequency";          // ScpiCmdLookup.at(ScpiCmd::FREQ_STOP)
     // Amplitude und Pegel-Parameter
-    static constexpr std::string_view refPegel      = "Referenz Pegel";
-    static constexpr std::string_view HFDaempfung   = "HF-Dämpfung";
+    static constexpr std::string_view refPegel      = "Referenz Pegel";         // ScpiCmdLookup.at(ScpiCmd::DISP_TRAC_Y_RLEV)
+    static constexpr std::string_view HFDaempfung   = "HF-Dämpfung";            // ScpiCmdLookup.at(ScpiCmd::DISP_TRAC_Y_OFFS)
     static constexpr std::string_view ampUnit       = "Amplituden Einheit";
     // Bandbreiten und Zeit
-    static constexpr std::string_view RBW           = "Auflösebandbreite (RBW)";
-    static constexpr std::string_view VBW           = "Videobandbreite (VBW)";
-    static constexpr std::string_view sweepTime     = "Sweep dauer";
+    static constexpr std::string_view RBW           = "Auflösebandbreite (RBW)"; // ScpiCmdLookup.at(ScpiCmd::BAND_RES)
+    static constexpr std::string_view VBW           = "Videobandbreite (VBW)";   // ScpiCmdLookup.at(ScpiCmd::BAND_VID_AUTO)
+    static constexpr std::string_view sweepTime     = "Sweep dauer";             // ScpiCmdLookup.at(ScpiCmd::SWE_TIME)
     // Erfassung
+    static constexpr std::string_view noPointsArray = "Number Points per mesurement"; // ScpiCmdLookup.at(ScpiCmd::SWE_POIN)
     static constexpr std::string_view detektor      = "Detektor";
-    static constexpr std::string_view noPointsArray = "Number Points per mesurement";
 };
+

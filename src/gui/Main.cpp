@@ -394,7 +394,7 @@ void MainProgrammWin::MenuMesurementNew(wxCommandEvent& event)
 {
     // Each window gets its own heap-allocated document so it can live independently
     MeasurementDocument* measDoc = new MeasurementDocument(
-        PrologixUsbGpibAdapter::get_instance(), fsuMesurement::get_instance());
+        PrologixUsbGpibAdapter::get_instance(), fsuMeasurement::get_instance());
 
     PlotWindow* PlotWin = new PlotWindow(this, m_doc);
     PlotWin->SetDocument(measDoc);
@@ -430,7 +430,7 @@ void MainProgrammWin::MenuMesurementLoad(wxCommandEvent& event)
 
     // Create a new PlotWindow with its own MeasurementDocument
     MeasurementDocument* measDoc = new MeasurementDocument(
-        PrologixUsbGpibAdapter::get_instance(), fsuMesurement::get_instance());
+        PrologixUsbGpibAdapter::get_instance(), fsuMeasurement::get_instance());
 
     PlotWindow* PlotWin = new PlotWindow(this, nullptr);  // no mainDoc — data comes from import
     PlotWin->SetDocument(measDoc);
@@ -499,7 +499,7 @@ void MainProgrammWin::MenuTestPloter(wxCommandEvent& event)
 void MainProgrammWin::MenuMesurementSetMarker(wxCommandEvent& event)
 {
     // Reuse the same adapter — marker dialog only needs to write SCPI commands
-    MeasurementDocument markerDoc(PrologixUsbGpibAdapter::get_instance(), fsuMesurement::get_instance());
+    MeasurementDocument markerDoc(PrologixUsbGpibAdapter::get_instance(), fsuMeasurement::get_instance());
 
     PlotWindowSetMarker* PlotWinMarker = new PlotWindowSetMarker(this);
     PlotWinMarker->SetDocument(&markerDoc);

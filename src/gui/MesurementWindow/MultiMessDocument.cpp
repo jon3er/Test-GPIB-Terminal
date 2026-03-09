@@ -10,7 +10,7 @@
 // Construction / Destruction
 // ---------------------------------------------------------------------------
 
-MultiMessDocument::MultiMessDocument(PrologixUsbGpibAdapter& adapter, fsuMesurement& fsuMesurement)
+MultiMessDocument::MultiMessDocument(PrologixUsbGpibAdapter& adapter, fsuMeasurement& fsuMesurement)
     : m_adapter(adapter), m_fsuMesurement(fsuMesurement)
 {
     RecalculateTotalPoints();

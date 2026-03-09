@@ -159,3 +159,72 @@ static const std::unordered_map<ScpiQueryCmd, std::string> ScpiQueryCmdLookup = 
     {ScpiQueryCmd::SWE_TIME,        "SWE:TIME?"},
     {ScpiQueryCmd::TRAC_DATA,       "TRAC:DATA?"},
 };
+
+// sweep measurement
+enum class ScpiCommand {
+    START_FREQUENCY,
+    END_FREQUENCY,
+    REF_LEVEL,
+    RF_ATTENUATION,
+    AMPLITUDE_UNIT,
+    RBW,
+    VBW,
+    SWEEP_TIME,
+    SWEEP_POINTS,
+    DETECTOR,
+    // IQ / Trigger Parameter
+    CENTER_FREQUENCY,
+    SPAN_FREQUENCY,
+    IQ_SAMPLE_RATE,
+    IQ_RECORD_LENGTH,
+    IQ_IF_BANDWIDTH,
+    TRIGGER_SOURCE,
+    TRIGGER_LEVEL,
+    TRIGGER_DELAY
+};
+
+// Map für SET-Befehle
+static std::unordered_map<ScpiCommand, std::string> scpiSetCommands = {
+    {ScpiCommand::START_FREQUENCY, "FREQ:STAR "},
+    {ScpiCommand::END_FREQUENCY,   "FREQ:STOP "},
+    {ScpiCommand::REF_LEVEL,       "DISP:WIND:TRAC:Y:RLEV "},
+    {ScpiCommand::RF_ATTENUATION,  "INP:ATT "},
+    {ScpiCommand::AMPLITUDE_UNIT,  "CALC:UNIT:POW "},
+    {ScpiCommand::RBW,             "BAND:RES "},
+    {ScpiCommand::VBW,             "BAND:VID "},
+    {ScpiCommand::SWEEP_TIME,      "SWE:TIME "},
+    {ScpiCommand::SWEEP_POINTS,      "SWE:POIN "},
+    {ScpiCommand::DETECTOR,          "DET "},
+    // IQ / Trigger Parameter
+    {ScpiCommand::CENTER_FREQUENCY,  "FREQ:CENT "},
+    {ScpiCommand::SPAN_FREQUENCY,    "FREQ:SPAN "},
+    {ScpiCommand::IQ_SAMPLE_RATE,    "TRAC:IQ:SRAT "},
+    {ScpiCommand::IQ_RECORD_LENGTH,  "TRAC:IQ:RLEN "},
+    {ScpiCommand::IQ_IF_BANDWIDTH,   "TRAC:IQ:BWID "},
+    {ScpiCommand::TRIGGER_SOURCE,    "TRIG:SOUR "},     // TRIGGER Einstellung
+    {ScpiCommand::TRIGGER_LEVEL,     "TRIG:LEV:IFP "},
+    {ScpiCommand::TRIGGER_DELAY,     "TRIG:DEL "}
+};
+
+// Map für QUERY-Befehle (gleiche Reihenfolge/Keys)
+static std::unordered_map<ScpiCommand, std::string> scpiQueryCommands = {
+    {ScpiCommand::START_FREQUENCY, "FREQ:STAR?"},
+    {ScpiCommand::END_FREQUENCY,   "FREQ:STOP?"},
+    {ScpiCommand::REF_LEVEL,       "DISP:WIND:TRAC:Y:RLEV?"},
+    {ScpiCommand::RF_ATTENUATION,  "INP:ATT?"},
+    {ScpiCommand::AMPLITUDE_UNIT,  "CALC:UNIT:POW?"},
+    {ScpiCommand::RBW,             "BAND:RES?"},
+    {ScpiCommand::VBW,             "BAND:VID?"},
+    {ScpiCommand::SWEEP_TIME,      "SWE:TIME?"},
+    {ScpiCommand::SWEEP_POINTS,      "SWE:POIN?"},
+    {ScpiCommand::DETECTOR,          "DET?"},
+    // IQ / Trigger Parameter
+    {ScpiCommand::CENTER_FREQUENCY,  "FREQ:CENT?"},
+    {ScpiCommand::SPAN_FREQUENCY,    "FREQ:SPAN?"},
+    {ScpiCommand::IQ_SAMPLE_RATE,    "TRAC:IQ:SRAT?"},
+    {ScpiCommand::IQ_RECORD_LENGTH,  "TRAC:IQ:RLEN?"},
+    {ScpiCommand::IQ_IF_BANDWIDTH,   "TRAC:IQ:BWID?"},
+    {ScpiCommand::TRIGGER_SOURCE,    "TRIG:SOUR?"},
+    {ScpiCommand::TRIGGER_LEVEL,     "TRIG:LEV:IFP?"},
+    {ScpiCommand::TRIGGER_DELAY,     "TRIG:DEL?"}
+};

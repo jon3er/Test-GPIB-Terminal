@@ -44,7 +44,7 @@ public:
      * @param adapter   Hardware adapter singleton reference.
      * @param messung   Global measurement data object reference.
      */
-    MeasurementDocument(PrologixUsbGpibAdapter& adapter, fsuMesurement& messung);
+    MeasurementDocument(PrologixUsbGpibAdapter& adapter, fsuMeasurement& messung);
     ~MeasurementDocument();
 
     // ---- Observer management ----
@@ -100,7 +100,7 @@ private:
 
     // ---- Injected dependencies ----
     PrologixUsbGpibAdapter& m_adapter;
-    fsuMesurement&          m_messung;
+    fsuMeasurement&          m_messung;
 
     // ---- State ----
     std::vector<double>     m_x;
