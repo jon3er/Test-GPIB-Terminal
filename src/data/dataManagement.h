@@ -66,16 +66,32 @@ public:
     // header data for mesurements
     struct sParam                                   
     {
+        // info
         wxString        File;
         wxString        Date;
         wxString        Time;
         wxString        Type;
+        // Plotter
         unsigned int    NoPoints_X;
         unsigned int    NoPoints_Y;
+        // Detection
         unsigned int    NoPoints_Array;
-        wxString        ampUnit;
+        std::string     Detektor;
+        // Frequenz
         unsigned int    startFreq;
         unsigned int    endFreq;
+        // Amplitude und Pegel
+        std::string     refPegel;   
+        unsigned int    HFDaempfung;
+        wxString        ampUnit;
+  
+        unsigned int    RBW ;       
+        unsigned int    VBW;
+        // Erfassung        
+        std::string     sweepTime;  
+        std::string     detektor;   
+
+        
     };
 
     // constructor

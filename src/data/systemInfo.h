@@ -66,38 +66,21 @@ enum MainMenuBar
 };
 
 // Error Prefixes
-enum class ErrorPrefix
+struct ErrorPrefixStr
 {
-    CsvRead,
-    CsvSave,
-    CsvHelper,
-    Prologix,
-    Measurement,
-    GuiMain,
-    GuiFunc,
-    GuiTerminal,
-    GuiMesurement,
-    GuiProcessing,
-    GuiTest,
-    GuiHelp,
-    GuiGeneric,
-
+    wxString CsvRead        = "[CSV/READ] ";
+    wxString CsvSave        = "[CSV/SAVE] ";
+    wxString CsvHelper      = "[CSV/HELPER] ";
+    wxString Prologix       = "[PROLOGIX] ";
+    wxString Measurement    = "[MEASUREMENT] ";
+    wxString GuiMain        = "[GUI/MAIN] ";
+    wxString GuiFunc        = "[GUI/FUNC] ";
+    wxString GuiTerminal    = "[GUI/TERMINAL] ";
+    wxString GuiMeasurement = "[GUI/MEASUREMENT] ";
+    wxString GuiProcessing  = "[GUI/PROCESSING] ";
+    wxString GuiTest        = "[GUI/TEST] ";
+    wxString GuiHelp        = "[GUI/HELP] ";
+    wxString GuiGeneric     = "[GUI/GENERIC] ";
 };
 
-
-static const std::unordered_map<ErrorPrefix, wxString> ErrPrefixString = {
-    {ErrorPrefix::CsvRead,          "[CSV/READ] "},
-    {ErrorPrefix::CsvSave,         "[CSV/SAVE] "},
-    {ErrorPrefix::CsvHelper,        "[CSV/HELPER] "},
-    {ErrorPrefix::Prologix,         "[PROLOGIX] "},
-    {ErrorPrefix::Measurement,      "[MEASUREMENT] "},
-    {ErrorPrefix::GuiMain,          "[GUI/MAIN] "},
-    {ErrorPrefix::GuiFunc,          "[GUI/FUNC] "},
-    {ErrorPrefix::GuiTerminal,      "[GUI/TERMINAL] "},
-    {ErrorPrefix::GuiMesurement,    "[GUI/MEASUREMENT] "},
-    {ErrorPrefix::GuiProcessing,    "[GUI/PROCESSING] "},
-    {ErrorPrefix::GuiTest,          "[GUI/TEST] "},
-    {ErrorPrefix::GuiHelp,          "[GUI/HELP] "},
-    {ErrorPrefix::GuiGeneric,       "[GUI/GENERIC] "},
-
-};
+static const ErrorPrefixStr kErrPrefixStr;

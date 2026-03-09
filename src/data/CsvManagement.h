@@ -48,7 +48,7 @@ class CsvFile
         char getSeparator()                 { return m_separator; };
 
     protected:
-    
+
         // save Helper Functions
         /**
          * @brief save header info from sData to file
@@ -99,4 +99,35 @@ class CsvFile
         std::unordered_map<std::string, int> m_CsvLookupTable;
         // set Separator (, ;)
         char m_separator;
+};
+
+
+struct HeaderInfo
+{
+    static constexpr std::string_view fileName      = "File Name";
+    static constexpr std::string_view date          = "Date";
+    static constexpr std::string_view time          = "Time";
+    static constexpr std::string_view type          = "Type";
+
+};
+
+struct HeaderConfig
+{
+    // Plotter Parameter
+    static constexpr std::string_view noPointsX     = "Number Points X";
+    static constexpr std::string_view noPointsY     = "Number Points Y";
+    // Frequenz Parameter
+    static constexpr std::string_view startFreq     = "Start Frequency";
+    static constexpr std::string_view endFreq       = "End Frequency";
+    // Amplitude und Pegel-Parameter
+    static constexpr std::string_view refPegel      = "Referenz Pegel";
+    static constexpr std::string_view HFDaempfung   = "HF-Dämpfung";
+    static constexpr std::string_view ampUnit       = "Amplituden Einheit";
+    // Bandbreiten und Zeit
+    static constexpr std::string_view RBW           = "Auflösebandbreite (RBW)";
+    static constexpr std::string_view VBW           = "Videobandbreite (VBW)";
+    static constexpr std::string_view sweepTime     = "Sweep dauer";
+    // Erfassung
+    static constexpr std::string_view detektor      = "Detektor";
+    static constexpr std::string_view noPointsArray = "Number Points per mesurement";
 };

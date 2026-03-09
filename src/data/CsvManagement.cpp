@@ -45,7 +45,7 @@ bool CsvFile::saveCsvFile(wxString& filename, sData& data, int mesurementNumb)
 
     if (!file.Open())
     {
-        std::cout << ErrPrefixString.at(ErrorPrefix::CsvSave) <<"Failed to open file" << std::endl;
+        std::cout << kErrPrefixStr.CsvSave <<"Failed to open file" << std::endl;
         return false;
     }
 
@@ -54,19 +54,19 @@ bool CsvFile::saveCsvFile(wxString& filename, sData& data, int mesurementNumb)
         // Write header
         if(!saveCsvHeader(file, data))
         {
-            std::cout << ErrPrefixString.at(ErrorPrefix::CsvSave) <<"Failed to write header" << std::endl;
+            std::cout << kErrPrefixStr.CsvSave <<"Failed to write header" << std::endl;
             return false;
         }
         // Write indexes
         if (!writeMatrixIndexCsv(file, data))
         {
-            std::cout << ErrPrefixString.at(ErrorPrefix::CsvSave) <<"Failed to write indexes" << std::endl;
+            std::cout << kErrPrefixStr.CsvSave <<"Failed to write indexes" << std::endl;
             return false;
         }
         // create lookup table
         if (!createCsvLookupTable(file))
         {
-            std::cout << ErrPrefixString.at(ErrorPrefix::CsvSave) <<"Failed to create lookup table" << std::endl;
+            std::cout << kErrPrefixStr.CsvSave <<"Failed to create lookup table" << std::endl;
             return false;
         }
     }
@@ -115,17 +115,21 @@ bool CsvFile::saveCsvFile(wxString& filename, sData& data, int mesurementNumb)
 bool CsvFile::saveCsvHeader(wxTextFile &file, sData& data)
 {
     sData::sParam* dsParam = data.GetParameter();
-    //data.setNumberofPts_Array();
-
-    file.AddLine(wxString::Format("File Name%c%s",m_separator, dsParam->File));
-    file.AddLine(wxString::Format("Date%c%s",m_separator, dsParam->Date));
-    file.AddLine(wxString::Format("Time%c%s",m_separator, dsParam->Time));
-    file.AddLine(wxString::Format("Type%c%s",m_separator, dsParam->Type));
-    file.AddLine(wxString::Format("Number Points X%c%d",m_separator, dsParam->NoPoints_X));
-    file.AddLine(wxString::Format("Number Points Y%c%d",m_separator, dsParam->NoPoints_Y));
-    file.AddLine(wxString::Format("Number Points per mesurement%c%d",m_separator, dsParam->NoPoints_Array));
-    file.AddLine(wxString::Format("Start Frequency%c%d %s",m_separator, dsParam->startFreq, dsParam->ampUnit.ToAscii()));
-    file.AddLine(wxString::Format("End Frequency%c%d %s",m_separator, dsParam->endFreq, dsParam->ampUnit.ToAscii()));
+    
+    file.AddLine("Header Information"); // Leerzeile
+    file.AddLine(wxString::Format("%s%c%s",   HeaderInfo::fileName.data(),        m_separator, dsParam->File));
+    file.AddLine(wxString::Format("%s%c%s",   HeaderInfo::date.data(),            m_separator, dsParam->Date));
+    file.AddLine(wxString::Format("%s%c%s",   HeaderInfo::time.data(),            m_separator, dsParam->Time));
+    file.AddLine(wxString::Format("%s%c%s",   HeaderInfo::type.data(),            m_separator, dsParam->Type));
+    // Config
+    file.AddLine(wxString::Format("%s%c%d",   HeaderConfig::noPointsX.data(),     m_separator, dsParam->NoPoints_X));
+    file.AddLine(wxString::Format("%s%c%d",   HeaderConfig::noPointsY.data(),     m_separator, dsParam->NoPoints_Y));
+    // Measurement config
+    file.AddLine(wxString::Format("%s%c%d",   HeaderConfig::noPointsArray.data(), m_separator, dsParam->NoPoints_Array));
+    
+    //Frequency
+    file.AddLine(wxString::Format("%s%c%d %s", HeaderConfig::startFreq.data(),   m_separator, dsParam->startFreq, dsParam->ampUnit.ToAscii()));
+    file.AddLine(wxString::Format("%s%c%d %s", HeaderConfig::endFreq.data(),     m_separator, dsParam->endFreq, dsParam->ampUnit.ToAscii()));
 
     file.AddLine(""); // Leerzeile
 
@@ -155,7 +159,7 @@ bool CsvFile::saveCsvData(wxTextFile& file, sData data, int mesurementNumb, bool
 {
     if (!file.IsOpened())
     {
-        std::cerr << ErrPrefixString.at(ErrorPrefix::CsvSave) <<"File not opened" << std::endl;
+        std::cerr << kErrPrefixStr.CsvSave <<"File not opened" << std::endl;
         return false;
     }
     
@@ -197,7 +201,7 @@ bool CsvFile::readCsvFile(wxString filename, sData& data)
 
     if (!file.Open())
     {
-        std::cout << ErrPrefixString.at(ErrorPrefix::CsvRead) << "Failed to open file" << std::endl;
+        std::cout << kErrPrefixStr.CsvRead << "Failed to open file" << std::endl;
         file.Close();
         return false;
     }
@@ -205,26 +209,26 @@ bool CsvFile::readCsvFile(wxString filename, sData& data)
 
     if (!createCsvLookupTable(file))
     {
-        std::cout << ErrPrefixString.at(ErrorPrefix::CsvRead) << "Failed to create lookup table" << std::endl;
+        std::cout << kErrPrefixStr.CsvRead << "Failed to create lookup table" << std::endl;
         file.Close();
         return false;
     }
 
     if (!readCsvHeader(file, data))
     {
-        std::cout << ErrPrefixString.at(ErrorPrefix::CsvRead) <<"Failed to read header" << std::endl;
+        std::cout << kErrPrefixStr.CsvRead <<"Failed to read header" << std::endl;
         file.Close();
         return false;
     }
 
     if (!readCsvData(file, data))
     {
-        std::cout << ErrPrefixString.at(ErrorPrefix::CsvRead) <<"Failed to read data" << std::endl;
+        std::cout << kErrPrefixStr.CsvRead <<"Failed to read data" << std::endl;
         file.Close();
         return false;
     }
 
-    std::cout << ErrPrefixString.at(ErrorPrefix::CsvRead) <<"Finised file read" << std::endl;
+    std::cout << kErrPrefixStr.CsvRead <<"Finised file read" << std::endl;
 
 
     file.Close();
@@ -235,7 +239,7 @@ bool CsvFile::readCsvHeader(wxTextFile&file, sData& data)
 {
     if (!file.IsOpened())
     {
-        std::cout << ErrPrefixString.at(ErrorPrefix::CsvRead) <<"File not opened" << std::endl;
+        std::cout << kErrPrefixStr.CsvRead <<"File not opened" << std::endl;
         return false;
     }   
 
@@ -244,7 +248,7 @@ bool CsvFile::readCsvHeader(wxTextFile&file, sData& data)
     size_t lineCount = file.GetLineCount();
     // Minimale Zeilenanzahl prüfen
     if (lineCount < 9) {
-        std::cerr << ErrPrefixString.at(ErrorPrefix::CsvRead) <<"File too short, insufficient header" << std::endl;
+        std::cerr << kErrPrefixStr.CsvRead <<"File too short, insufficient header" << std::endl;
         return false;
     }
 
@@ -273,7 +277,7 @@ bool CsvFile::readCsvHeader(wxTextFile&file, sData& data)
     if (startFreqStr.ToLong(&freqVal)) dsParam->startFreq = freqVal;
     if (endFreqStr.ToLong(&freqVal)) dsParam->endFreq = freqVal;
 
-    std::cout << ErrPrefixString.at(ErrorPrefix::CsvRead) <<"Read Header" << std::endl;
+    std::cout << kErrPrefixStr.CsvRead <<"Read Header" << std::endl;
 
     // Resize Datastorage array for data
     data.resize3DData(dsParam->NoPoints_X, dsParam->NoPoints_Y, dsParam->NoPoints_Array);
@@ -311,7 +315,7 @@ bool CsvFile::readCsvData(wxTextFile& file, sData& data)
         int realLineNum = findLineCsv(file, realLabel);
         if (realLineNum == -1)
         {
-            std::cerr << ErrPrefixString.at(ErrorPrefix::CsvRead) <<"Could not find Real data line for measurement " << mesurementNumb << std::endl;
+            std::cerr << kErrPrefixStr.CsvRead <<"Could not find Real data line for measurement " << mesurementNumb << std::endl;
             continue;
         }
 
@@ -319,7 +323,7 @@ bool CsvFile::readCsvData(wxTextFile& file, sData& data)
         int imagLineNum = findLineCsv(file, imagLabel);
         if (imagLineNum == -1)
         {
-            std::cerr << ErrPrefixString.at(ErrorPrefix::CsvRead) <<"Could not find Imag data line for measurement " << mesurementNumb << std::endl;
+            std::cerr << kErrPrefixStr.CsvRead <<"Could not find Imag data line for measurement " << mesurementNumb << std::endl;
             continue;
         }
 
@@ -356,7 +360,7 @@ bool CsvFile::readCsvData(wxTextFile& file, sData& data)
         // Validate parsed data
         if (real.size() != imag.size())
         {
-            std::cerr << ErrPrefixString.at(ErrorPrefix::CsvRead) <<"Warning: Real/Imag data arrays have different sizes for measurement " << mesurementNumb << "!" << std::endl;
+            std::cerr << kErrPrefixStr.CsvRead <<"Warning: Real/Imag data arrays have different sizes for measurement " << mesurementNumb << "!" << std::endl;
             continue;
         }
 
@@ -384,7 +388,7 @@ bool CsvFile::readCsvData(wxTextFile& file, sData& data)
         data.set3DDataReal(real, xPos, yPos);
         data.set3DDataImag(imag, xPos, yPos);
 
-        std::cerr << ErrPrefixString.at(ErrorPrefix::CsvRead) <<"Stored measurement " << mesurementNumb << " at position [" << xPos << "," << yPos << "]" << std::endl;
+        std::cerr << kErrPrefixStr.CsvRead <<"Stored measurement " << mesurementNumb << " at position [" << xPos << "," << yPos << "]" << std::endl;
     }
 
     file.Close();
@@ -482,7 +486,7 @@ int CsvFile::findLineCsv(wxTextFile& file, wxString findText)
     }
     else
     {
-        std::cerr << ErrPrefixString.at(ErrorPrefix::CsvHelper) <<"Not found" << std::endl;
+        std::cerr << kErrPrefixStr.CsvHelper <<"Not found" << std::endl;
         return -1;
     }
 }
@@ -491,7 +495,7 @@ bool CsvFile::createCsvLookupTable(wxTextFile& file)
 {
     if (!file.IsOpened())
     {
-        std::cerr << ErrPrefixString.at(ErrorPrefix::CsvHelper) <<"file not open" << std::endl;
+        std::cerr << kErrPrefixStr.CsvHelper <<"file not open" << std::endl;
         return false;
     }
 
@@ -518,7 +522,7 @@ char CsvFile::detectSeparator(wxTextFile& file)
 {
     if (!file.IsOpened())
     {
-        std::cerr << ErrPrefixString.at(ErrorPrefix::CsvHelper) <<"Failed to open file" << std::endl;
+        std::cerr << kErrPrefixStr.CsvHelper <<"Failed to open file" << std::endl;
         return ',';
     }
 
