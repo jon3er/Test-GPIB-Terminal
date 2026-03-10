@@ -184,7 +184,7 @@ void FunctionDocument::TestSaveFile()
     TestObjekt.setEndFreq(endFreq);
 
     auto& fsu = fsuMeasurement::get_instance();
-    fsu.setMeasurementMode(MeasurementMode::MARKER_PEAK);
+    fsu.setMeasurementMode(MeasurementMode::SWEEP);
 
 
     std::vector<double> TestArray;

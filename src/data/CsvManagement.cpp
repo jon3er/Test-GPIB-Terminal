@@ -160,6 +160,8 @@ bool CsvFile::saveCsvHeader(wxTextFile &file, sData& data)
             break;
     }
 
+    file.AddLine(""); // Leerzeile
+
     // Frequenz-Zeile zusammenbauen
     wxString lineFreq = wxString::Format("f in %s", dsParam->ampUnit.ToAscii());
 
@@ -182,9 +184,6 @@ bool CsvFile::saveCsvHeader(wxTextFile &file, sData& data)
 
             break;
     }
-
-    file.AddLine(""); // Leerzeile
-
 
     // ID-Zeile zusammenbauen
     wxString lineID = "ID";
@@ -260,7 +259,10 @@ bool CsvFile::saveCsvData(wxTextFile& file, sData data, int mesurementNumb, bool
     int yPoints = data.getNumberOfPts_Y();
     
     // find line with current
-    wxString indexText = getIndexNumbers(xPoints, yPoints, mesurementNumb, cont) + " Real";
+    bool isMarker = (m_fsuSettings.mode == MeasurementMode::MARKER_PEAK);
+    const char* label1 = isMarker ? "Freq" : "Real";
+
+    wxString indexText = getIndexNumbers(xPoints, yPoints, mesurementNumb, cont) + " " + label1;
 
     int lineNumber = findLineCsv(file, indexText);
     // std::cout << "line Found: " << lineNumber << std::endl;
@@ -505,25 +507,39 @@ bool CsvFile::readCsvData(wxTextFile& file, sData& data)
         std::vector<double> real;
         std::vector<double> imag;
 
-        // ID Für Real und Imag Nummern suchen
+        // ID Für Real und Imag Nummern suchen (Marker: Freq/Amp)
         std::string index = getIndexNumbers(xPoints, yPoints, mesurementNumb, continuous);
 
-        wxString realLabel = wxString::Format("%s Real", index);
-        wxString imagLabel = wxString::Format("%s Imag", index);
+        // Detect marker mode from CSV: check if Freq label exists for first measurement
+        bool isMarker = false;
+        if (mesurementNumb == 1)
+        {
+            std::string firstIdx = getIndexNumbers(xPoints, yPoints, 1, continuous);
+            wxString testLabel = wxString::Format("%s Freq", firstIdx);
+            isMarker = (findLineCsv(file, testLabel) >= 0);
+        }
+        static bool s_isMarker = false;
+        if (mesurementNumb == 1) s_isMarker = isMarker;
 
-        // Find Real data line
+        const char* label1 = s_isMarker ? "Freq" : "Real";
+        const char* label2 = s_isMarker ? "Amp"  : "Imag";
+
+        wxString realLabel = wxString::Format("%s %s", index, label1);
+        wxString imagLabel = wxString::Format("%s %s", index, label2);
+
+        // Find Real/Freq data line
         int realLineNum = findLineCsv(file, realLabel);
         if (realLineNum == -1)
         {
-            std::cerr << kErrPrefixStr.CsvRead <<"Could not find Real data line for measurement " << mesurementNumb << std::endl;
+            std::cerr << kErrPrefixStr.CsvRead <<"Could not find " << label1 << " data line for measurement " << mesurementNumb << std::endl;
             continue;
         }
 
-        // Find Imag data line
+        // Find Imag/Amp data line
         int imagLineNum = findLineCsv(file, imagLabel);
         if (imagLineNum == -1)
         {
-            std::cerr << kErrPrefixStr.CsvRead <<"Could not find Imag data line for measurement " << mesurementNumb << std::endl;
+            std::cerr << kErrPrefixStr.CsvRead <<"Could not find " << label2 << " data line for measurement " << mesurementNumb << std::endl;
             continue;
         }
 
@@ -604,16 +620,19 @@ bool CsvFile::writeMatrixIndexCsv(wxTextFile& file, sData data)
     int xPoints = data.getNumberOfPts_X();
     int yPoints = data.getNumberOfPts_Y();
 
+    bool isMarker = (m_fsuSettings.mode == MeasurementMode::MARKER_PEAK);
+    const char* label1 = isMarker ? "Freq" : "Real";
+    const char* label2 = isMarker ? "Amp"  : "Imag";
+
     size_t count = xPoints * yPoints;
     
     for (size_t i = 0; i < count; i++)
     {
         std::string index = getIndexNumbers(xPoints, yPoints, i + 1);
 
-        file.AddLine(wxString::Format("%s Real", index));
+        file.AddLine(wxString::Format("%s %s", index, label1));
 
-        // ID Für Imagh Zahlen einfügen
-        file.AddLine(wxString::Format("%s Imag", index));
+        file.AddLine(wxString::Format("%s %s", index, label2));
     }
 
     return true;
