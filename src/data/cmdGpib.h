@@ -160,6 +160,13 @@ static const std::unordered_map<ScpiQueryCmd, std::string> ScpiQueryCmdLookup = 
     {ScpiQueryCmd::TRAC_DATA,       "TRAC:DATA?"},
 };
 
+// Messmodi fuer SettingsDialog
+enum class MeasurementMode {
+    SWEEP,
+    IQ,
+    MARKER_PEAK
+};
+
 // sweep measurement
 enum class ScpiCommand {
     START_FREQUENCY,

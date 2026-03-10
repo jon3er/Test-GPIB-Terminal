@@ -79,6 +79,10 @@ public:
 
     // Helper functions
     // Definition der unterstützten Datentypen für die Parameter
+
+    using SettingValue = std::variant<double, int, std::string>;
+    bool checkIfSettingsValidSweep(ScpiCommand command, const SettingValue& value);
+
     struct lastSweepSettings
     {
         double startFreq;
@@ -93,13 +97,45 @@ public:
         std::string detector;
     };
 
-    using SettingValue = std::variant<double, int, std::string>;
-    bool checkIfSettingsValidSweep(ScpiCommand command, const SettingValue& value);
-
     bool writeSweepSettings(lastSweepSettings settings);
     bool readSweepSettings();
     auto returnSweepSettings() { return m_lastSwpSettings; };
 
+    // IQ Messung
+    struct IqSettings
+    {
+        double centerFreq;
+        double refLevel;
+        int att;
+        std::string unit;
+        double sampleRate;
+        int recordLength;
+        double ifBandwidth;
+        std::string triggerSource;
+        double triggerLevel;
+        double triggerDelay;
+    };
+
+    bool writeIqSettings(IqSettings settings);
+    bool readIqSettings();
+    auto returnIqSettings() { return m_lastIqSettings; };
+
+    // Marker Peak Messung
+    struct MarkerPeakSettings
+    {
+        double startFreq;
+        double stopFreq;
+        double refLevel;
+        int att;
+        std::string unit;
+        double rbw;
+        double vbw;
+        std::string detector;
+    };
+
+    bool writeMarkerPeakSettings(MarkerPeakSettings settings);
+    bool readMarkerPeakSettings();
+    auto returnMarkerPeakSettings() { return m_lastMarkerPeakSettings; };
 
 private:
     std::vector<double> m_x_Data;
@@ -114,6 +150,8 @@ private:
 
     // Settings
     lastSweepSettings m_lastSwpSettings;
+    IqSettings m_lastIqSettings;
+    MarkerPeakSettings m_lastMarkerPeakSettings;
 };
 
 struct PrologixDeviceInfo {

@@ -678,6 +678,130 @@ bool fsuMeasurement::readSweepSettings()
     }
 }
 
+bool fsuMeasurement::writeIqSettings(IqSettings settings)
+{
+    std::string blockCmd = scpiSetCommands.at(ScpiCommand::CENTER_FREQUENCY)  + std::to_string(settings.centerFreq)   + ";:" +
+                           scpiSetCommands.at(ScpiCommand::REF_LEVEL)         + std::to_string(settings.refLevel)     + ";:" +
+                           scpiSetCommands.at(ScpiCommand::RF_ATTENUATION)    + std::to_string(settings.att)          + ";:" +
+                           scpiSetCommands.at(ScpiCommand::AMPLITUDE_UNIT)    + settings.unit                         + ";:" +
+                           scpiSetCommands.at(ScpiCommand::IQ_SAMPLE_RATE)    + std::to_string(settings.sampleRate)   + ";:" +
+                           scpiSetCommands.at(ScpiCommand::IQ_RECORD_LENGTH)  + std::to_string(settings.recordLength) + ";:" +
+                           scpiSetCommands.at(ScpiCommand::IQ_IF_BANDWIDTH)   + std::to_string(settings.ifBandwidth)  + ";:" +
+                           scpiSetCommands.at(ScpiCommand::TRIGGER_SOURCE)    + settings.triggerSource                + ";:" +
+                           scpiSetCommands.at(ScpiCommand::TRIGGER_LEVEL)     + std::to_string(settings.triggerLevel) + ";:" +
+                           scpiSetCommands.at(ScpiCommand::TRIGGER_DELAY)     + std::to_string(settings.triggerDelay) + ";";
+
+    std::string status = PrologixUsbGpibAdapter::get_instance().write(blockCmd);
+    return (status.substr(0, 3) == "Msg");
+}
+
+bool fsuMeasurement::readIqSettings()
+{
+    std::string queryCmd = scpiQueryCommands.at(ScpiCommand::CENTER_FREQUENCY) + ";:" +
+                           scpiQueryCommands.at(ScpiCommand::REF_LEVEL)        + ";:" +
+                           scpiQueryCommands.at(ScpiCommand::RF_ATTENUATION)   + ";:" +
+                           scpiQueryCommands.at(ScpiCommand::AMPLITUDE_UNIT)   + ";:" +
+                           scpiQueryCommands.at(ScpiCommand::IQ_SAMPLE_RATE)   + ";:" +
+                           scpiQueryCommands.at(ScpiCommand::IQ_RECORD_LENGTH) + ";:" +
+                           scpiQueryCommands.at(ScpiCommand::IQ_IF_BANDWIDTH)  + ";:" +
+                           scpiQueryCommands.at(ScpiCommand::TRIGGER_SOURCE)   + ";:" +
+                           scpiQueryCommands.at(ScpiCommand::TRIGGER_LEVEL)    + ";:" +
+                           scpiQueryCommands.at(ScpiCommand::TRIGGER_DELAY);
+
+    auto& adapter = PrologixUsbGpibAdapter::get_instance();
+    adapter.write(queryCmd);
+    std::string response = adapter.read();
+
+    if (response.empty()) return false;
+
+    std::vector<std::string> tokens;
+    std::stringstream ss(response);
+    std::string token;
+    while (std::getline(ss, token, ';')) {
+        token.erase(token.find_last_not_of(" \n\r\t") + 1);
+        tokens.push_back(token);
+    }
+
+    if (tokens.size() < 10) return false;
+
+    try {
+        m_lastIqSettings.centerFreq    = std::stod(tokens[0]);
+        m_lastIqSettings.refLevel      = std::stod(tokens[1]);
+        m_lastIqSettings.att           = std::stoi(tokens[2]);
+        m_lastIqSettings.unit          = tokens[3];
+        m_lastIqSettings.sampleRate    = std::stod(tokens[4]);
+        m_lastIqSettings.recordLength  = std::stoi(tokens[5]);
+        m_lastIqSettings.ifBandwidth   = std::stod(tokens[6]);
+        m_lastIqSettings.triggerSource = tokens[7];
+        m_lastIqSettings.triggerLevel  = std::stod(tokens[8]);
+        m_lastIqSettings.triggerDelay  = std::stod(tokens[9]);
+        return true;
+    }
+    catch (const std::exception& e) {
+        std::cerr << "Exception read IQ Settings: " << e.what() << std::endl;
+        return false;
+    }
+}
+
+bool fsuMeasurement::writeMarkerPeakSettings(MarkerPeakSettings settings)
+{
+    std::string blockCmd = scpiSetCommands.at(ScpiCommand::START_FREQUENCY)  + std::to_string(settings.startFreq) + ";:" +
+                           scpiSetCommands.at(ScpiCommand::END_FREQUENCY)    + std::to_string(settings.stopFreq)  + ";:" +
+                           scpiSetCommands.at(ScpiCommand::REF_LEVEL)        + std::to_string(settings.refLevel)  + ";:" +
+                           scpiSetCommands.at(ScpiCommand::RF_ATTENUATION)   + std::to_string(settings.att)       + ";:" +
+                           scpiSetCommands.at(ScpiCommand::AMPLITUDE_UNIT)   + settings.unit                      + ";:" +
+                           scpiSetCommands.at(ScpiCommand::RBW)              + std::to_string(settings.rbw)       + ";:" +
+                           scpiSetCommands.at(ScpiCommand::VBW)              + std::to_string(settings.vbw)       + ";:" +
+                           scpiSetCommands.at(ScpiCommand::DETECTOR)         + settings.detector                  + ";";
+
+    std::string status = PrologixUsbGpibAdapter::get_instance().write(blockCmd);
+    return (status.substr(0, 3) == "Msg");
+}
+
+bool fsuMeasurement::readMarkerPeakSettings()
+{
+    std::string queryCmd = scpiQueryCommands.at(ScpiCommand::START_FREQUENCY) + ";:" +
+                           scpiQueryCommands.at(ScpiCommand::END_FREQUENCY)   + ";:" +
+                           scpiQueryCommands.at(ScpiCommand::REF_LEVEL)       + ";:" +
+                           scpiQueryCommands.at(ScpiCommand::RF_ATTENUATION)  + ";:" +
+                           scpiQueryCommands.at(ScpiCommand::AMPLITUDE_UNIT)  + ";:" +
+                           scpiQueryCommands.at(ScpiCommand::RBW)             + ";:" +
+                           scpiQueryCommands.at(ScpiCommand::VBW)             + ";:" +
+                           scpiQueryCommands.at(ScpiCommand::DETECTOR);
+
+    auto& adapter = PrologixUsbGpibAdapter::get_instance();
+    adapter.write(queryCmd);
+    std::string response = adapter.read();
+
+    if (response.empty()) return false;
+
+    std::vector<std::string> tokens;
+    std::stringstream ss(response);
+    std::string token;
+    while (std::getline(ss, token, ';')) {
+        token.erase(token.find_last_not_of(" \n\r\t") + 1);
+        tokens.push_back(token);
+    }
+
+    if (tokens.size() < 8) return false;
+
+    try {
+        m_lastMarkerPeakSettings.startFreq = std::stod(tokens[0]);
+        m_lastMarkerPeakSettings.stopFreq  = std::stod(tokens[1]);
+        m_lastMarkerPeakSettings.refLevel  = std::stod(tokens[2]);
+        m_lastMarkerPeakSettings.att       = std::stoi(tokens[3]);
+        m_lastMarkerPeakSettings.unit      = tokens[4];
+        m_lastMarkerPeakSettings.rbw       = std::stod(tokens[5]);
+        m_lastMarkerPeakSettings.vbw       = std::stod(tokens[6]);
+        m_lastMarkerPeakSettings.detector  = tokens[7];
+        return true;
+    }
+    catch (const std::exception& e) {
+        std::cerr << "Exception read MarkerPeak Settings: " << e.what() << std::endl;
+        return false;
+    }
+}
+
 //------fsuMesurement Ende-----
 
 // Helper functions
