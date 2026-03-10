@@ -1,4 +1,4 @@
-#include "SweepSetDialog.h"
+#include "MSetDialog.h"
 #include "fkt_GPIB.h"
 #include "cmdGpib.h"
 #include <wx/valnum.h>
@@ -130,6 +130,8 @@ void SettingsDialog::OnApply(wxCommandEvent& event) {
 // ---- Sweep Apply + Verifikation ----
 void SettingsDialog::ApplySweep() {
     fsuMeasurement* fsu = &fsuMeasurement::get_instance();
+    // Set Mode for Measurement
+    fsu->setMeasurementMode(MeasurementMode::SWEEP);
 
     double startFreq, stopFreq, refLevel, rbw, vbw;
     m_txtStartFreq->GetValue().ToDouble(&startFreq);
@@ -207,6 +209,8 @@ void SettingsDialog::ApplySweep() {
 // ---- IQ Apply + Verifikation ----
 void SettingsDialog::ApplyIq() {
     fsuMeasurement* fsu = &fsuMeasurement::get_instance();
+    // Set Mode for Measurement
+    fsu->setMeasurementMode(MeasurementMode::IQ);
 
     double centerFreq, refLevel, sampleRate, ifBw, trigLevel, trigDelay;
     m_txtCenterFreq->GetValue().ToDouble(&centerFreq);
@@ -292,7 +296,9 @@ void SettingsDialog::ApplyIq() {
 // ---- MarkerPeak Apply + Verifikation ----
 void SettingsDialog::ApplyMarkerPeak() {
     fsuMeasurement* fsu = &fsuMeasurement::get_instance();
-
+    // Set Mode for Measurement
+    fsu->setMeasurementMode(MeasurementMode::MARKER_PEAK);
+    
     double startFreq, stopFreq, refLevel, rbw, vbw;
     m_txtStartFreq->GetValue().ToDouble(&startFreq);
     m_txtStopFreq->GetValue().ToDouble(&stopFreq);

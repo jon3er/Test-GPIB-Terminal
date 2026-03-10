@@ -59,6 +59,7 @@ target_include_directories(TEST-GPIB-Terminal PRIVATE
     "src/gui"
     "src/gui/FunctionWindow"
     "src/gui/MesurementWindow"
+    "src/gui/MesurementWindow/InputDialog"
     "src/gui/SettingsWindow"
     "src/gui/TerminalWindow"
     "src/gui/GenericInput"

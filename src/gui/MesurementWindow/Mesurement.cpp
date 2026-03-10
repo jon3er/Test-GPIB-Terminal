@@ -41,9 +41,9 @@ PlotWindow::PlotWindow(wxWindow *parent, MainDocument* mainDoc)
     subMenuNew->AppendSeparator();
     subMenuNew->Append(MainMenuBar::ID_Main_Mesurement_Load,       wxT("Load config"));
     subMenuNew->AppendSeparator();
-    subMenuNew->Append(MainMenuBar::ID_Main_Mesurement_Preset_1,   wxT("Preset 1"));
-    subMenuNew->Append(MainMenuBar::ID_Main_Mesurement_Preset_2,   wxT("Preset 2"));
-    subMenuNew->Append(MainMenuBar::ID_Main_Mesurement_Preset_3,   wxT("Preset 3"));
+    subMenuNew->Append(MainMenuBar::ID_Main_Mesurement_Sweep,   wxT("Preset 1"));
+    subMenuNew->Append(MainMenuBar::ID_Main_Mesurement_QI,   wxT("Preset 2"));
+    subMenuNew->Append(MainMenuBar::ID_Main_Mesurement_MarkerPeak,   wxT("Preset 3"));
 
     menuMesurement->AppendSubMenu(subMenuNew, wxT("New Mesurement"));
     menuMesurement->AppendSeparator();
@@ -70,9 +70,9 @@ PlotWindow::PlotWindow(wxWindow *parent, MainDocument* mainDoc)
     Bind(wxEVT_MENU, &PlotWindow::OnMenuMesurementNew,       this, MainMenuBar::ID_Main_Mesurement_New);
     Bind(wxEVT_MENU, &PlotWindow::OnMenuMesurementOpen,      this, MainMenuBar::ID_Main_Mesurement_Open);
     Bind(wxEVT_MENU, &PlotWindow::OnMenuMesurementLoad,      this, MainMenuBar::ID_Main_Mesurement_Load);
-    Bind(wxEVT_MENU, &PlotWindow::OnMenuMesurementPreset1,   this, MainMenuBar::ID_Main_Mesurement_Preset_1);
-    Bind(wxEVT_MENU, &PlotWindow::OnMenuMesurementPreset2,   this, MainMenuBar::ID_Main_Mesurement_Preset_2);
-    Bind(wxEVT_MENU, &PlotWindow::OnMenuMesurementPreset3,   this, MainMenuBar::ID_Main_Mesurement_Preset_3);
+    Bind(wxEVT_MENU, &PlotWindow::OnMenuMesurementPreset1,   this, MainMenuBar::ID_Main_Mesurement_Sweep);
+    Bind(wxEVT_MENU, &PlotWindow::OnMenuMesurementPreset2,   this, MainMenuBar::ID_Main_Mesurement_QI);
+    Bind(wxEVT_MENU, &PlotWindow::OnMenuMesurementPreset3,   this, MainMenuBar::ID_Main_Mesurement_MarkerPeak);
     Bind(wxEVT_MENU, &PlotWindow::OnMenuMesurement2DMess,    this, MainMenuBar::ID_Main_Mesurement_2D_Mess);
     Bind(wxEVT_MENU, &PlotWindow::OnMenuMesurementSetMarker, this, MainMenuBar::ID_Main_Mesurement_SetMarker);
     Bind(wxEVT_MENU, &PlotWindow::OnMenuMesurementSettings,  this, MainMenuBar::ID_Main_Mesurement_Settings);

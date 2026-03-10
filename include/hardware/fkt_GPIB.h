@@ -62,14 +62,21 @@ public:
     void setFreqStartEnd(double FreqS, double FreqE);
 
 
-    // Sweep Measurement
+    // Measurement
+    /**
+     * @brief starts a measurement uses a default skript depending on the selected measurement
+     * @returns when the measuremnt is complete
+     */
+    bool executeMeasurement(int TimeOutMs = 5000);
+
 
     /**
      * @brief Seperates comma seperated vaules
      * @param receivedString Input raw data
      * @param seperatedValues pass seperated values
      */
-    void seperateDataBlock(const wxString& receivedString, std::vector<double>& seperatedValues);
+    void seperateDataBlock(const wxString& receivedString, 
+                std::vector<double>& seperatedValuesReal, std::vector<double>& seperatedValuesImag);
     
     /**
      * @brief Caluculates Frequancy range array with set start and stop Frequancy and number of mesurement points
@@ -83,6 +90,10 @@ public:
     using SettingValue = std::variant<double, int, std::string>;
     bool checkIfSettingsValidSweep(ScpiCommand command, const SettingValue& value);
 
+    void setMeasurementMode(MeasurementMode mode) { m_lastMeasurementMode = mode; };
+
+    // Helper for Measurement settings
+    // Sweep Messung
     struct lastSweepSettings
     {
         double startFreq;
@@ -138,6 +149,7 @@ public:
     auto returnMarkerPeakSettings() { return m_lastMarkerPeakSettings; };
 
 private:
+
     std::vector<double> m_x_Data;
     std::vector<double> m_y_Data;
     double m_FreqStart;
@@ -148,6 +160,7 @@ private:
 
     bool m_ImagValues = false;
 
+    MeasurementMode m_lastMeasurementMode;
     // Settings
     lastSweepSettings m_lastSwpSettings;
     IqSettings m_lastIqSettings;
@@ -210,6 +223,12 @@ public:
     std::string send(std::string msg, int DelayMs = 100);
 
     /**
+     * @brief Checks GPIB Bus Status bit-4 (message bit)
+     * @returns True if Mesage is avaliable or timeOut is reached
+     */
+    bool checkIfMsgAvailable(int TimeOutMs = 100);
+
+    /**
      * @brief retuns current Adapter status
      */
     std::string statusText();
@@ -228,6 +247,11 @@ public:
      * @brief unloads VCP drivers to solve drive conficts on linux/gnu
      */
     void prepareFTDIDevice();
+
+    /**
+     * @brief checks the Status register for errors and returns found errors
+     */
+    void checkForGpibBusError(wxWindow* parent);
 
     // get methodes
     FT_STATUS getStatus();

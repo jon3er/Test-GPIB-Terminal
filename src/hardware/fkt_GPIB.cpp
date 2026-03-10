@@ -96,10 +96,38 @@ std::string PrologixUsbGpibAdapter::write(std::string msg)
 std::string PrologixUsbGpibAdapter::send(std::string msg, int DelayMs)
 {
     write(msg);
-    sleepMs(DelayMs);
+    checkIfMsgAvailable(DelayMs);
     quaryBuffer();
-
     return read();
+}
+
+bool PrologixUsbGpibAdapter::checkIfMsgAvailable(int TimeOutMs)
+{
+    int elapsedMs = 0;
+    int pollIntervalMs = 10; // Abfrage-Intervall (verhindert 100% CPU-Last)
+
+    while (elapsedMs < TimeOutMs) {
+        // Status-Byte abfragen
+        write("++spoll\n");
+        quaryBuffer();
+        std::string statusStr = read();
+
+        try {
+            int statusByte = std::stoi(statusStr);
+            
+            // check MAV-Bit (Message Available, Bit 4)
+            if (statusByte & (1 << 4)) {
+                break; // Msg available
+            }
+        } catch (...) {
+            
+        }
+
+        sleepMs(pollIntervalMs);
+        elapsedMs += pollIntervalMs;
+    }
+
+    return true;
 }
 
 DWORD PrologixUsbGpibAdapter::quaryBuffer()
@@ -236,7 +264,8 @@ void PrologixUsbGpibAdapter::readScriptFile(const wxString& dirPath, const wxStr
             }
             else if(line.Contains("?") && line.substr(0,4) == "TRAC")
             {
-                std::vector<double> buffer;
+                std::vector<double> bufferReal;
+                std::vector<double> bufferImag;
                 std::cerr << "line " << i << ": send: " << line << std::endl;
 
                 write(std::string(line.ToUTF8()));
@@ -244,8 +273,9 @@ void PrologixUsbGpibAdapter::readScriptFile(const wxString& dirPath, const wxStr
                 sleepMs(300); // TODO change logic to be more efficent
                 logAdapterReceived.Add(read());
                 std::cerr << "responce: " << logAdapterReceived.Last() << std::endl;
-                fsuMeasurement::get_instance().seperateDataBlock(logAdapterReceived.Last(), buffer);
-                fsuMeasurement::get_instance().setX_Data(buffer);
+                fsuMeasurement::get_instance().seperateDataBlock(logAdapterReceived.Last(), bufferReal, bufferImag);
+                fsuMeasurement::get_instance().setX_Data(bufferReal);
+                fsuMeasurement::get_instance().setY_Data(bufferImag);
                 fsuMeasurement::get_instance().setFreqStartEnd(75'000'000,125'000'000);
                 //Messung.calcYdata(); //start und end frequenz angeben
 
@@ -419,6 +449,42 @@ void prepareFTDIDevice() {
     }
 }
 
+void PrologixUsbGpibAdapter::checkForGpibBusError(wxWindow* parent)
+{
+    if (!getConnected()) return;
+    // Check if SRQ-Line (Service Request) is activ
+    
+    std::string srqStatus = send("++srq");
+
+    //  "1" signals Service Request
+    if (srqStatus.find("1") != std::string::npos) {
+        
+        // Serial Poll  (R&S Analysator) 
+        std::string statusStr = send("++spoll");
+        try {
+            int statusByte = std::stoi(statusStr);
+
+            // Event Status Bit (Bit 5 / Dec 32)
+            if (statusByte & (1 << 5)) {
+                
+                // check error msg of R&S device
+                std::string errorMsg = send("SYST:ERR?");
+
+                // 5. wxWidgets warning window popup
+                wxMessageBox(
+                    wxString::Format("Spektrumanalysator meldet einen Fehler:\n%s", errorMsg), 
+                    "Gerätefehler", 
+                    wxOK | wxICON_WARNING | wxCENTRE, 
+                    parent
+                );
+            }
+        } catch (const std::exception& e) {
+            std::cerr << "Fehler beim Auslesen des Status-Bytes: " << e.what() << std::endl;
+            wxMessageBox("Fehler beim Auslesen des Status-Bytes.", "Kommunikationsfehler", wxOK | wxICON_ERROR, parent);
+        }
+    }
+}
+
 //------fsuMesurement Beginn-----
 
 fsuMeasurement::fsuMeasurement()
@@ -439,31 +505,99 @@ fsuMeasurement::~fsuMeasurement()
 {
 }
 
-void fsuMeasurement::seperateDataBlock(const wxString& receivedString, std::vector<double>& x)
+bool fsuMeasurement::executeMeasurement(int TimeOutMs)
+{
+    // TODO Auf enums anpassen
+    auto& adapter = PrologixUsbGpibAdapter::get_instance();
+
+    // Setup adapter settings for measurement
+    adapter.write("++mode 1");
+    adapter.write("++auto 0");
+    adapter.write("++eos 2");
+    
+    std::string commaSeparatedValues;
+
+    switch (m_lastMeasurementMode)
+    {
+    case MeasurementMode::SWEEP:
+        adapter.write("INIT:CONT OFF"); // turn of continous measurement
+        adapter.write("INIT:IMM");      // trigger measurement
+        adapter.write("*WAI");          // wait for measurement to finish
+        adapter.write("TRAC? TRACE1");
+        if (adapter.checkIfMsgAvailable(TimeOutMs))
+            commaSeparatedValues = adapter.send("++read eoi");
+
+        break;
+    
+    case MeasurementMode::IQ:
+        adapter.write("TRAC:IQ:STAT ON"); 
+        adapter.write("TRAC:IQ:SET NORM, 10MHz, 1024, FREE, POS, 0, 0");      // TODO auf andere Trigger anpassbar machen
+        adapter.write("*WAI");          // wait for measurement to finish
+        adapter.write("TRAC:IQ:DATA?");
+        if (adapter.checkIfMsgAvailable(TimeOutMs))
+            commaSeparatedValues = adapter.send("++read eoi");
+
+        break;
+    
+    case MeasurementMode::MARKER_PEAK:
+        adapter.write("INIT:CONT OFF"); // turn of continous measurement
+        adapter.write("INIT:IMM");      // trigger measurement
+        adapter.write("*WAI");          // wait for measurement to finish
+        adapter.write("CALC:MARK1:MAX");
+        commaSeparatedValues = adapter.send("CALC:MARK1:X?"); 
+        commaSeparatedValues += ",";
+        commaSeparatedValues += adapter.send("CALC:MARK1:Y?");  // Save x and y values
+
+        break;
+
+    default:
+        return false;
+        break;
+    }
+
+    return true;
+}
+
+void fsuMeasurement::seperateDataBlock(const wxString& receivedString, 
+                                        std::vector<double>& Real, std::vector<double>& Imag)
 {
     wxArrayString seperatedStrings = wxStringTokenize(receivedString, ",");
 
     double value;
-    wxString data;
+    Real.clear(); // empty vectors
+    Imag.clear();
 
-    for (long unsigned int i = 0; i < seperatedStrings.Count(); i++)
+    for (size_t i = 0; i < seperatedStrings.Count(); i++)
     {
-        data = seperatedStrings[i];
+        wxString data = seperatedStrings[i];
 
-        if(data.ToCDouble(&value))
+        if (data.ToCDouble(&value))
         {
-             x.push_back(value);
-             std::cerr << "seperated value: " << value << std::endl;
+            if (m_lastMeasurementMode == MeasurementMode::IQ)
+            {
+                // I/Q every other value alternates between the two
+                if (i % 2 == 0) {
+                    Real.push_back(value); // Realanteil (I)
+                } else {
+                    Imag.push_back(value); // Imaginäranteil (Q)
+                }
+            }
+            else
+            {
+                // Normal Sweep
+                Real.push_back(value);
+            }
         }
         else
         {
-            std::cerr << "Failed to convert" << std::endl;
+            wxLogError("Konvertierungsfehler bei Wert %zu: %s", i, data);
         }
     }
-    /*
-    m_x_Data.resize(x.size());
-    m_x_Data=x;
-    */
+    
+    // Debug Output
+    std::cerr << "Daten verarbeitet. X-Groesse: " << Real.size() 
+              << " Y-Groesse: " << Imag.size() << std::endl;
+
 }
 std::vector<double> fsuMeasurement::calcFreqData()
 {
@@ -687,7 +821,7 @@ bool fsuMeasurement::writeIqSettings(IqSettings settings)
                            scpiSetCommands.at(ScpiCommand::IQ_SAMPLE_RATE)    + std::to_string(settings.sampleRate)   + ";:" +
                            scpiSetCommands.at(ScpiCommand::IQ_RECORD_LENGTH)  + std::to_string(settings.recordLength) + ";:" +
                            scpiSetCommands.at(ScpiCommand::IQ_IF_BANDWIDTH)   + std::to_string(settings.ifBandwidth)  + ";:" +
-                           scpiSetCommands.at(ScpiCommand::TRIGGER_SOURCE)    + settings.triggerSource                + ";:" +
+                           //scpiSetCommands.at(ScpiCommand::TRIGGER_SOURCE)    + settings.triggerSource                + ";:" +
                            scpiSetCommands.at(ScpiCommand::TRIGGER_LEVEL)     + std::to_string(settings.triggerLevel) + ";:" +
                            scpiSetCommands.at(ScpiCommand::TRIGGER_DELAY)     + std::to_string(settings.triggerDelay) + ";";
 
@@ -704,7 +838,7 @@ bool fsuMeasurement::readIqSettings()
                            scpiQueryCommands.at(ScpiCommand::IQ_SAMPLE_RATE)   + ";:" +
                            scpiQueryCommands.at(ScpiCommand::IQ_RECORD_LENGTH) + ";:" +
                            scpiQueryCommands.at(ScpiCommand::IQ_IF_BANDWIDTH)  + ";:" +
-                           scpiQueryCommands.at(ScpiCommand::TRIGGER_SOURCE)   + ";:" +
+                           //scpiQueryCommands.at(ScpiCommand::TRIGGER_SOURCE)   + ";:" +
                            scpiQueryCommands.at(ScpiCommand::TRIGGER_LEVEL)    + ";:" +
                            scpiQueryCommands.at(ScpiCommand::TRIGGER_DELAY);
 
@@ -755,6 +889,7 @@ bool fsuMeasurement::writeMarkerPeakSettings(MarkerPeakSettings settings)
                            scpiSetCommands.at(ScpiCommand::DETECTOR)         + settings.detector                  + ";";
 
     std::string status = PrologixUsbGpibAdapter::get_instance().write(blockCmd);
+
     return (status.substr(0, 3) == "Msg");
 }
 

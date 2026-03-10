@@ -8,66 +8,17 @@ wxIMPLEMENT_APP(MainWin);
 //-----MainWin Methodes-----
 bool MainWin::OnInit()
 {
-    try
-    {
-        // Log to file for debugging
-        FILE* debugLog = fopen("C:\\temp\\debug.log", "w");
-        if (debugLog)
-        {
-            fprintf(debugLog, "TEST-GPIB-Terminal starting...\n");
-            fflush(debugLog);
-        }
+    //Enable Debug output window
+    wxLog::SetActiveTarget(new wxLogStderr());
 
-        //Enable Debug output window
-        wxLog::SetActiveTarget(new wxLogStderr());
+    // Create main frame
+    MainProgrammWin *MainProgFrame = new MainProgrammWin(nullptr, new MainDocument());
 
-        if (debugLog)
-        {
-            fprintf(debugLog, "Creating main frame...\n");
-            fflush(debugLog);
-        }
-    
-        // Create main frame
-        MainProgrammWin *MainProgFrame = new MainProgrammWin(nullptr, new MainDocument());
+    SetTopWindow(MainProgFrame);
 
-        if (debugLog)
-        {
-            fprintf(debugLog, "Main frame created, showing...\n");
-            fflush(debugLog);
-        }
+    MainProgFrame->Show();
 
-        MainProgFrame->Show();
-
-        if (debugLog)
-        {
-            fprintf(debugLog, "Main frame shown, returning true\n");
-            fclose(debugLog);
-        }
-
-        return true;
-    }
-    catch (const std::exception& e)
-    {
-        FILE* debugLog = fopen("C:\\temp\\debug.log", "a");
-        if (debugLog)
-        {
-            fprintf(debugLog, "Exception caught: %s\n", e.what());
-            fclose(debugLog);
-        }
-        wxLogError(wxT("Fatal error during initialization: %s"), wxString::FromUTF8(e.what()));
-        return false;
-    }
-    catch (...)
-    {
-        FILE* debugLog = fopen("C:\\temp\\debug.log", "a");
-        if (debugLog)
-        {
-            fprintf(debugLog, "Unknown exception caught\n");
-            fclose(debugLog);
-        }
-        wxLogError(wxT("Unknown fatal error during initialization"));
-        return false;
-    }
+    return true;
 }
 //-----MainWin Methodes ende-----
 
@@ -92,9 +43,9 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, MainDocument* doc, wxWindowI
     Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementNew,       this, MainMenuBar::ID_Main_Mesurement_New);
     Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementLoad,      this, MainMenuBar::ID_Main_Mesurement_Open);
     Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementLoad,      this, MainMenuBar::ID_Main_Mesurement_Load);
-    Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementLoad,      this, MainMenuBar::ID_Main_Mesurement_Preset_1);
-    Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementLoad,      this, MainMenuBar::ID_Main_Mesurement_Preset_2);
-    Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementLoad,      this, MainMenuBar::ID_Main_Mesurement_Preset_3);
+    Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementSweep,     this, MainMenuBar::ID_Main_Mesurement_Sweep);
+    Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementIQ,        this, MainMenuBar::ID_Main_Mesurement_QI);
+    Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementMarkerPeak,this, MainMenuBar::ID_Main_Mesurement_MarkerPeak);
     Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurement2DMess,    this, MainMenuBar::ID_Main_Mesurement_2D_Mess);
     Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementSetMarker, this, MainMenuBar::ID_Main_Mesurement_SetMarker);
     Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementSettings,  this, MainMenuBar::ID_Main_Mesurement_Settings);
@@ -149,9 +100,9 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, MainDocument* doc, wxWindowI
 	m_menuMesure_Item_New           = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_New,        wxString( wxT("New Mesurement") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menuMesure_Item_Open          = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_Open,       wxString( wxT("Open Saved Mesurement") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menuMesure_Item_Load          = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_Load,       wxString( wxT("Load config") ) , wxEmptyString, wxITEM_NORMAL );
-	m_menuMesure_Item_Preset_1      = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_Preset_1,   wxString( wxT("Preset 1") ) , wxEmptyString, wxITEM_NORMAL );
-	m_menuMesure_Item_Preset_2      = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_Preset_2,   wxString( wxT("Preset 2") ) , wxEmptyString, wxITEM_NORMAL );
-	m_menuMesure_Item_Preset_3      = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_Preset_3,   wxString( wxT("Preset 3") ) , wxEmptyString, wxITEM_NORMAL );
+	m_menuMesure_Item_Preset_1      = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_Sweep,   wxString( wxT("Preset 1") ) , wxEmptyString, wxITEM_NORMAL );
+	m_menuMesure_Item_Preset_2      = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_QI,   wxString( wxT("Preset 2") ) , wxEmptyString, wxITEM_NORMAL );
+	m_menuMesure_Item_Preset_3      = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_MarkerPeak,   wxString( wxT("Preset 3") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menuMesure_Item_2DMesurment   = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_2D_Mess,    wxString( wxT("2D Plot Mesurment") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menuMesure_Item_SetMarker     = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_SetMarker,  wxString( wxT("Set Marker") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menuMesure_Item_Settings      = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_Settings,   wxString( wxT("Settings") ) , wxEmptyString, wxITEM_NORMAL );
@@ -449,6 +400,26 @@ void MainProgrammWin::MenuMesurementLoad(wxCommandEvent& event)
     m_openMeasurementWindows.insert(PlotWin);
     PlotWin->Show();
 }
+void MainProgrammWin::MenuMesurementSweep(wxCommandEvent& event)
+{
+
+    // Open sweep Dialog
+    SettingsDialog dlg(this, MeasurementMode::SWEEP);
+    dlg.ShowModal();
+};
+void MainProgrammWin::MenuMesurementIQ(wxCommandEvent& event)
+{
+    // Open IQ Dialog
+    SettingsDialog dlg(this, MeasurementMode::IQ);
+    dlg.ShowModal();
+}
+void MainProgrammWin::MenuMesurementMarkerPeak(wxCommandEvent& event)
+{
+    // Open Marker Peak Dialog
+    SettingsDialog dlg(this, MeasurementMode::MARKER_PEAK);
+    dlg.ShowModal();
+}
+
 void MainProgrammWin::MenuMesurementSettings(wxCommandEvent& event)
 {
     // Document owns hardware state; created on the stack to match the lifecycle of the dialog

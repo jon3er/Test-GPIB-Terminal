@@ -17,12 +17,14 @@
 // Gui header
 #include "mathplot.h"
 #include "Mesurement.h"
-#include "MeasurementDocument.h"
-#include "MultiMessDocument.h"
 #include "TerminalWindow.h"
-#include "TerminalDocument.h"
 #include "FunctionWindow.h"
 #include "SettingsWindow.h"
+#include "MSetDialog.h"
+// document header
+#include "MeasurementDocument.h"
+#include "MultiMessDocument.h"
+#include "TerminalDocument.h"
 #include "SettingsDocument.h"
 // Data
 #include "dataManagement.h"
@@ -132,6 +134,9 @@ public:
 
     void MenuMesurementNew(wxCommandEvent& event);
 	void MenuMesurementLoad(wxCommandEvent& event);
+    void MenuMesurementSweep(wxCommandEvent& event);
+    void MenuMesurementIQ(wxCommandEvent& event);
+    void MenuMesurementMarkerPeak(wxCommandEvent& event);
     void MenuMesurementSetMarker(wxCommandEvent& event);
     void MenuMesurement2DMess(wxCommandEvent& event);
     void MenuMesurementSettings(wxCommandEvent& event);
