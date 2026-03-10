@@ -543,7 +543,7 @@ bool fsuMeasurement::executeMeasurement(int TimeOutMs)
         adapter.write("INIT:CONT OFF"); // turn of continous measurement
         adapter.write("INIT:IMM");      // trigger measurement
         adapter.write("*WAI");          // wait for measurement to finish
-        adapter.write("CALC:MARK1:MAX");
+        adapter.write("CALC:MARK1:MAX");        // TODO make type of marker selectable
         commaSeparatedValues = adapter.send("CALC:MARK1:X?"); 
         commaSeparatedValues += ",";
         commaSeparatedValues += adapter.send("CALC:MARK1:Y?");  // Save x and y values
