@@ -91,6 +91,7 @@ public:
     bool checkIfSettingsValidSweep(ScpiCommand command, const SettingValue& value);
 
     void setMeasurementMode(MeasurementMode mode) { m_lastMeasurementMode = mode; };
+    MeasurementMode getMeasurementMode() const { return m_lastMeasurementMode; };
 
     // Helper for Measurement settings
     // Sweep Messung

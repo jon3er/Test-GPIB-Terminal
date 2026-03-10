@@ -7,8 +7,19 @@
 #include <wx/tokenzr.h>
 
 #include "dataManagement.h"
+#include "fkt_GPIB.h"
 
 
+/**
+ * @brief Cached copy of fsuMeasurement settings for CSV I/O
+ */
+struct FsuSettings
+{
+    MeasurementMode mode{};
+    fsuMeasurement::lastSweepSettings    sweep{};
+    fsuMeasurement::IqSettings           iq{};
+    fsuMeasurement::MarkerPeakSettings   marker{};
+};
 
 /**
  * @brief Save/Read measurement data to csv file
@@ -47,6 +58,16 @@ class CsvFile
         void setSeparator(char separator)   { m_separator = separator; };
         char getSeparator()                 { return m_separator; };
 
+        /**
+         * @brief Reads current settings from fsuMeasurement singleton into m_fsuSettings
+         */
+        void importFsuSettings();
+
+        /**
+         * @brief Returns const reference to the cached fsu settings
+         */
+        const FsuSettings& getFsuSettings() const { return m_fsuSettings; };
+
     protected:
 
         // save Helper Functions
@@ -55,6 +76,11 @@ class CsvFile
          */
         bool saveCsvHeader(wxTextFile& file, sData& data);
 
+        bool saveCsvSettingsSweep(wxTextFile& file, sData& data);
+        bool saveCsvSettingsQI(wxTextFile& file, sData& data);
+        bool saveCsvSettingsMarker(wxTextFile& file, sData& data);
+
+
         /**
          * @brief save measurement data to file
          */
@@ -62,6 +88,11 @@ class CsvFile
 
         // read Helper Functions
         bool readCsvHeader(wxTextFile& file, sData& data);
+
+        bool readCsvSettingsSweep(wxTextFile& file, sData& data);
+        bool readCsvSettingsQI(wxTextFile& file, sData& data);
+        bool readCsvSettingsMarker(wxTextFile& file, sData& data);
+
         bool readCsvData(wxTextFile& file, sData& data);
 
         // helper functions
@@ -99,6 +130,8 @@ class CsvFile
         std::unordered_map<std::string, int> m_CsvLookupTable;
         // set Separator (, ;)
         char m_separator;
+        // Cached fsu measurement settings
+        FsuSettings m_fsuSettings;
 };
 
 
@@ -130,5 +163,15 @@ struct HeaderConfig
     // Erfassung
     static constexpr std::string_view noPointsArray = "Number Points per mesurement"; // ScpiCmdLookup.at(ScpiCmd::SWE_POIN)
     static constexpr std::string_view detektor      = "Detektor";
+    // IQ-spezifische Parameter
+    static constexpr std::string_view centerFreq    = "Center Frequency";
+    static constexpr std::string_view sampleRate    = "Sample Rate";
+    static constexpr std::string_view recordLength  = "Record Length";
+    static constexpr std::string_view ifBandwidth   = "IF Bandwidth";
+    static constexpr std::string_view triggerSource  = "Trigger Source";
+    static constexpr std::string_view triggerLevel   = "Trigger Level";
+    static constexpr std::string_view triggerDelay   = "Trigger Delay";
+    // Abschnitts-Label
+    static constexpr std::string_view mesSettings   = "Messeinstellungen";
 };
 

@@ -183,6 +183,10 @@ void FunctionDocument::TestSaveFile()
     TestObjekt.setNumberOfPts_Y(ypt);
     TestObjekt.setEndFreq(endFreq);
 
+    auto& fsu = fsuMeasurement::get_instance();
+    fsu.setMeasurementMode(MeasurementMode::MARKER_PEAK);
+
+
     std::vector<double> TestArray;
 
     // Generates random values
