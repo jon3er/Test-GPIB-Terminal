@@ -1,5 +1,5 @@
 #include "MSetDialog.h"
-#include "fkt_GPIB.h"
+#include "FsuMeasurement.h"
 #include "cmdGpib.h"
 #include <wx/valnum.h>
 #include <cmath>

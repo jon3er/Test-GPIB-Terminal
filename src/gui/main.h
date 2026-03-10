@@ -12,7 +12,7 @@
 #include <set>
 #include <thread>
 // Hardware header
-#include "fkt_GPIB.h"
+#include "FsuMeasurement.h"
 #include "fkt_d2xx.h"
 // Gui header
 #include "mathplot.h"

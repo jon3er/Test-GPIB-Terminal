@@ -1,6 +1,6 @@
 
 #include "MultiMessDocument.h"
-#include "fkt_GPIB.h"
+#include "FsuMeasurement.h"
 #include "systemInfo.h"
 
 #include <iostream>

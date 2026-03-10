@@ -7,7 +7,7 @@
 #include <wx/tokenzr.h>
 
 #include "dataManagement.h"
-#include "fkt_GPIB.h"
+#include "FsuMeasurement.h"
 
 
 /**

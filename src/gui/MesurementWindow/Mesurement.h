@@ -12,7 +12,7 @@
 
 #include "MainDocument.h"
 #include "dataManagement.h"
-#include "fkt_GPIB.h"
+#include "FsuMeasurement.h"
 #include "fkt_d2xx.h"
 #include "systemInfo.h"
 

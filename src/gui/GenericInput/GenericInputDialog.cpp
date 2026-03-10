@@ -1,5 +1,5 @@
 #include "GenericInputDialog.h"
-#include "fkt_GPIB.h"
+#include "FsuMeasurement.h"
 #include "PlotterFrame.h"
 #include "main.h"
 

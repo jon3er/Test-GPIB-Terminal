@@ -1,5 +1,5 @@
 #include "SettingsDocument.h"
-#include "fkt_GPIB.h"
+#include "FsuMeasurement.h"
 #include "cmdGpib.h"
 
 #include <algorithm>

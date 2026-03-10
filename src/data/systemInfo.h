@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include "mathplot.h"
 #include "dataManagement.h"
-#include "fkt_GPIB.h"
+#include "FsuMeasurement.h"
 
 // defines path for linux and windows systems
 namespace System

@@ -5,7 +5,7 @@
 #include <thread>
 #include <atomic>
 #include "dataManagement.h"
-#include "fkt_GPIB.h"
+#include "FsuMeasurement.h"
 
 /**
  * @brief Observer interface for MeasurementDocument.
