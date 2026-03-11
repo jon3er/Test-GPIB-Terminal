@@ -36,7 +36,7 @@ std::string PrologixUsbGpibAdapter::read(unsigned int forceReadBytes)
             m_deviceInfo.lastMsgReceived = std::string(BigBuffer.data(),BigBuffer.size());
             Text = m_deviceInfo.lastMsgReceived + "\n";
 
-            std::cout << "Read msg: "<<Text << std::endl;
+            std::cout << "Read msg: "<< Text << std::endl;
 
             if (BigBuffer.size() == 0)
             {
@@ -107,29 +107,44 @@ bool PrologixUsbGpibAdapter::checkIfMsgAvailable(int TimeOutMs)
 {
     int elapsedMs = 0;
     int pollIntervalMs = 20; // Abfrage-Intervall (verhindert 100% CPU-Last)
+    bool msgReceived = false;
 
     while (elapsedMs < TimeOutMs) {
         // Status-Byte abfragen
-        write("++spoll\n");
-        quaryBuffer();
-        std::string statusStr = read();
+        write("++spoll");
 
-        try {
-            int statusByte = std::stoi(statusStr);
+        sleepMs(10);
 
-            // check MAV-Bit (Message Available, Bit 4)
-            if (statusByte & (1 << 4)) {
-                break; // Msg available
+        if(quaryBuffer() > 0)
+        {
+            std::string statusStr = read();
+
+            try {
+                int statusByte = std::stoi(statusStr);
+
+                // check MAV-Bit (Message Available, Bit 4)
+                if (statusByte & 0x10) {
+                    msgReceived = true;
+                    break; // Msg available
+                }
+                else if (statusByte & 0x04) // Bit 2 Error Available
+                {
+                    write("SYST:ERR?");
+                    sleepMs(10);
+                    std::string errorMsg = read();
+
+                    std::cout << "[GPIB BUS ERROR] "<< errorMsg << std::endl;
+                    return msgReceived = false;
+                }
+            } catch (...) {
+
             }
-        } catch (...) {
-
         }
-
-        sleepMs(pollIntervalMs);
-        elapsedMs += pollIntervalMs;
+        sleepMs(pollIntervalMs-10);
+        elapsedMs += (pollIntervalMs);
     }
 
-    return true;
+    return msgReceived;
 }
 
 DWORD PrologixUsbGpibAdapter::quaryBuffer()
@@ -179,7 +194,7 @@ bool PrologixUsbGpibAdapter::checkIfGpibDeviceAvailable()
         }
 
 
-        if ((0 <= spollStatus) && (spollStatus<= 256))
+        if ((0x00 <= spollStatus) && (spollStatus<= 0xff))
         {
             std::cout << "GPIB Devcie found!" << std::endl;
             std::cout << "++spoll Status: " << statusStr << std::endl;

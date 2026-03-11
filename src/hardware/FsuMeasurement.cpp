@@ -23,25 +23,9 @@ fsuMeasurement::fsuMeasurement()
 
 fsuMeasurement::~fsuMeasurement()
 {
+    
 }
 
-bool fsuSetupConfig()
-{
-    auto& adapter = PrologixUsbGpibAdapter::get_instance();
-    // setup Adapter settings
-    adapter.write(ProLogixCmdLookup.at(ProLogixCmd::CLR));
-    sleepMs(200);
-    adapter.write(ProLogixCmdLookup.at(ProLogixCmd::MODE)       + " 1");
-    adapter.write(ProLogixCmdLookup.at(ProLogixCmd::AUTO)       + " 1");
-    adapter.write(ProLogixCmdLookup.at(ProLogixCmd::EOS)        + " 2");
-    adapter.write(ProLogixCmdLookup.at(ProLogixCmd::EOI)        + " 1");
-    adapter.write(ProLogixCmdLookup.at(ProLogixCmd::EOT_ENABLE) + " 0");
-    adapter.write(ProLogixCmdLookup.at(ProLogixCmd::EOT_CHAR)   + " 10");
-    adapter.write(ProLogixCmdLookup.at(ProLogixCmd::ADDR)       + " 20");
-    std::string responce = adapter.send("syst:err?");
-
-    std::cout << "Config fin - status: " << responce << std::endl;
-}
 
 bool fsuMeasurement::executeMeasurement(int TimeOutMs)
 {

@@ -42,8 +42,6 @@ public:
 
     ~fsuMeasurement();
 
-    bool fsuSetupConfig();
-
     /**
      * @brief To check if the last mesurement had complex values
      */
