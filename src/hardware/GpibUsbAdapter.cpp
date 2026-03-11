@@ -155,12 +155,9 @@ bool PrologixUsbGpibAdapter::checkIfGpibDeviceAvailable()
         return false;
     }
 
-    if (!getConnected())
+    if (!connect())
     {
-        if (!connect())
-        {
-            return false;
-        } 
+        return false;
     }
     else 
     {
@@ -195,6 +192,10 @@ bool PrologixUsbGpibAdapter::connect()
             m_deviceInfo.Connected = false;
             return false;
         }
+    }
+    else
+    {
+        return true;
     }
 }
 bool PrologixUsbGpibAdapter::disconnect()
