@@ -42,6 +42,8 @@ public:
 
     ~fsuMeasurement();
 
+    bool fsuSetupConfig();
+
     /**
      * @brief To check if the last mesurement had complex values
      */
@@ -77,9 +79,9 @@ public:
      * @param receivedString Input raw data
      * @param seperatedValues pass seperated values
      */
-    void seperateDataBlock(const wxString& receivedString, 
+    void seperateDataBlock(const wxString& receivedString,
                 std::vector<double>& seperatedValuesReal, std::vector<double>& seperatedValuesImag);
-    
+
     /**
      * @brief Caluculates Frequancy range array with set start and stop Frequancy and number of mesurement points
      * @return Frequancy range
@@ -107,7 +109,7 @@ public:
         std::string unit;
         int rbw;
         int vbw;
-        std::string sweepTime;
+        std::string sweepTime = "ON";
         std::string detector;
     };
 
@@ -163,7 +165,7 @@ private:
     std::vector<double> m_x_Data;
     std::vector<double> m_y_Data;
     double m_FreqStart;
-    double m_FreqEnd; 
+    double m_FreqEnd;
     wxString m_lastMesurementTime;
     unsigned int m_NoPoints_x;
     unsigned int m_NoPoints_y;

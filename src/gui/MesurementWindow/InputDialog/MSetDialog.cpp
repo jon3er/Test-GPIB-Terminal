@@ -321,7 +321,7 @@ void SettingsDialog::ApplyMarkerPeak() {
     fsuMeasurement* fsu = &fsuMeasurement::get_instance();
     // Set Mode for Measurement
     fsu->setMeasurementMode(MeasurementMode::MARKER_PEAK);
-    
+
     double startFreq, stopFreq, refLevel, rbw, vbw;
     m_txtStartFreq->GetValue().ToDouble(&startFreq);
     m_txtStopFreq->GetValue().ToDouble(&stopFreq);
@@ -398,6 +398,7 @@ void SettingsDialog::RefreshData()
 
     switch (m_mode) {
     case MeasurementMode::SWEEP: {
+        fsu->readSweepSettings();
         auto s = fsu->returnSweepSettings();
         m_txtStartFreq     ->SetValue(std::to_string(s.startFreq));
         m_txtStopFreq      ->SetValue(std::to_string(s.stopFreq));
@@ -411,6 +412,7 @@ void SettingsDialog::RefreshData()
         break;
     }
     case MeasurementMode::IQ: {
+        fsu->readIqSettings();
         auto s = fsu->returnIqSettings();
         m_txtRefLevel         ->SetValue(std::to_string(s.refLevel));
         m_spinAttenuation     ->SetValue(s.att);
@@ -425,6 +427,7 @@ void SettingsDialog::RefreshData()
         break;
     }
     case MeasurementMode::MARKER_PEAK: {
+        fsu->readMarkerPeakSettings();
         auto s = fsu->returnMarkerPeakSettings();
         m_txtStartFreq    ->SetValue(std::to_string(s.startFreq));
         m_txtStopFreq     ->SetValue(std::to_string(s.stopFreq));

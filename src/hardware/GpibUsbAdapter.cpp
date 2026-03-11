@@ -36,6 +36,8 @@ std::string PrologixUsbGpibAdapter::read(unsigned int forceReadBytes)
             m_deviceInfo.lastMsgReceived = std::string(BigBuffer.data(),BigBuffer.size());
             Text = m_deviceInfo.lastMsgReceived + "\n";
 
+            std::cout << "Read msg: "<<Text << std::endl;
+
             if (BigBuffer.size() == 0)
             {
                 Text = "Failed to Receive Data - No Message to Read\n";
@@ -104,7 +106,7 @@ std::string PrologixUsbGpibAdapter::send(std::string msg, int DelayMs)
 bool PrologixUsbGpibAdapter::checkIfMsgAvailable(int TimeOutMs)
 {
     int elapsedMs = 0;
-    int pollIntervalMs = 10; // Abfrage-Intervall (verhindert 100% CPU-Last)
+    int pollIntervalMs = 20; // Abfrage-Intervall (verhindert 100% CPU-Last)
 
     while (elapsedMs < TimeOutMs) {
         // Status-Byte abfragen
@@ -114,13 +116,13 @@ bool PrologixUsbGpibAdapter::checkIfMsgAvailable(int TimeOutMs)
 
         try {
             int statusByte = std::stoi(statusStr);
-            
+
             // check MAV-Bit (Message Available, Bit 4)
             if (statusByte & (1 << 4)) {
                 break; // Msg available
             }
         } catch (...) {
-            
+
         }
 
         sleepMs(pollIntervalMs);
@@ -159,17 +161,36 @@ bool PrologixUsbGpibAdapter::checkIfGpibDeviceAvailable()
     {
         return false;
     }
-    else 
+    else
     {
-        std::string statusStr = send("++spoll");
-        if (statusStr.find("1") == std::string::npos)
+        write("++spoll");
+        sleepMs(20);
+        std::string statusStr = read();
+        int spollStatus;
+
+        try
         {
+            spollStatus = std::stoi(statusStr);
+        }
+        catch(...)
+        {
+            std::cout << "failed to convert String" << std::endl;
             return false;
+        }
+
+
+        if ((0 <= spollStatus) && (spollStatus<= 256))
+        {
+            std::cout << "GPIB Devcie found!" << std::endl;
+            std::cout << "++spoll Status: " << statusStr << std::endl;
+            return true;
         }
         else
         {
-            return true;
-        }     
+            std::cout << "Failed to find GPIB Devcie!" <<std::endl;
+            std::cout << "++spoll Status: " << statusStr << std::endl;
+            return false;
+        }
     }
 }
 
@@ -223,6 +244,8 @@ bool PrologixUsbGpibAdapter::disconnect()
 }
 void PrologixUsbGpibAdapter::config()
 {
+    UCHAR LatencyTimer = 16;
+
     //set Baudrate
     m_deviceInfo.ftStatus = FT_SetBaudRate(m_deviceInfo.ftHandle,m_deviceInfo.BaudRate);
     printErrD2XX(m_deviceInfo.ftStatus,"Failed to set Baudrate");
@@ -233,10 +256,27 @@ void PrologixUsbGpibAdapter::config()
     m_deviceInfo.ftStatus = FT_SetFlowControl(m_deviceInfo.ftHandle, FT_FLOW_NONE, 0, 0);
     printErrD2XX(m_deviceInfo.ftStatus,"Failed to set flow Characteristics");
 
-    m_deviceInfo.ftStatus =  FT_SetTimeouts(m_deviceInfo.ftHandle, 500,500);
+    m_deviceInfo.ftStatus =  FT_SetTimeouts(m_deviceInfo.ftHandle, 5000,5000);
     printErrD2XX(m_deviceInfo.ftStatus,"Failed to set TimeOut");
 
+    m_deviceInfo.ftStatus = FT_SetLatencyTimer(m_deviceInfo.ftHandle, LatencyTimer);
+
     std::cerr << "FT-Config complete" << std::endl;
+
+    // setup Adapter settings
+    write(ProLogixCmdLookup.at(ProLogixCmd::CLR));
+    sleepMs(200);
+    write(ProLogixCmdLookup.at(ProLogixCmd::MODE)       + " 1");
+    write(ProLogixCmdLookup.at(ProLogixCmd::AUTO)       + " 1");
+    write(ProLogixCmdLookup.at(ProLogixCmd::EOS)        + " 2");
+    write(ProLogixCmdLookup.at(ProLogixCmd::EOI)        + " 1");
+    write(ProLogixCmdLookup.at(ProLogixCmd::EOT_ENABLE) + " 0");
+    write(ProLogixCmdLookup.at(ProLogixCmd::EOT_CHAR)   + " 10");
+    write(ProLogixCmdLookup.at(ProLogixCmd::ADDR)       + " 20");
+    std::string responce = send("syst:err?");
+
+    std::cout << "Config fin - status: " << responce << std::endl;
+
 
     if (m_deviceInfo.ftStatus == FT_OK)
     {
@@ -463,8 +503,8 @@ std::vector<char> PrologixUsbGpibAdapter::checkAscii(std::string input)
     ModString = ModString + std::to_string(charOutputBuffer[j]) + " ";
     ModString = ModString + std::to_string(charOutputBuffer[j + 1]);
 
-    std::cerr << "Input str in ascii: " << OgString << std::endl;
-    std::cerr << "Output str in ascii: " << ModString << std::endl;
+    // std::cerr << "Input str in ascii: " << OgString << std::endl;
+    // std::cerr << "Output str in ascii: " << ModString << std::endl;
 
     std::vector<char> vCharOutputGpib(charOutputBuffer,charOutputBuffer + strlen(charOutputBuffer));
 
@@ -489,8 +529,15 @@ void prepareFTDIDevice() {
         if (res1 == 0) {
             std::cout << "VCP-Treiber erfolgreich entladen." << std::endl;
         } else {
-            std::cerr << "Fehler beim Entladen. Wurde das Passwort eingegeben?" << std::endl;
+            std::cerr << "Fehler beim Entladen. Wurde das Programm als SU gestartet?" << std::endl;
         }
+
+        if (res2 == 0) {
+            std::cout << "USBserial-Treiber erfolgreich entladen." << std::endl;
+        } else {
+            std::cerr << "Fehler beim Entladen. Wurde das Programm als SU gestartet?" << std::endl;
+        }
+
     } else {
         std::cout << "Keine blockierenden Treiber aktiv. D2XX Zugriff bereit." << std::endl;
     }
@@ -500,28 +547,28 @@ void PrologixUsbGpibAdapter::checkForGpibBusError(wxWindow* parent)
 {
     if (!getConnected()) return;
     // Check if SRQ-Line (Service Request) is activ
-    
+
     std::string srqStatus = send("++srq");
 
     //  "1" signals Service Request
     if (srqStatus.find("1") != std::string::npos) {
-        
-        // Serial Poll  (R&S Analysator) 
+
+        // Serial Poll  (R&S Analysator)
         std::string statusStr = send("++spoll");
         try {
             int statusByte = std::stoi(statusStr);
 
             // Event Status Bit (Bit 5 / Dec 32)
             if (statusByte & (1 << 5)) {
-                
+
                 // check error msg of R&S device
                 std::string errorMsg = send("SYST:ERR?");
 
                 // 5. wxWidgets warning window popup
                 wxMessageBox(
-                    wxString::Format("Spektrumanalysator meldet einen Fehler:\n%s", errorMsg), 
-                    "Gerätefehler", 
-                    wxOK | wxICON_WARNING | wxCENTRE, 
+                    wxString::Format("Spektrumanalysator meldet einen Fehler:\n%s", errorMsg),
+                    "Gerätefehler",
+                    wxOK | wxICON_WARNING | wxCENTRE,
                     parent
                 );
             }

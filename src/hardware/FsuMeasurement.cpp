@@ -25,6 +25,24 @@ fsuMeasurement::~fsuMeasurement()
 {
 }
 
+bool fsuSetupConfig()
+{
+    auto& adapter = PrologixUsbGpibAdapter::get_instance();
+    // setup Adapter settings
+    adapter.write(ProLogixCmdLookup.at(ProLogixCmd::CLR));
+    sleepMs(200);
+    adapter.write(ProLogixCmdLookup.at(ProLogixCmd::MODE)       + " 1");
+    adapter.write(ProLogixCmdLookup.at(ProLogixCmd::AUTO)       + " 1");
+    adapter.write(ProLogixCmdLookup.at(ProLogixCmd::EOS)        + " 2");
+    adapter.write(ProLogixCmdLookup.at(ProLogixCmd::EOI)        + " 1");
+    adapter.write(ProLogixCmdLookup.at(ProLogixCmd::EOT_ENABLE) + " 0");
+    adapter.write(ProLogixCmdLookup.at(ProLogixCmd::EOT_CHAR)   + " 10");
+    adapter.write(ProLogixCmdLookup.at(ProLogixCmd::ADDR)       + " 20");
+    std::string responce = adapter.send("syst:err?");
+
+    std::cout << "Config fin - status: " << responce << std::endl;
+}
+
 bool fsuMeasurement::executeMeasurement(int TimeOutMs)
 {
     // TODO Auf enums anpassen
@@ -34,9 +52,9 @@ bool fsuMeasurement::executeMeasurement(int TimeOutMs)
     adapter.write("++mode 1");
     adapter.write("++auto 0");
     adapter.write("++eos 2");
-    
+
     std::string commaSeparatedValues;
-    
+
 
     switch (m_lastMeasurementMode)
     {
@@ -49,9 +67,9 @@ bool fsuMeasurement::executeMeasurement(int TimeOutMs)
             commaSeparatedValues = adapter.send("++read eoi");
 
         break;
-    
+
     case MeasurementMode::IQ:
-        adapter.write("TRAC:IQ:STAT ON"); 
+        adapter.write("TRAC:IQ:STAT ON");
         adapter.write("TRAC:IQ:SET NORM, 10MHz, 1024, FREE, POS, 0, 0");      // TODO auf andere Trigger anpassbar machen
         adapter.write("*WAI");          // wait for measurement to finish
         adapter.write("TRAC:IQ:DATA?");
@@ -59,13 +77,13 @@ bool fsuMeasurement::executeMeasurement(int TimeOutMs)
             commaSeparatedValues = adapter.send("++read eoi");
 
         break;
-    
+
     case MeasurementMode::MARKER_PEAK:
         adapter.write("INIT:CONT OFF"); // turn of continous measurement
         adapter.write("INIT:IMM");      // trigger measurement
         adapter.write("*WAI");          // wait for measurement to finish
         adapter.write("CALC:MARK1:MAX");        // TODO make type of marker selectable
-        commaSeparatedValues = adapter.send("CALC:MARK1:X?"); 
+        commaSeparatedValues = adapter.send("CALC:MARK1:X?");
         commaSeparatedValues += ",";
         commaSeparatedValues += adapter.send("CALC:MARK1:Y?");  // Save x and y values
 
@@ -84,7 +102,7 @@ bool fsuMeasurement::executeMeasurement(int TimeOutMs)
     return true;
 }
 
-void fsuMeasurement::seperateDataBlock(const wxString& receivedString, 
+void fsuMeasurement::seperateDataBlock(const wxString& receivedString,
                                         std::vector<double>& Real, std::vector<double>& Imag)
 {
     wxArrayString seperatedStrings = wxStringTokenize(receivedString, ",");
@@ -121,9 +139,9 @@ void fsuMeasurement::seperateDataBlock(const wxString& receivedString,
             wxLogError("Konvertierungsfehler bei Wert %zu: %s", i, data);
         }
     }
-    
+
     // Debug Output
-    std::cerr << "Daten verarbeitet. X-Groesse: " << Real.size() 
+    std::cerr << "Daten verarbeitet. X-Groesse: " << Real.size()
               << " Y-Groesse: " << Imag.size() << std::endl;
 
 }
@@ -159,7 +177,7 @@ void fsuMeasurement::setFreqStartEnd(double FreqS, double FreqE)
 bool fsuMeasurement::checkIfSettingsValidSweep(ScpiCommand command, const SettingValue& value)
 {
 try {
-    switch (command) 
+    switch (command)
     {
         case ScpiCommand::START_FREQUENCY:
         case ScpiCommand::END_FREQUENCY: {
@@ -188,7 +206,7 @@ try {
 
         case ScpiCommand::SWEEP_POINTS: {
                 int points = std::get<int>(value);
-                
+
                 // Definierte zulässige Festwerte für R&S FSU
                 static const std::set<int> allowedPoints = {
                     155, 313, 625, 1251, 1999, 2501, 5001, 10001, 20001, 30001
@@ -201,7 +219,7 @@ try {
         case ScpiCommand::DETECTOR: {
             std::string det = std::get<std::string>(value);
             // Erlaubte SCPI Parameter für Detektoren
-            return (det == "APE" || det == "POS" || det == "NEG" || 
+            return (det == "APE" || det == "POS" || det == "NEG" ||
                     det == "SAMP" || det == "RMS" || det == "AVER");
         }
 
@@ -252,8 +270,8 @@ try {
         default:
             return false;
         }
-    } 
-    catch (const std::bad_variant_access&) 
+    }
+    catch (const std::bad_variant_access&)
     {
         // Falscher Datentyp für diesen Befehl übergeben
         return false;
@@ -264,7 +282,7 @@ bool fsuMeasurement::writeSweepSettings(lastSweepSettings settings)
 {
    std::string blockCmd = scpiSetCommands.at(ScpiCommand::START_FREQUENCY   )   + std::to_string(settings.startFreq)+ ";:" +
                             scpiSetCommands.at(ScpiCommand::END_FREQUENCY   )   + std::to_string(settings.stopFreq) + ";:" +
-                            scpiSetCommands.at(ScpiCommand::REF_LEVEL       )   + std::to_string(settings.refLevel) + ";:" +      
+                            scpiSetCommands.at(ScpiCommand::REF_LEVEL       )   + std::to_string(settings.refLevel) + ";:" +
                             scpiSetCommands.at(ScpiCommand::RF_ATTENUATION  )   + std::to_string(settings.att)      + ";:" +
                             scpiSetCommands.at(ScpiCommand::AMPLITUDE_UNIT  )   + settings.unit                     + ";:" +
                             scpiSetCommands.at(ScpiCommand::RBW             )   + std::to_string(settings.rbw)      + ";:" +
@@ -272,11 +290,14 @@ bool fsuMeasurement::writeSweepSettings(lastSweepSettings settings)
                             scpiSetCommands.at(ScpiCommand::SWEEP_TIME      )   + settings.sweepTime                + ";:" +
                             scpiSetCommands.at(ScpiCommand::SWEEP_POINTS    )   + std::to_string(settings.points)   + ";:" +
                             scpiSetCommands.at(ScpiCommand::DETECTOR        )   + settings.detector                 + ";";
-         
+
     std::string status = PrologixUsbGpibAdapter::get_instance().write(blockCmd);
 
-    if (status.substr(0,2) == "Msg")
+    std::cout << "written Sweep data: " << status << std::endl;
+
+    if (status.substr(0,3) == "Msg")
     {
+        std::cout << "write succsess" << std::endl;
         return true;
     }
     else
@@ -300,16 +321,22 @@ bool fsuMeasurement::readSweepSettings()
     // send commands and read responce
     auto& adapter = PrologixUsbGpibAdapter::get_instance();
     // TODO Testen ob send mit verzögerung notwendig ist.
+
+    std::cout << "read Sweep settings: " << queryCmd << std::endl;
+
     adapter.write(queryCmd);
-    std::string response = adapter.read(); 
-    
+
+    sleepMs(400);
+
+    std::string response = adapter.read();
+
     if (response.empty()) return false;
 
     // split strings
     std::vector<std::string> tokens;
     std::stringstream ss(response);
     std::string token;
-    
+
     while (std::getline(ss, token, ';')) {
         // Steuerzeichen am Ende (wie \r oder \n) entfernen
         token.erase(token.find_last_not_of(" \n\r\t") + 1);
@@ -331,9 +358,9 @@ bool fsuMeasurement::readSweepSettings()
         m_lastSwpSettings.sweepTime = tokens[7];                // std::string
         m_lastSwpSettings.points    = std::stoi(tokens[8]);
         m_lastSwpSettings.detector  = tokens[9];                // std::string
-        
+
         return true;
-    } 
+    }
     catch (const std::exception& e) {
         std::cerr << "Exception read Sweep Settings: " << e.what() << std::endl;
         return false;

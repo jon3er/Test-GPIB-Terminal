@@ -118,7 +118,7 @@ static const std::unordered_map<ScpiCmd, std::string> ScpiCmdLookup = {
     {ScpiCmd::DISP_TRAC_MODE,   "DISP:TRAC:MODE"},
     {ScpiCmd::SWE_POIN,         "SWE:POIN"},
     {ScpiCmd::SWE_COUN,         "SWE:COUN"},
-    {ScpiCmd::SWE_TIME,         "SWE:TIME"},
+    {ScpiCmd::SWE_TIME,         "SWE:TIME:AUTO"},
     {ScpiCmd::INIT_CONT,        "INIT:CONT"},
     {ScpiCmd::INIT_IMM,         "INIT:IMM"},
     {ScpiCmd::FORM_DATA,        "FORM:DATA"},
@@ -200,7 +200,7 @@ static std::unordered_map<ScpiCommand, std::string> scpiSetCommands = {
     {ScpiCommand::AMPLITUDE_UNIT,  "CALC:UNIT:POW "},
     {ScpiCommand::RBW,             "BAND:RES "},
     {ScpiCommand::VBW,             "BAND:VID "},
-    {ScpiCommand::SWEEP_TIME,      "SWE:TIME "},
+    {ScpiCommand::SWEEP_TIME,      "SWE:TIME:AUTO "},
     {ScpiCommand::SWEEP_POINTS,      "SWE:POIN "},
     {ScpiCommand::DETECTOR,          "DET "},
     // IQ / Trigger Parameter

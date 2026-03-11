@@ -112,7 +112,7 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, MainDocument* doc, wxWindowI
     // "New Mesurement" submenu with Load config and Presets
     wxMenu* m_submenu_NewMesurement = new wxMenu();
 
-    
+
     m_submenu_NewMesurement->Append( m_menuMesure_Item_Load );
     m_submenu_NewMesurement->AppendSeparator();
     m_submenu_NewMesurement->Append( m_menuMesure_Item_Preset_1 );
@@ -251,29 +251,31 @@ void MainProgrammWin::ButtonRefresh(wxCommandEvent& event)
     wxString Text = "";
     m_textCtrlAdapterStatus->SetValue(Text);
     m_textCtrlDeviceStatus->SetValue(Text);
+    auto& adapter = PrologixUsbGpibAdapter::get_instance();
 
-    if (!PrologixUsbGpibAdapter::get_instance().getConnected())
-    {
-        PrologixUsbGpibAdapter::get_instance().connect();
-    }
 
-    if (PrologixUsbGpibAdapter::get_instance().getConnected())
+    if (adapter.checkIfAdapterAvailable())
     {
 
-        Text = PrologixUsbGpibAdapter::get_instance().send(ProLogixCmdLookup.at(ProLogixCmd::VER));
-        if (Text.substr(0,6) == "Failed")
+        if (!adapter.connect())
         {
-            m_textCtrlAdapterStatus->SetValue("Error Check Connection");
+            m_textCtrlAdapterStatus->SetValue("Error! Check Connection");
         }
         else
         {
-            m_textCtrlAdapterStatus->SetValue(Text.substr(14));
+            m_textCtrlAdapterStatus->SetValue("Adapter Found");
         }
 
-        Text = PrologixUsbGpibAdapter::get_instance().send(ScpiCmdLookup.at(ScpiCmd::IDN));
-        if (Text == "No Message to Read\n")
+        if (!adapter.checkIfGpibDeviceAvailable())
         {
             Text = "No GPIB Device Found Check Connection";
+        }
+        else
+        {
+            Text = "Device Found";
+
+            adapter.config();
+
         }
 
         m_textCtrlDeviceStatus->SetValue(Text);
