@@ -140,7 +140,7 @@ void MeasurementDocument::WorkerThread(const std::string& dirPath,
         wxString wxScriptName = wxString::FromUTF8(scriptName);
 
         // Execute the GPIB script — blocks until completed or stopped
-        m_adapter.readScriptFile(wxDirPath, wxScriptName, logAdapterReceived, &m_stopFlag);
+        m_adapter.readScriptFile(wxDirPath, wxScriptName, &logAdapterReceived, &m_stopFlag);
 
         for (size_t i = 0; i < logAdapterReceived.GetCount(); i++)
             std::cerr << logAdapterReceived[i] << std::endl;

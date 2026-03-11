@@ -247,7 +247,7 @@ void PrologixUsbGpibAdapter::config()
         m_deviceInfo.configFin = false;
     }
 }
-void PrologixUsbGpibAdapter::readScriptFile(const wxString& dirPath, const wxString& fileName, wxArrayString& logAdapterReceived, const std::atomic<bool>* stopFlag)
+void PrologixUsbGpibAdapter::readScriptFile(const wxString& dirPath, const wxString& fileName, wxArrayString* logAdapterReceived, const std::atomic<bool>* stopFlag)
 {
     wxTextFile textFile;
 
@@ -295,8 +295,8 @@ void PrologixUsbGpibAdapter::readScriptFile(const wxString& dirPath, const wxStr
             {
                 std::cerr << "line " << i << ": manuell send: " << line << std::endl;
                 line = line.substr(5);
-                logAdapterReceived.Add(send(std::string(line.ToUTF8())));
-                std::cerr << "responce: " << logAdapterReceived.Last() << std::endl;
+                logAdapterReceived->Add(send(std::string(line.ToUTF8())));
+                std::cerr << "responce: " << logAdapterReceived->Last() << std::endl;
             }
             else if (line.substr(0,6) == "write ")
             {
@@ -307,8 +307,8 @@ void PrologixUsbGpibAdapter::readScriptFile(const wxString& dirPath, const wxStr
             else if (line.substr(0,4) == "read")
             {
                 std::cerr << "line " << i << ": manuell read" << std::endl;
-                logAdapterReceived.Add(read());
-                std::cerr << "responce: " << logAdapterReceived.Last() << std::endl;
+                logAdapterReceived->Add(read());
+                std::cerr << "responce: " << logAdapterReceived->Last() << std::endl;
             }
             else if(line.Contains("?") && line.substr(0,4) == "TRAC")
             {
@@ -319,20 +319,19 @@ void PrologixUsbGpibAdapter::readScriptFile(const wxString& dirPath, const wxStr
                 write(std::string(line.ToUTF8()));
                 write(ProLogixCmdLookup.at(ProLogixCmd::READ) + " eoi");
                 sleepMs(300); // TODO change logic to be more efficent
-                logAdapterReceived.Add(read());
-                std::cerr << "responce: " << logAdapterReceived.Last() << std::endl;
-                fsuMeasurement::get_instance().seperateDataBlock(logAdapterReceived.Last(), bufferReal, bufferImag);
+                logAdapterReceived->Add(read());
+                std::cerr << "responce: " << logAdapterReceived->Last() << std::endl;
+                fsuMeasurement::get_instance().seperateDataBlock(logAdapterReceived->Last(), bufferReal, bufferImag);
                 fsuMeasurement::get_instance().setX_Data(bufferReal);
                 fsuMeasurement::get_instance().setY_Data(bufferImag);
-                fsuMeasurement::get_instance().setFreqStartEnd(75'000'000,125'000'000);
                 //Messung.calcYdata(); //start und end frequenz angeben
 
             }
             else if(line.Contains("?"))
             {
                 std::cerr << "line " << i << ": send: " << line << std::endl;
-                logAdapterReceived.Add(send(std::string(line.ToUTF8())));
-                std::cerr << "responce: " << logAdapterReceived.Last() << std::endl;
+                logAdapterReceived->Add(send(std::string(line.ToUTF8())));
+                std::cerr << "responce: " << logAdapterReceived->Last() << std::endl;
             }
             else
             {

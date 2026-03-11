@@ -19,6 +19,7 @@ void CsvFile::importFsuSettings()
     m_fsuSettings.sweep  = fsu.returnSweepSettings();
     m_fsuSettings.iq     = fsu.returnIqSettings();
     m_fsuSettings.marker = fsu.returnMarkerPeakSettings();
+    m_fsuSettings.costumFile = fsu.getFileName();
 }
 
 // save Csv Functions
@@ -157,6 +158,10 @@ bool CsvFile::saveCsvHeader(wxTextFile &file, sData& data)
         case MeasurementMode::MARKER_PEAK:
             file.AddLine(wxString::Format("%s%c%s", HeaderConfig::mesSettings.data(), m_separator, "Marker Peak"));
             saveCsvSettingsMarker(file, data);
+            break;
+        case MeasurementMode::COSTUM:
+            file.AddLine(wxString::Format("%s%c%s", HeaderConfig::mesSettings.data(), m_separator, "Costum"));
+            file.AddLine(wxString::Format("%s%c%s", HeaderConfig::customFile.data(), m_separator, m_fsuSettings.costumFile.ToUTF8()));
             break;
     }
 
@@ -375,6 +380,9 @@ bool CsvFile::readCsvHeader(wxTextFile&file, sData& data)
             readCsvSettingsQI(file, data);
         else if (modeName == "Marker Peak")
             readCsvSettingsMarker(file, data);
+        else if (modeName == "Costum")
+            readCsvSettingsCostum(file, data);
+
     }
 
     std::cout << kErrPrefixStr.CsvRead <<"Read Header" << std::endl;
@@ -483,6 +491,22 @@ bool CsvFile::readCsvSettingsMarker(wxTextFile& file, sData& data)
         dsParam->VBW = (unsigned int)dVal;
 
     dsParam->detektor = readLine(HeaderConfig::detektor).ToStdString();
+
+    return true;
+}
+
+bool CsvFile::readCsvSettingsCostum(wxTextFile& file, sData& data)
+{
+        sData::sParam* dsParam = data.GetParameter();
+    char separator = detectSeparator(file);
+
+    auto readLine = [&](std::string_view label) -> wxString {
+        int line = findLineCsv(file, wxString(label.data()));
+        if (line < 0) return "";
+        return file.GetLine(line).AfterFirst(separator).Trim(false).Trim();
+    };
+
+    dsParam->costumFile = readLine(HeaderConfig::customFile);
 
     return true;
 }

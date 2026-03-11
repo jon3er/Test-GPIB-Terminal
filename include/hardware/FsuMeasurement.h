@@ -151,6 +151,13 @@ public:
     bool readMarkerPeakSettings();
     auto returnMarkerPeakSettings() { return m_lastMarkerPeakSettings; };
 
+    // Custom Measurement
+    void setFilePath(wxString path) { m_filePathCustomMeasurement = path; };
+    void setFileName(wxString name) { m_fileNameCustomMeasurement = name; };
+    std::string getFilePath() { return m_filePathCustomMeasurement; };
+    std::string getFileName() { return m_fileNameCustomMeasurement; };
+
+
 private:
 
     std::vector<double> m_x_Data;
@@ -162,6 +169,10 @@ private:
     unsigned int m_NoPoints_y;
 
     bool m_ImagValues = false;
+
+    // Custom Measurement file Paths
+    std::string m_filePathCustomMeasurement;
+    std::string m_fileNameCustomMeasurement;
 
     MeasurementMode m_lastMeasurementMode;
     // Settings

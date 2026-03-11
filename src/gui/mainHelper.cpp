@@ -13,7 +13,7 @@ bool PlotterMesurement(sData* data, int measurementNumber)
     int x;
     int y;
 
-    PrologixUsbGpibAdapter::get_instance().readScriptFile(System::filePathSystem, "PlotMessung.txt", logAdapterReceived);
+    PrologixUsbGpibAdapter::get_instance().readScriptFile(System::filePathSystem, "PlotMessung.txt", &logAdapterReceived);
     // Output received messages to debug log
     for (size_t i = 0; i < logAdapterReceived.GetCount(); i++)
     {

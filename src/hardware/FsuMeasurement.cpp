@@ -70,6 +70,9 @@ bool fsuMeasurement::executeMeasurement(int TimeOutMs)
         commaSeparatedValues += adapter.send("CALC:MARK1:Y?");  // Save x and y values
 
         break;
+    case MeasurementMode::COSTUM:
+        adapter.readScriptFile(getFilePath(),getFileName());
+        break;
 
     default:
         return false;

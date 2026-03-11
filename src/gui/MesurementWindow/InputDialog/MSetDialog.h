@@ -48,6 +48,7 @@ private:
     void ApplySweep();
     void ApplyIq();
     void ApplyMarkerPeak();
+    void ApplyCustom();
 
     void RefreshData();
 

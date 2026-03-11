@@ -19,6 +19,7 @@ struct FsuSettings
     fsuMeasurement::lastSweepSettings    sweep{};
     fsuMeasurement::IqSettings           iq{};
     fsuMeasurement::MarkerPeakSettings   marker{};
+    wxString costumFile{};
 };
 
 /**
@@ -92,6 +93,8 @@ class CsvFile
         bool readCsvSettingsSweep(wxTextFile& file, sData& data);
         bool readCsvSettingsQI(wxTextFile& file, sData& data);
         bool readCsvSettingsMarker(wxTextFile& file, sData& data);
+        bool readCsvSettingsCostum(wxTextFile& file, sData& data);
+
 
         bool readCsvData(wxTextFile& file, sData& data);
 
@@ -171,6 +174,8 @@ struct HeaderConfig
     static constexpr std::string_view triggerSource  = "Trigger Source";
     static constexpr std::string_view triggerLevel   = "Trigger Level";
     static constexpr std::string_view triggerDelay   = "Trigger Delay";
+    // Custom 
+    static constexpr std::string_view customFile    = "Custom file used";
     // Abschnitts-Label
     static constexpr std::string_view mesSettings   = "Messeinstellungen";
 };

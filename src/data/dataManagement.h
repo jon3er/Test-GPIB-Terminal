@@ -89,9 +89,9 @@ public:
         unsigned int    VBW;
         // Erfassung        
         std::string     sweepTime;  
-        std::string     detektor;   
-
-        
+        std::string     detektor;  
+        // Costum file name:
+        std::string     costumFile; 
     };
 
     // constructor

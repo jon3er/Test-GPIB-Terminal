@@ -92,7 +92,7 @@ public:
     /**
      * @brief reads command from a .txt file
      */
-    void readScriptFile(const wxString& dirPath, const wxString& file, wxArrayString& logAdapterReceived, const std::atomic<bool>* stopFlag = nullptr);
+    void readScriptFile(const wxString& dirPath, const wxString& file, wxArrayString* logAdapterReceived = nullptr, const std::atomic<bool>* stopFlag = nullptr);
  
     /**
      * @brief unloads VCP drivers to solve drive conficts on linux/gnu

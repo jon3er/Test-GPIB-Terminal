@@ -164,7 +164,8 @@ static const std::unordered_map<ScpiQueryCmd, std::string> ScpiQueryCmdLookup = 
 enum class MeasurementMode {
     SWEEP,
     IQ,
-    MARKER_PEAK
+    MARKER_PEAK,
+    COSTUM
 };
 
 // sweep measurement
