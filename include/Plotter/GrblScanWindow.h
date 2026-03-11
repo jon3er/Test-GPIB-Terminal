@@ -5,6 +5,7 @@
 #include "GrblController.h"
 #include "dataManagement.h"
 #include "mainHelper.h"
+#include "FsuMeasurement.h"
 
 class GrblScanWindow : public wxDialog {
 public:
@@ -13,7 +14,7 @@ public:
 
 private:
     GrblController* m_controller;
-    
+
     // UI Controls
     wxTextCtrl* m_txtStartX;
     wxTextCtrl* m_txtStartY;
@@ -30,7 +31,7 @@ private:
     // Threading
     std::thread m_workerThread;
     std::atomic<bool> m_isScanning{false};
-    
+
     // Measurement Data
     sData m_currentData;
 

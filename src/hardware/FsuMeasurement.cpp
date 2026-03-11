@@ -64,7 +64,9 @@ bool fsuMeasurement::executeMeasurement(int TimeOutMs)
         adapter.write("*WAI");          // wait for measurement to finish
         adapter.write("TRAC? TRACE1");
         if (adapter.checkIfMsgAvailable(TimeOutMs))
-            commaSeparatedValues = adapter.send("++read eoi");
+            adapter.write("++read eoi");
+            sleepMs(300);
+            commaSeparatedValues = adapter.read();
 
         break;
 
@@ -105,7 +107,21 @@ bool fsuMeasurement::executeMeasurement(int TimeOutMs)
 void fsuMeasurement::seperateDataBlock(const wxString& receivedString,
                                         std::vector<double>& Real, std::vector<double>& Imag)
 {
-    wxArrayString seperatedStrings = wxStringTokenize(receivedString, ",");
+    // removes \n at the end of the msg
+    wxString str = receivedString.AfterFirst('\n');
+
+    str.Trim(true).Trim(false);
+
+    // removes junk at the front of the string
+    size_t pos = str.find_last_of(" ");
+    if (pos != std::string::npos) {
+        // Erstelle Substring ab Position nach dem Leerzeichen
+        str.substr(pos + 1);
+    }
+
+    // Kein Leerzeichen gefunden
+
+    wxArrayString seperatedStrings = wxStringTokenize(str, ",");
 
     double value;
     Real.clear(); // empty vectors

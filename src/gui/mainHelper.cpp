@@ -40,6 +40,8 @@ bool PlotterMesurement(sData* data, int measurementNumber)
         std::cout << "[Error] Failed to save data to CSV file" << std::endl;
     }
 
+    std::cout << "Measuremnt done" << std::endl;
+
     return true; // Mesurement Finished
 
 }

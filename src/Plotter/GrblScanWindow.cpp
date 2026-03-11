@@ -131,8 +131,21 @@ void GrblScanWindow::OnStart(wxCommandEvent& event) {
                     int measurementNumber = r * cols + c;  // Korrekte Berechnung
                     std::cout << "Mesurement number: " << measurementNumber << std::endl;
 
+                    bool success;
                     // 2. Die Messfunktion aufrufen
-                    bool success = PlotterMesurement(&m_currentData, measurementNumber);
+                    try
+                    {
+
+                        //success = PlotterMesurement(&m_currentData, measurementNumber);
+                        auto fsu = &fsuMeasurement::get_instance();
+                        fsu->setNoPoints(rows, cols);
+                        success = fsu->executeMeasurement();
+                    }
+                    catch (const std::exception& e) {
+                        // Hier holst du den Grund ab:
+                        std::cout << "Plotter Messung Error: " << e.what() << std::endl;
+                        success = false;
+                    }
 
                     if (success)
                     {
