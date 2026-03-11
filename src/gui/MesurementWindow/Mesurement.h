@@ -64,6 +64,8 @@ protected:
     wxPanel*      m_plotPanel;   ///< Container that constrains the plot to a square
     wxPanel*      m_infoPanel;   ///< Right-side info area (placeholder)
     wxStaticText* m_infoText;    ///< Placeholder text inside the info panel
+    wxPanel*      m_settingsPanel;  ///< Current FSU device settings panel
+    wxStaticText* m_settingsText;   ///< Text inside the settings panel
 
     // Matrix measurement selector [x ; y]
     wxTextCtrl*   m_textXSelector;
@@ -90,9 +92,9 @@ private:
     void OnMenuMesurementNew(wxCommandEvent& event);
     void OnMenuMesurementOpen(wxCommandEvent& event);
     void OnMenuMesurementLoad(wxCommandEvent& event);
-    void OnMenuMesurementPreset1(wxCommandEvent& event);
-    void OnMenuMesurementPreset2(wxCommandEvent& event);
-    void OnMenuMesurementPreset3(wxCommandEvent& event);
+    void OnMenuMesurementSweep(wxCommandEvent& event);
+    void OnMenuMesurementIQ(wxCommandEvent& event);
+    void OnMenuMesurementMarker(wxCommandEvent& event);
     void OnMenuMesurement2DMess(wxCommandEvent& event);
     void OnMenuMesurementSetMarker(wxCommandEvent& event);
     void OnMenuMesurementSettings(wxCommandEvent& event);
@@ -103,6 +105,9 @@ private:
     // Update the info panel with data from a sParam header struct.
     // Pass nullptr to show the default "no data" placeholder.
     void UpdateInfoPanel(sData::sParam* param);
+
+    // Update the settings panel from the current fsuMeasurement state.
+    void UpdateSettingsPanel();
 
     // Owning pointer to document — each window owns its own document
     MeasurementDocument* m_document = nullptr;

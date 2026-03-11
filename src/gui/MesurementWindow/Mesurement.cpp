@@ -3,7 +3,7 @@
 #include "SettingsWindow.h"
 #include "cmdGpib.h"
 #include "mainHelper.h"
-#include "GenericInputDialog.h"
+
 
 int PlotWindow::s_windowCounter = 0;
 
@@ -41,9 +41,9 @@ PlotWindow::PlotWindow(wxWindow *parent, MainDocument* mainDoc)
     subMenuNew->AppendSeparator();
     subMenuNew->Append(MainMenuBar::ID_Main_Mesurement_Load,       wxT("Load config"));
     subMenuNew->AppendSeparator();
-    subMenuNew->Append(MainMenuBar::ID_Main_Mesurement_Sweep,   wxT("Preset 1"));
-    subMenuNew->Append(MainMenuBar::ID_Main_Mesurement_QI,   wxT("Preset 2"));
-    subMenuNew->Append(MainMenuBar::ID_Main_Mesurement_MarkerPeak,   wxT("Preset 3"));
+    subMenuNew->Append(MainMenuBar::ID_Main_Mesurement_Sweep,       wxT("Sweep"));
+    subMenuNew->Append(MainMenuBar::ID_Main_Mesurement_IQ,          wxT("IQ"));
+    subMenuNew->Append(MainMenuBar::ID_Main_Mesurement_MarkerPeak,  wxT("Marker"));
 
     menuMesurement->AppendSubMenu(subMenuNew, wxT("New Mesurement"));
     menuMesurement->AppendSeparator();
@@ -70,9 +70,9 @@ PlotWindow::PlotWindow(wxWindow *parent, MainDocument* mainDoc)
     Bind(wxEVT_MENU, &PlotWindow::OnMenuMesurementNew,       this, MainMenuBar::ID_Main_Mesurement_New);
     Bind(wxEVT_MENU, &PlotWindow::OnMenuMesurementOpen,      this, MainMenuBar::ID_Main_Mesurement_Open);
     Bind(wxEVT_MENU, &PlotWindow::OnMenuMesurementLoad,      this, MainMenuBar::ID_Main_Mesurement_Load);
-    Bind(wxEVT_MENU, &PlotWindow::OnMenuMesurementPreset1,   this, MainMenuBar::ID_Main_Mesurement_Sweep);
-    Bind(wxEVT_MENU, &PlotWindow::OnMenuMesurementPreset2,   this, MainMenuBar::ID_Main_Mesurement_QI);
-    Bind(wxEVT_MENU, &PlotWindow::OnMenuMesurementPreset3,   this, MainMenuBar::ID_Main_Mesurement_MarkerPeak);
+    Bind(wxEVT_MENU, &PlotWindow::OnMenuMesurementSweep,     this, MainMenuBar::ID_Main_Mesurement_Sweep);
+    Bind(wxEVT_MENU, &PlotWindow::OnMenuMesurementIQ,        this, MainMenuBar::ID_Main_Mesurement_IQ);
+    Bind(wxEVT_MENU, &PlotWindow::OnMenuMesurementMarker,   this, MainMenuBar::ID_Main_Mesurement_MarkerPeak);
     Bind(wxEVT_MENU, &PlotWindow::OnMenuMesurement2DMess,    this, MainMenuBar::ID_Main_Mesurement_2D_Mess);
     Bind(wxEVT_MENU, &PlotWindow::OnMenuMesurementSetMarker, this, MainMenuBar::ID_Main_Mesurement_SetMarker);
     Bind(wxEVT_MENU, &PlotWindow::OnMenuMesurementSettings,  this, MainMenuBar::ID_Main_Mesurement_Settings);
@@ -194,10 +194,25 @@ PlotWindow::PlotWindow(wxWindow *parent, MainDocument* mainDoc)
     else
         UpdateInfoPanel(nullptr);
 
-    // Bottom sizer: left info | right controls (equal halves)
+    // Current device settings panel
+    m_settingsPanel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_SIMPLE);
+    wxBoxSizer* settingsSizer = new wxBoxSizer(wxVERTICAL);
+    wxStaticText* settingsTitle = new wxStaticText(m_settingsPanel, wxID_ANY, "Current Settings",
+        wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER_HORIZONTAL);
+    settingsTitle->SetFont(settingsTitle->GetFont().Bold());
+    settingsSizer->Add(settingsTitle, 0, wxEXPAND | wxALL, 8);
+    settingsSizer->Add(new wxStaticLine(m_settingsPanel), 0, wxEXPAND | wxLEFT | wxRIGHT, 5);
+    m_settingsText = new wxStaticText(m_settingsPanel, wxID_ANY, wxEmptyString,
+        wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT);
+    settingsSizer->Add(m_settingsText, 1, wxEXPAND | wxALL, 8);
+    m_settingsPanel->SetSizer(settingsSizer);
+    UpdateSettingsPanel();
+
+    // Bottom sizer: measurement info | device settings | controls
     wxBoxSizer* bottomSizer = new wxBoxSizer(wxHORIZONTAL);
-    bottomSizer->Add(m_infoPanel,  1, wxEXPAND | wxALL, 5);
-    bottomSizer->Add(leftSizer,    1, wxEXPAND | wxALL, 5);
+    bottomSizer->Add(m_infoPanel,      1, wxEXPAND | wxALL, 5);
+    bottomSizer->Add(m_settingsPanel,  1, wxEXPAND | wxALL, 5);
+    bottomSizer->Add(leftSizer,        1, wxEXPAND | wxALL, 5);
 
     // Main sizer: plot (proportion 2) on top, controls (proportion 1) at bottom
     wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
@@ -346,6 +361,69 @@ void PlotWindow::OnSelectMeasurement(wxCommandEvent& /*event*/)
     wxLogMessage("PlotWindow: selected measurement [%ld ; %ld]", x, y);
 }
 
+// -----------------------------------------------------------------------
+// UpdateSettingsPanel — shows current fsuMeasurement device settings
+// -----------------------------------------------------------------------
+void PlotWindow::UpdateSettingsPanel()
+{
+    fsuMeasurement* fsu = &fsuMeasurement::get_instance();
+    wxString info;
+
+    switch (fsu->getMeasurementMode()) {
+        case MeasurementMode::SWEEP: {
+            auto s = fsu->returnSweepSettings();
+            info += "Mode:        Sweep\n";
+            info += wxString::Format("Start Freq:  %g Hz\n", s.startFreq);
+            info += wxString::Format("Stop Freq:   %g Hz\n", s.stopFreq);
+            info += wxString::Format("Ref Level:   %g dBm\n", s.refLevel);
+            info += wxString::Format("Attenuation: %d dB\n", s.att);
+            info += wxString::Format("Unit:        %s\n", s.unit);
+            info += wxString::Format("RBW:         %d Hz\n", s.rbw);
+            info += wxString::Format("VBW:         %d Hz\n", s.vbw);
+            info += wxString::Format("Points:      %d\n", s.points);
+            info += wxString::Format("Detector:    %s", s.detector);
+            break;
+        }
+        case MeasurementMode::IQ: {
+            auto s = fsu->returnIqSettings();
+            info += "Mode:         IQ\n";
+            info += wxString::Format("Center Freq:  %g Hz\n", s.centerFreq);
+            info += wxString::Format("Ref Level:    %g dBm\n", s.refLevel);
+            info += wxString::Format("Attenuation:  %d dB\n", s.att);
+            info += wxString::Format("Unit:         %s\n", s.unit);
+            info += wxString::Format("Sample Rate:  %g Hz\n", s.sampleRate);
+            info += wxString::Format("Record Len:   %d\n", s.recordLength);
+            info += wxString::Format("IF Bandwidth: %g Hz\n", s.ifBandwidth);
+            info += wxString::Format("Trigger Src:  %s\n", s.triggerSource);
+            info += wxString::Format("Trigger Lvl:  %g dBm\n", s.triggerLevel);
+            info += wxString::Format("Trigger Dly:  %g s", s.triggerDelay);
+            break;
+        }
+        case MeasurementMode::MARKER_PEAK: {
+            auto s = fsu->returnMarkerPeakSettings();
+            info += "Mode:        Marker Peak\n";
+            info += wxString::Format("Start Freq:  %g Hz\n", s.startFreq);
+            info += wxString::Format("Stop Freq:   %g Hz\n", s.stopFreq);
+            info += wxString::Format("Ref Level:   %g dBm\n", s.refLevel);
+            info += wxString::Format("Attenuation: %d dB\n", s.att);
+            info += wxString::Format("Unit:        %s\n", s.unit);
+            info += wxString::Format("RBW:         %g Hz\n", s.rbw);
+            info += wxString::Format("VBW:         %g Hz\n", s.vbw);
+            info += wxString::Format("Detector:    %s", s.detector);
+            break;
+        }
+        default:
+            info = "--- No mode set ---";
+            break;
+    }
+
+    m_settingsText->SetLabel(info);
+    m_settingsPanel->Layout();
+}
+
+// -----------------------------------------------------------------------
+// File menu handlers (local to this PlotWindow)
+// -----------------------------------------------------------------------
 void PlotWindow::UpdateInfoPanel(sData::sParam* param)
 {
     if (!param)
@@ -377,9 +455,6 @@ void PlotWindow::UpdateInfoPanel(sData::sParam* param)
     m_infoPanel->Layout();
 }
 
-// -----------------------------------------------------------------------
-// File menu handlers (local to this PlotWindow)
-// -----------------------------------------------------------------------
 void PlotWindow::OnMenuFileOpen(wxCommandEvent& event)
 {
     wxFileDialog openFileDialog(this, _("Import CSV Data"),
@@ -461,9 +536,9 @@ void PlotWindow::OnMenuFileExit(wxCommandEvent& event)
     Close();
 }
 
-// -----------------------------------------------------------------------
+
 // Measurement menu handlers (forward to parent MainProgrammWin)
-// -----------------------------------------------------------------------
+
 void PlotWindow::OnMenuMesurementNew(wxCommandEvent& event)
 {
     MainProgrammWin* parent = dynamic_cast<MainProgrammWin*>(GetParent());
@@ -485,76 +560,25 @@ void PlotWindow::OnMenuMesurementLoad(wxCommandEvent& event)
         parent->MenuMesurementLoad(event);
 }
 
-void PlotWindow::OnMenuMesurementPreset1(wxCommandEvent& /*event*/)
+void PlotWindow::OnMenuMesurementSweep(wxCommandEvent& event)
 {
-    std::vector<InputFieldDef> fields = {
-        { "Start Frequency:",    "1000000",   "SENS:FREQ:STAR {}"     },
-        { "Stop Frequency:",     "100000000", "SENS:FREQ:STOP {}"     },
-        { "Sweep Points:",       "512",       "SENS:SWE:POIN {}"      },
-        { "IF Bandwidth (Hz):",  "1000",      "SENS:BWID {}"          },
-        { "Power Level (dBm):",  "-10",       "SOUR:POW {}"           },
-        { "Averaging:",          "1",         "SENS:AVER:COUN {}"     },
-        { "Port:",               "1",         "SENS:PORT {}"          },
-        { "Cal Group:",          "",          "SENS:CORR:CKIT:SEL {}" },
-    };
-
-    auto* dlg = new GenericInputDialog(this, "Preset 1 \u2014 Frequency Sweep", fields,
-        [this](const std::vector<wxString>& vals)
-        {
-            // TODO: apply Preset 1 values to document / hardware
-            wxLogMessage("Preset 1 confirmed: Start=%s  Stop=%s  Points=%s",
-                vals[0], vals[1], vals[2]);
-        });
-    dlg->ShowModal();
-    dlg->Destroy();
+    MainProgrammWin* parent = dynamic_cast<MainProgrammWin*>(GetParent());
+    if (parent)
+        parent->MenuMesurementSweep(event);
 }
 
-void PlotWindow::OnMenuMesurementPreset2(wxCommandEvent& /*event*/)
+void PlotWindow::OnMenuMesurementIQ(wxCommandEvent& event)
 {
-    std::vector<InputFieldDef> fields = {
-        { "X Measurement Points:",  "5",   ""  },
-        { "Y Measurement Points:",  "5",   ""  },
-        { "X Start Coordinate:",    "0",   ""  },
-        { "Y Start Coordinate:",    "0",   ""  },
-        { "X Spacing (mm):",        "10",  ""  },
-        { "Y Spacing (mm):",        "10",  ""  },
-        { "Speed (mm/s):",          "50",  ""  },
-        { "Dwell Time (ms):",       "200", ""  },
-    };
-
-    auto* dlg = new GenericInputDialog(this, "Preset 2 \u2014 2D Grid Scan", fields,
-        [this](const std::vector<wxString>& vals)
-        {
-            // TODO: apply Preset 2 values to document / hardware
-            wxLogMessage("Preset 2 confirmed: Grid %sx%s, spacing %s x %s",
-                vals[0], vals[1], vals[4], vals[5]);
-        });
-    dlg->ShowModal();
-    dlg->Destroy();
+    MainProgrammWin* parent = dynamic_cast<MainProgrammWin*>(GetParent());
+    if (parent)
+        parent->MenuMesurementIQ(event);
 }
 
-void PlotWindow::OnMenuMesurementPreset3(wxCommandEvent& /*event*/)
+void PlotWindow::OnMenuMesurementMarker(wxCommandEvent& event)
 {
-    std::vector<InputFieldDef> fields = {
-        { "Center Frequency (Hz):", "50000000", "SENS:FREQ:CENT {}"  },
-        { "Span (Hz):",             "10000000", "SENS:FREQ:SPAN {}"  },
-        { "Resolution BW (Hz):",    "100000",   "SENS:BWID:RES {}"   },
-        { "Video BW (Hz):",         "10000",    "SENS:BWID:VID {}"   },
-        { "Reference Level (dBm):", "0",        "DISP:WIND:TRAC:Y:RLEV {}" },
-        { "Attenuation (dB):",      "10",       "INP:ATT {}"         },
-        { "Sweep Time (ms):",       "0",        "SENS:SWE:TIME {}"   },
-        { "Marker Count:",          "1",        "CALC:MARK:COUN {}"  },
-    };
-
-    auto* dlg = new GenericInputDialog(this, "Preset 3 \u2014 Spectrum Analyser", fields,
-        [this](const std::vector<wxString>& vals)
-        {
-            // TODO: apply Preset 3 values to document / hardware
-            wxLogMessage("Preset 3 confirmed: Centre=%s  Span=%s  RBW=%s",
-                vals[0], vals[1], vals[2]);
-        });
-    dlg->ShowModal();
-    dlg->Destroy();
+    MainProgrammWin* parent = dynamic_cast<MainProgrammWin*>(GetParent());
+    if (parent)
+        parent->MenuMesurementMarkerPeak(event);
 }
 
 void PlotWindow::OnMenuMesurement2DMess(wxCommandEvent& event)

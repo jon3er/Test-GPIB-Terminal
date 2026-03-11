@@ -55,6 +55,7 @@ public:
     wxString getMesurmentTime() { return m_lastMesurementTime; };
     unsigned int getNoPoints_x() { return m_NoPoints_x; };
     unsigned int getNoPoints_y() { return m_NoPoints_y; };
+    void setNoPoints(unsigned int x, unsigned int y) { m_NoPoints_x = x; m_NoPoints_y = y; };
 
     // Set Methodes
 

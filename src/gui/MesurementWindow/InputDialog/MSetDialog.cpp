@@ -1,11 +1,16 @@
 #include "MSetDialog.h"
 #include "FsuMeasurement.h"
 #include "cmdGpib.h"
+#include "Mesurement.h"
+#include "PlotterFrame.h"
 #include <wx/valnum.h>
 #include <cmath>
 
+enum { ID_BTN_START = wxID_HIGHEST + 1 };
+
 wxBEGIN_EVENT_TABLE(SettingsDialog, wxDialog)
-    EVT_BUTTON(wxID_APPLY, SettingsDialog::OnApply)
+    EVT_BUTTON(wxID_APPLY,   SettingsDialog::OnApply)
+    EVT_BUTTON(ID_BTN_START, SettingsDialog::OnStart)
 wxEND_EVENT_TABLE()
 
 SettingsDialog::SettingsDialog(wxWindow* parent, MeasurementMode mode)
@@ -107,11 +112,22 @@ SettingsDialog::SettingsDialog(wxWindow* parent, MeasurementMode mode)
         grid->Add(m_txtTriggerDelay, 1, wxEXPAND);
     }
 
+    grid->Add(new wxStaticText(this, wxID_ANY, wxString::FromUTF8("Messung mit Plotter durchführen")), 0, wxALIGN_CENTER_VERTICAL);
+    m_useMultipoint = new wxCheckBox(this, wxID_ANY,"", wxDefaultPosition, wxDefaultSize, 0);
+    grid->Add(m_useMultipoint, 1, wxEXPAND);
+
     // Layout
     wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
     mainSizer->Add(grid, 1, wxALL | wxEXPAND, 15);
 
-    wxSizer* buttonSizer = CreateButtonSizer(wxAPPLY | wxCANCEL);
+    wxBoxSizer* buttonSizer = new wxBoxSizer(wxHORIZONTAL);
+    wxButton* btnApply  = new wxButton(this, wxID_APPLY,   "Apply");
+    m_btnStart          = new wxButton(this, ID_BTN_START, "Start");
+    wxButton* btnCancel = new wxButton(this, wxID_CANCEL,  "Cancel");
+    m_btnStart->Enable(true);   // TODO change back to False
+    buttonSizer->Add(btnCancel, 0, wxRIGHT, 5);
+    buttonSizer->Add(btnApply,  0, wxRIGHT, 5);
+    buttonSizer->Add(m_btnStart, 0);
     mainSizer->Add(buttonSizer, 0, wxALL | wxALIGN_RIGHT, 10);
 
     SetSizer(mainSizer);
@@ -125,6 +141,7 @@ void SettingsDialog::OnApply(wxCommandEvent& event) {
         case MeasurementMode::IQ:          ApplyIq();         break;
         case MeasurementMode::MARKER_PEAK: ApplyMarkerPeak(); break;
     }
+
 }
 
 // ---- Sweep Apply + Verifikation ----
@@ -198,10 +215,13 @@ void SettingsDialog::ApplySweep() {
     ok &= VerifyString("Detektor",       det,       rb.detector,  mismatches);
     ok &= VerifyString("Einheit",        unit,      rb.unit,      mismatches);
 
-    if (ok)
+    if (ok) {
         wxMessageBox("Einstellungen erfolgreich uebernommen und verifiziert!", "Erfolg", wxOK | wxICON_INFORMATION);
-    else
+        m_btnStart->Enable(true);
+    } else {
         wxMessageBox("Abweichungen festgestellt:\n\n" + mismatches, "Verifikation", wxOK | wxICON_WARNING);
+        m_btnStart->Enable(false);
+    }
 
     RefreshData();
 }
@@ -285,10 +305,13 @@ void SettingsDialog::ApplyIq() {
     ok &= VerifyDouble("Trigger Level",   trigLevel,   rb.triggerLevel,  mismatches);
     ok &= VerifyDouble("Trigger Delay",   trigDelay,   rb.triggerDelay,  mismatches);
 
-    if (ok)
+    if (ok) {
         wxMessageBox("IQ-Einstellungen erfolgreich uebernommen und verifiziert!", "Erfolg", wxOK | wxICON_INFORMATION);
-    else
+        m_btnStart->Enable(true);
+    } else {
         wxMessageBox("Abweichungen festgestellt:\n\n" + mismatches, "Verifikation", wxOK | wxICON_WARNING);
+        m_btnStart->Enable(false);
+    }
 
     RefreshData();
 }
@@ -357,10 +380,13 @@ void SettingsDialog::ApplyMarkerPeak() {
     ok &= VerifyDouble("VBW",            vbw,       rb.vbw,       mismatches);
     ok &= VerifyString("Detektor",       det,       rb.detector,  mismatches);
 
-    if (ok)
+    if (ok) {
         wxMessageBox("MarkerPeak-Einstellungen erfolgreich uebernommen und verifiziert!", "Erfolg", wxOK | wxICON_INFORMATION);
-    else
+        m_btnStart->Enable(true);
+    } else {
         wxMessageBox("Abweichungen festgestellt:\n\n" + mismatches, "Verifikation", wxOK | wxICON_WARNING);
+        m_btnStart->Enable(false);
+    }
 
     RefreshData();
 }
@@ -414,6 +440,21 @@ void SettingsDialog::RefreshData()
 }
 
 // ---- Verifikations-Helfer ----
+void SettingsDialog::OnStart(wxCommandEvent& /*event*/)
+{
+    EndModal(wxID_OK);
+
+    if (m_useMultipoint->GetValue()) {
+        PlotterFrame* plotter = new PlotterFrame();
+        plotter->ShowModal();
+    } else {
+        fsuMeasurement* fsu = &fsuMeasurement::get_instance();
+
+        PlotWindow* mw = new PlotWindow(GetParent());
+        mw->Show();
+    }
+}
+
 bool SettingsDialog::VerifyDouble(const wxString& name, double written, double readback, wxString& mismatches)
 {
     double tol = std::max(std::abs(written) * 0.01, 1.0);

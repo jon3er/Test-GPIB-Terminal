@@ -36,6 +36,7 @@ bool fsuMeasurement::executeMeasurement(int TimeOutMs)
     adapter.write("++eos 2");
     
     std::string commaSeparatedValues;
+    
 
     switch (m_lastMeasurementMode)
     {
@@ -75,6 +76,8 @@ bool fsuMeasurement::executeMeasurement(int TimeOutMs)
         break;
     }
 
+    seperateDataBlock(commaSeparatedValues, m_x_Data, m_y_Data); // Separates the values and passes them to the internal data storage
+
     return true;
 }
 
@@ -95,6 +98,7 @@ void fsuMeasurement::seperateDataBlock(const wxString& receivedString,
         {
             if (m_lastMeasurementMode == MeasurementMode::IQ)
             {
+                m_ImagValues = true;
                 // I/Q every other value alternates between the two
                 if (i % 2 == 0) {
                     Real.push_back(value); // Realanteil (I)
@@ -104,6 +108,7 @@ void fsuMeasurement::seperateDataBlock(const wxString& receivedString,
             }
             else
             {
+                m_ImagValues = false;
                 // Normal Sweep
                 Real.push_back(value);
             }

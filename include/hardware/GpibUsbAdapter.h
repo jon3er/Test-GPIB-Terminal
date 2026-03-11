@@ -23,6 +23,7 @@ struct PrologixDeviceInfo {
     int sendDelayMs     = 100;
     std::string lastMsgReceived = "";
     DWORD BytesToRead   = 0;
+    bool busy = false;
 };
 
 class PrologixUsbGpibAdapter
@@ -46,8 +47,12 @@ public:
 
     ~PrologixUsbGpibAdapter();
 
-    void connect();
-    void disconnect();
+    bool checkIfAdapterAvailable();
+    bool checkIfGpibDeviceAvailable();
+
+
+    bool connect();
+    bool disconnect();
     void config();
 
     /**
@@ -106,12 +111,17 @@ public:
     bool getConnected();
     int getBaudrate();
     std::string getLastMsgReseived();
+    bool getBusy(){return m_deviceInfo.busy;};
+
 
     // set methodes
     void setBaudrate(int BaudrateNew);
+    void setBusy(bool busy) {m_deviceInfo.busy = busy;};
     
 private:
     PrologixDeviceInfo m_deviceInfo;
+
+    
 
     // helper Functionen
 

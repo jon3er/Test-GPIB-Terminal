@@ -116,7 +116,7 @@ void GrblScanWindow::OnStart(wxCommandEvent& event) {
 
         // Set Parameter for mesurement
         sData::sParam *MessInfo = m_currentData.GetParameter();
-        MessInfo->File = "Mesurement";
+        MessInfo->File = "PlotterScan";
         MessInfo->NoPoints_X = rows;
         MessInfo->NoPoints_Y = cols;
 

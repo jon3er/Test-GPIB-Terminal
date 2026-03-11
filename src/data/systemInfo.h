@@ -40,7 +40,7 @@ enum MainMenuBar
     ID_Main_Mesurement_Open         = 32,
     ID_Main_Mesurement_Load         = 33,
     ID_Main_Mesurement_Sweep     = 34,
-    ID_Main_Mesurement_QI     = 35,
+    ID_Main_Mesurement_IQ     = 35,
     ID_Main_Mesurement_MarkerPeak     = 36,
     ID_Main_Mesurement_2D_Mess      = 37,
     ID_Main_Mesurement_SetMarker    = 38,

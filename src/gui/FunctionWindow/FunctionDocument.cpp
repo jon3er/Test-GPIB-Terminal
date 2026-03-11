@@ -170,7 +170,7 @@ void FunctionDocument::TestSaveFile()
 
     sData TestObjekt;
     sData TestObjekt2;
-    CsvFile csvFile1(',');
+    CsvFile csvFile1(';');
 
     int xpt      = 10;
     int ypt      = 10;

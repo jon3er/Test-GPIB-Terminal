@@ -44,7 +44,7 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, MainDocument* doc, wxWindowI
     Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementLoad,      this, MainMenuBar::ID_Main_Mesurement_Open);
     Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementLoad,      this, MainMenuBar::ID_Main_Mesurement_Load);
     Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementSweep,     this, MainMenuBar::ID_Main_Mesurement_Sweep);
-    Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementIQ,        this, MainMenuBar::ID_Main_Mesurement_QI);
+    Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementIQ,        this, MainMenuBar::ID_Main_Mesurement_IQ);
     Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementMarkerPeak,this, MainMenuBar::ID_Main_Mesurement_MarkerPeak);
     Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurement2DMess,    this, MainMenuBar::ID_Main_Mesurement_2D_Mess);
     Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementSetMarker, this, MainMenuBar::ID_Main_Mesurement_SetMarker);
@@ -101,7 +101,7 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, MainDocument* doc, wxWindowI
 	m_menuMesure_Item_Open          = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_Open,       wxString( wxT("Open Saved Mesurement") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menuMesure_Item_Load          = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_Load,       wxString( wxT("Load config") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menuMesure_Item_Preset_1      = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_Sweep,      wxString( wxT("Sweep Measurement") ) , wxEmptyString, wxITEM_NORMAL );
-	m_menuMesure_Item_Preset_2      = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_QI,         wxString( wxT("IQ Measurement") ) , wxEmptyString, wxITEM_NORMAL );
+	m_menuMesure_Item_Preset_2      = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_IQ,         wxString( wxT("IQ Measurement") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menuMesure_Item_Preset_3      = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_MarkerPeak, wxString( wxT("Marker Measurement") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menuMesure_Item_2DMesurment   = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_2D_Mess,    wxString( wxT("2D Plot Mesurment") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menuMesure_Item_SetMarker     = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_SetMarker,  wxString( wxT("Set Marker") ) , wxEmptyString, wxITEM_NORMAL );

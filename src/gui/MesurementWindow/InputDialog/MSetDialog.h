@@ -34,8 +34,15 @@ private:
     wxTextCtrl* m_txtTriggerLevel  = nullptr;
     wxTextCtrl* m_txtTriggerDelay  = nullptr;
 
+    // Options
+    wxCheckBox* m_useMultipoint = nullptr;
+
+    // Buttons
+    wxButton* m_btnStart = nullptr;
+
     // Event Handler
     void OnApply(wxCommandEvent& event);
+    void OnStart(wxCommandEvent& event);
 
     // Mode-spezifische Apply + Verifikation
     void ApplySweep();

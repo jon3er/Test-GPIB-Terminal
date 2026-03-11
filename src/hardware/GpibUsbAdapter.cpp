@@ -38,7 +38,7 @@ std::string PrologixUsbGpibAdapter::read(unsigned int forceReadBytes)
 
             if (BigBuffer.size() == 0)
             {
-                Text = "No Message to Read\n";
+                Text = "Failed to Receive Data - No Message to Read\n";
             }
         }
         else
@@ -140,9 +140,45 @@ DWORD PrologixUsbGpibAdapter::quaryBuffer()
     return m_deviceInfo.BytesToRead;
 }
 
-void PrologixUsbGpibAdapter::connect()
+bool PrologixUsbGpibAdapter::checkIfAdapterAvailable()
 {
-    if (!m_deviceInfo.Connected)
+    DWORD numDevs;
+    FT_CreateDeviceInfoList(&numDevs);
+    return (numDevs > 0);
+}
+
+bool PrologixUsbGpibAdapter::checkIfGpibDeviceAvailable()
+{
+
+    if (!checkIfAdapterAvailable())
+    {
+        return false;
+    }
+
+    if (!getConnected())
+    {
+        if (!connect())
+        {
+            return false;
+        } 
+    }
+    else 
+    {
+        std::string statusStr = send("++spoll");
+        if (statusStr.find("1") == std::string::npos)
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }     
+    }
+}
+
+bool PrologixUsbGpibAdapter::connect()
+{
+    if (!getConnected())
     {
         m_deviceInfo.ftStatus = FT_Open(m_deviceInfo.numDev,&m_deviceInfo.ftHandle);
         printErrD2XX(m_deviceInfo.ftStatus,"Failed to Connect");
@@ -152,17 +188,23 @@ void PrologixUsbGpibAdapter::connect()
         {
             std::cerr << "Connected to " << m_deviceInfo.numDev << std::endl;
             m_deviceInfo.Connected = true;
+            return true;
+        }
+        else
+        {
+            m_deviceInfo.Connected = false;
+            return false;
         }
     }
 }
-void PrologixUsbGpibAdapter::disconnect()
+bool PrologixUsbGpibAdapter::disconnect()
 {
     write(ProLogixCmdLookup.at(ProLogixCmd::AUTO) + " 0");
     write(ScpiCmdLookup.at(ScpiCmd::CLR));
     write(ProLogixCmdLookup.at(ProLogixCmd::LOC));
     write(ProLogixCmdLookup.at(ProLogixCmd::IFC));
 
-    sleepMs(200);
+    sleepMs(200); // TODO Prüfen wieso
 
 
     m_deviceInfo.ftStatus = FT_Close(m_deviceInfo.ftHandle);
@@ -171,6 +213,11 @@ void PrologixUsbGpibAdapter::disconnect()
     {
         std::cerr << "Connected to " << m_deviceInfo.numDev << std::endl;
         m_deviceInfo.Connected = false;
+        return true;
+    }
+    else
+    {
+        return false;
     }
 }
 void PrologixUsbGpibAdapter::config()
