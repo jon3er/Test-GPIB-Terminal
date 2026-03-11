@@ -40,7 +40,6 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, MainDocument* doc, wxWindowI
     Bind(wxEVT_MENU, &MainProgrammWin::MenuFileSaveAs,  this, MainMenuBar::ID_Main_File_SaveAs);
     Bind(wxEVT_MENU, &MainProgrammWin::MenuFileExit,    this, MainMenuBar::ID_Main_File_Exit);
     // Mesurement Menu binds
-    Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementNew,       this, MainMenuBar::ID_Main_Mesurement_New);
     Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementLoad,      this, MainMenuBar::ID_Main_Mesurement_Open);
     Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementLoad,      this, MainMenuBar::ID_Main_Mesurement_Load);
     Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementSweep,     this, MainMenuBar::ID_Main_Mesurement_Sweep);
@@ -49,6 +48,7 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, MainDocument* doc, wxWindowI
     Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurement2DMess,    this, MainMenuBar::ID_Main_Mesurement_2D_Mess);
     Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementSetMarker, this, MainMenuBar::ID_Main_Mesurement_SetMarker);
     Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementSettings,  this, MainMenuBar::ID_Main_Mesurement_Settings);
+    Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementCustom,    this, MainMenuBar::ID_Main_Mesurement_Custom);
     // Test Menu binds
     Bind(wxEVT_MENU, &MainProgrammWin::MenuTestTerminal,    this, MainMenuBar::ID_Main_Test_Terminal);
     Bind(wxEVT_MENU, &MainProgrammWin::MenuTestFunc,        this, MainMenuBar::ID_Main_Test_Func);
@@ -106,16 +106,21 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, MainDocument* doc, wxWindowI
 	m_menuMesure_Item_2DMesurment   = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_2D_Mess,    wxString( wxT("2D Plot Mesurment") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menuMesure_Item_SetMarker     = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_SetMarker,  wxString( wxT("Set Marker") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menuMesure_Item_Settings      = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_Settings,   wxString( wxT("Settings") ) , wxEmptyString, wxITEM_NORMAL );
+    m_menuMesure_Item_Custom      = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_Custom,     wxString( wxT("Load Custom Script") ) , wxEmptyString, wxITEM_NORMAL );
+
 
     // "New Mesurement" submenu with Load config and Presets
     wxMenu* m_submenu_NewMesurement = new wxMenu();
-    m_submenu_NewMesurement->Append( m_menuMesure_Item_New );
-    m_submenu_NewMesurement->AppendSeparator();
+
+    
     m_submenu_NewMesurement->Append( m_menuMesure_Item_Load );
     m_submenu_NewMesurement->AppendSeparator();
     m_submenu_NewMesurement->Append( m_menuMesure_Item_Preset_1 );
     m_submenu_NewMesurement->Append( m_menuMesure_Item_Preset_2 );
     m_submenu_NewMesurement->Append( m_menuMesure_Item_Preset_3 );
+    m_submenu_NewMesurement->AppendSeparator();
+    m_submenu_NewMesurement->Append( m_menuMesure_Item_Custom );
+
 
     // set submenu order
     m_menu_Mesurement->AppendSubMenu( m_submenu_NewMesurement, wxT("New Mesurement") );
@@ -341,21 +346,6 @@ void MainProgrammWin::MenuFileExit(wxCommandEvent& event)
     this->Destroy();
 }
 
-void MainProgrammWin::MenuMesurementNew(wxCommandEvent& event)
-{
-    // Each window gets its own heap-allocated document so it can live independently
-    MeasurementDocument* measDoc = new MeasurementDocument(
-        PrologixUsbGpibAdapter::get_instance(), fsuMeasurement::get_instance());
-
-    PlotWindow* PlotWin = new PlotWindow(this, m_doc);
-    PlotWin->SetDocument(measDoc);
-    PlotWin->SetOwnsDocument(true);  // PlotWindow takes ownership
-
-    // Track and show as modeless (non-blocking)
-    m_openMeasurementWindows.insert(PlotWin);
-    PlotWin->Show();
-    // Window self-destructs on close; MenuMesurementNew returns immediately
-}
 void MainProgrammWin::MenuMesurementLoad(wxCommandEvent& event)
 {
     wxFileDialog openFileDialog(this, _("Open CSV File"),
@@ -418,6 +408,43 @@ void MainProgrammWin::MenuMesurementMarkerPeak(wxCommandEvent& event)
     // Open Marker Peak Dialog
     SettingsDialog dlg(this, MeasurementMode::MARKER_PEAK);
     dlg.ShowModal();
+}
+
+void MainProgrammWin::MenuMesurementCustom(wxCommandEvent& event)
+{
+    wxFileDialog openScriptDialog(
+    this,
+    _("GPIB Script öffnen"),
+    System::filePathSystem,          // öffnet direkt im GpibScripts-Ordner
+    wxEmptyString,
+    "Text Files (*.txt)|*.txt|All Files (*.*)|*.*",
+    wxFD_OPEN | wxFD_FILE_MUST_EXIST
+    );
+
+    if (openScriptDialog.ShowModal() == wxID_CANCEL)
+    return;
+
+    wxString scriptFileName = openScriptDialog.GetFilename();   // z.B. "TestScript.txt"
+    wxString scriptFolderPath = openScriptDialog.GetDirectory(); // z.B. "D:\...\GpibScripts"
+
+    // set Measurement Settings
+    fsuMeasurement* fsu = &fsuMeasurement::get_instance();
+    fsu->setMeasurementMode(MeasurementMode::COSTUM);
+    fsu->setFilePath(scriptFolderPath);
+    fsu->setFileName(scriptFileName);
+
+    if (m_plotterWindow && m_plotterWindow->IsShown())
+    {
+        m_plotterWindow->Raise();  // move window to foreground
+        return;
+    }
+
+    // open Plotter settings window
+    m_plotterWindow = new PlotterFrame();
+    m_plotterWindow->ShowModal();
+    m_plotterWindow->Destroy();
+    m_plotterWindow = nullptr;
+
 }
 
 void MainProgrammWin::MenuMesurementSettings(wxCommandEvent& event)

@@ -57,6 +57,7 @@ private:
     // Track all open measurement windows for proper cleanup
     std::set<PlotWindow*> m_openMeasurementWindows;
 
+    PlotterFrame* m_plotterWindow = nullptr;
 public:
     /** Called by PlotWindow to unregister itself when closing */
     void UnregisterMeasurementWindow(PlotWindow* win) { m_openMeasurementWindows.erase(win); }
@@ -83,6 +84,8 @@ protected:
     wxMenuItem* m_menuMesure_Item_2DMesurment;
     wxMenuItem* m_menuMesure_Item_SetMarker;
     wxMenuItem* m_menuMesure_Item_Settings;
+    wxMenuItem* m_menuMesure_Item_Custom;
+
 
     // Test menu elements
     wxMenuItem* m_menuTest_Item_Terminal;
@@ -132,11 +135,11 @@ public:
     void MenuFileExit(wxCommandEvent& event);
 
 
-    void MenuMesurementNew(wxCommandEvent& event);
 	void MenuMesurementLoad(wxCommandEvent& event);
     void MenuMesurementSweep(wxCommandEvent& event);
     void MenuMesurementIQ(wxCommandEvent& event);
     void MenuMesurementMarkerPeak(wxCommandEvent& event);
+    void MenuMesurementCustom(wxCommandEvent& event);
     void MenuMesurementSetMarker(wxCommandEvent& event);
     void MenuMesurement2DMess(wxCommandEvent& event);
     void MenuMesurementSettings(wxCommandEvent& event);

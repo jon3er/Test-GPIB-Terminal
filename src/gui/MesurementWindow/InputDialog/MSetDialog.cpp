@@ -445,8 +445,17 @@ void SettingsDialog::OnStart(wxCommandEvent& /*event*/)
     EndModal(wxID_OK);
 
     if (m_useMultipoint->GetValue()) {
-        PlotterFrame* plotter = new PlotterFrame();
-        plotter->ShowModal();
+        if (m_plotterWindow && m_plotterWindow->IsShown())
+        {
+            m_plotterWindow->Raise();  // move window to foreground
+            return;
+        }
+
+        // open Plotter settings window
+        m_plotterWindow = new PlotterFrame();
+        m_plotterWindow->ShowModal();
+        m_plotterWindow->Destroy();
+        m_plotterWindow = nullptr;
     } else {
         fsuMeasurement* fsu = &fsuMeasurement::get_instance();
 

@@ -89,11 +89,11 @@ private:
     void OnMenuFileExit(wxCommandEvent& event);
 
     // Menu handlers (Measurement) — forward to parent MainProgrammWin
-    void OnMenuMesurementNew(wxCommandEvent& event);
     void OnMenuMesurementOpen(wxCommandEvent& event);
     void OnMenuMesurementLoad(wxCommandEvent& event);
     void OnMenuMesurementSweep(wxCommandEvent& event);
     void OnMenuMesurementIQ(wxCommandEvent& event);
+    void OnMenuMesurementCustom(wxCommandEvent& event);
     void OnMenuMesurementMarker(wxCommandEvent& event);
     void OnMenuMesurement2DMess(wxCommandEvent& event);
     void OnMenuMesurementSetMarker(wxCommandEvent& event);

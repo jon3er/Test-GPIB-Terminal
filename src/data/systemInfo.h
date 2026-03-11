@@ -39,14 +39,16 @@ enum MainMenuBar
     ID_Main_Mesurement_New          = 31,
     ID_Main_Mesurement_Open         = 32,
     ID_Main_Mesurement_Load         = 33,
-    ID_Main_Mesurement_Sweep     = 34,
-    ID_Main_Mesurement_IQ     = 35,
-    ID_Main_Mesurement_MarkerPeak     = 36,
+    ID_Main_Mesurement_Sweep        = 34,
+    ID_Main_Mesurement_IQ           = 35,
+    ID_Main_Mesurement_MarkerPeak   = 36,
     ID_Main_Mesurement_2D_Mess      = 37,
     ID_Main_Mesurement_SetMarker    = 38,
     ID_Main_Mesurement_Settings     = 39,
+    ID_Main_Mesurement_Custom       = 40,
 
-    ID_Main_Processing      = 40,
+
+    ID_Main_Processing      = 45,
 
     ID_Main_Test            = 50,
     ID_Main_Test_Terminal   = 51,

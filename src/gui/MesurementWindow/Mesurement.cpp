@@ -37,13 +37,14 @@ PlotWindow::PlotWindow(wxWindow *parent, MainDocument* mainDoc)
 
     // "New Mesurement" submenu with Load config and Presets
     wxMenu* subMenuNew = new wxMenu();
-    subMenuNew->Append(MainMenuBar::ID_Main_Mesurement_New,        wxT("New Mesurement"));
-    subMenuNew->AppendSeparator();
+    
     subMenuNew->Append(MainMenuBar::ID_Main_Mesurement_Load,       wxT("Load config"));
     subMenuNew->AppendSeparator();
     subMenuNew->Append(MainMenuBar::ID_Main_Mesurement_Sweep,       wxT("Sweep"));
     subMenuNew->Append(MainMenuBar::ID_Main_Mesurement_IQ,          wxT("IQ"));
     subMenuNew->Append(MainMenuBar::ID_Main_Mesurement_MarkerPeak,  wxT("Marker"));
+    subMenuNew->AppendSeparator();
+    subMenuNew->Append(MainMenuBar::ID_Main_Mesurement_Custom,  wxT("custom script File"));
 
     menuMesurement->AppendSubMenu(subMenuNew, wxT("New Mesurement"));
     menuMesurement->AppendSeparator();
@@ -67,7 +68,6 @@ PlotWindow::PlotWindow(wxWindow *parent, MainDocument* mainDoc)
     Bind(wxEVT_MENU, &PlotWindow::OnMenuFileExit,    this, MainMenuBar::ID_Plot_File_Exit);
 
     // Bind Measurement menu handlers (forward to parent MainProgrammWin)
-    Bind(wxEVT_MENU, &PlotWindow::OnMenuMesurementNew,       this, MainMenuBar::ID_Main_Mesurement_New);
     Bind(wxEVT_MENU, &PlotWindow::OnMenuMesurementOpen,      this, MainMenuBar::ID_Main_Mesurement_Open);
     Bind(wxEVT_MENU, &PlotWindow::OnMenuMesurementLoad,      this, MainMenuBar::ID_Main_Mesurement_Load);
     Bind(wxEVT_MENU, &PlotWindow::OnMenuMesurementSweep,     this, MainMenuBar::ID_Main_Mesurement_Sweep);
@@ -539,13 +539,6 @@ void PlotWindow::OnMenuFileExit(wxCommandEvent& event)
 
 // Measurement menu handlers (forward to parent MainProgrammWin)
 
-void PlotWindow::OnMenuMesurementNew(wxCommandEvent& event)
-{
-    MainProgrammWin* parent = dynamic_cast<MainProgrammWin*>(GetParent());
-    if (parent)
-        parent->MenuMesurementNew(event);
-}
-
 void PlotWindow::OnMenuMesurementOpen(wxCommandEvent& event)
 {
     MainProgrammWin* parent = dynamic_cast<MainProgrammWin*>(GetParent());
@@ -579,6 +572,13 @@ void PlotWindow::OnMenuMesurementMarker(wxCommandEvent& event)
     MainProgrammWin* parent = dynamic_cast<MainProgrammWin*>(GetParent());
     if (parent)
         parent->MenuMesurementMarkerPeak(event);
+}
+
+void PlotWindow::OnMenuMesurementCustom(wxCommandEvent& event)
+{
+    MainProgrammWin* parent = dynamic_cast<MainProgrammWin*>(GetParent());
+    if (parent)
+        parent->MenuMesurementCustom(event);
 }
 
 void PlotWindow::OnMenuMesurement2DMess(wxCommandEvent& event)
