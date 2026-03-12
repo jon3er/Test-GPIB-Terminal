@@ -71,7 +71,7 @@ std::vector<double> sData::GetFreqStepVector()
     
     try
     {
-        step = (endFreq - startFreq) / ArrayPts;
+        step = (endFreq - startFreq) / (ArrayPts-1);
     }
     catch(const std::exception& e)
     {

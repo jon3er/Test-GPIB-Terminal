@@ -132,10 +132,10 @@ struct HeaderConfig
     static constexpr std::string_view endFreq       = "End Frequency";          // ScpiCmdLookup.at(ScpiCmd::FREQ_STOP)
     // Amplitude und Pegel-Parameter
     static constexpr std::string_view refPegel      = "Referenz Pegel";         // ScpiCmdLookup.at(ScpiCmd::DISP_TRAC_Y_RLEV)
-    static constexpr std::string_view HFDaempfung   = "HF-Dämpfung";            // ScpiCmdLookup.at(ScpiCmd::DISP_TRAC_Y_OFFS)
+    static constexpr std::string_view HFDaempfung   = "HF-Daempfung";            // ScpiCmdLookup.at(ScpiCmd::DISP_TRAC_Y_OFFS)
     static constexpr std::string_view ampUnit       = "Amplituden Einheit";
     // Bandbreiten und Zeit
-    static constexpr std::string_view RBW           = "Auflösebandbreite (RBW)"; // ScpiCmdLookup.at(ScpiCmd::BAND_RES)
+    static constexpr std::string_view RBW           = "Aufloesebandbreite (RBW)"; // ScpiCmdLookup.at(ScpiCmd::BAND_RES)
     static constexpr std::string_view VBW           = "Videobandbreite (VBW)";   // ScpiCmdLookup.at(ScpiCmd::BAND_VID_AUTO)
     static constexpr std::string_view sweepTime     = "Sweep dauer";             // ScpiCmdLookup.at(ScpiCmd::SWE_TIME)
     // Erfassung
