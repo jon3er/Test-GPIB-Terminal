@@ -14,6 +14,11 @@
 #include "GpibUsbAdapter.h"
 #include <wx/textfile.h>
 
+
+
+
+
+
 /**
  * @brief single instance class to Performe frequency mesurements with a R&S instrument
  *
@@ -92,6 +97,8 @@ public:
     using SettingValue = std::variant<double, int, std::string>;
     bool checkIfSettingsValidSweep(ScpiCommand command, const SettingValue& value);
 
+
+
     void setMeasurementMode(MeasurementMode mode) { m_lastMeasurementMode = mode; };
     MeasurementMode getMeasurementMode() const { return m_lastMeasurementMode; };
 
@@ -157,6 +164,20 @@ public:
     std::string getFilePath() { return m_filePathCustomMeasurement; };
     std::string getFileName() { return m_fileNameCustomMeasurement; };
 
+    /**
+     * @brief Cached copy of fsuMeasurement settings for CSV I/O
+     */
+    struct FsuSettings
+    {
+        MeasurementMode mode{};
+        fsuMeasurement::lastSweepSettings    sweep{};
+        fsuMeasurement::IqSettings           iq{};
+        fsuMeasurement::MarkerPeakSettings   marker{};
+        wxString costumFile{};
+    };
+
+    // Write Current Settings to GPIB-BUS
+    bool writeSettingsToGpib();
 
 private:
 

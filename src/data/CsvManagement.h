@@ -112,7 +112,6 @@ class CsvFile
         char m_separator;
 };
 
-
 struct HeaderInfo
 {
     static constexpr std::string_view fileName      = "File Name";

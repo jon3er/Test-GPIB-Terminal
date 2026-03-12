@@ -371,6 +371,12 @@ void MainProgrammWin::MenuMesurementLoad(wxCommandEvent& event)
         return;
     }
 
+    // Set File setting to Current settings
+    importedData.exportFsuSettings();
+    // send new Settings to Gpib device
+    fsuMeasurement::get_instance().writeSettingsToGpib();
+
+
     // Create a new PlotWindow with its own MeasurementDocument
     MeasurementDocument* measDoc = new MeasurementDocument(
         PrologixUsbGpibAdapter::get_instance(), fsuMeasurement::get_instance());

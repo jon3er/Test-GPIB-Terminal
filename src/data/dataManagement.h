@@ -62,17 +62,7 @@ private:
     std::vector<double> m_dataArray;
 };
 
-/**
- * @brief Cached copy of fsuMeasurement settings for CSV I/O
- */
-struct FsuSettings
-{
-    MeasurementMode mode{};
-    fsuMeasurement::lastSweepSettings    sweep{};
-    fsuMeasurement::IqSettings           iq{};
-    fsuMeasurement::MarkerPeakSettings   marker{};
-    wxString costumFile{};
-};
+
 
 class sData
 {
@@ -178,9 +168,15 @@ public:
     void importFsuSettings();
 
     /**
+     * @brief Loads current settings from m_fsuSettings into fsuMeasurement singleton
+     */
+    void exportFsuSettings();
+
+
+    /**
      * @brief Returns const reference to the cached fsu settings
      */
-    const FsuSettings& getFsuSettings() const { return m_fsuSettings; };
+    const fsuMeasurement::FsuSettings& getFsuSettings() const { return m_fsuSettings; };
 
     /**
      * @brief Copies the matching fields from m_fsuSettings into m_dsParam
@@ -198,7 +194,7 @@ private:
     sData3D m_Real3D;
     sData3D m_Imag3D;
     // Cached fsu measurement settings
-    FsuSettings m_fsuSettings;
+    fsuMeasurement::FsuSettings m_fsuSettings;
 
 };
 

@@ -111,6 +111,17 @@ void sData::importFsuSettings()
     applyFsuSettingsToParam();
 }
 
+void sData::exportFsuSettings() // use only when loading a measurement
+{
+    fsuMeasurement& fsu = fsuMeasurement::get_instance();
+    fsu.setMeasurementMode(m_fsuSettings.mode);
+    fsu.writeSweepSettings(m_fsuSettings.sweep);
+    fsu.writeIqSettings(m_fsuSettings.iq);
+    fsu.writeMarkerPeakSettings(m_fsuSettings.marker);
+    fsu.setFileName(m_fsuSettings.costumFile);
+}
+
+
 void sData::applyFsuSettingsToParam()
 {
     switch (m_fsuSettings.mode)

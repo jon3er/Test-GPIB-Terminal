@@ -284,6 +284,31 @@ try {
     }
 }
 
+bool fsuMeasurement::writeSettingsToGpib()
+{
+
+
+    switch (m_lastMeasurementMode)
+    {
+        case MeasurementMode::SWEEP:
+            return writeSweepSettings(m_lastSwpSettings);
+            
+        case MeasurementMode::IQ:
+            return writeIqSettings(m_lastIqSettings);
+            
+        case MeasurementMode::MARKER_PEAK:
+            return writeMarkerPeakSettings(m_lastMarkerPeakSettings);
+            
+        case MeasurementMode::COSTUM:
+            return true;
+            
+        default:
+            return false;
+            
+    }
+}
+
+
 bool fsuMeasurement::writeSweepSettings(lastSweepSettings settings)
 {
    std::string blockCmd = scpiSetCommands.at(ScpiCommand::START_FREQUENCY   )   + std::to_string(settings.startFreq)+ ";:" +
