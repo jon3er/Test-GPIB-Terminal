@@ -21,12 +21,7 @@ TerminalDocument::TerminalDocument(PrologixUsbGpibAdapter& adapter)
 
 TerminalDocument::~TerminalDocument()
 {
-    // Ensure we are disconnected when the document is destroyed
-    if (m_adapter.getConnected())
-    {
-        m_adapter.disconnect();
-        std::cerr << "TerminalDocument: adapter disconnected on destruction" << std::endl;
-    }
+    
 }
 
 // ---------------------------------------------------------------------------
