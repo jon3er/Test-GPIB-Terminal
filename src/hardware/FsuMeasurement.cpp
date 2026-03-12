@@ -23,7 +23,7 @@ fsuMeasurement::fsuMeasurement()
 
 fsuMeasurement::~fsuMeasurement()
 {
-    
+
 }
 
 
@@ -49,7 +49,7 @@ bool fsuMeasurement::executeMeasurement(int TimeOutMs)
         adapter.write("TRAC? TRACE1");
         if (adapter.checkIfMsgAvailable(TimeOutMs))
             adapter.write("++read eoi");
-            sleepMs(300);
+            sleepMs(10);
             commaSeparatedValues = adapter.read();
 
         break;
@@ -82,6 +82,8 @@ bool fsuMeasurement::executeMeasurement(int TimeOutMs)
         return false;
         break;
     }
+
+    adapter.write("++auto 1");
 
     seperateDataBlock(commaSeparatedValues, m_x_Data, m_y_Data); // Separates the values and passes them to the internal data storage
 

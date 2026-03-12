@@ -121,6 +121,10 @@ void GrblScanWindow::OnStart(wxCommandEvent& event) {
         MessInfo->NoPoints_Y = cols;
 
 
+
+        auto fsu = &fsuMeasurement::get_instance();
+        fsu->setNoPoints(rows, cols);
+
         Layout();
 
         m_workerThread = std::thread([=, this]() {
@@ -136,10 +140,8 @@ void GrblScanWindow::OnStart(wxCommandEvent& event) {
                     try
                     {
 
-                        //success = PlotterMesurement(&m_currentData, measurementNumber);
-                        auto fsu = &fsuMeasurement::get_instance();
-                        fsu->setNoPoints(rows, cols);
-                        success = fsu->executeMeasurement();
+                        success = PlotterMesurement(&m_currentData, measurementNumber);
+
                     }
                     catch (const std::exception& e) {
                         // Hier holst du den Grund ab:

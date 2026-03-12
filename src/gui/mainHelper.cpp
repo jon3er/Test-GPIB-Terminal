@@ -6,35 +6,28 @@ bool PlotterMesurement(sData* data, int measurementNumber)
     wxArrayString logAdapterReceived;
     CsvFile csvFile;
 
-
     std::vector<double> MessWerteReal;
     std::vector<double> MessWerteImag;
 
     int x;
     int y;
 
-    PrologixUsbGpibAdapter::get_instance().readScriptFile(System::filePathSystem, "PlotMessung.txt", &logAdapterReceived);
-    // Output received messages to debug log
-    for (size_t i = 0; i < logAdapterReceived.GetCount(); i++)
-    {
-        wxString text = logAdapterReceived[i];
+    auto fsu = &fsuMeasurement::get_instance();
 
-        std::cerr << text << std::endl;
-    }
+    fsu->executeMeasurement();
+    // Get last measuremtent results
+    MessWerteReal = fsu->getX_Data();
+    MessWerteImag = fsu->getY_Data();
 
-
-    MessWerteReal = fsuMeasurement::get_instance().getX_Data();
 
     data->getXYCord(x, y, measurementNumber);
-
+    // save lates data in 3d array
     data->set3DDataReal(MessWerteReal, x, y);
-    if (fsuMeasurement::get_instance().isImagValues())
-    {
-        data->set3DDataImag(MessWerteImag, x, y);
-    }
+    data->set3DDataImag(MessWerteImag, x, y);
 
     // save data to a Csv file
-    wxString fileName = System::filePathRoot + "LogFiles" + System::fileSystemSlash + "PlotterMessung.csv";
+    wxString fileName = System::filePathRoot + "LogFiles" + System::fileSystemSlash +
+             data->GetFile() + "_" + data->GetDate() + "_" + data->GetTime() +".csv";
     if(!csvFile.saveCsvFile(fileName, *data, measurementNumber))
     {
         std::cout << "[Error] Failed to save data to CSV file" << std::endl;
