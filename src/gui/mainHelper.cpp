@@ -36,7 +36,6 @@ bool PlotterMesurement(sData* data, int measurementNumber)
     std::cout << "Measuremnt done" << std::endl;
 
     return true; // Mesurement Finished
-
 }
 
 wxString terminalTimestampOutput(wxString Text)

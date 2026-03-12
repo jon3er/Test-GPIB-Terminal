@@ -48,9 +48,12 @@ bool fsuMeasurement::executeMeasurement(int TimeOutMs)
         adapter.write("*WAI");          // wait for measurement to finish
         adapter.write("TRAC? TRACE1");
         if (adapter.checkIfMsgAvailable(TimeOutMs))
+        {   
             adapter.write("++read eoi");
             sleepMs(10);
             commaSeparatedValues = adapter.read();
+        }
+        
 
         break;
 
@@ -61,17 +64,17 @@ bool fsuMeasurement::executeMeasurement(int TimeOutMs)
         adapter.write("TRAC:IQ:DATA?");
         if (adapter.checkIfMsgAvailable(TimeOutMs))
             commaSeparatedValues = adapter.send("++read eoi");
-
         break;
 
     case MeasurementMode::MARKER_PEAK:
-        adapter.write("INIT:CONT OFF"); // turn of continous measurement
+        adapter.write("INIT:CONT OFF"); // turn off continous measurement
         adapter.write("INIT:IMM");      // trigger measurement
         adapter.write("*WAI");          // wait for measurement to finish
         adapter.write("CALC:MARK1:MAX");        // TODO make type of marker selectable
         commaSeparatedValues = adapter.send("CALC:MARK1:X?");
         commaSeparatedValues += ",";
         commaSeparatedValues += adapter.send("CALC:MARK1:Y?");  // Save x and y values
+
 
         break;
     case MeasurementMode::COSTUM:
@@ -83,6 +86,7 @@ bool fsuMeasurement::executeMeasurement(int TimeOutMs)
         break;
     }
 
+    adapter.write("INIT:CONT ON"); // turn on continous measurement
     adapter.write("++auto 1");
 
     seperateDataBlock(commaSeparatedValues, m_x_Data, m_y_Data); // Separates the values and passes them to the internal data storage

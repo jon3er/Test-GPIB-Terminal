@@ -107,6 +107,8 @@ void sData::importFsuSettings()
     m_fsuSettings.iq     = fsu.returnIqSettings();
     m_fsuSettings.marker = fsu.returnMarkerPeakSettings();
     m_fsuSettings.costumFile = fsu.getFileName();
+
+    applyFsuSettingsToParam();
 }
 
 void sData::applyFsuSettingsToParam()
