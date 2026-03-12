@@ -7,20 +7,7 @@
 #include <wx/tokenzr.h>
 
 #include "dataManagement.h"
-#include "FsuMeasurement.h"
 
-
-/**
- * @brief Cached copy of fsuMeasurement settings for CSV I/O
- */
-struct FsuSettings
-{
-    MeasurementMode mode{};
-    fsuMeasurement::lastSweepSettings    sweep{};
-    fsuMeasurement::IqSettings           iq{};
-    fsuMeasurement::MarkerPeakSettings   marker{};
-    wxString costumFile{};
-};
 
 /**
  * @brief Save/Read measurement data to csv file
@@ -58,16 +45,6 @@ class CsvFile
         // Separator
         void setSeparator(char separator)   { m_separator = separator; };
         char getSeparator()                 { return m_separator; };
-
-        /**
-         * @brief Reads current settings from fsuMeasurement singleton into m_fsuSettings
-         */
-        void importFsuSettings();
-
-        /**
-         * @brief Returns const reference to the cached fsu settings
-         */
-        const FsuSettings& getFsuSettings() const { return m_fsuSettings; };
 
     protected:
 
@@ -133,8 +110,6 @@ class CsvFile
         std::unordered_map<std::string, int> m_CsvLookupTable;
         // set Separator (, ;)
         char m_separator;
-        // Cached fsu measurement settings
-        FsuSettings m_fsuSettings;
 };
 
 

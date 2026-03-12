@@ -150,12 +150,12 @@ void SettingsDialog::ApplySweep() {
     // Set Mode for Measurement
     fsu->setMeasurementMode(MeasurementMode::SWEEP);
 
-    double startFreq, stopFreq, refLevel, rbw, vbw;
-    m_txtStartFreq->GetValue().ToDouble(&startFreq);
-    m_txtStopFreq->GetValue().ToDouble(&stopFreq);
-    m_txtRefLevel->GetValue().ToDouble(&refLevel);
-    m_txtRBW->GetValue().ToDouble(&rbw);
-    m_txtVBW->GetValue().ToDouble(&vbw);
+    int startFreq, stopFreq, refLevel, rbw, vbw;
+    m_txtStartFreq->GetValue().ToInt(&startFreq);
+    m_txtStopFreq->GetValue().ToInt(&stopFreq);
+    m_txtRefLevel->GetValue().ToInt(&refLevel);
+    m_txtRBW->GetValue().ToInt(&rbw);
+    m_txtVBW->GetValue().ToInt(&vbw);
     int points = wxAtoi(m_choiceSweepPoints->GetStringSelection());
     std::string det = m_choiceDetector->GetStringSelection().ToStdString();
     int att = m_spinAttenuation->GetValue();
@@ -182,14 +182,14 @@ void SettingsDialog::ApplySweep() {
     }
 
     fsuMeasurement::lastSweepSettings settings{};
-    settings.startFreq = startFreq;
-    settings.stopFreq  = stopFreq;
+    settings.startFreq = static_cast<unsigned int>(startFreq);
+    settings.stopFreq  = static_cast<unsigned int>(stopFreq);
     settings.refLevel  = refLevel;
-    settings.att       = att;
+    settings.att       = static_cast<unsigned int>(att);
     settings.unit      = unit;
-    settings.rbw       = static_cast<int>(rbw);
-    settings.vbw       = static_cast<int>(vbw);
-    settings.points    = points;
+    settings.rbw       = static_cast<unsigned int>(rbw);
+    settings.vbw       = static_cast<unsigned int>(vbw);
+    settings.points    = static_cast<unsigned int>(points);
     settings.detector  = det;
 
     if (!fsu->writeSweepSettings(settings)) {
@@ -205,15 +205,15 @@ void SettingsDialog::ApplySweep() {
     auto rb = fsu->returnSweepSettings();
     wxString mismatches;
     bool ok = true;
-    ok &= VerifyDouble("Start Frequenz", startFreq, rb.startFreq, mismatches);
-    ok &= VerifyDouble("Stop Frequenz",  stopFreq,  rb.stopFreq,  mismatches);
-    ok &= VerifyDouble("Ref. Pegel",     refLevel,  rb.refLevel,  mismatches);
-    ok &= VerifyInt("Daempfung",         att,       rb.att,       mismatches);
-    ok &= VerifyInt("RBW", static_cast<int>(rbw),   rb.rbw,       mismatches);
-    ok &= VerifyInt("VBW", static_cast<int>(vbw),   rb.vbw,       mismatches);
-    ok &= VerifyInt("Sweep Punkte",      points,    rb.points,    mismatches);
-    ok &= VerifyString("Detektor",       det,       rb.detector,  mismatches);
-    ok &= VerifyString("Einheit",        unit,      rb.unit,      mismatches);
+    ok &= VerifyInt("Start Frequenz", static_cast<int>(startFreq), static_cast<int>(rb.startFreq), mismatches);
+    ok &= VerifyInt("Stop Frequenz",  static_cast<int>(stopFreq),  static_cast<int>(rb.stopFreq),  mismatches);
+    ok &= VerifyInt("Ref. Pegel",     refLevel,                    rb.refLevel,                    mismatches);
+    ok &= VerifyInt("Daempfung",      att,                         static_cast<int>(rb.att),       mismatches);
+    ok &= VerifyInt("RBW", static_cast<int>(rbw),                  static_cast<int>(rb.rbw),       mismatches);
+    ok &= VerifyInt("VBW", static_cast<int>(vbw),                  static_cast<int>(rb.vbw),       mismatches);
+    ok &= VerifyInt("Sweep Punkte",   points,                      static_cast<int>(rb.points),    mismatches);
+    ok &= VerifyString("Detektor",    det,                         rb.detector,                    mismatches);
+    ok &= VerifyString("Einheit",     unit,                        rb.unit.ToStdString(),          mismatches);
 
     if (ok) {
         wxMessageBox("Einstellungen erfolgreich uebernommen und verifiziert!", "Erfolg", wxOK | wxICON_INFORMATION);
@@ -272,8 +272,8 @@ void SettingsDialog::ApplyIq() {
 
     fsuMeasurement::IqSettings settings{};
     settings.centerFreq    = centerFreq;
-    settings.refLevel      = refLevel;
-    settings.att           = att;
+    settings.refLevel      = std::to_string(refLevel);
+    settings.att           = static_cast<unsigned int>(att);
     settings.unit          = unit;
     settings.sampleRate    = sampleRate;
     settings.recordLength  = recordLen;
@@ -294,16 +294,16 @@ void SettingsDialog::ApplyIq() {
     auto rb = fsu->returnIqSettings();
     wxString mismatches;
     bool ok = true;
-    ok &= VerifyDouble("Center Frequenz", centerFreq,  rb.centerFreq,    mismatches);
-    ok &= VerifyDouble("Ref. Pegel",      refLevel,    rb.refLevel,      mismatches);
-    ok &= VerifyInt("Daempfung",          att,         rb.att,           mismatches);
-    ok &= VerifyString("Einheit",         unit,        rb.unit,          mismatches);
-    ok &= VerifyDouble("Sample Rate",     sampleRate,  rb.sampleRate,    mismatches);
-    ok &= VerifyInt("Record Length",      recordLen,   rb.recordLength,  mismatches);
-    ok &= VerifyDouble("IF Bandwidth",    ifBw,        rb.ifBandwidth,   mismatches);
-    ok &= VerifyString("Trigger Quelle",  trigSrc,     rb.triggerSource, mismatches);
-    ok &= VerifyDouble("Trigger Level",   trigLevel,   rb.triggerLevel,  mismatches);
-    ok &= VerifyDouble("Trigger Delay",   trigDelay,   rb.triggerDelay,  mismatches);
+    ok &= VerifyDouble("Center Frequenz", centerFreq,  rb.centerFreq,                  mismatches);
+    ok &= VerifyString("Ref. Pegel",      std::to_string(refLevel), rb.refLevel,       mismatches);
+    ok &= VerifyInt("Daempfung",          att,         static_cast<int>(rb.att),        mismatches);
+    ok &= VerifyString("Einheit",         unit,        rb.unit.ToStdString(),           mismatches);
+    ok &= VerifyDouble("Sample Rate",     sampleRate,  rb.sampleRate,                   mismatches);
+    ok &= VerifyInt("Record Length",      recordLen,   rb.recordLength,                 mismatches);
+    ok &= VerifyDouble("IF Bandwidth",    ifBw,        rb.ifBandwidth,                  mismatches);
+    ok &= VerifyString("Trigger Quelle",  trigSrc,     rb.triggerSource,                mismatches);
+    ok &= VerifyDouble("Trigger Level",   trigLevel,   rb.triggerLevel,                 mismatches);
+    ok &= VerifyDouble("Trigger Delay",   trigDelay,   rb.triggerDelay,                 mismatches);
 
     if (ok) {
         wxMessageBox("IQ-Einstellungen erfolgreich uebernommen und verifiziert!", "Erfolg", wxOK | wxICON_INFORMATION);
@@ -350,13 +350,13 @@ void SettingsDialog::ApplyMarkerPeak() {
     }
 
     fsuMeasurement::MarkerPeakSettings settings{};
-    settings.startFreq = startFreq;
-    settings.stopFreq  = stopFreq;
-    settings.refLevel  = refLevel;
-    settings.att       = att;
+    settings.startFreq = static_cast<unsigned int>(startFreq);
+    settings.stopFreq  = static_cast<unsigned int>(stopFreq);
+    settings.refLevel  = std::to_string(refLevel);
+    settings.att       = static_cast<unsigned int>(att);
     settings.unit      = unit;
-    settings.rbw       = rbw;
-    settings.vbw       = vbw;
+    settings.rbw       = static_cast<unsigned int>(rbw);
+    settings.vbw       = static_cast<unsigned int>(vbw);
     settings.detector  = det;
 
     if (!fsu->writeMarkerPeakSettings(settings)) {
@@ -371,14 +371,14 @@ void SettingsDialog::ApplyMarkerPeak() {
     auto rb = fsu->returnMarkerPeakSettings();
     wxString mismatches;
     bool ok = true;
-    ok &= VerifyDouble("Start Frequenz", startFreq, rb.startFreq, mismatches);
-    ok &= VerifyDouble("Stop Frequenz",  stopFreq,  rb.stopFreq,  mismatches);
-    ok &= VerifyDouble("Ref. Pegel",     refLevel,  rb.refLevel,  mismatches);
-    ok &= VerifyInt("Daempfung",         att,       rb.att,       mismatches);
-    ok &= VerifyString("Einheit",        unit,      rb.unit,      mismatches);
-    ok &= VerifyDouble("RBW",            rbw,       rb.rbw,       mismatches);
-    ok &= VerifyDouble("VBW",            vbw,       rb.vbw,       mismatches);
-    ok &= VerifyString("Detektor",       det,       rb.detector,  mismatches);
+    ok &= VerifyInt("Start Frequenz", static_cast<int>(startFreq), static_cast<int>(rb.startFreq), mismatches);
+    ok &= VerifyInt("Stop Frequenz",  static_cast<int>(stopFreq),  static_cast<int>(rb.stopFreq),  mismatches);
+    ok &= VerifyString("Ref. Pegel",  std::to_string(refLevel),    rb.refLevel,                    mismatches);
+    ok &= VerifyInt("Daempfung",      att,                         static_cast<int>(rb.att),       mismatches);
+    ok &= VerifyString("Einheit",     unit,                        rb.unit.ToStdString(),          mismatches);
+    ok &= VerifyInt("RBW",            static_cast<int>(rbw),       static_cast<int>(rb.rbw),       mismatches);
+    ok &= VerifyInt("VBW",            static_cast<int>(vbw),       static_cast<int>(rb.vbw),       mismatches);
+    ok &= VerifyString("Detektor",    det,                         rb.detector,                    mismatches);
 
     if (ok) {
         wxMessageBox("MarkerPeak-Einstellungen erfolgreich uebernommen und verifiziert!", "Erfolg", wxOK | wxICON_INFORMATION);
@@ -403,7 +403,7 @@ void SettingsDialog::RefreshData()
         m_txtStartFreq     ->SetValue(std::to_string(s.startFreq));
         m_txtStopFreq      ->SetValue(std::to_string(s.stopFreq));
         m_txtRefLevel      ->SetValue(std::to_string(s.refLevel));
-        m_spinAttenuation  ->SetValue(s.att);
+        m_spinAttenuation  ->SetValue(static_cast<int>(s.att));
         m_choiceUnit       ->SetStringSelection(s.unit);
         m_txtRBW           ->SetValue(std::to_string(s.rbw));
         m_txtVBW           ->SetValue(std::to_string(s.vbw));
@@ -414,8 +414,8 @@ void SettingsDialog::RefreshData()
     case MeasurementMode::IQ: {
         fsu->readIqSettings();
         auto s = fsu->returnIqSettings();
-        m_txtRefLevel         ->SetValue(std::to_string(s.refLevel));
-        m_spinAttenuation     ->SetValue(s.att);
+        m_txtRefLevel         ->SetValue(s.refLevel);
+        m_spinAttenuation     ->SetValue(static_cast<int>(s.att));
         m_choiceUnit          ->SetStringSelection(s.unit);
         m_txtCenterFreq       ->SetValue(std::to_string(s.centerFreq));
         m_txtSampleRate       ->SetValue(std::to_string(s.sampleRate));
@@ -431,8 +431,8 @@ void SettingsDialog::RefreshData()
         auto s = fsu->returnMarkerPeakSettings();
         m_txtStartFreq    ->SetValue(std::to_string(s.startFreq));
         m_txtStopFreq     ->SetValue(std::to_string(s.stopFreq));
-        m_txtRefLevel     ->SetValue(std::to_string(s.refLevel));
-        m_spinAttenuation ->SetValue(s.att);
+        m_txtRefLevel     ->SetValue(s.refLevel);
+        m_spinAttenuation ->SetValue(static_cast<int>(s.att));
         m_choiceUnit      ->SetStringSelection(s.unit);
         m_txtRBW          ->SetValue(std::to_string(s.rbw));
         m_txtVBW          ->SetValue(std::to_string(s.vbw));

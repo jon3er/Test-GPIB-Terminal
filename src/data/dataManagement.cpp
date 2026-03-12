@@ -1,4 +1,5 @@
 #include "dataManagement.h"
+#include "FsuMeasurement.h"
 
 //------sData Beginn------
 sData::sData(const char* type)
@@ -96,6 +97,69 @@ void sData::getXYCord(int& x, int& y, int mesurementNumber)
 
     x = ((mesurementNumber - 1) / yPoints);
     y = ((mesurementNumber - 1) % yPoints);
+}
+
+void sData::importFsuSettings()
+{
+    fsuMeasurement& fsu = fsuMeasurement::get_instance();
+    m_fsuSettings.mode   = fsu.getMeasurementMode();
+    m_fsuSettings.sweep  = fsu.returnSweepSettings();
+    m_fsuSettings.iq     = fsu.returnIqSettings();
+    m_fsuSettings.marker = fsu.returnMarkerPeakSettings();
+    m_fsuSettings.costumFile = fsu.getFileName();
+}
+
+void sData::applyFsuSettingsToParam()
+{
+    switch (m_fsuSettings.mode)
+    {
+        case MeasurementMode::SWEEP:
+        {
+            const auto& s = m_fsuSettings.sweep;
+            m_dsParam->startFreq      = s.startFreq;
+            m_dsParam->endFreq        = s.stopFreq;
+            m_dsParam->refPegel       = s.refLevel;
+            m_dsParam->HFDaempfung    = s.att;
+            m_dsParam->ampUnit        = s.unit;
+            m_dsParam->RBW            = s.rbw;
+            m_dsParam->VBW            = s.vbw;
+            m_dsParam->sweepTime      = s.sweepTime;
+            m_dsParam->detektor       = s.detector;
+            m_dsParam->NoPoints_Array = s.points;
+            break;
+        }
+        case MeasurementMode::IQ:
+        {
+            const auto& s = m_fsuSettings.iq;
+            m_dsParam->centerFreq    = s.centerFreq;
+            m_dsParam->refPegel      = std::stoi(s.refLevel);
+            m_dsParam->HFDaempfung   = s.att;
+            m_dsParam->ampUnit       = s.unit;
+            m_dsParam->sampleRate    = s.sampleRate;
+            m_dsParam->recordLength  = s.recordLength;
+            m_dsParam->ifBandwidth   = s.ifBandwidth;
+            m_dsParam->triggerSource = s.triggerSource;
+            m_dsParam->triggerLevel  = s.triggerLevel;
+            m_dsParam->triggerDelay  = s.triggerDelay;
+            break;
+        }
+        case MeasurementMode::MARKER_PEAK:
+        {
+            const auto& s = m_fsuSettings.marker;
+            m_dsParam->startFreq   = s.startFreq;
+            m_dsParam->endFreq     = s.stopFreq;
+            m_dsParam->refPegel    = std::stoi(s.refLevel);
+            m_dsParam->HFDaempfung = s.att;
+            m_dsParam->ampUnit     = s.unit;
+            m_dsParam->RBW         = s.rbw;
+            m_dsParam->VBW         = s.vbw;
+            m_dsParam->detektor    = s.detector;
+            break;
+        }
+        case MeasurementMode::COSTUM:
+            m_dsParam->costumFile = m_fsuSettings.costumFile.ToStdString();
+            break;
+    }
 }
 
 

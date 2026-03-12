@@ -99,14 +99,14 @@ public:
     // Sweep Messung
     struct lastSweepSettings
     {
-        double startFreq;
-        double stopFreq;
-        double refLevel;
-        int points;
-        int att;
-        std::string unit;
-        int rbw;
-        int vbw;
+        unsigned int startFreq;
+        unsigned int stopFreq;
+        int refLevel;
+        unsigned int points;
+        unsigned int att;
+        wxString unit;
+        unsigned int rbw;
+        unsigned int vbw;
         std::string sweepTime = "ON";
         std::string detector;
     };
@@ -119,9 +119,9 @@ public:
     struct IqSettings
     {
         double centerFreq;
-        double refLevel;
-        int att;
-        std::string unit;
+        std::string refLevel;
+        unsigned int att;
+        wxString unit;
         double sampleRate;
         int recordLength;
         double ifBandwidth;
@@ -137,13 +137,13 @@ public:
     // Marker Peak Messung
     struct MarkerPeakSettings
     {
-        double startFreq;
-        double stopFreq;
-        double refLevel;
-        int att;
-        std::string unit;
-        double rbw;
-        double vbw;
+        unsigned int startFreq;
+        unsigned int stopFreq;
+        std::string refLevel;
+        unsigned int att;
+        wxString unit;
+        unsigned int rbw;
+        unsigned int vbw;
         std::string detector;
     };
 
