@@ -78,13 +78,13 @@ bool CsvFile::saveCsvFile(wxString& filename, sData& data, int mesurementNumb)
     // save whole File at once
     if (mesurementNumb == 0)
     {
-        int count = data.getTotalNumberOfPts();
+        size_t count = data.getTotalNumberOfPts();
 
         for (size_t i = 1; i <= count; i++)
         {
             saveCsvData(file, data, i);
         }
-        
+
         file.Write();
         file.Close();
         return true;
@@ -118,7 +118,7 @@ bool CsvFile::saveCsvFile(wxString& filename, sData& data, int mesurementNumb)
 bool CsvFile::saveCsvHeader(wxTextFile &file, sData& data)
 {
     sData::sParam* dsParam = data.GetParameter();
-    
+
     //file.AddLine("Header Information"); // Leerzeile
     file.AddLine(wxString::Format("%s%c%s",   HeaderInfo::fileName.data(),        m_separator, dsParam->File));
     file.AddLine(wxString::Format("%s%c%s",   HeaderInfo::date.data(),            m_separator, dsParam->Date));
@@ -250,10 +250,10 @@ bool CsvFile::saveCsvData(wxTextFile& file, sData data, int mesurementNumb, bool
         std::cerr << kErrPrefixStr.CsvSave <<"File not opened" << std::endl;
         return false;
     }
-    
+
     int xPoints = data.getNumberOfPts_X();
     int yPoints = data.getNumberOfPts_Y();
-    
+
     // find line with current
     bool isMarker = (data.getFsuSettings().mode == MeasurementMode::MARKER_PEAK);
     const char* label1 = isMarker ? "Freq" : "Real";
@@ -279,7 +279,7 @@ bool CsvFile::saveCsvData(wxTextFile& file, sData data, int mesurementNumb, bool
 
         file.GetLine(lineNumber + 1) << m_separator << imag[i];
     }
-    
+
     return true;
 }
 
@@ -295,7 +295,7 @@ bool CsvFile::readCsvFile(wxString filename, sData& data)
         file.Close();
         return false;
     }
-    
+
 
     if (!createCsvLookupTable(file))
     {
@@ -331,7 +331,7 @@ bool CsvFile::readCsvHeader(wxTextFile&file, sData& data)
     {
         std::cout << kErrPrefixStr.CsvRead <<"File not opened" << std::endl;
         return false;
-    }   
+    }
 
     sData::sParam* dsParam = data.GetParameter();
 
@@ -352,9 +352,9 @@ bool CsvFile::readCsvHeader(wxTextFile&file, sData& data)
     dsParam->Type = file.GetLine(3).AfterFirst(separator).Trim(false).Trim();
 
     long lVal;
-    if (file.GetLine(4).AfterFirst(separator).ToLong(&lVal)) 
+    if (file.GetLine(4).AfterFirst(separator).ToLong(&lVal))
         dsParam->NoPoints_X = lVal;
-    if (file.GetLine(5).AfterFirst(separator).ToLong(&lVal)) 
+    if (file.GetLine(5).AfterFirst(separator).ToLong(&lVal))
         dsParam->NoPoints_Y = lVal;
 
     // Messeinstellungen je nach Modus einlesen
@@ -380,7 +380,7 @@ bool CsvFile::readCsvHeader(wxTextFile&file, sData& data)
 
     // Resize Datastorage array for data
     data.resize3DData(dsParam->NoPoints_X, dsParam->NoPoints_Y, dsParam->NoPoints_Array);
-    
+
     std::cout << dsParam->NoPoints_X << " x " << dsParam->NoPoints_Y << " x " << dsParam->NoPoints_Array << std::endl;
 
     return true;
@@ -521,7 +521,7 @@ bool CsvFile::readCsvData(wxTextFile& file, sData& data)
     {
         std::cout << "Failed to open file" << std::endl;
         return false;
-    }   
+    }
 
     // Read all available measurements
     for (int mesurementNumb = 1; mesurementNumb <= totalMeasurements; mesurementNumb++)
@@ -647,7 +647,7 @@ bool CsvFile::writeMatrixIndexCsv(wxTextFile& file, sData data)
     const char* label2 = isMarker ? "Amp"  : "Imag";
 
     size_t count = xPoints * yPoints;
-    
+
     for (size_t i = 0; i < count; i++)
     {
         std::string index = getIndexNumbers(xPoints, yPoints, i + 1);
@@ -673,9 +673,9 @@ std::string CsvFile::getIndexNumbers(int xPoints, int yPoints, int mesurementNum
     }
     else
     {
-        matrixSeparator = ","; 
+        matrixSeparator = ",";
     }
-    
+
 
     if (mesurementNumb < 1 || mesurementNumb > xPoints * yPoints)
     {
@@ -693,7 +693,7 @@ std::string CsvFile::getIndexNumbers(int xPoints, int yPoints, int mesurementNum
     }
     else // snaking
     {
-        
+
         if (xPosition % 2 == 0) // is even
         {
             yPosition = yPoints - (idx % yPoints) + 1;

@@ -98,15 +98,24 @@ std::string PrologixUsbGpibAdapter::write(std::string msg)
 std::string PrologixUsbGpibAdapter::send(std::string msg, int DelayMs)
 {
     write(msg);
-    checkIfMsgAvailable(DelayMs);
-    quaryBuffer();
+    int i = 0;
+    sleepMs(5);
+
+    while ((quaryBuffer() < 1)&& (i < DelayMs))
+    {
+        sleepMs(1);
+        i++;
+    }
+
+    std::cout << "send Responce Time: " << 5 + i << " ms" << std::endl;
+
     return read();
 }
 
 bool PrologixUsbGpibAdapter::checkIfMsgAvailable(int TimeOutMs)
 {
     int elapsedMs = 0;
-    int pollIntervalMs = 20; // Abfrage-Intervall (verhindert 100% CPU-Last)
+    int pollIntervalMs = 30; // Abfrage-Intervall (verhindert 100% CPU-Last)
     bool msgReceived = false;
 
     while (elapsedMs < TimeOutMs) {

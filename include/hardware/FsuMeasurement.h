@@ -66,7 +66,7 @@ public:
 
     void setX_Data(std::vector<double> x) { m_x_Data = x; };
     void setY_Data(std::vector<double> y) { m_y_Data = y; };
-    void setFreqStartEnd(double FreqS, double FreqE);
+    void setFreqStartEnd(unsigned int FreqS, unsigned int FreqE);
 
 
     // Measurement
@@ -94,7 +94,7 @@ public:
     // Helper functions
     // Definition der unterstützten Datentypen für die Parameter
 
-    using SettingValue = std::variant<double, int, std::string>;
+    using SettingValue = std::variant<double,unsigned int, int, std::string>;
     bool checkIfSettingsValidSweep(ScpiCommand command, const SettingValue& value);
 
 
@@ -125,7 +125,7 @@ public:
     // IQ Messung
     struct IqSettings
     {
-        double centerFreq;
+        unsigned int centerFreq;
         std::string refLevel;
         unsigned int att;
         wxString unit;

@@ -47,13 +47,8 @@ bool fsuMeasurement::executeMeasurement(int TimeOutMs)
         adapter.write("INIT:IMM");      // trigger measurement
         adapter.write("*WAI");          // wait for measurement to finish
         adapter.write("TRAC? TRACE1");
-        if (adapter.checkIfMsgAvailable(TimeOutMs))
-        {   
-            adapter.write("++read eoi");
-            sleepMs(10);
-            commaSeparatedValues = adapter.read();
-        }
-        
+        adapter.send("++read eoi", 3000);
+
 
         break;
 
@@ -62,8 +57,8 @@ bool fsuMeasurement::executeMeasurement(int TimeOutMs)
         adapter.write("TRAC:IQ:SET NORM, 10MHz, 1024, FREE, POS, 0, 0");      // TODO auf andere Trigger anpassbar machen
         adapter.write("*WAI");          // wait for measurement to finish
         adapter.write("TRAC:IQ:DATA?");
-        if (adapter.checkIfMsgAvailable(TimeOutMs))
-            commaSeparatedValues = adapter.send("++read eoi");
+
+        commaSeparatedValues = adapter.send("++read eoi",3000);
         break;
 
     case MeasurementMode::MARKER_PEAK:
@@ -174,7 +169,7 @@ std::vector<double> fsuMeasurement::calcFreqData()
 
     return freqRange;
 }
-void fsuMeasurement::setFreqStartEnd(double FreqS, double FreqE)
+void fsuMeasurement::setFreqStartEnd(unsigned int FreqS, unsigned int FreqE)
 {
     m_FreqStart = FreqS;
     m_FreqEnd = FreqE;
@@ -187,34 +182,34 @@ try {
     {
         case ScpiCommand::START_FREQUENCY:
         case ScpiCommand::END_FREQUENCY: {
-            double freq = std::get<double>(value);
+            unsigned int freq = std::get<unsigned int>(value);
             // Beispiel: R&S FSU26 geht bis 26.5 GHz
-            return (freq >= 0.0 && freq <= 26.5e9);
+            return (freq >= 0 && freq <= 26'500'000'000);
         }
 
         case ScpiCommand::REF_LEVEL: {
-            double level = std::get<double>(value);
-            return (level >= -130.0 && level <= 30.0);
+            int level = std::get<int>(value);
+            return (level >= -130 && level <= 30);
         }
 
         case ScpiCommand::RF_ATTENUATION: {
-            int att = std::get<int>(value);
+            unsigned int att = std::get<unsigned int>(value);
             // Dämpfung meist in 5dB Schritten bis 75dB
             return (att >= 0 && att <= 75 && (att % 5 == 0));
         }
 
         case ScpiCommand::RBW:
         case ScpiCommand::VBW: {
-            double bw = std::get<double>(value);
+            unsigned int bw = std::get<unsigned int>(value);
             // Bandbreiten meist 1Hz bis 50MHz (FSU)
-            return (bw >= 1.0 && bw <= 50.0e6);
+            return (bw >= 1 && bw <= 50'000'000);
         }
 
         case ScpiCommand::SWEEP_POINTS: {
-                int points = std::get<int>(value);
+                unsigned int points = std::get<unsigned int>(value);
 
                 // Definierte zulässige Festwerte für R&S FSU
-                static const std::set<int> allowedPoints = {
+                static const std::set<unsigned int> allowedPoints = {
                     155, 313, 625, 1251, 1999, 2501, 5001, 10001, 20001, 30001
                 };
 
@@ -236,8 +231,8 @@ try {
 
         case ScpiCommand::CENTER_FREQUENCY:
         case ScpiCommand::SPAN_FREQUENCY: {
-            double freq = std::get<double>(value);
-            return (freq >= 0.0 && freq <= 26.5e9);
+            unsigned int freq = std::get<unsigned int>(value);
+            return (freq >= 0 && freq <= 26'500'000'000);
         }
 
         case ScpiCommand::IQ_SAMPLE_RATE: {
@@ -292,19 +287,19 @@ bool fsuMeasurement::writeSettingsToGpib()
     {
         case MeasurementMode::SWEEP:
             return writeSweepSettings(m_lastSwpSettings);
-            
+
         case MeasurementMode::IQ:
             return writeIqSettings(m_lastIqSettings);
-            
+
         case MeasurementMode::MARKER_PEAK:
             return writeMarkerPeakSettings(m_lastMarkerPeakSettings);
-            
+
         case MeasurementMode::COSTUM:
             return true;
-            
+
         default:
             return false;
-            
+
     }
 }
 
@@ -355,11 +350,8 @@ bool fsuMeasurement::readSweepSettings()
 
     std::cout << "read Sweep settings: " << queryCmd << std::endl;
 
-    adapter.write(queryCmd);
 
-    sleepMs(100); 
-
-    std::string response = adapter.read();
+    std::string response = adapter.send(queryCmd);
     std::cout << "response Sweep settings: " << response << std::endl;
 
 
@@ -431,12 +423,11 @@ bool fsuMeasurement::readIqSettings()
                            scpiQueryCommands.at(ScpiCommand::TRIGGER_DELAY);
 
     auto& adapter = PrologixUsbGpibAdapter::get_instance();
-    adapter.write(queryCmd);
-    std::cout << "read IQ settings: " << queryCmd << std::endl;
-    
-    sleepMs(100);
 
-    std::string response = adapter.read();
+    std::string response = adapter.send(queryCmd);
+
+    std::cout << "read IQ settings: " << queryCmd << std::endl;
+
     std::cout << "response IQ  settings: " << response << std::endl;
     if (response.substr(0,6)== "Failed") return false;
 
@@ -497,11 +488,10 @@ bool fsuMeasurement::readMarkerPeakSettings()
                            scpiQueryCommands.at(ScpiCommand::DETECTOR);
 
     auto& adapter = PrologixUsbGpibAdapter::get_instance();
-    adapter.write(queryCmd);
-    std::cout << "read Marker settings: " << queryCmd << std::endl;
-    sleepMs(100);
+    std::string response = adapter.send(queryCmd);
 
-    std::string response = adapter.read();
+    std::cout << "read Marker settings: " << queryCmd << std::endl;
+
     std::cout << "responce Marker settings: " << response << std::endl;
 
     if (response.substr(0,6)== "Failed") return false;

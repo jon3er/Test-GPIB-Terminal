@@ -48,6 +48,8 @@ public:
     ~PrologixUsbGpibAdapter();
 
     bool checkIfAdapterAvailable();
+
+    // nur mit ++auto 0 benutzten!
     bool checkIfGpibDeviceAvailable();
 
 
@@ -57,7 +59,7 @@ public:
 
     /**
      * @brief Reads avalible data from Adapter
-     * @param forceReadBytes (optional) reads until set number of read bytes is reached 
+     * @param forceReadBytes (optional) reads until set number of read bytes is reached
      */
     std::string read(unsigned int forceReadBytes = 0);
 
@@ -88,12 +90,12 @@ public:
      * @brief checks if Adapter buffer has data avalibe to read
      */
     DWORD       quaryBuffer();
-    
+
     /**
      * @brief reads command from a .txt file
      */
     void readScriptFile(const wxString& dirPath, const wxString& file, wxArrayString* logAdapterReceived = nullptr, const std::atomic<bool>* stopFlag = nullptr);
- 
+
     /**
      * @brief unloads VCP drivers to solve drive conficts on linux/gnu
      */
@@ -117,11 +119,11 @@ public:
     // set methodes
     void setBaudrate(int BaudrateNew);
     void setBusy(bool busy) {m_deviceInfo.busy = busy;};
-    
+
 private:
     PrologixDeviceInfo m_deviceInfo;
 
-    
+
 
     // helper Functionen
 

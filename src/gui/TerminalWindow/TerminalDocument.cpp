@@ -21,7 +21,7 @@ TerminalDocument::TerminalDocument(PrologixUsbGpibAdapter& adapter)
 
 TerminalDocument::~TerminalDocument()
 {
-    
+
 }
 
 // ---------------------------------------------------------------------------
@@ -230,7 +230,16 @@ std::string TerminalDocument::SendToDevice(const std::string& args)
     wxString writeResult = m_adapter.write(args);
     oss << writeResult.ToStdString();
 
-    sleepMs(100);
+    int i;
+    sleepMs(8);
+
+    while (m_adapter.quaryBuffer() < 1)
+    {
+        sleepMs(1);
+        i++;
+
+    }
+    std::cout << "waited: " << 8+i << " ms" << std::endl;
 
     std::cerr << "Reading from device..." << std::endl;
 
