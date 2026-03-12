@@ -400,7 +400,6 @@ void MainProgrammWin::MenuMesurementLoad(wxCommandEvent& event)
 }
 void MainProgrammWin::MenuMesurementSweep(wxCommandEvent& event)
 {
-
     // Open sweep Dialog
     SettingsDialog dlg(this, MeasurementMode::SWEEP);
     dlg.ShowModal();

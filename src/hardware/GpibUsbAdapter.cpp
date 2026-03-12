@@ -288,6 +288,7 @@ void PrologixUsbGpibAdapter::config()
     write(ProLogixCmdLookup.at(ProLogixCmd::EOT_ENABLE) + " 0");
     write(ProLogixCmdLookup.at(ProLogixCmd::EOT_CHAR)   + " 10");
     write(ProLogixCmdLookup.at(ProLogixCmd::ADDR)       + " 20");
+    write("SYST:DISP:UPD ON"); // turn Display on
     std::string responce = send("syst:err?");
 
     std::cout << "Config fin - status: " << responce << std::endl;
