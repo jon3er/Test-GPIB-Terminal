@@ -71,9 +71,16 @@ public:
     /**
      * @brief send string to Adapter and listens for a responce
      * @param msg Message to write to device
-     * @param DelayMs (Optional) change wait time before expecting a responce
+     * @param timeOut (Optional) change wait time before expecting a responce. Default = 100
      */
-    std::string send(std::string msg, int DelayMs = 100);
+    std::string send(std::string msg, int timeOut = 100);
+
+    /**
+    * @brief send a String wait for Specified time then quarys for a responce
+    * @param msg Message to send to device
+    * @param DelayMs (Optional) wait forced wait time default = 100 ms
+    */
+    std::string sendForceDelay(std::string msg, int DelayMs = 100);
 
     /**
      * @brief Checks GPIB Bus Status bit-4 (message bit)

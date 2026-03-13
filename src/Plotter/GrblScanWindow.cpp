@@ -120,6 +120,8 @@ void GrblScanWindow::OnStart(wxCommandEvent& event) {
         MessInfo->NoPoints_X = rows;
         MessInfo->NoPoints_Y = cols;
 
+        std::cout << "Start Measurement" << std::endl;
+
         auto fsu = &fsuMeasurement::get_instance();
         fsu->setNoPoints(rows, cols);
 

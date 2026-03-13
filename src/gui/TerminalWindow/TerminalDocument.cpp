@@ -233,7 +233,7 @@ std::string TerminalDocument::SendToDevice(const std::string& args)
     int i = 0;
     sleepMs(8);
 
-    while (m_adapter.quaryBuffer() < 1)
+    while ((m_adapter.quaryBuffer() < 1) && (i < 500))
     {
         sleepMs(1);
         i++;

@@ -112,6 +112,17 @@ std::string PrologixUsbGpibAdapter::send(std::string msg, int DelayMs)
     return read();
 }
 
+
+std::string PrologixUsbGpibAdapter::sendForceDelay(std::string msg, int DelayMs)
+{
+    write(msg);
+
+    sleepMs(DelayMs);
+    std::cout << "write / read Time Delay forced: " << DelayMs << " ms" << std::endl;
+
+    return read();
+}
+
 bool PrologixUsbGpibAdapter::checkIfMsgAvailable(int TimeOutMs)
 {
     int elapsedMs = 0;
@@ -289,7 +300,7 @@ void PrologixUsbGpibAdapter::config()
 
     // setup Adapter settings
     write(ProLogixCmdLookup.at(ProLogixCmd::CLR));
-    sleepMs(200);
+    //sleepMs(200);
     write(ProLogixCmdLookup.at(ProLogixCmd::MODE)       + " 1");
     write(ProLogixCmdLookup.at(ProLogixCmd::AUTO)       + " 1");
     write(ProLogixCmdLookup.at(ProLogixCmd::EOS)        + " 2");
@@ -298,7 +309,7 @@ void PrologixUsbGpibAdapter::config()
     write(ProLogixCmdLookup.at(ProLogixCmd::EOT_CHAR)   + " 10");
     write(ProLogixCmdLookup.at(ProLogixCmd::ADDR)       + " 20");
     write("SYST:DISP:UPD ON"); // turn Display on
-    std::string responce = send("syst:err?");
+    std::string responce = send("syst:err?", 1000);
 
     std::cout << "Config fin - status: " << responce << std::endl;
 

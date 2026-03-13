@@ -30,6 +30,7 @@ fsuMeasurement::~fsuMeasurement()
 bool fsuMeasurement::executeMeasurement(int TimeOutMs)
 {
     // TODO Auf enums anpassen
+
     auto& adapter = PrologixUsbGpibAdapter::get_instance();
 
     // Setup adapter settings for measurement
@@ -40,7 +41,7 @@ bool fsuMeasurement::executeMeasurement(int TimeOutMs)
     adapter.write("++eos 2");
 
     std::string commaSeparatedValues;
-
+    std::string IQParameter;
 
     switch (m_lastMeasurementMode)
     {
@@ -63,13 +64,15 @@ bool fsuMeasurement::executeMeasurement(int TimeOutMs)
         break;
 
     case MeasurementMode::IQ:
+        adapter.write("INST:SEL SAN");
         adapter.write("TRAC:IQ:STAT ON");
+        IQParameter = m_lastIqSettings.sampleRate;
         adapter.write("TRAC:IQ:SET NORM, 10MHz, 1024, FREE, POS, 0, 0");      // TODO auf andere Trigger anpassbar machen
         adapter.write("*WAI");          // wait for measurement to finish
         adapter.write("TRAC:IQ:DATA?");
         adapter.write("++read eoi");
         // auf iq messpunkte anpassen.
-        while (adapter.quaryBuffer() < (0.8*m_lastSwpSettings.points * 18)) // 18 bytes per data point
+        while (adapter.quaryBuffer() < (0.8*1024 * 18)) // 18 bytes per data point
         {
             sleepMs(50);
         }
@@ -78,13 +81,13 @@ bool fsuMeasurement::executeMeasurement(int TimeOutMs)
         break;
 
     case MeasurementMode::MARKER_PEAK:
-        adapter.write("INIT:CONT OFF"); // turn off continous measurement
-        adapter.write("INIT:IMM");      // trigger measurement
-        adapter.write("*WAI");          // wait for measurement to finish
-        adapter.write("CALC:MARK1:MAX");        // TODO make type of marker selectable
-        commaSeparatedValues = adapter.send("CALC:MARK1:X?");
-        commaSeparatedValues += ",";
-        commaSeparatedValues += adapter.send("CALC:MARK1:Y?");  // Save x and y values
+        adapter.write("++auto 1");
+        adapter.write("INIT:CONT OFF;INIT;*WAI");          // wait for measurement to finishCALC:MARK1:X?;Y?
+        adapter.write("CALC:MARK1:ON");
+        adapter.write("CALC:MARK1:MAX");        // TODO make type of marker selectable MIN / MAX
+        // adapter.write("++read");
+        sleepMs(50);
+        commaSeparatedValues = adapter.send("CALC:MARK1:X?;Y?", 5000);// Save x and y values
 
 
         break;
