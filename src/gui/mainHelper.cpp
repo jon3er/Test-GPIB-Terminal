@@ -5,6 +5,7 @@ bool PlotterMesurement(sData* data, int measurementNumber)
 {
     wxArrayString logAdapterReceived;
     static CsvFile csvFile;
+    wxString TypeText;
 
     std::vector<double> MessWerteReal;
     std::vector<double> MessWerteImag;
@@ -31,14 +32,18 @@ bool PlotterMesurement(sData* data, int measurementNumber)
         {
         case MeasurementMode::SWEEP:
             anz = data->getNumberOfPts_Array();
+            TypeText = "Sweep";
             break;
         case MeasurementMode::IQ:
             anz = data->getRecordLength();
+            TypeText = "IQ";
             break;
         case MeasurementMode::MARKER_PEAK:
             anz = data->getNumberOfPts_Array();
+            TypeText = "Marker";
             break;
         case MeasurementMode::COSTUM:
+            TypeText = "Costum";
             // TODO set the Lenght with skript 
         default:
             break;
@@ -66,7 +71,7 @@ bool PlotterMesurement(sData* data, int measurementNumber)
 
     // save data to a Csv file
     wxString fileName = System::filePathRoot + "LogFiles" + System::fileSystemSlash +
-             data->GetFile() + "_" + data->GetDate() + "_" + data->GetTime() +".csv";
+             data->GetFile() + "_" + TypeText + "_" + data->GetDate() + "_" + data->GetTime() +".csv";
     if(!csvFile.saveCsvFile(fileName, *data, measurementNumber))
     {
         std::cout << "[Error] Failed to save data to CSV file" << std::endl;

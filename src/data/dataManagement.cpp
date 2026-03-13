@@ -339,9 +339,7 @@ void sData::setNumberofPts_Array(int numb)
         catch(const std::exception& e)
         {
             std::cerr << "Set Number of Points Array Error" << e.what() << '\n';
-        }
-        
-        
+        }       
 }
 
 bool sData::setTimeAndDate()
