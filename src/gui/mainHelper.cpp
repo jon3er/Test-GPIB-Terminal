@@ -4,7 +4,7 @@
 bool PlotterMesurement(sData* data, int measurementNumber)
 {
     wxArrayString logAdapterReceived;
-    CsvFile csvFile;
+    static CsvFile csvFile;
 
     std::vector<double> MessWerteReal;
     std::vector<double> MessWerteImag;
@@ -14,16 +14,36 @@ bool PlotterMesurement(sData* data, int measurementNumber)
 
     auto fsu = &fsuMeasurement::get_instance();
 
+    std::cout << "current measurementNumber "<<measurementNumber << std::endl;
+
+    if (measurementNumber == 1)
+    {
+        //CsvFile csvFileRest;
+        //csvFile = csvFileRest;
+
+        data->getFsuSettings();
+        int x = data->getNumberOfPts_X();
+        int y = data->getNumberOfPts_Y();
+        int anz = data->getNumberOfPts_Array();
+
+        std::cout << "array size " << "x " <<x  <<"y "<< y << "anz "<< anz << std::endl;
+        data->resize3DData(x,y,anz);
+    }
+
     fsu->executeMeasurement();
     // Get last measuremtent results
+    std::cout << "get Resultes from fsu" << std::endl;
     MessWerteReal = fsu->getX_Data();
     MessWerteImag = fsu->getY_Data();
+
+    std::cout << "passed resultes" << MessWerteReal[1] << std::endl;
 
 
     data->getXYCord(x, y, measurementNumber);
     // save lates data in 3d array
     data->set3DDataReal(MessWerteReal, x, y);
     data->set3DDataImag(MessWerteImag, x, y);
+
 
     // save data to a Csv file
     wxString fileName = System::filePathRoot + "LogFiles" + System::fileSystemSlash +

@@ -120,8 +120,6 @@ void GrblScanWindow::OnStart(wxCommandEvent& event) {
         MessInfo->NoPoints_X = rows;
         MessInfo->NoPoints_Y = cols;
 
-
-
         auto fsu = &fsuMeasurement::get_instance();
         fsu->setNoPoints(rows, cols);
 
@@ -132,7 +130,7 @@ void GrblScanWindow::OnStart(wxCommandEvent& event) {
             // This now respects the m_shouldCancel flag
             m_controller->StartScanCycle(startX, startY, rows, cols, stepX, stepY,
                 [this, rows, cols](int r, int c, double x, double y) {
-                    int measurementNumber = r * cols + c;  // Korrekte Berechnung
+                    int measurementNumber = (r * cols + c) + 1 ;  // Korrekte Berechnung Messnummer beginnt mit 1 nicht 0!!!
                     std::cout << "Mesurement number: " << measurementNumber << std::endl;
 
                     bool success;

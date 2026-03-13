@@ -33,6 +33,8 @@ bool fsuMeasurement::executeMeasurement(int TimeOutMs)
     auto& adapter = PrologixUsbGpibAdapter::get_instance();
 
     // Setup adapter settings for measurement
+    // clears old msgs
+    adapter.read();
     adapter.write("++mode 1");
     adapter.write("++auto 0");
     adapter.write("++eos 2");
@@ -47,7 +49,15 @@ bool fsuMeasurement::executeMeasurement(int TimeOutMs)
         adapter.write("INIT:IMM");      // trigger measurement
         adapter.write("*WAI");          // wait for measurement to finish
         adapter.write("TRAC? TRACE1");
-        adapter.send("++read eoi", 3000);
+        sleepMs(10);
+        adapter.write("++read eoi");
+        while (adapter.quaryBuffer() < (0.8*m_lastSwpSettings.points * 18)) // 18 bytes per data point
+        {
+            sleepMs(50);
+        }
+        sleepMs(50);
+        commaSeparatedValues = adapter.read();
+        //commaSeparatedValues = adapter.send("++read eoi", 3000);
 
 
         break;
@@ -57,8 +67,14 @@ bool fsuMeasurement::executeMeasurement(int TimeOutMs)
         adapter.write("TRAC:IQ:SET NORM, 10MHz, 1024, FREE, POS, 0, 0");      // TODO auf andere Trigger anpassbar machen
         adapter.write("*WAI");          // wait for measurement to finish
         adapter.write("TRAC:IQ:DATA?");
-
-        commaSeparatedValues = adapter.send("++read eoi",3000);
+        adapter.write("++read eoi");
+        // auf iq messpunkte anpassen.
+        while (adapter.quaryBuffer() < (0.8*m_lastSwpSettings.points * 18)) // 18 bytes per data point
+        {
+            sleepMs(50);
+        }
+        sleepMs(50);
+        commaSeparatedValues = adapter.read();
         break;
 
     case MeasurementMode::MARKER_PEAK:
@@ -86,6 +102,8 @@ bool fsuMeasurement::executeMeasurement(int TimeOutMs)
 
     seperateDataBlock(commaSeparatedValues, m_x_Data, m_y_Data); // Separates the values and passes them to the internal data storage
 
+    std::cout << "finished execute Measurement!" << std::endl;
+
     return true;
 }
 
@@ -93,20 +111,15 @@ void fsuMeasurement::seperateDataBlock(const wxString& receivedString,
                                         std::vector<double>& Real, std::vector<double>& Imag)
 {
     // removes \n at the end of the msg
-    wxString str = receivedString.AfterFirst('\n');
+    wxString str = receivedString; //.AfterFirst('\n');
 
     str.Trim(true).Trim(false);
-
-    // removes junk at the front of the string
-    size_t pos = str.find_last_of(" ");
-    if (pos != std::string::npos) {
-        // Erstelle Substring ab Position nach dem Leerzeichen
-        str.substr(pos + 1);
-    }
 
     // Kein Leerzeichen gefunden
 
     wxArrayString seperatedStrings = wxStringTokenize(str, ",");
+
+    //std::cout << "seperated Data: " << seperatedStrings << std::endl;
 
     double value;
     Real.clear(); // empty vectors

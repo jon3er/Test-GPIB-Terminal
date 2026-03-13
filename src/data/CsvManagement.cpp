@@ -22,6 +22,8 @@ bool CsvFile::saveCsvFile(wxString& filename, sData& data, int mesurementNumb)
     real = data.getRealArray();
     imag = data.getImagArray();
 
+    std::cout << "saveCsvFile()" << std::endl;
+
     // filename.Append(timestamp);
     if (!filename.Lower().EndsWith(".csv"))
     {
@@ -52,14 +54,18 @@ bool CsvFile::saveCsvFile(wxString& filename, sData& data, int mesurementNumb)
     if (mesurementNumb == 1 || mesurementNumb == 0) // weiteren check hinzufügen
     {
         // Import current fsu settings once before writing
-        data.importFsuSettings();
+
+        // create array
+        //data.resize3DData(data.getNumberOfPts_X(),data.getNumberOfPts_Y(),data.getNumberOfPts_Array());
 
         // Write header
+        std::cout << "save header" << std::endl;
         if(!saveCsvHeader(file, data))
         {
             std::cout << kErrPrefixStr.CsvSave <<"Failed to write header" << std::endl;
             return false;
         }
+        std::cout << "write matrix" << std::endl;
         // Write indexes
         if (!writeMatrixIndexCsv(file, data))
         {
@@ -67,6 +73,7 @@ bool CsvFile::saveCsvFile(wxString& filename, sData& data, int mesurementNumb)
             return false;
         }
         // create lookup table
+        std::cout << "create lookup" << std::endl;
         if (!createCsvLookupTable(file))
         {
             std::cout << kErrPrefixStr.CsvSave <<"Failed to create lookup table" << std::endl;

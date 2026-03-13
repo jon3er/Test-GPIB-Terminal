@@ -106,14 +106,14 @@ public:
     // Sweep Messung
     struct lastSweepSettings
     {
-        unsigned int startFreq = 10'000'000;
-        unsigned int stopFreq = 50'000'000;
+        int startFreq = 10'000'000;
+        int stopFreq = 50'000'000;
         int refLevel;
-        unsigned int points = 625;
-        unsigned int att;
+        int points = 625;
+        int att;
         wxString unit;
-        unsigned int rbw;
-        unsigned int vbw;
+        int rbw;
+        int vbw;
         std::string sweepTime = "ON";
         std::string detector;
     };
