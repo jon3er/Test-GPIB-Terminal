@@ -657,7 +657,12 @@ void SettingsDialog::OnStart(wxCommandEvent& /*event*/)
     } else {
         fsuMeasurement* fsu = &fsuMeasurement::get_instance();
 
+        MeasurementDocument* measDoc = new MeasurementDocument(
+            PrologixUsbGpibAdapter::get_instance(), fsuMeasurement::get_instance());
+
         PlotWindow* mw = new PlotWindow(GetParent());
+        mw->SetDocument(measDoc);
+        mw->SetOwnsDocument(true);
         mw->Show();
     }
 }

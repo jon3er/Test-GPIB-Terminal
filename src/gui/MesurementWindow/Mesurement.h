@@ -58,6 +58,7 @@ protected:
     wxChoice*     m_selectMesurement;
     mpWindow*     m_plot;
     mpFXYVector*  m_vectorLayer;
+    mpFXYVector*  m_vectorLayerImag;
     wxMenuBar*    m_menuBar;
 
     // Layout panels
@@ -79,6 +80,8 @@ private:
     void executeScriptEvent(wxCommandEvent& event);
     void OnSelectMeasurement(wxCommandEvent& event);
     void PopulateSelectors(unsigned int nX, unsigned int nY);
+    bool ApplySelectionToPlot(int xIndex, int yIndex, bool logSelection = false);
+    bool IsIqMode(const sData::sParam* param, const sData& data) const;
     void updatePlotData();
     void OnClose(wxCloseEvent& event);
 

@@ -133,7 +133,8 @@ void fsuMeasurement::seperateDataBlock(const wxString& receivedString,
 
         if (data.ToCDouble(&value))
         {
-            if (m_lastMeasurementMode == MeasurementMode::IQ)
+            if ((m_lastMeasurementMode == MeasurementMode::IQ) 
+                || (m_lastMeasurementMode == MeasurementMode::MARKER_PEAK))
             {
                 m_ImagValues = true;
                 // I/Q every other value alternates between the two

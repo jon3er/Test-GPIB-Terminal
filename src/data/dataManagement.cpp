@@ -1,6 +1,8 @@
 #include "dataManagement.h"
 #include "FsuMeasurement.h"
 
+#include <stdexcept>
+
 //------sData Beginn------
 sData::sData(const char* type)
 {
@@ -224,7 +226,7 @@ bool sData::setFileType(wxString Type)
 }
 bool sData::setMeasurementNumb(int Numb)
 {
-    if (Numb <= 1)
+    if (Numb >= 1)
     {
         try
         {
@@ -417,18 +419,34 @@ void sData3D::resize(int x, int y, int Anzahl)
 
 double& sData3D::at(int x, int y, int dataIndex)
 {
+    if (x < 0 || y < 0 || dataIndex < 0 ||
+        x >= m_X_Messpunkte || y >= m_Y_Messpunkte || dataIndex >= m_Messpunkte)
+    {
+        throw std::out_of_range("sData3D::at index out of range");
+    }
+
     int index = (y*m_X_Messpunkte + x) * m_Messpunkte + dataIndex;
     return m_dataArray[index];
 }
 
 double* sData3D::getDataPtr(int x, int y)
 {
+    if (x < 0 || y < 0 || x >= m_X_Messpunkte || y >= m_Y_Messpunkte)
+    {
+        throw std::out_of_range("sData3D::getDataPtr index out of range");
+    }
+
     int index = (y*m_X_Messpunkte + x) * m_Messpunkte;
     return &m_dataArray[index];
 }
 
 std::vector<double> sData3D::getSingleArray(int x, int y)
 {
+    if (x < 0 || y < 0 || x >= m_X_Messpunkte || y >= m_Y_Messpunkte)
+    {
+        throw std::out_of_range("sData3D::getSingleArray index out of range");
+    }
+
     int index = (y*m_X_Messpunkte + x) * m_Messpunkte;
     std::vector<double> subVector(m_dataArray.begin() + index, m_dataArray.begin() + index + m_Messpunkte);
 

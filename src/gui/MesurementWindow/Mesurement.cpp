@@ -4,6 +4,8 @@
 #include "cmdGpib.h"
 #include "mainHelper.h"
 
+#include <algorithm>
+
 
 int PlotWindow::s_windowCounter = 0;
 
@@ -129,13 +131,21 @@ PlotWindow::PlotWindow(wxWindow *parent, MainDocument* mainDoc)
 
 
     // 4. Vektor-Layer erstellen
-    m_vectorLayer = new mpFXYVector("Messdaten");
+    m_vectorLayer = new mpFXYVector("Real/Amplitude");
     m_vectorLayer->SetData(freq, realAmp);
     m_vectorLayer->SetContinuity(true); // True = Linie zeichnen
     m_vectorLayer->SetPen(wxPen(wxColour(30, 100, 200), 2, wxPENSTYLE_SOLID)); // kräftiges Blau
     m_vectorLayer->ShowName(true);      // Wichtig für die Legende
 
+    m_vectorLayerImag = new mpFXYVector("Imag");
+    m_vectorLayerImag->SetData(std::vector<double>{}, std::vector<double>{});
+    m_vectorLayerImag->SetContinuity(true);
+    m_vectorLayerImag->SetPen(wxPen(wxColour(200, 90, 40), 2, wxPENSTYLE_SOLID));
+    m_vectorLayerImag->ShowName(true);
+    m_vectorLayerImag->SetVisible(false);
+
     m_plot->AddLayer(m_vectorLayer);
+    m_plot->AddLayer(m_vectorLayerImag);
 
     // 5. Legende hinzufügen (mpInfoLegend ist ein Layer)
     static wxBrush legendBrush(wxColour(248, 248, 252), wxBRUSHSTYLE_SOLID);
@@ -269,11 +279,33 @@ void PlotWindow::OnDocumentChanged(const std::string& changeType)
         // DataUpdated may arrive from a worker thread — guard with CallAfter
         wxEvtHandler::CallAfter([this]()
         {
-            // Pull latest vectors from the document (already copied by WorkerThread)
+            if (!m_document)
+                return;
+
+            sData& results = m_document->GetResultsMutable();
+            sData::sParam* param = results.GetParameter();
+
+            if (param)
+            {
+                PopulateSelectors(static_cast<unsigned int>(std::max(0, param->NoPoints_X)),
+                                  static_cast<unsigned int>(std::max(0, param->NoPoints_Y)));
+
+                int xi = m_choiceXSelector->GetSelection();
+                int yi = m_choiceYSelector->GetSelection();
+                if (ApplySelectionToPlot(xi, yi, false))
+                {
+                    std::cout << "[PlotWindow] Plot refreshed from selected matrix point" << std::endl;
+                    return;
+                }
+            }
+
+            // Fallback: show latest live vector data if matrix selection cannot be resolved yet.
             auto x = m_document->GetXData();
             auto y = m_document->GetYData();
             m_vectorLayer->SetData(x, y);
+            m_vectorLayerImag->SetVisible(false);
             m_plot->Fit();
+            m_plot->Refresh();
             std::cout << "[PlotWindow] Plot refreshed from document" << std::endl;
         });
     }
@@ -339,8 +371,129 @@ void PlotWindow::updatePlotData()
         auto x = m_document->GetXData();
         auto y = m_document->GetYData();
         m_vectorLayer->SetData(x, y);
+        m_vectorLayerImag->SetVisible(false);
     }
     m_plot->Fit();
+    m_plot->Refresh();
+}
+
+bool PlotWindow::IsIqMode(const sData::sParam* param, const sData& data) const
+{
+    if (data.getFsuSettings().mode == MeasurementMode::IQ)
+        return true;
+
+    if (!param)
+        return false;
+
+    wxString type = param->Type;
+    type.MakeLower();
+    return type.Find("iq") != wxNOT_FOUND;
+}
+
+bool PlotWindow::ApplySelectionToPlot(int xIndex, int yIndex, bool logSelection)
+{
+    if (!m_document)
+    {
+        wxLogWarning("PlotWindow: no document attached");
+        return false;
+    }
+
+    sData& data = m_document->GetResultsMutable();
+    sData::sParam* param = data.GetParameter();
+    if (!param)
+    {
+        wxLogWarning("PlotWindow: no measurement header available");
+        return false;
+    }
+
+    if (xIndex < 0 || yIndex < 0 || xIndex >= param->NoPoints_X || yIndex >= param->NoPoints_Y)
+    {
+        wxLogWarning("PlotWindow: selected index [%d ; %d] out of bounds", xIndex + 1, yIndex + 1);
+        return false;
+    }
+
+    std::vector<double> yReal;
+    try
+    {
+        yReal = data.get3DDataReal(xIndex, yIndex);
+    }
+    catch (const std::exception& e)
+    {
+        wxLogWarning("PlotWindow: failed reading real data [%d ; %d]: %s",
+                     xIndex + 1, yIndex + 1, e.what());
+        return false;
+    }
+
+    if (yReal.empty())
+    {
+        wxLogWarning("PlotWindow: no data for selection [%d ; %d]", xIndex + 1, yIndex + 1);
+        return false;
+    }
+
+    const bool iqMode = IsIqMode(param, data);
+    std::vector<double> xAxis = iqMode ? data.GetTimeIQStepVector() : data.GetFreqStepVector();
+    if (xAxis.empty())
+    {
+        wxLogWarning("PlotWindow: failed to build x-axis for selection [%d ; %d]", xIndex + 1, yIndex + 1);
+        return false;
+    }
+
+    size_t n = std::min(xAxis.size(), yReal.size());
+    if (n == 0)
+    {
+        wxLogWarning("PlotWindow: invalid data length for selection [%d ; %d]", xIndex + 1, yIndex + 1);
+        return false;
+    }
+
+    xAxis.resize(n);
+    yReal.resize(n);
+    m_vectorLayer->SetData(xAxis, yReal);
+
+    if (iqMode)
+    {
+        std::vector<double> yImag;
+        try
+        {
+            yImag = data.get3DDataImag(xIndex, yIndex);
+        }
+        catch (const std::exception& e)
+        {
+            wxLogWarning("PlotWindow: failed reading imag data [%d ; %d]: %s",
+                         xIndex + 1, yIndex + 1, e.what());
+            yImag.clear();
+        }
+
+        size_t ni = std::min(n, yImag.size());
+        if (ni > 0)
+        {
+            std::vector<double> xImag(xAxis.begin(), xAxis.begin() + static_cast<long>(ni));
+            yImag.resize(ni);
+            m_vectorLayerImag->SetData(xImag, yImag);
+            m_vectorLayerImag->SetVisible(true);
+        }
+        else
+        {
+            m_vectorLayerImag->SetVisible(false);
+            wxLogWarning("PlotWindow: IQ imag data missing for selection [%d ; %d]", xIndex + 1, yIndex + 1);
+        }
+    }
+    else
+    {
+        m_vectorLayerImag->SetVisible(false);
+    }
+
+    m_document->SetXData(xAxis);
+    m_document->SetYData(yReal);
+
+    m_plot->Fit();
+    m_plot->Refresh();
+
+    if (logSelection)
+    {
+        wxLogMessage("PlotWindow: selected measurement [%d ; %d]", xIndex + 1, yIndex + 1);
+    }
+
+    return true;
 }
 
 void PlotWindow::OnSelectMeasurement(wxCommandEvent& /*event*/)
@@ -351,26 +504,28 @@ void PlotWindow::OnSelectMeasurement(wxCommandEvent& /*event*/)
     if (xi == wxNOT_FOUND || yi == wxNOT_FOUND)
         return;
 
-    long x = xi + 1;
-    long y = yi + 1;
-
-    // TODO: load the measurement at matrix position [x; y] from the data set.
-    wxLogMessage("PlotWindow: selected measurement [%ld ; %ld]", x, y);
+    if (!ApplySelectionToPlot(xi, yi, true))
+    {
+        wxLogWarning("PlotWindow: failed to show selected measurement");
+    }
 }
 
 void PlotWindow::PopulateSelectors(unsigned int nX, unsigned int nY)
 {
+    int prevX = m_choiceXSelector->GetSelection();
+    int prevY = m_choiceYSelector->GetSelection();
+
     m_choiceXSelector->Clear();
     for (unsigned int i = 1; i <= nX; ++i)
         m_choiceXSelector->Append(wxString::Format("%u", i));
     if (nX > 0)
-        m_choiceXSelector->SetSelection(0);
+        m_choiceXSelector->SetSelection((prevX >= 0 && static_cast<unsigned int>(prevX) < nX) ? prevX : 0);
 
     m_choiceYSelector->Clear();
     for (unsigned int i = 1; i <= nY; ++i)
         m_choiceYSelector->Append(wxString::Format("%u", i));
     if (nY > 0)
-        m_choiceYSelector->SetSelection(0);
+        m_choiceYSelector->SetSelection((prevY >= 0 && static_cast<unsigned int>(prevY) < nY) ? prevY : 0);
 }
 
 // -----------------------------------------------------------------------
@@ -466,58 +621,109 @@ void PlotWindow::UpdateInfoPanel(sData::sParam* param)
 
 void PlotWindow::OnMenuFileOpen(wxCommandEvent& event)
 {
-    wxFileDialog openFileDialog(this, _("Import CSV Data"),
-        System::filePathRoot,
-        "",
-        "CSV Files (*.csv)|*.csv|All Files (*.*)|*.*",
-        wxFD_OPEN | wxFD_FILE_MUST_EXIST);
-
-    if (openFileDialog.ShowModal() == wxID_CANCEL)
-        return;
-
-    wxString filePath = openFileDialog.GetPath();
-    sData importedData;
-    CsvFile csvFile;
-
-    if (!csvFile.readCsvFile(filePath, importedData))
+    try
     {
-        wxMessageBox("Failed to read CSV file: " + filePath,
-                     "Import Error", wxOK | wxICON_ERROR, this);
-        return;
-    }
+        wxFileDialog openFileDialog(this, _("Import CSV Data"),
+            System::filePathRoot,
+            "",
+            "CSV Files (*.csv)|*.csv|All Files (*.*)|*.*",
+            wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
-    // Extract data from the imported sData and update the plot
-    sData::sParam* param = importedData.GetParameter();
-    std::vector<double> realAmp, imagAmp, freq;
-    importedData.GetData(param, realAmp, imagAmp, freq);
-    // add Loaded data to document data
-        // Update the document with the loaded data
-    if (m_document)
+        if (openFileDialog.ShowModal() == wxID_CANCEL)
+            return;
+
+        wxString filePath = openFileDialog.GetPath();
+        sData importedData;
+        CsvFile csvFile;
+
+        if (!csvFile.readCsvFile(filePath, importedData))
+        {
+            wxMessageBox("Failed to read CSV file: " + filePath,
+                        "Import Error", wxOK | wxICON_ERROR, this);
+            return;
+        }
+
+        if (!m_document)
+        {
+            MeasurementDocument* measDoc = new MeasurementDocument(
+                PrologixUsbGpibAdapter::get_instance(), fsuMeasurement::get_instance());
+            SetDocument(measDoc);
+            SetOwnsDocument(true);
+            wxLogMessage("PlotWindow: created local document for imported CSV");
+        }
+
+        if (m_document)
+        {
+            // Copy full imported data into the view document and render via matrix selector path.
+            m_document->GetResultsMutable() = importedData;
+
+            sData::sParam* docParam = m_document->GetResultsMutable().GetParameter();
+            if (!docParam)
+            {
+                wxLogWarning("PlotWindow: imported data has no header");
+                return;
+            }
+
+            UpdateInfoPanel(docParam);
+            PopulateSelectors(static_cast<unsigned int>(std::max(0, docParam->NoPoints_X)),
+                            static_cast<unsigned int>(std::max(0, docParam->NoPoints_Y)));
+
+            int xi = m_choiceXSelector->GetSelection();
+            int yi = m_choiceYSelector->GetSelection();
+            if (!ApplySelectionToPlot(xi, yi, false))
+            {
+                wxLogWarning("PlotWindow: failed to render imported matrix selection");
+            }
+        }
+        else
+        {
+            // Fallback when no document is attached: draw first available measurement.
+            sData::sParam* param = importedData.GetParameter();
+            if (!param)
+            {
+                wxLogWarning("PlotWindow: imported data has no header");
+                return;
+            }
+
+            std::vector<double> xAxis = importedData.GetFreqStepVector();
+            std::vector<double> yReal = importedData.get3DDataReal(0, 0);
+            size_t n = std::min(xAxis.size(), yReal.size());
+            if (n == 0)
+            {
+                wxLogWarning("PlotWindow: imported file contains no plottable data");
+                return;
+            }
+
+            xAxis.resize(n);
+            yReal.resize(n);
+            m_vectorLayer->SetData(xAxis, yReal);
+            m_vectorLayerImag->SetVisible(false);
+            m_plot->Fit();
+            m_plot->Refresh();
+
+            UpdateInfoPanel(param);
+            PopulateSelectors(static_cast<unsigned int>(std::max(0, param->NoPoints_X)),
+                            static_cast<unsigned int>(std::max(0, param->NoPoints_Y)));
+        }
+
+        SetTitle(wxString::Format("Measurement Window %d - %s",
+                m_windowId, filePath.AfterLast('\\').AfterLast('/')));
+
+        std::cout << "[PlotWindow " << m_windowId << "] Imported CSV: "
+                << filePath << std::endl;
+    }
+    catch (const std::exception& e)
     {
-        // Copy the full sData into the document's result store
-        m_document->GetResultsMutable() = importedData;
-
-        // Push the x/y vectors so observers (e.g. live plot refresh) are notified
-        m_document->SetXData(freq);
-        m_document->SetYData(realAmp); // amplitude
+        wxLogError("PlotWindow import failed: %s", e.what());
+        wxMessageBox(wxString::Format("Import failed:\n%s", e.what()),
+                    "Import Error", wxOK | wxICON_ERROR, this);
     }
-    
-    m_vectorLayer->SetData(freq, realAmp);
-    m_plot->AddLayer(m_vectorLayer);
-    m_plot->Fit();
-    m_plot->Refresh();
-
-    sData::sParam* docParam = m_document
-        ? m_document->GetResultsMutable().GetParameter()
-        : param;
-    UpdateInfoPanel(docParam);
-    PopulateSelectors(docParam->NoPoints_X, docParam->NoPoints_Y);
-
-    SetTitle(wxString::Format("Measurement Window %d \u2014 %s",
-             m_windowId, filePath.AfterLast('\\').AfterLast('/')));
-
-    std::cout << "[PlotWindow " << m_windowId << "] Imported CSV: "
-              << filePath << std::endl;
+    catch (...)
+    {
+        wxLogError("PlotWindow import failed: unknown exception");
+        wxMessageBox("Import failed with an unknown error.",
+                    "Import Error", wxOK | wxICON_ERROR, this);
+    }
 }
 
 void PlotWindow::OnMenuFileClose(wxCommandEvent& event)
