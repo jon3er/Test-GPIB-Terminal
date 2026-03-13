@@ -76,21 +76,21 @@ public:
         wxString        Time;
         wxString        Type;
         // Plotter
-        unsigned int    NoPoints_X;
-        unsigned int    NoPoints_Y;
+        int             NoPoints_X;
+        int             NoPoints_Y;
         // Detection
-        unsigned int    NoPoints_Array;
+        int             NoPoints_Array;
         std::string     Detektor;
         // Frequenz
-        unsigned int    startFreq;
-        unsigned int    endFreq;
+        double          startFreq;
+        double          endFreq;
         // Amplitude und Pegel
-        int             refPegel;   
-        unsigned int    HFDaempfung;
+        double          refPegel;   
+        int             HFDaempfung;
         wxString        ampUnit;
   
-        unsigned int    RBW ;       
-        unsigned int    VBW;
+        int             RBW ;       
+        int             VBW;
         // Erfassung        
         std::string     sweepTime;  
         std::string     detektor;  

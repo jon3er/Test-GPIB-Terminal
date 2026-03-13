@@ -145,7 +145,7 @@ void sData::applyFsuSettingsToParam()
         {
             const auto& s = m_fsuSettings.iq;
             m_dsParam->centerFreq    = s.centerFreq;
-            m_dsParam->refPegel      = std::stoi(s.refLevel);
+            m_dsParam->refPegel      = s.refLevel;
             m_dsParam->HFDaempfung   = s.att;
             m_dsParam->ampUnit       = s.unit;
             m_dsParam->sampleRate    = s.sampleRate;
@@ -161,7 +161,7 @@ void sData::applyFsuSettingsToParam()
             const auto& s = m_fsuSettings.marker;
             m_dsParam->startFreq   = s.startFreq;
             m_dsParam->endFreq     = s.stopFreq;
-            m_dsParam->refPegel    = std::stoi(s.refLevel);
+            m_dsParam->refPegel    = s.refLevel;
             m_dsParam->HFDaempfung = s.att;
             m_dsParam->ampUnit     = s.unit;
             m_dsParam->RBW         = s.rbw;

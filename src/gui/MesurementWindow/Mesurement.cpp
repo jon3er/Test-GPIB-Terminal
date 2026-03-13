@@ -388,7 +388,7 @@ void PlotWindow::UpdateSettingsPanel()
             auto s = fsu->returnIqSettings();
             info += "Mode:         IQ\n";
             info += wxString::Format("Center Freq:  %g Hz\n", s.centerFreq);
-            info += wxString::Format("Ref Level:    %s dBm\n", s.refLevel.c_str());
+            info += wxString::Format("Ref Level:    %s dBm\n", s.refLevel);
             info += wxString::Format("Attenuation:  %u dB\n", s.att);
             info += wxString::Format("Unit:         %s\n", s.unit);
             info += wxString::Format("Sample Rate:  %g Hz\n", s.sampleRate);
@@ -404,7 +404,7 @@ void PlotWindow::UpdateSettingsPanel()
             info += "Mode:        Marker Peak\n";
             info += wxString::Format("Start Freq:  %u Hz\n", s.startFreq);
             info += wxString::Format("Stop Freq:   %u Hz\n", s.stopFreq);
-            info += wxString::Format("Ref Level:   %s dBm\n", s.refLevel.c_str());
+            info += wxString::Format("Ref Level:   %s dBm\n", s.refLevel);
             info += wxString::Format("Attenuation: %u dB\n", s.att);
             info += wxString::Format("Unit:        %s\n", s.unit);
             info += wxString::Format("RBW:         %u Hz\n", s.rbw);

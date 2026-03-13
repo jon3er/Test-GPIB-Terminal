@@ -191,38 +191,38 @@ void fsuMeasurement::setFreqStartEnd(unsigned int FreqS, unsigned int FreqE)
 bool fsuMeasurement::checkIfSettingsValidSweep(ScpiCommand command, const SettingValue& value)
 {
 try {
-    switch (command)
+    switch (command) 
     {
         case ScpiCommand::START_FREQUENCY:
         case ScpiCommand::END_FREQUENCY: {
-            unsigned int freq = std::get<unsigned int>(value);
+            double freq = std::get<double>(value);
             // Beispiel: R&S FSU26 geht bis 26.5 GHz
-            return (freq >= 0 && freq <= 26'500'000'000);
+            return (freq >= 0.0 && freq <= 26.5e9);
         }
 
         case ScpiCommand::REF_LEVEL: {
-            int level = std::get<int>(value);
-            return (level >= -130 && level <= 30);
+            double level = std::get<double>(value);
+            return (level >= -130.0 && level <= 30.0);
         }
 
         case ScpiCommand::RF_ATTENUATION: {
-            unsigned int att = std::get<unsigned int>(value);
+            int att = std::get<int>(value);
             // Dämpfung meist in 5dB Schritten bis 75dB
             return (att >= 0 && att <= 75 && (att % 5 == 0));
         }
 
         case ScpiCommand::RBW:
         case ScpiCommand::VBW: {
-            unsigned int bw = std::get<unsigned int>(value);
+            double bw = std::get<double>(value);
             // Bandbreiten meist 1Hz bis 50MHz (FSU)
-            return (bw >= 1 && bw <= 50'000'000);
+            return (bw >= 1.0 && bw <= 50.0e6);
         }
 
         case ScpiCommand::SWEEP_POINTS: {
-                unsigned int points = std::get<unsigned int>(value);
-
+                int points = std::get<int>(value);
+                
                 // Definierte zulässige Festwerte für R&S FSU
-                static const std::set<unsigned int> allowedPoints = {
+                static const std::set<int> allowedPoints = {
                     155, 313, 625, 1251, 1999, 2501, 5001, 10001, 20001, 30001
                 };
 
@@ -233,7 +233,7 @@ try {
         case ScpiCommand::DETECTOR: {
             std::string det = std::get<std::string>(value);
             // Erlaubte SCPI Parameter für Detektoren
-            return (det == "APE" || det == "POS" || det == "NEG" ||
+            return (det == "APE" || det == "POS" || det == "NEG" || 
                     det == "SAMP" || det == "RMS" || det == "AVER");
         }
 
@@ -244,8 +244,8 @@ try {
 
         case ScpiCommand::CENTER_FREQUENCY:
         case ScpiCommand::SPAN_FREQUENCY: {
-            unsigned int freq = std::get<unsigned int>(value);
-            return (freq >= 0 && freq <= 26'500'000'000);
+            double freq = std::get<double>(value);
+            return (freq >= 0.0 && freq <= 26.5e9);
         }
 
         case ScpiCommand::IQ_SAMPLE_RATE: {
@@ -284,8 +284,8 @@ try {
         default:
             return false;
         }
-    }
-    catch (const std::bad_variant_access&)
+    } 
+    catch (const std::bad_variant_access&) 
     {
         // Falscher Datentyp für diesen Befehl übergeben
         return false;
@@ -319,17 +319,17 @@ bool fsuMeasurement::writeSettingsToGpib()
 
 bool fsuMeasurement::writeSweepSettings(lastSweepSettings settings)
 {
-   std::string blockCmd = scpiSetCommands.at(ScpiCommand::START_FREQUENCY   )   + std::to_string(settings.startFreq)+ ";:" +
-                            scpiSetCommands.at(ScpiCommand::END_FREQUENCY   )   + std::to_string(settings.stopFreq) + ";:" +
-                            scpiSetCommands.at(ScpiCommand::REF_LEVEL       )   + std::to_string(settings.refLevel) + ";:" +
-                            scpiSetCommands.at(ScpiCommand::RF_ATTENUATION  )   + std::to_string(settings.att)      + ";:" +
-                            scpiSetCommands.at(ScpiCommand::AMPLITUDE_UNIT  )   + settings.unit.ToStdString()       + ";:" +
-                            scpiSetCommands.at(ScpiCommand::RBW             )   + std::to_string(settings.rbw)      + ";:" +
-                            scpiSetCommands.at(ScpiCommand::VBW             )   + std::to_string(settings.vbw)      + ";:" +
-                            scpiSetCommands.at(ScpiCommand::SWEEP_TIME      )   + settings.sweepTime                + ";:" +
-                            scpiSetCommands.at(ScpiCommand::SWEEP_POINTS    )   + std::to_string(settings.points)   + ";:" +
-                            scpiSetCommands.at(ScpiCommand::DETECTOR        )   + settings.detector                 + ";";
-
+std::string blockCmd = scpiSetCommands.at(ScpiCommand::START_FREQUENCY   )   + std::to_string(settings.startFreq)+ ";:" +
+                        scpiSetCommands.at(ScpiCommand::END_FREQUENCY   )   + std::to_string(settings.stopFreq) + ";:" +
+                        scpiSetCommands.at(ScpiCommand::REF_LEVEL       )   + std::to_string(settings.refLevel) + ";:" +      
+                        scpiSetCommands.at(ScpiCommand::RF_ATTENUATION  )   + std::to_string(settings.att)      + ";:" +
+                        scpiSetCommands.at(ScpiCommand::AMPLITUDE_UNIT  )   + settings.unit                     + ";:" +
+                        scpiSetCommands.at(ScpiCommand::RBW             )   + std::to_string(settings.rbw)      + ";:" +
+                        scpiSetCommands.at(ScpiCommand::VBW             )   + std::to_string(settings.vbw)      + ";:" +
+                        scpiSetCommands.at(ScpiCommand::SWEEP_TIME      )   + settings.sweepTime                + ";:" +
+                        scpiSetCommands.at(ScpiCommand::SWEEP_POINTS    )   + std::to_string(settings.points)   + ";:" +
+                        scpiSetCommands.at(ScpiCommand::DETECTOR        )   + settings.detector                 + ";";
+         
     std::string status = PrologixUsbGpibAdapter::get_instance().write(blockCmd);
 
     std::cout << "written Sweep data: " << status << std::endl;
@@ -386,15 +386,15 @@ bool fsuMeasurement::readSweepSettings()
 
     // save to member struct
     try {
-        m_lastSwpSettings.startFreq = static_cast<unsigned int>(std::stod(tokens[0]));
-        m_lastSwpSettings.stopFreq  = static_cast<unsigned int>(std::stod(tokens[1]));
-        m_lastSwpSettings.refLevel  = std::stoi(tokens[2]);
-        m_lastSwpSettings.att       = static_cast<unsigned int>(std::stoi(tokens[3]));
-        m_lastSwpSettings.unit      = tokens[4];
-        m_lastSwpSettings.rbw       = static_cast<unsigned int>(std::stod(tokens[5]));
-        m_lastSwpSettings.vbw       = static_cast<unsigned int>(std::stod(tokens[6]));
+        m_lastSwpSettings.startFreq = std::stod(tokens[0]);
+        m_lastSwpSettings.stopFreq  = std::stod(tokens[1]);
+        m_lastSwpSettings.refLevel  = std::stod(tokens[2]);
+        m_lastSwpSettings.att       = std::stoi(tokens[3]);
+        m_lastSwpSettings.unit      = tokens[4];                // std::string
+        m_lastSwpSettings.rbw       = std::stod(tokens[5]);
+        m_lastSwpSettings.vbw       = std::stod(tokens[6]);
         m_lastSwpSettings.sweepTime = tokens[7];                // std::string
-        m_lastSwpSettings.points    = static_cast<unsigned int>(std::stoi(tokens[8]));
+        m_lastSwpSettings.points    = std::stoi(tokens[8]);
         m_lastSwpSettings.detector  = tokens[9];                // std::string
 
         return true;
@@ -408,9 +408,9 @@ bool fsuMeasurement::readSweepSettings()
 bool fsuMeasurement::writeIqSettings(IqSettings settings)
 {
     std::string blockCmd = scpiSetCommands.at(ScpiCommand::CENTER_FREQUENCY)  + std::to_string(settings.centerFreq)   + ";:" +
-                           scpiSetCommands.at(ScpiCommand::REF_LEVEL)         + settings.refLevel                     + ";:" +
+                           scpiSetCommands.at(ScpiCommand::REF_LEVEL)         + std::to_string(settings.refLevel)                     + ";:" +
                            scpiSetCommands.at(ScpiCommand::RF_ATTENUATION)    + std::to_string(settings.att)          + ";:" +
-                           scpiSetCommands.at(ScpiCommand::AMPLITUDE_UNIT)    + settings.unit.ToStdString()           + ";:" +
+                           scpiSetCommands.at(ScpiCommand::AMPLITUDE_UNIT)    + settings.unit                         + ";:" +
                            scpiSetCommands.at(ScpiCommand::IQ_SAMPLE_RATE)    + std::to_string(settings.sampleRate)   + ";:" +
                            scpiSetCommands.at(ScpiCommand::IQ_RECORD_LENGTH)  + std::to_string(settings.recordLength) + ";:" +
                            scpiSetCommands.at(ScpiCommand::IQ_IF_BANDWIDTH)   + std::to_string(settings.ifBandwidth)  + ";:" +
@@ -456,8 +456,8 @@ bool fsuMeasurement::readIqSettings()
 
     try {
         m_lastIqSettings.centerFreq    = std::stod(tokens[0]);
-        m_lastIqSettings.refLevel      = tokens[1];
-        m_lastIqSettings.att           = static_cast<unsigned int>(std::stoi(tokens[2]));
+        m_lastIqSettings.refLevel      = std::stod(tokens[1]);
+        m_lastIqSettings.att           = std::stoi(tokens[2]);
         m_lastIqSettings.unit          = tokens[3];
         m_lastIqSettings.sampleRate    = std::stod(tokens[4]);
         m_lastIqSettings.recordLength  = std::stoi(tokens[5]);
@@ -477,9 +477,9 @@ bool fsuMeasurement::writeMarkerPeakSettings(MarkerPeakSettings settings)
 {
     std::string blockCmd = scpiSetCommands.at(ScpiCommand::START_FREQUENCY)  + std::to_string(settings.startFreq) + ";:" +
                            scpiSetCommands.at(ScpiCommand::END_FREQUENCY)    + std::to_string(settings.stopFreq)  + ";:" +
-                           scpiSetCommands.at(ScpiCommand::REF_LEVEL)        + settings.refLevel                  + ";:" +
+                           scpiSetCommands.at(ScpiCommand::REF_LEVEL)        + std::to_string(settings.refLevel)  + ";:" +
                            scpiSetCommands.at(ScpiCommand::RF_ATTENUATION)   + std::to_string(settings.att)       + ";:" +
-                           scpiSetCommands.at(ScpiCommand::AMPLITUDE_UNIT)   + settings.unit.ToStdString()        + ";:" +
+                           scpiSetCommands.at(ScpiCommand::AMPLITUDE_UNIT)   + settings.unit                      + ";:" +
                            scpiSetCommands.at(ScpiCommand::RBW)              + std::to_string(settings.rbw)       + ";:" +
                            scpiSetCommands.at(ScpiCommand::VBW)              + std::to_string(settings.vbw)       + ";:" +
                            scpiSetCommands.at(ScpiCommand::DETECTOR)         + settings.detector                  + ";";
@@ -520,13 +520,13 @@ bool fsuMeasurement::readMarkerPeakSettings()
     if (tokens.size() < 8) return false;
 
     try {
-        m_lastMarkerPeakSettings.startFreq = static_cast<unsigned int>(std::stod(tokens[0]));
-        m_lastMarkerPeakSettings.stopFreq  = static_cast<unsigned int>(std::stod(tokens[1]));
-        m_lastMarkerPeakSettings.refLevel  = tokens[2];
-        m_lastMarkerPeakSettings.att       = static_cast<unsigned int>(std::stoi(tokens[3]));
+        m_lastMarkerPeakSettings.startFreq = std::stod(tokens[0]);
+        m_lastMarkerPeakSettings.stopFreq  = std::stod(tokens[1]);
+        m_lastMarkerPeakSettings.refLevel  = std::stod(tokens[2]);
+        m_lastMarkerPeakSettings.att       = std::stoi(tokens[3]);
         m_lastMarkerPeakSettings.unit      = tokens[4];
-        m_lastMarkerPeakSettings.rbw       = static_cast<unsigned int>(std::stod(tokens[5]));
-        m_lastMarkerPeakSettings.vbw       = static_cast<unsigned int>(std::stod(tokens[6]));
+        m_lastMarkerPeakSettings.rbw       = std::stod(tokens[5]);
+        m_lastMarkerPeakSettings.vbw       = std::stod(tokens[6]);
         m_lastMarkerPeakSettings.detector  = tokens[7];
         return true;
     }
