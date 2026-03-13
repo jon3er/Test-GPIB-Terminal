@@ -64,13 +64,25 @@ bool PlotterMesurement(sData* data, int measurementNumber)
         data->resize3DData(x,y,anz);
     }
 
-    fsu->executeMeasurement();
+    if (!fsu->executeMeasurement())
+    {
+        std::cout << "[Error] executeMeasurement failed" << std::endl;
+        return false;
+    }
     // Get last measuremtent results
     std::cout << "get Resultes from fsu" << std::endl;
     MessWerteReal = fsu->getX_Data();
     MessWerteImag = fsu->getY_Data();
 
-    std::cout << "passed resultes" << MessWerteReal[1] << std::endl;
+    if (!MessWerteReal.empty())
+    {
+        std::cout << "passed resultes " << MessWerteReal.front() << std::endl;
+    }
+    else
+    {
+        std::cout << "[Error] No measurement values returned" << std::endl;
+        return false;
+    }
 
 
     data->getXYCord(x, y, measurementNumber);

@@ -118,9 +118,8 @@ void fsuMeasurement::seperateDataBlock(const wxString& receivedString,
 
     str.Trim(true).Trim(false);
 
-    // Kein Leerzeichen gefunden
-
-    wxArrayString seperatedStrings = wxStringTokenize(str, ",");
+    // Responses can be comma-separated (sweep/IQ) or semicolon-separated (marker X;Y).
+    wxArrayString seperatedStrings = wxStringTokenize(str, ",;");
 
     //std::cout << "seperated Data: " << seperatedStrings << std::endl;
 
