@@ -16,6 +16,8 @@ bool PlotterMesurement(sData* data, int measurementNumber)
 
     std::cout << "current measurementNumber "<<measurementNumber << std::endl;
 
+    data->setMeasurementNumb(measurementNumber);
+
     if (measurementNumber == 1)
     {
         //CsvFile csvFileRest;

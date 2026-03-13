@@ -68,8 +68,8 @@ protected:
     wxStaticText* m_settingsText;   ///< Text inside the settings panel
 
     // Matrix measurement selector [x ; y]
-    wxTextCtrl*   m_textXSelector;
-    wxTextCtrl*   m_textYSelector;
+    wxChoice*     m_choiceXSelector;
+    wxChoice*     m_choiceYSelector;
 
 private:
     wxString      m_filePath = System::filePathSystem;
@@ -78,6 +78,7 @@ private:
     void getFileNames(const wxString& dirPath, wxArrayString& files);
     void executeScriptEvent(wxCommandEvent& event);
     void OnSelectMeasurement(wxCommandEvent& event);
+    void PopulateSelectors(unsigned int nX, unsigned int nY);
     void updatePlotData();
     void OnClose(wxCloseEvent& event);
 

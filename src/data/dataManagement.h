@@ -75,6 +75,8 @@ public:
         wxString        Date;
         wxString        Time;
         wxString        Type;
+
+        int             MeasurementNumb;
         // Plotter
         int             NoPoints_X;
         int             NoPoints_Y;
@@ -123,6 +125,8 @@ public:
     wxString GetTime() { return m_dsParam->Time; };
     wxString GetType() { return m_dsParam->Type; };
 
+    int GetMeasurementNumb() { return m_dsParam->MeasurementNumb; };
+
     unsigned int getNumberOfPts_X() {return m_dsParam->NoPoints_X; };
     unsigned int getNumberOfPts_Y() {return m_dsParam->NoPoints_Y; };
     unsigned int getTotalNumberOfPts() {return m_dsParam->NoPoints_X * m_dsParam->NoPoints_Y; };
@@ -141,6 +145,8 @@ public:
     // set File Var
     bool setFileName(wxString Name);
     bool setFileType(wxString Type);
+
+    bool setMeasurementNumb(int Numb);
     // set Points
     bool setNumberOfPts_X(unsigned int NumbPtsX);
     bool setNumberOfPts_Y(unsigned int NumbPtsY);

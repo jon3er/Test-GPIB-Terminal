@@ -95,7 +95,7 @@ std::vector<double> sData::GetTimeIQStepVector()
     double samplerate = m_dsParam->sampleRate;
     double recordLength = m_dsParam->recordLength;
     double t_sample = 1 / samplerate;
-    
+
     std::vector<double> timeAxis(recordLength);
 
 
@@ -222,6 +222,34 @@ bool sData::setFileType(wxString Type)
 
     return true;
 }
+bool sData::setMeasurementNumb(int Numb) 
+{ 
+    if (Numb <= 1)
+    {
+        try
+        {
+            m_dsParam->MeasurementNumb = Numb; 
+
+            std::cout << "Measurement Number set to:" << Numb << std::endl;
+
+            return true; 
+        }
+        catch(const std::exception& e)
+        {
+            std::cerr << e.what() << '\n';
+            return false;
+        }
+    }
+    else
+    {
+        std::cout << "Invaild Measurement Number: " << Numb << "\n Number has to Start at 1" << std::endl;
+
+        return false;
+    }
+    
+};
+
+
 bool sData::setNumberOfPts_X(unsigned int NumbPtsX)
 {
         try

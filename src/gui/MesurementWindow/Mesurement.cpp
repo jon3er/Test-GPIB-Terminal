@@ -162,15 +162,15 @@ PlotWindow::PlotWindow(wxWindow *parent, MainDocument* mainDoc)
     // [x ; y] matrix measurement selector row
     wxBoxSizer* matrixSizer = new wxBoxSizer(wxHORIZONTAL);
     wxStaticText* matrixLabel = new wxStaticText(this, wxID_ANY, "Select [x ; y]:");
-    m_textXSelector = new wxTextCtrl(this, wxID_ANY, "0", wxDefaultPosition, wxSize(50, -1));
+    m_choiceXSelector = new wxChoice(this, wxID_ANY);
     wxStaticText* matrixSep = new wxStaticText(this, wxID_ANY, ";");
-    m_textYSelector = new wxTextCtrl(this, wxID_ANY, "0", wxDefaultPosition, wxSize(50, -1));
+    m_choiceYSelector = new wxChoice(this, wxID_ANY);
     wxButton* selectBtn = new wxButton(this, wxID_ANY, "Go");
     selectBtn->Bind(wxEVT_BUTTON, &PlotWindow::OnSelectMeasurement, this);
     matrixSizer->Add(matrixLabel,     0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
-    matrixSizer->Add(m_textXSelector, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 3);
-    matrixSizer->Add(matrixSep,       0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, 3);
-    matrixSizer->Add(m_textYSelector, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 3);
+    matrixSizer->Add(m_choiceXSelector, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 3);
+    matrixSizer->Add(matrixSep,          0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, 3);
+    matrixSizer->Add(m_choiceYSelector,  0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 3);
     matrixSizer->Add(selectBtn,       0, wxALIGN_CENTER_VERTICAL);
     leftSizer->Add(matrixSizer, 0, wxEXPAND | wxALL, 3);
     leftSizer->AddStretchSpacer(1);
@@ -345,20 +345,32 @@ void PlotWindow::updatePlotData()
 
 void PlotWindow::OnSelectMeasurement(wxCommandEvent& /*event*/)
 {
-    long x = 0, y = 0;
+    int xi = m_choiceXSelector->GetSelection();
+    int yi = m_choiceYSelector->GetSelection();
 
-    if (!m_textXSelector->GetValue().ToLong(&x) ||
-        !m_textYSelector->GetValue().ToLong(&y))
-    {
-        wxMessageBox("Please enter valid integer values for x and y.",
-                     "Invalid Input", wxOK | wxICON_WARNING, this);
+    if (xi == wxNOT_FOUND || yi == wxNOT_FOUND)
         return;
-    }
+
+    long x = xi + 1;
+    long y = yi + 1;
 
     // TODO: load the measurement at matrix position [x; y] from the data set.
     wxLogMessage("PlotWindow: selected measurement [%ld ; %ld]", x, y);
+}
 
-    wxLogMessage("PlotWindow: selected measurement [%ld ; %ld]", x, y);
+void PlotWindow::PopulateSelectors(unsigned int nX, unsigned int nY)
+{
+    m_choiceXSelector->Clear();
+    for (unsigned int i = 1; i <= nX; ++i)
+        m_choiceXSelector->Append(wxString::Format("%u", i));
+    if (nX > 0)
+        m_choiceXSelector->SetSelection(0);
+
+    m_choiceYSelector->Clear();
+    for (unsigned int i = 1; i <= nY; ++i)
+        m_choiceYSelector->Append(wxString::Format("%u", i));
+    if (nY > 0)
+        m_choiceYSelector->SetSelection(0);
 }
 
 // -----------------------------------------------------------------------
@@ -445,9 +457,8 @@ void PlotWindow::UpdateInfoPanel(sData::sParam* param)
     info += wxString::Format("Measurement Type:\t%s\n", param->Type);
     info += wxString::Format("Date:\t\t\t%s\n",         param->Date);
     info += wxString::Format("Time:\t\t\t%s\n",         param->Time);
-    info += wxString::Format("X Points:\t\t%u\n",       param->NoPoints_X);
-    info += wxString::Format("Y Points:\t\t%u\n",       param->NoPoints_Y);
-    info += wxString::Format("Measurement Points:\t%u\n", param->NoPoints_Array);
+    info += wxString::Format("X Points:\t\t\t%u\n",       param->NoPoints_X);
+    info += wxString::Format("Y Points:\t\t\t%u\n",       param->NoPoints_Y);
 
     m_infoText->SetLabel(info);
     m_infoPanel->Layout();
@@ -500,6 +511,7 @@ void PlotWindow::OnMenuFileOpen(wxCommandEvent& event)
         ? m_document->GetResultsMutable().GetParameter()
         : param;
     UpdateInfoPanel(docParam);
+    PopulateSelectors(docParam->NoPoints_X, docParam->NoPoints_Y);
 
     SetTitle(wxString::Format("Measurement Window %d \u2014 %s",
              m_windowId, filePath.AfterLast('\\').AfterLast('/')));
