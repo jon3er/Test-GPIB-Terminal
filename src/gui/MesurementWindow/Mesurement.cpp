@@ -82,6 +82,8 @@ PlotWindow::PlotWindow(wxWindow *parent, MainDocument* mainDoc)
 
     wxButton* executeMesurment = new wxButton(this, wxID_ANY, "Execute Mesurement");
     executeMesurment->Bind(wxEVT_BUTTON, &PlotWindow::executeScriptEvent, this);
+    wxButton* applyImportedSettings = new wxButton(this, wxID_ANY, "Apply Imported Settings");
+    applyImportedSettings->Bind(wxEVT_BUTTON, &PlotWindow::OnApplyImportedSettings, this);
     m_selectMesurement = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, m_fileNames);
     m_selectMesurement->SetSelection(0);
 
@@ -167,6 +169,7 @@ PlotWindow::PlotWindow(wxWindow *parent, MainDocument* mainDoc)
     // Left: control buttons and [x ; y] selector
     wxBoxSizer* leftSizer = new wxBoxSizer(wxVERTICAL);
     leftSizer->Add(executeMesurment,   0, wxEXPAND | wxALL, 3);
+    leftSizer->Add(applyImportedSettings, 0, wxEXPAND | wxALL, 3);
     leftSizer->Add(m_selectMesurement, 0, wxEXPAND | wxALL, 3);
 
     // [x ; y] matrix measurement selector row
@@ -177,12 +180,14 @@ PlotWindow::PlotWindow(wxWindow *parent, MainDocument* mainDoc)
     m_choiceYSelector = new wxChoice(this, wxID_ANY);
     wxButton* selectBtn = new wxButton(this, wxID_ANY, "Go");
     selectBtn->Bind(wxEVT_BUTTON, &PlotWindow::OnSelectMeasurement, this);
+    m_activeSelectionText = new wxStaticText(this, wxID_ANY, "Active Selection: [- ; -]");
     matrixSizer->Add(matrixLabel,     0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
     matrixSizer->Add(m_choiceXSelector, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 3);
     matrixSizer->Add(matrixSep,          0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, 3);
     matrixSizer->Add(m_choiceYSelector,  0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 3);
     matrixSizer->Add(selectBtn,       0, wxALIGN_CENTER_VERTICAL);
     leftSizer->Add(matrixSizer, 0, wxEXPAND | wxALL, 3);
+    leftSizer->Add(m_activeSelectionText, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 3);
     leftSizer->AddStretchSpacer(1);
 
     // Right: info panel (placeholder)
@@ -484,6 +489,7 @@ bool PlotWindow::ApplySelectionToPlot(int xIndex, int yIndex, bool logSelection)
 
     m_document->SetXData(xAxis);
     m_document->SetYData(yReal);
+    UpdateSelectionLabel(xIndex, yIndex);
 
     m_plot->Fit();
     m_plot->Refresh();
@@ -494,6 +500,20 @@ bool PlotWindow::ApplySelectionToPlot(int xIndex, int yIndex, bool logSelection)
     }
 
     return true;
+}
+
+void PlotWindow::UpdateSelectionLabel(int xIndex, int yIndex)
+{
+    if (!m_activeSelectionText)
+        return;
+
+    if (xIndex < 0 || yIndex < 0)
+    {
+        m_activeSelectionText->SetLabel("Active Selection: [- ; -]");
+        return;
+    }
+
+    m_activeSelectionText->SetLabel(wxString::Format("Active Selection: [%d ; %d]", xIndex + 1, yIndex + 1));
 }
 
 void PlotWindow::OnSelectMeasurement(wxCommandEvent& /*event*/)
@@ -508,6 +528,33 @@ void PlotWindow::OnSelectMeasurement(wxCommandEvent& /*event*/)
     {
         wxLogWarning("PlotWindow: failed to show selected measurement");
     }
+}
+
+void PlotWindow::OnApplyImportedSettings(wxCommandEvent& /*event*/)
+{
+    if (!m_document)
+    {
+        wxLogWarning("PlotWindow: no document attached");
+        return;
+    }
+
+    sData& data = m_document->GetResultsMutable();
+    sData::sParam* param = data.GetParameter();
+    if (!param)
+    {
+        wxLogWarning("PlotWindow: no imported dataset available");
+        return;
+    }
+
+    data.exportFsuSettings();
+    if (!fsuMeasurement::get_instance().writeSettingsToGpib())
+    {
+        wxLogWarning("PlotWindow: failed to write imported settings to device");
+        return;
+    }
+
+    UpdateSettingsPanel();
+    wxLogMessage("PlotWindow: imported settings applied to device");
 }
 
 void PlotWindow::PopulateSelectors(unsigned int nX, unsigned int nY)
@@ -526,6 +573,8 @@ void PlotWindow::PopulateSelectors(unsigned int nX, unsigned int nY)
         m_choiceYSelector->Append(wxString::Format("%u", i));
     if (nY > 0)
         m_choiceYSelector->SetSelection((prevY >= 0 && static_cast<unsigned int>(prevY) < nY) ? prevY : 0);
+
+    UpdateSelectionLabel(m_choiceXSelector->GetSelection(), m_choiceYSelector->GetSelection());
 }
 
 // -----------------------------------------------------------------------
