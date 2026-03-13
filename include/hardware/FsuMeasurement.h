@@ -108,14 +108,14 @@ public:
     {
         double startFreq = 10'000'000;
         double stopFreq = 50'000'000;
-        double refLevel;
+        double refLevel = 0;
         int points = 625;
-        int att;
-        std::string unit;
-        int rbw;
-        int vbw;
+        int att = 0;
+        std::string unit = "DBM";
+        int rbw = 1;
+        int vbw = 1;
         std::string sweepTime = "ON";
-        std::string detector;
+        std::string detector = "APE";
     };
 
     bool writeSweepSettings(lastSweepSettings settings);
@@ -125,16 +125,16 @@ public:
     // IQ Messung
     struct IqSettings
     {
-        double centerFreq;
-        double refLevel;
-        int att;
-        std::string unit;
-        double sampleRate;
-        int recordLength;
-        double ifBandwidth;
-        std::string triggerSource;
-        double triggerLevel;
-        double triggerDelay;
+        double centerFreq = 50'000'000;
+        double refLevel = 0;
+        int att = 0;
+        std::string unit = "DBM";
+        double sampleRate = 100'000;
+        int recordLength = 1024;
+        double ifBandwidth = 100'000;
+        std::string triggerSource = "IMM";
+        double triggerLevel = 0;
+        double triggerDelay = 0;
     };
 
     bool writeIqSettings(IqSettings settings);
@@ -144,14 +144,14 @@ public:
     // Marker Peak Messung
     struct MarkerPeakSettings
     {
-        double startFreq;
-        double stopFreq;
-        double refLevel;
-        int att;
-        std::string unit;
-        int rbw;
-        int vbw;
-        std::string detector;
+        double startFreq = 10'000'000;
+        double stopFreq = 50'000'000;
+        double refLevel = 0;
+        int att = 0;
+        std::string unit = "DBM";
+        int rbw = 1;
+        int vbw = 1;
+        std::string detector = "APE";
     };
 
     bool writeMarkerPeakSettings(MarkerPeakSettings settings);

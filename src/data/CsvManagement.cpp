@@ -164,21 +164,64 @@ bool CsvFile::saveCsvHeader(wxTextFile &file, sData& data)
 
     file.AddLine(""); // Leerzeile
 
-    // Frequenz-Zeile zusammenbauen
-    wxString lineFreq = wxString::Format("f in %s", dsParam->ampUnit.ToAscii());
-
-    std::vector<double> freq = data.GetFreqStepVector();
+    wxString lineLabel;
+    std::vector<double> lineDataVector;
+    std::vector<double> timeAxis;
+    double samplerate;
+    int recordLength;
+    double t_sample; 
+    std::string timeUnit;
 
     switch (mode)
     {
         case MeasurementMode::SWEEP:
-        case MeasurementMode::IQ:
+            // Frequenz-Zeile 
+            lineLabel = wxString::Format("f in %s", dsParam->ampUnit.ToAscii());
+
+            lineDataVector = data.GetFreqStepVector();
 
             for (size_t i = 0; i < dsParam->NoPoints_Array; i++)
             {
-                lineFreq << m_separator << freq[i];
+                lineLabel << m_separator << lineDataVector[i];
             }
-            file.AddLine(lineFreq);
+            file.AddLine(lineLabel);
+
+            break;
+        case MeasurementMode::IQ:
+            // time scale
+            samplerate = dsParam->sampleRate;
+            recordLength = dsParam->recordLength;
+            t_sample = 1 / samplerate;
+
+            if (t_sample < 0.000'000'1)
+            {
+                t_sample = t_sample * 1'000'000'000;
+                timeUnit = "ns";
+            }
+            if (t_sample < 0.000'1)
+            {
+                t_sample = t_sample * 1'000'000;
+                timeUnit = "us";
+            }
+            else if (t_sample < 0.1)
+            {
+                t_sample = t_sample * 1'000;
+                timeUnit = "ms";
+            }else 
+            if (t_sample < 1)
+            {
+                timeUnit = "s";
+            }
+
+            lineLabel = wxString::Format("t in %s", timeUnit);
+
+            lineDataVector = data.GetTimeIQStepVector();
+
+            for (size_t i = 0; i < recordLength; i++)
+            {
+                lineLabel << m_separator << lineDataVector[i];
+            }
+            file.AddLine(lineLabel);
 
             break;
 

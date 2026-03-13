@@ -230,7 +230,7 @@ std::string TerminalDocument::SendToDevice(const std::string& args)
     wxString writeResult = m_adapter.write(args);
     oss << writeResult.ToStdString();
 
-    int i;
+    int i = 0;
     sleepMs(8);
 
     while (m_adapter.quaryBuffer() < 1)

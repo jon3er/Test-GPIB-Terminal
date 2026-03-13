@@ -90,6 +90,24 @@ std::vector<double> sData::GetFreqStepVector()
 
     return freqSteps;
 }
+std::vector<double> sData::GetTimeIQStepVector()
+{
+    double samplerate = m_dsParam->sampleRate;
+    double recordLength = m_dsParam->recordLength;
+    double t_sample = 1 / samplerate;
+    
+    std::vector<double> timeAxis(recordLength);
+
+
+    for (int i = 0; i < recordLength; ++i) {
+        timeAxis[i] = i * t_sample; // Zeit in Sekunden
+    }
+
+    return timeAxis;
+
+}
+
+
 void sData::getXYCord(int& x, int& y, int mesurementNumber)
 {
     // für den das Array ist die addressierung von 0 bis n-1

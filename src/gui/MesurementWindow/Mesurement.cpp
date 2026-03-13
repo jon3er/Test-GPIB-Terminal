@@ -372,44 +372,44 @@ void PlotWindow::UpdateSettingsPanel()
     switch (fsu->getMeasurementMode()) {
         case MeasurementMode::SWEEP: {
             auto s = fsu->returnSweepSettings();
-            info += "Mode:        Sweep\n";
-            info += wxString::Format("Start Freq:  %u Hz\n", s.startFreq);
-            info += wxString::Format("Stop Freq:   %u Hz\n", s.stopFreq);
-            info += wxString::Format("Ref Level:   %d dBm\n", s.refLevel);
-            info += wxString::Format("Attenuation: %u dB\n", s.att);
-            info += wxString::Format("Unit:        %s\n", s.unit);
-            info += wxString::Format("RBW:         %u Hz\n", s.rbw);
-            info += wxString::Format("VBW:         %u Hz\n", s.vbw);
-            info += wxString::Format("Points:      %u\n", s.points);
-            info += wxString::Format("Detector:    %s", s.detector);
+            info += "Mode:\t\tSweep\n";
+            info += wxString::Format("Start Freq:\t%g Hz\n", s.startFreq);
+            info += wxString::Format("Stop Freq:\t%g Hz\n", s.stopFreq);
+            info += wxString::Format("Ref Level:\t%g dBm\n", s.refLevel);
+            info += wxString::Format("Attenuation:\t%d dB\n", s.att);
+            info += wxString::Format("Unit:\t\t%s\n",       s.unit.c_str());
+            info += wxString::Format("RBW:\t\t%d Hz\n",     s.rbw);
+            info += wxString::Format("VBW:\t\t%d Hz\n",   s.vbw);
+            info += wxString::Format("Points:\t\t%d\n",     s.points);
+            info += wxString::Format("Detector:\t%s",     s.detector.c_str());
             break;
         }
         case MeasurementMode::IQ: {
             auto s = fsu->returnIqSettings();
-            info += "Mode:         IQ\n";
-            info += wxString::Format("Center Freq:  %g Hz\n", s.centerFreq);
-            info += wxString::Format("Ref Level:    %s dBm\n", s.refLevel);
-            info += wxString::Format("Attenuation:  %u dB\n", s.att);
-            info += wxString::Format("Unit:         %s\n", s.unit);
-            info += wxString::Format("Sample Rate:  %g Hz\n", s.sampleRate);
-            info += wxString::Format("Record Len:   %d\n", s.recordLength);
-            info += wxString::Format("IF Bandwidth: %g Hz\n", s.ifBandwidth);
-            info += wxString::Format("Trigger Src:  %s\n", s.triggerSource);
-            info += wxString::Format("Trigger Lvl:  %g dBm\n", s.triggerLevel);
-            info += wxString::Format("Trigger Dly:  %g s", s.triggerDelay);
+            info += "Mode:\t\tIQ\n";
+            info += wxString::Format("Center Freq:\t%g Hz\n", s.centerFreq);
+            info += wxString::Format("Ref Level:\t%g dBm\n", s.refLevel);
+            info += wxString::Format("Attenuation:\t%d dB\n", s.att);
+            info += wxString::Format("Unit:\t\t%s\n", s.unit.c_str());
+            info += wxString::Format("Sample Rate:\t%g Hz\n", s.sampleRate);
+            info += wxString::Format("Record Len:\t%d\n", s.recordLength);
+            info += wxString::Format("IF Bandwidth:\t%g Hz\n", s.ifBandwidth);
+            info += wxString::Format("Trigger Src:\t%s\n", s.triggerSource.c_str());
+            info += wxString::Format("Trigger Lvl:\t%g dBm\n", s.triggerLevel);
+            info += wxString::Format("Trigger Dly:\t%g s", s.triggerDelay);
             break;
         }
         case MeasurementMode::MARKER_PEAK: {
             auto s = fsu->returnMarkerPeakSettings();
-            info += "Mode:        Marker Peak\n";
-            info += wxString::Format("Start Freq:  %u Hz\n", s.startFreq);
-            info += wxString::Format("Stop Freq:   %u Hz\n", s.stopFreq);
-            info += wxString::Format("Ref Level:   %s dBm\n", s.refLevel);
-            info += wxString::Format("Attenuation: %u dB\n", s.att);
-            info += wxString::Format("Unit:        %s\n", s.unit);
-            info += wxString::Format("RBW:         %u Hz\n", s.rbw);
-            info += wxString::Format("VBW:         %u Hz\n", s.vbw);
-            info += wxString::Format("Detector:    %s", s.detector);
+            info += "Mode:\t\tMarker Peak\n";
+            info += wxString::Format("Start Freq:\t%g Hz\n", s.startFreq);
+            info += wxString::Format("Stop Freq:\t%g Hz\n", s.stopFreq);
+            info += wxString::Format("Ref Level:\t%g dBm\n", s.refLevel);
+            info += wxString::Format("Attenuation:\t%d dB\n", s.att);
+            info += wxString::Format("Unit:\t\t%s\n", s.unit.c_str());
+            info += wxString::Format("RBW:\t\t%d Hz\n", s.rbw);
+            info += wxString::Format("VBW:\t\t%d Hz\n", s.vbw);
+            info += wxString::Format("Detector:\t%s", s.detector.c_str());
             break;
         }
         default:
@@ -441,15 +441,13 @@ void PlotWindow::UpdateInfoPanel(sData::sParam* param)
     };
 
     wxString info;
-    info += wxString::Format("File Name:          %s\n", param->File);
-    info += wxString::Format("Measurement Type:   %s\n", param->Type);
-    info += wxString::Format("Date:               %s\n", param->Date);
-    info += wxString::Format("Time:               %s\n", param->Time);
-    info += wxString::Format("X Points:           %u\n", param->NoPoints_X);
-    info += wxString::Format("Y Points:           %u\n", param->NoPoints_Y);
-    info += wxString::Format("Measurement Points: %u\n", param->NoPoints_Array);
-    info += wxString::Format("Start Frequency:    %s\n", freqStr(param->startFreq));
-    info += wxString::Format("End Frequency:      %s",   freqStr(param->endFreq));
+    info += wxString::Format("File Name:\t\t%s\n",      param->File);
+    info += wxString::Format("Measurement Type:\t%s\n", param->Type);
+    info += wxString::Format("Date:\t\t\t%s\n",         param->Date);
+    info += wxString::Format("Time:\t\t\t%s\n",         param->Time);
+    info += wxString::Format("X Points:\t\t%u\n",       param->NoPoints_X);
+    info += wxString::Format("Y Points:\t\t%u\n",       param->NoPoints_Y);
+    info += wxString::Format("Measurement Points:\t%u\n", param->NoPoints_Array);
 
     m_infoText->SetLabel(info);
     m_infoPanel->Layout();
