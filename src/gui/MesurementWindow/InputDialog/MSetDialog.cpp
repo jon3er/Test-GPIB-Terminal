@@ -29,11 +29,20 @@ SettingsDialog::SettingsDialog(wxWindow* parent, MeasurementMode mode)
     wxFloatingPointValidator<double> floatVal;
 
     // ---- Gemeinsame Felder (alle Modi) ----
-    grid->Add(new wxStaticText(this, wxID_ANY, "Ref. Pegel (dBm):"), 0, wxALIGN_CENTER_VERTICAL);
-    floatVal.SetPrecision(0);
+    grid->Add(new wxStaticText(this, wxID_ANY, "Ref. Pegel:"), 0, wxALIGN_CENTER_VERTICAL);
+    floatVal.SetPrecision(2);
     m_txtRefLevel = new wxTextCtrl(this, wxID_ANY, "0", wxDefaultPosition, wxDefaultSize, 0, floatVal);
-    m_txtRefLevel->SetToolTip("Zulaessiger Bereich: -130 bis +30 dBm");
-    grid->Add(m_txtRefLevel, 1, wxEXPAND);
+    m_txtRefLevel->SetToolTip("Zulaessiger Bereich: -130.00 bis +30.00 dBm");
+
+    wxArrayString units = {"DBM", "V", "W", "DBUV"};
+    m_choiceUnit = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, units);
+    m_choiceUnit->SetSelection(0);
+    m_choiceUnit->SetToolTip("Zulaessige Einheiten: DBM, V, W, DBUV");
+
+    wxBoxSizer* refLevelSizer = new wxBoxSizer(wxHORIZONTAL);
+    refLevelSizer->Add(m_txtRefLevel, 1, wxRIGHT, 6);
+    refLevelSizer->Add(m_choiceUnit, 0);
+    grid->Add(refLevelSizer, 1, wxEXPAND);
 
     grid->Add(new wxStaticText(this, wxID_ANY, "HF-Daempfung (dB):"), 0, wxALIGN_CENTER_VERTICAL);
     m_spinAttenuation = new wxSpinCtrl(this, wxID_ANY);
@@ -41,13 +50,6 @@ SettingsDialog::SettingsDialog(wxWindow* parent, MeasurementMode mode)
     m_spinAttenuation->SetIncrement(5);
     m_spinAttenuation->SetToolTip("Zulaessiger Bereich: 0 bis 75 dB in 5-dB Schritten");
     grid->Add(m_spinAttenuation, 1, wxEXPAND);
-
-    grid->Add(new wxStaticText(this, wxID_ANY, "Einheit:"), 0, wxALIGN_CENTER_VERTICAL);
-    wxArrayString units = {"DBM", "V", "W", "DBUV"};
-    m_choiceUnit = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, units);
-    m_choiceUnit->SetSelection(0);
-    m_choiceUnit->SetToolTip("Zulaessige Einheiten: DBM, V, W, DBUV");
-    grid->Add(m_choiceUnit, 1, wxEXPAND);
 
     // ---- Sweep + MarkerPeak Felder ----
     if (m_mode == MeasurementMode::SWEEP || m_mode == MeasurementMode::MARKER_PEAK) {
@@ -112,12 +114,13 @@ SettingsDialog::SettingsDialog(wxWindow* parent, MeasurementMode mode)
         m_txtIfBandwidth->SetToolTip("Zulaessiger Bereich: 10 Hz bis 50 MHz (z. B. 10e6, 10 MHz)");
         grid->Add(m_txtIfBandwidth, 1, wxEXPAND);
 
-        grid->Add(new wxStaticText(this, wxID_ANY, "Trigger Quelle:"), 0, wxALIGN_CENTER_VERTICAL);
-        wxArrayString trigSources = {"IMM", "EXT", "IFP"};
-        m_choiceTriggerSource = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, trigSources);
-        m_choiceTriggerSource->SetSelection(0);
-        m_choiceTriggerSource->SetToolTip("Zulaessige Trigger-Quellen: IMM, EXT, IFP");
-        grid->Add(m_choiceTriggerSource, 1, wxEXPAND);
+        // Trigger source Setting (currently disabled)
+        // grid->Add(new wxStaticText(this, wxID_ANY, "Trigger Quelle:"), 0, wxALIGN_CENTER_VERTICAL);
+        // wxArrayString trigsources = {"IMM", "EXT", "IFP"};
+        // m_choiceTriggerSource = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, trigsources);
+        // m_choiceTriggerSource->SetSelection(0);
+        // m_choiceTriggerSource->SetToolTip("Zulaessige Trigger-Quellen: IMM, EXT, IFP");
+        // grid->Add(m_choiceTriggerSource, 1, wxEXPAND);
 
         grid->Add(new wxStaticText(this, wxID_ANY, "Trigger Level (dBm):"), 0, wxALIGN_CENTER_VERTICAL);
         floatVal.SetPrecision(0);
@@ -126,9 +129,8 @@ SettingsDialog::SettingsDialog(wxWindow* parent, MeasurementMode mode)
         grid->Add(m_txtTriggerLevel, 1, wxEXPAND);
 
         grid->Add(new wxStaticText(this, wxID_ANY, "Trigger Delay (s):"), 0, wxALIGN_CENTER_VERTICAL);
-        floatVal.SetPrecision(0);
-        m_txtTriggerDelay = new wxTextCtrl(this, wxID_ANY, "0", wxDefaultPosition, wxDefaultSize, 0, floatVal);
-        m_txtTriggerDelay->SetToolTip("Zulaessiger Bereich: -1 bis 65 s");
+        m_txtTriggerDelay = new wxTextCtrl(this, wxID_ANY, "0");
+        m_txtTriggerDelay->SetToolTip("Zulaessiger Bereich: -1 bis 65 s (auch z. B. 500 ms, 250 us)");
         grid->Add(m_txtTriggerDelay, 1, wxEXPAND);
     }
 
@@ -281,11 +283,15 @@ void SettingsDialog::ApplyIq() {
         wxMessageBox("IF Bandwidth ungueltig! Beispiele: 10000000, 10 MHz", "Validierungsfehler", wxOK | wxICON_ERROR); return;
     }
     m_txtTriggerLevel->GetValue().ToDouble(&trigLevel);
-    m_txtTriggerDelay->GetValue().ToDouble(&trigDelay);
+    if (!ParseTimeInputToSeconds(m_txtTriggerDelay->GetValue(), trigDelay)) {
+        wxMessageBox("Trigger Delay ungueltig! Beispiele: 0.5, 500 ms, 250 us", "Validierungsfehler", wxOK | wxICON_ERROR); return;
+    }
     int recordLen = wxAtoi(m_txtRecordLength->GetValue());
     int att = m_spinAttenuation->GetValue();
     std::string unit = m_choiceUnit->GetStringSelection().ToStdString();
-    std::string trigSrc = m_choiceTriggerSource->GetStringSelection().ToStdString();
+    std::string trigSrc = m_choiceTriggerSource
+        ? m_choiceTriggerSource->GetStringSelection().ToStdString()
+        : "IMM";
 
     // Validierung
     if (!fsu->checkIfSettingsValidSweep(ScpiCommand::CENTER_FREQUENCY, centerFreq)) {
@@ -477,7 +483,9 @@ void SettingsDialog::RefreshData()
             m_txtRecordLength     ->SetValue(wxString::Format(wxT("%i"),s.recordLength));
             m_txtIfBandwidth      ->SetValue(wxString::Format(wxT("%.0f"),s.ifBandwidth));
             m_txtIfBandwidth      ->SetToolTip(FormatFrequencyAutoUnit(s.ifBandwidth));
-            m_choiceTriggerSource ->SetStringSelection(s.triggerSource);
+            if (m_choiceTriggerSource) {
+                m_choiceTriggerSource->SetStringSelection(s.triggerSource);
+            }
             m_txtTriggerLevel     ->SetValue(wxString::Format(wxT("%.0f"),s.triggerLevel));
             m_txtTriggerDelay     ->SetValue(wxString::Format(wxT("%.0f"),s.triggerDelay));
             break;
@@ -572,6 +580,47 @@ bool SettingsDialog::ParseFrequencyInputToHz(const wxString& input, double& hz) 
 
     hz = base * factor;
     return std::isfinite(hz);
+}
+
+bool SettingsDialog::ParseTimeInputToSeconds(const wxString& input, double& seconds) const
+{
+    wxString value = input;
+    value.Trim(true);
+    value.Trim(false);
+
+    if (value.IsEmpty()) {
+        return false;
+    }
+
+    value.Replace(",", ".");
+    wxString lower = value.Lower();
+    lower.Trim(true);
+    lower.Trim(false);
+
+    double factor = 1.0;
+    wxString numberPart = lower;
+
+    if (numberPart.EndsWith("ms")) {
+        factor = 1e-3;
+        numberPart = numberPart.Left(numberPart.Length() - 2);
+    } else if (numberPart.EndsWith("us")) {
+        factor = 1e-6;
+        numberPart = numberPart.Left(numberPart.Length() - 2);
+    } else if (numberPart.EndsWith("s")) {
+        factor = 1.0;
+        numberPart = numberPart.Left(numberPart.Length() - 1);
+    }
+
+    numberPart.Trim(true);
+    numberPart.Trim(false);
+
+    double base = 0.0;
+    if (!numberPart.ToDouble(&base)) {
+        return false;
+    }
+
+    seconds = base * factor;
+    return std::isfinite(seconds);
 }
 
 // ---- Verifikations-Helfer ----

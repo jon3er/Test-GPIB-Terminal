@@ -55,6 +55,7 @@ private:
     void RefreshData();
     wxString FormatFrequencyAutoUnit(double hz) const;
     bool ParseFrequencyInputToHz(const wxString& input, double& hz) const;
+    bool ParseTimeInputToSeconds(const wxString& input, double& seconds) const;
 
     // Verifikations-Helfer
     bool VerifyDouble(const wxString& name, double written, double readback, wxString& mismatches);
