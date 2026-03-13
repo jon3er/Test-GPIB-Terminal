@@ -136,6 +136,7 @@ SettingsDialog::SettingsDialog(wxWindow* parent, MeasurementMode mode)
 
     grid->Add(new wxStaticText(this, wxID_ANY, wxString::FromUTF8("Messung mit Plotter durchführen")), 0, wxALIGN_CENTER_VERTICAL);
     m_useMultipoint = new wxCheckBox(this, wxID_ANY,"", wxDefaultPosition, wxDefaultSize, 0);
+    m_useMultipoint->SetValue(true);
     grid->Add(m_useMultipoint, 1, wxEXPAND);
 
     // Layout
