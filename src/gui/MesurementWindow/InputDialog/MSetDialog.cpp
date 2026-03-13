@@ -30,6 +30,7 @@ SettingsDialog::SettingsDialog(wxWindow* parent, MeasurementMode mode)
 
     // ---- Gemeinsame Felder (alle Modi) ----
     grid->Add(new wxStaticText(this, wxID_ANY, "Ref. Pegel (dBm):"), 0, wxALIGN_CENTER_VERTICAL);
+    floatVal.SetPrecision(0);
     m_txtRefLevel = new wxTextCtrl(this, wxID_ANY, "0", wxDefaultPosition, wxDefaultSize, 0, floatVal);
     grid->Add(m_txtRefLevel, 1, wxEXPAND);
 
@@ -48,18 +49,22 @@ SettingsDialog::SettingsDialog(wxWindow* parent, MeasurementMode mode)
     // ---- Sweep + MarkerPeak Felder ----
     if (m_mode == MeasurementMode::SWEEP || m_mode == MeasurementMode::MARKER_PEAK) {
         grid->Add(new wxStaticText(this, wxID_ANY, "Start Frequenz (Hz):"), 0, wxALIGN_CENTER_VERTICAL);
+        floatVal.SetPrecision(0);
         m_txtStartFreq = new wxTextCtrl(this, wxID_ANY, "1000000", wxDefaultPosition, wxDefaultSize, 0, floatVal);
         grid->Add(m_txtStartFreq, 1, wxEXPAND);
 
         grid->Add(new wxStaticText(this, wxID_ANY, "Stop Frequenz (Hz):"), 0, wxALIGN_CENTER_VERTICAL);
+        floatVal.SetPrecision(0);
         m_txtStopFreq = new wxTextCtrl(this, wxID_ANY, "1000000000", wxDefaultPosition, wxDefaultSize, 0, floatVal);
         grid->Add(m_txtStopFreq, 1, wxEXPAND);
 
         grid->Add(new wxStaticText(this, wxID_ANY, "RBW (Hz):"), 0, wxALIGN_CENTER_VERTICAL);
+        floatVal.SetPrecision(0);
         m_txtRBW = new wxTextCtrl(this, wxID_ANY, "10000", wxDefaultPosition, wxDefaultSize, 0, floatVal);
         grid->Add(m_txtRBW, 1, wxEXPAND);
 
         grid->Add(new wxStaticText(this, wxID_ANY, "VBW (Hz):"), 0, wxALIGN_CENTER_VERTICAL);
+        floatVal.SetPrecision(0);
         m_txtVBW = new wxTextCtrl(this, wxID_ANY, "10000", wxDefaultPosition, wxDefaultSize, 0, floatVal);
         grid->Add(m_txtVBW, 1, wxEXPAND);
 
@@ -82,18 +87,22 @@ SettingsDialog::SettingsDialog(wxWindow* parent, MeasurementMode mode)
     // ---- Nur IQ ----
     if (m_mode == MeasurementMode::IQ) {
         grid->Add(new wxStaticText(this, wxID_ANY, "Center Frequenz (Hz):"), 0, wxALIGN_CENTER_VERTICAL);
+        floatVal.SetPrecision(0);
         m_txtCenterFreq = new wxTextCtrl(this, wxID_ANY, "100000000", wxDefaultPosition, wxDefaultSize, 0, floatVal);
         grid->Add(m_txtCenterFreq, 1, wxEXPAND);
 
         grid->Add(new wxStaticText(this, wxID_ANY, "Sample Rate (Hz):"), 0, wxALIGN_CENTER_VERTICAL);
+        floatVal.SetPrecision(0);
         m_txtSampleRate = new wxTextCtrl(this, wxID_ANY, "32000000", wxDefaultPosition, wxDefaultSize, 0, floatVal);
         grid->Add(m_txtSampleRate, 1, wxEXPAND);
 
         grid->Add(new wxStaticText(this, wxID_ANY, "Record Length (Samples):"), 0, wxALIGN_CENTER_VERTICAL);
+        floatVal.SetPrecision(0);
         m_txtRecordLength = new wxTextCtrl(this, wxID_ANY, "1024", wxDefaultPosition, wxDefaultSize, 0, floatVal);
         grid->Add(m_txtRecordLength, 1, wxEXPAND);
 
         grid->Add(new wxStaticText(this, wxID_ANY, "IF Bandwidth (Hz):"), 0, wxALIGN_CENTER_VERTICAL);
+        floatVal.SetPrecision(0);
         m_txtIfBandwidth = new wxTextCtrl(this, wxID_ANY, "10000000", wxDefaultPosition, wxDefaultSize, 0, floatVal);
         grid->Add(m_txtIfBandwidth, 1, wxEXPAND);
 
@@ -104,10 +113,12 @@ SettingsDialog::SettingsDialog(wxWindow* parent, MeasurementMode mode)
         grid->Add(m_choiceTriggerSource, 1, wxEXPAND);
 
         grid->Add(new wxStaticText(this, wxID_ANY, "Trigger Level (dBm):"), 0, wxALIGN_CENTER_VERTICAL);
+        floatVal.SetPrecision(0);
         m_txtTriggerLevel = new wxTextCtrl(this, wxID_ANY, "-20", wxDefaultPosition, wxDefaultSize, 0, floatVal);
         grid->Add(m_txtTriggerLevel, 1, wxEXPAND);
 
         grid->Add(new wxStaticText(this, wxID_ANY, "Trigger Delay (s):"), 0, wxALIGN_CENTER_VERTICAL);
+        floatVal.SetPrecision(0);
         m_txtTriggerDelay = new wxTextCtrl(this, wxID_ANY, "0", wxDefaultPosition, wxDefaultSize, 0, floatVal);
         grid->Add(m_txtTriggerDelay, 1, wxEXPAND);
     }
@@ -408,40 +419,40 @@ void SettingsDialog::RefreshData()
     switch (m_mode) {
         case MeasurementMode::SWEEP: {
             auto s = fsu->returnSweepSettings();
-            m_txtStartFreq     ->SetValue(std::to_string(s.startFreq));
-            m_txtStopFreq      ->SetValue(std::to_string(s.stopFreq));
-            m_txtRefLevel      ->SetValue(std::to_string(s.refLevel));
+            m_txtStartFreq     ->SetValue(wxString::Format(wxT("%.0f"),s.startFreq));
+            m_txtStopFreq      ->SetValue(wxString::Format(wxT("%.0f"),s.stopFreq));
+            m_txtRefLevel      ->SetValue(wxString::Format(wxT("%.0f"),s.refLevel));
             m_spinAttenuation  ->SetValue(s.att);
             m_choiceUnit       ->SetStringSelection(s.unit);
-            m_txtRBW           ->SetValue(std::to_string(s.rbw));
-            m_txtVBW           ->SetValue(std::to_string(s.vbw));
+            m_txtRBW           ->SetValue(wxString::Format(wxT("%.i"),s.rbw));
+            m_txtVBW           ->SetValue(wxString::Format(wxT("%.i"),s.vbw));
             m_choiceSweepPoints->SetStringSelection(std::to_string(s.points));
             m_choiceDetector   ->SetStringSelection(s.detector);
             break;
         }
         case MeasurementMode::IQ: {
             auto s = fsu->returnIqSettings();
-            m_txtRefLevel         ->SetValue(std::to_string(s.refLevel));
+            m_txtRefLevel         ->SetValue(wxString::Format(wxT("%.0f"),s.refLevel));
             m_spinAttenuation     ->SetValue(s.att);
             m_choiceUnit          ->SetStringSelection(s.unit);
-            m_txtCenterFreq       ->SetValue(std::to_string(s.centerFreq));
-            m_txtSampleRate       ->SetValue(std::to_string(s.sampleRate));
-            m_txtRecordLength     ->SetValue(std::to_string(s.recordLength));
-            m_txtIfBandwidth      ->SetValue(std::to_string(s.ifBandwidth));
+            m_txtCenterFreq       ->SetValue(wxString::Format(wxT("%.0f"),s.centerFreq));
+            m_txtSampleRate       ->SetValue(wxString::Format(wxT("%.0f"),s.sampleRate));
+            m_txtRecordLength     ->SetValue(wxString::Format(wxT("%i"),s.recordLength));
+            m_txtIfBandwidth      ->SetValue(wxString::Format(wxT("%.0f"),s.ifBandwidth));
             m_choiceTriggerSource ->SetStringSelection(s.triggerSource);
-            m_txtTriggerLevel     ->SetValue(std::to_string(s.triggerLevel));
-            m_txtTriggerDelay     ->SetValue(std::to_string(s.triggerDelay));
+            m_txtTriggerLevel     ->SetValue(wxString::Format(wxT("%.0f"),s.triggerLevel));
+            m_txtTriggerDelay     ->SetValue(wxString::Format(wxT("%.0f"),s.triggerDelay));
             break;
         }
         case MeasurementMode::MARKER_PEAK: {
             auto s = fsu->returnMarkerPeakSettings();
-            m_txtStartFreq    ->SetValue(std::to_string(s.startFreq));
-            m_txtStopFreq     ->SetValue(std::to_string(s.stopFreq));
-            m_txtRefLevel     ->SetValue(std::to_string(s.refLevel));
+            m_txtStartFreq    ->SetValue(wxString::Format(wxT("%.0f"),s.startFreq));
+            m_txtStopFreq     ->SetValue(wxString::Format(wxT("%.0f"),s.stopFreq));
+            m_txtRefLevel     ->SetValue(wxString::Format(wxT("%.0f"),s.refLevel));
             m_spinAttenuation ->SetValue(s.att);
             m_choiceUnit      ->SetStringSelection(s.unit);
-            m_txtRBW          ->SetValue(std::to_string(s.rbw));
-            m_txtVBW          ->SetValue(std::to_string(s.vbw));
+            m_txtRBW          ->SetValue(wxString::Format(wxT("%i"),s.rbw));
+            m_txtVBW          ->SetValue(wxString::Format(wxT("%i"),s.vbw));
             m_choiceDetector  ->SetStringSelection(s.detector);
             break;
         }
