@@ -32,42 +32,50 @@ SettingsDialog::SettingsDialog(wxWindow* parent, MeasurementMode mode)
     grid->Add(new wxStaticText(this, wxID_ANY, "Ref. Pegel (dBm):"), 0, wxALIGN_CENTER_VERTICAL);
     floatVal.SetPrecision(0);
     m_txtRefLevel = new wxTextCtrl(this, wxID_ANY, "0", wxDefaultPosition, wxDefaultSize, 0, floatVal);
+    m_txtRefLevel->SetToolTip("Zulaessiger Bereich: -130 bis +30 dBm");
     grid->Add(m_txtRefLevel, 1, wxEXPAND);
 
     grid->Add(new wxStaticText(this, wxID_ANY, "HF-Daempfung (dB):"), 0, wxALIGN_CENTER_VERTICAL);
     m_spinAttenuation = new wxSpinCtrl(this, wxID_ANY);
     m_spinAttenuation->SetRange(0, 75);
     m_spinAttenuation->SetIncrement(5);
+    m_spinAttenuation->SetToolTip("Zulaessiger Bereich: 0 bis 75 dB in 5-dB Schritten");
     grid->Add(m_spinAttenuation, 1, wxEXPAND);
 
     grid->Add(new wxStaticText(this, wxID_ANY, "Einheit:"), 0, wxALIGN_CENTER_VERTICAL);
     wxArrayString units = {"DBM", "V", "W", "DBUV"};
     m_choiceUnit = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, units);
     m_choiceUnit->SetSelection(0);
+    m_choiceUnit->SetToolTip("Zulaessige Einheiten: DBM, V, W, DBUV");
     grid->Add(m_choiceUnit, 1, wxEXPAND);
 
     // ---- Sweep + MarkerPeak Felder ----
     if (m_mode == MeasurementMode::SWEEP || m_mode == MeasurementMode::MARKER_PEAK) {
         grid->Add(new wxStaticText(this, wxID_ANY, "Start Frequenz (Hz):"), 0, wxALIGN_CENTER_VERTICAL);
         m_txtStartFreq = new wxTextCtrl(this, wxID_ANY, "1000000");
+        m_txtStartFreq->SetToolTip("Zulaessiger Bereich: 0 bis 26.5 GHz (auch z. B. 1e6, 1 MHz, 0.1 GHz)");
         grid->Add(m_txtStartFreq, 1, wxEXPAND);
 
         grid->Add(new wxStaticText(this, wxID_ANY, "Stop Frequenz (Hz):"), 0, wxALIGN_CENTER_VERTICAL);
         m_txtStopFreq = new wxTextCtrl(this, wxID_ANY, "1000000000");
+        m_txtStopFreq->SetToolTip("Zulaessiger Bereich: 0 bis 26.5 GHz (auch z. B. 2e6, 2 MHz, 0.2 GHz)");
         grid->Add(m_txtStopFreq, 1, wxEXPAND);
 
         grid->Add(new wxStaticText(this, wxID_ANY, "RBW (Hz):"), 0, wxALIGN_CENTER_VERTICAL);
         m_txtRBW = new wxTextCtrl(this, wxID_ANY, "10000");
+        m_txtRBW->SetToolTip("Zulaessiger Bereich: 1 Hz bis 50 MHz (z. B. 10000, 10 kHz, 0.01 MHz)");
         grid->Add(m_txtRBW, 1, wxEXPAND);
 
         grid->Add(new wxStaticText(this, wxID_ANY, "VBW (Hz):"), 0, wxALIGN_CENTER_VERTICAL);
         m_txtVBW = new wxTextCtrl(this, wxID_ANY, "10000");
+        m_txtVBW->SetToolTip("Zulaessiger Bereich: 1 Hz bis 50 MHz (z. B. 10000, 10 kHz, 0.01 MHz)");
         grid->Add(m_txtVBW, 1, wxEXPAND);
 
         grid->Add(new wxStaticText(this, wxID_ANY, "Detektor:"), 0, wxALIGN_CENTER_VERTICAL);
         wxArrayString detectors = {"APE", "POS", "NEG", "SAMP", "RMS", "AVER"};
         m_choiceDetector = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, detectors);
         m_choiceDetector->SetSelection(1);
+        m_choiceDetector->SetToolTip("Zulaessige Detektoren: APE, POS, NEG, SAMP, RMS, AVER");
         grid->Add(m_choiceDetector, 1, wxEXPAND);
     }
 
@@ -77,6 +85,7 @@ SettingsDialog::SettingsDialog(wxWindow* parent, MeasurementMode mode)
         wxArrayString points = {"155", "313", "625", "1251", "1999", "2501", "5001", "10001", "20001", "30001"};
         m_choiceSweepPoints = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, points);
         m_choiceSweepPoints->SetSelection(2);
+        m_choiceSweepPoints->SetToolTip("Zulaessige Sweep-Punkte: 155, 313, 625, 1251, 1999, 2501, 5001, 10001, 20001, 30001");
         grid->Add(m_choiceSweepPoints, 1, wxEXPAND);
     }
 
@@ -84,35 +93,42 @@ SettingsDialog::SettingsDialog(wxWindow* parent, MeasurementMode mode)
     if (m_mode == MeasurementMode::IQ) {
         grid->Add(new wxStaticText(this, wxID_ANY, "Center Frequenz (Hz):"), 0, wxALIGN_CENTER_VERTICAL);
         m_txtCenterFreq = new wxTextCtrl(this, wxID_ANY, "100000000");
+        m_txtCenterFreq->SetToolTip("Zulaessiger Bereich: 0 bis 26.5 GHz (auch z. B. 100e6, 100 MHz, 0.1 GHz)");
         grid->Add(m_txtCenterFreq, 1, wxEXPAND);
 
         grid->Add(new wxStaticText(this, wxID_ANY, "Sample Rate (Hz):"), 0, wxALIGN_CENTER_VERTICAL);
         m_txtSampleRate = new wxTextCtrl(this, wxID_ANY, "32000000");
+        m_txtSampleRate->SetToolTip("Zulaessiger Bereich: 10 kHz bis 70.4 MHz (z. B. 32e6, 32 MHz)");
         grid->Add(m_txtSampleRate, 1, wxEXPAND);
 
         grid->Add(new wxStaticText(this, wxID_ANY, "Record Length (Samples):"), 0, wxALIGN_CENTER_VERTICAL);
         floatVal.SetPrecision(0);
         m_txtRecordLength = new wxTextCtrl(this, wxID_ANY, "1024", wxDefaultPosition, wxDefaultSize, 0, floatVal);
+        m_txtRecordLength->SetToolTip("Zulaessiger Bereich: 1 bis 16,000,000 Samples");
         grid->Add(m_txtRecordLength, 1, wxEXPAND);
 
         grid->Add(new wxStaticText(this, wxID_ANY, "IF Bandwidth (Hz):"), 0, wxALIGN_CENTER_VERTICAL);
         m_txtIfBandwidth = new wxTextCtrl(this, wxID_ANY, "10000000");
+        m_txtIfBandwidth->SetToolTip("Zulaessiger Bereich: 10 Hz bis 50 MHz (z. B. 10e6, 10 MHz)");
         grid->Add(m_txtIfBandwidth, 1, wxEXPAND);
 
         grid->Add(new wxStaticText(this, wxID_ANY, "Trigger Quelle:"), 0, wxALIGN_CENTER_VERTICAL);
         wxArrayString trigSources = {"IMM", "EXT", "IFP"};
         m_choiceTriggerSource = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, trigSources);
         m_choiceTriggerSource->SetSelection(0);
+        m_choiceTriggerSource->SetToolTip("Zulaessige Trigger-Quellen: IMM, EXT, IFP");
         grid->Add(m_choiceTriggerSource, 1, wxEXPAND);
 
         grid->Add(new wxStaticText(this, wxID_ANY, "Trigger Level (dBm):"), 0, wxALIGN_CENTER_VERTICAL);
         floatVal.SetPrecision(0);
         m_txtTriggerLevel = new wxTextCtrl(this, wxID_ANY, "-20", wxDefaultPosition, wxDefaultSize, 0, floatVal);
+        m_txtTriggerLevel->SetToolTip("Zulaessiger Bereich: -130 bis +30 dBm");
         grid->Add(m_txtTriggerLevel, 1, wxEXPAND);
 
         grid->Add(new wxStaticText(this, wxID_ANY, "Trigger Delay (s):"), 0, wxALIGN_CENTER_VERTICAL);
         floatVal.SetPrecision(0);
         m_txtTriggerDelay = new wxTextCtrl(this, wxID_ANY, "0", wxDefaultPosition, wxDefaultSize, 0, floatVal);
+        m_txtTriggerDelay->SetToolTip("Zulaessiger Bereich: -1 bis 65 s");
         grid->Add(m_txtTriggerDelay, 1, wxEXPAND);
     }
 
