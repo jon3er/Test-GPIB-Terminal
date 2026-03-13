@@ -176,6 +176,7 @@ public:
 
     // Write Current Settings to GPIB-BUS
     bool writeSettingsToGpib();
+    bool readSettingsFromGpib();
 
 private:
 

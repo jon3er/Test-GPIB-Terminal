@@ -68,7 +68,7 @@ std::vector<double> sData::GetFreqStepVector()
     double startFreq = double(m_dsParam->startFreq);
     double ArrayPts = double(m_dsParam->NoPoints_Array);
     double step;
-    
+
     try
     {
         step = (endFreq - startFreq) / (ArrayPts-1);
@@ -222,17 +222,17 @@ bool sData::setFileType(wxString Type)
 
     return true;
 }
-bool sData::setMeasurementNumb(int Numb) 
-{ 
+bool sData::setMeasurementNumb(int Numb)
+{
     if (Numb <= 1)
     {
         try
         {
-            m_dsParam->MeasurementNumb = Numb; 
+            m_dsParam->MeasurementNumb = Numb;
 
             std::cout << "Measurement Number set to:" << Numb << std::endl;
 
-            return true; 
+            return true;
         }
         catch(const std::exception& e)
         {
@@ -246,11 +246,11 @@ bool sData::setMeasurementNumb(int Numb)
 
         return false;
     }
-    
+
 };
 
 
-bool sData::setNumberOfPts_X(unsigned int NumbPtsX)
+bool sData::setNumberOfPts_X(int NumbPtsX)
 {
         try
     {
@@ -263,8 +263,8 @@ bool sData::setNumberOfPts_X(unsigned int NumbPtsX)
     }
 
     return true;
-} 
-bool sData::setNumberOfPts_Y(unsigned int NumbPtsY)
+}
+bool sData::setNumberOfPts_Y(int NumbPtsY)
 {
         try
     {
@@ -278,7 +278,7 @@ bool sData::setNumberOfPts_Y(unsigned int NumbPtsY)
 
     return true;
 }
-bool sData::setAmpUnit(wxString Unit)
+bool sData::setAmpUnit(std::string Unit)
 {
     try
     {
@@ -292,7 +292,7 @@ bool sData::setAmpUnit(wxString Unit)
 
     return true;
 }
-bool sData::setStartFreq(unsigned int StartFreq)
+bool sData::setStartFreq(double StartFreq)
 {
     try
     {
@@ -306,7 +306,7 @@ bool sData::setStartFreq(unsigned int StartFreq)
 
     return true;
 }
-bool sData::setEndFreq(unsigned int EndFreq)
+bool sData::setEndFreq(double EndFreq)
 {
     try
     {
@@ -321,15 +321,15 @@ bool sData::setEndFreq(unsigned int EndFreq)
     return true;
 }
 
-void sData::setNumberofPts_Array(int numb) 
-{ 
-        if (numb == 0) 
+void sData::setNumberofPts_Array(int numb)
+{
+        if (numb == 0)
         {
             m_dsParam->NoPoints_Array = m_dsR.size();
-        } 
-        else 
+        }
+        else
         {
-            m_dsParam->NoPoints_Array = numb; 
+            m_dsParam->NoPoints_Array = numb;
         }
 
         try
@@ -339,7 +339,7 @@ void sData::setNumberofPts_Array(int numb)
         catch(const std::exception& e)
         {
             std::cerr << "Set Number of Points Array Error" << e.what() << '\n';
-        }       
+        }
 }
 
 bool sData::setTimeAndDate()
@@ -350,7 +350,7 @@ bool sData::setTimeAndDate()
         wxString timestamp = zeitJetzt.Format("%H:%M:%S");
         m_dsParam->Time = timestamp;
 
-        wxString dateStamp = zeitJetzt.Format("%Y:%m:%d");
+        wxString dateStamp = zeitJetzt.Format("%Y-%m-%d");
         m_dsParam->Date = dateStamp;
     }
     catch(const std::exception& e)
@@ -407,7 +407,7 @@ sData3D::sData3D(int x, int y, int Anzahl) : m_X_Messpunkte(x), m_Y_Messpunkte(y
     resize(m_X_Messpunkte, m_Y_Messpunkte, m_Messpunkte);
 }
 
-void sData3D::resize(int x, int y, int Anzahl) 
+void sData3D::resize(int x, int y, int Anzahl)
 {
     m_X_Messpunkte = x;
     m_Y_Messpunkte = y;

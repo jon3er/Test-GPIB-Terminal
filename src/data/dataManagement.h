@@ -13,7 +13,7 @@
 #include "FsuMeasurement.h"
 
 
-/** 
+/**
  * @brief Class to save big 3-Dimentions
  * [x;y] matrix with n values in each element
 */
@@ -68,7 +68,7 @@ class sData
 {
 public:
     // header data for mesurements
-    struct sParam                                   
+    struct sParam
     {
         // info
         wxString        File;
@@ -87,15 +87,15 @@ public:
         double          startFreq;
         double          endFreq;
         // Amplitude und Pegel
-        double          refPegel;   
+        double          refPegel;
         int             HFDaempfung;
-        wxString        ampUnit;
-  
-        int             RBW ;       
+        std::string     ampUnit;
+
+        int             RBW ;
         int             VBW;
-        // Erfassung        
-        std::string     sweepTime;  
-        std::string     detektor;  
+        // Erfassung
+        std::string     sweepTime;
+        std::string     detektor;
         // IQ
         double          centerFreq;
         double          sampleRate;
@@ -105,7 +105,7 @@ public:
         double          triggerLevel;
         double          triggerDelay;
         // Costum file name:
-        std::string     costumFile; 
+        std::string     costumFile;
     };
 
     // constructor
@@ -127,11 +127,11 @@ public:
 
     int GetMeasurementNumb() { return m_dsParam->MeasurementNumb; };
 
-    unsigned int getNumberOfPts_X() {return m_dsParam->NoPoints_X; };
-    unsigned int getNumberOfPts_Y() {return m_dsParam->NoPoints_Y; };
-    unsigned int getTotalNumberOfPts() {return m_dsParam->NoPoints_X * m_dsParam->NoPoints_Y; };
-    unsigned int getNumberOfPts_Array() {return m_dsParam->NoPoints_Array; };
-    unsigned int getRecordLength() {return m_dsParam->recordLength; };
+    int getNumberOfPts_X() {return m_dsParam->NoPoints_X; };
+    int getNumberOfPts_Y() {return m_dsParam->NoPoints_Y; };
+    int getTotalNumberOfPts() {return m_dsParam->NoPoints_X * m_dsParam->NoPoints_Y; };
+    int getNumberOfPts_Array() {return m_dsParam->NoPoints_Array; };
+    int getRecordLength() {return m_dsParam->recordLength; };
 
 
     std::vector<double> GetFreqStepVector();
@@ -148,18 +148,18 @@ public:
 
     bool setMeasurementNumb(int Numb);
     // set Points
-    bool setNumberOfPts_X(unsigned int NumbPtsX);
-    bool setNumberOfPts_Y(unsigned int NumbPtsY);
+    bool setNumberOfPts_X(int NumbPtsX);
+    bool setNumberOfPts_Y(int NumbPtsY);
     void setNumberofPts_Array(int numb = 0);
     // set Mesurement var
-    bool setAmpUnit(wxString Unit);
-    bool setStartFreq(unsigned int StartFreq);
-    bool setEndFreq(unsigned int EndFreq);
+    bool setAmpUnit(std::string Unit);
+    bool setStartFreq(double StartFreq);
+    bool setEndFreq(double EndFreq);
     bool setTimeAndDate();
     // set data array
     bool set3DDataReal(std::vector<double> Array , int x, int y);
     bool set3DDataImag(std::vector<double> Array , int x, int y);
-    
+
     // get methodes
     std::vector<double> get3DDataReal(int x, int y);
     std::vector<double> get3DDataImag(int x, int y);
@@ -198,7 +198,7 @@ private:
     // header data
     sParam*                 m_dsParam;
     // last stored arrays
-    std::vector<double>     m_dsR;                                
+    std::vector<double>     m_dsR;
     std::vector<double>     m_dsI;
     // all stored arrays
     sData3D m_Real3D;

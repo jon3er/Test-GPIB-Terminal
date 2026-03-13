@@ -191,7 +191,7 @@ void fsuMeasurement::setFreqStartEnd(unsigned int FreqS, unsigned int FreqE)
 bool fsuMeasurement::checkIfSettingsValidSweep(ScpiCommand command, const SettingValue& value)
 {
 try {
-    switch (command) 
+    switch (command)
     {
         case ScpiCommand::START_FREQUENCY:
         case ScpiCommand::END_FREQUENCY: {
@@ -220,7 +220,7 @@ try {
 
         case ScpiCommand::SWEEP_POINTS: {
                 int points = std::get<int>(value);
-                
+
                 // Definierte zulässige Festwerte für R&S FSU
                 static const std::set<int> allowedPoints = {
                     155, 313, 625, 1251, 1999, 2501, 5001, 10001, 20001, 30001
@@ -233,7 +233,7 @@ try {
         case ScpiCommand::DETECTOR: {
             std::string det = std::get<std::string>(value);
             // Erlaubte SCPI Parameter für Detektoren
-            return (det == "APE" || det == "POS" || det == "NEG" || 
+            return (det == "APE" || det == "POS" || det == "NEG" ||
                     det == "SAMP" || det == "RMS" || det == "AVER");
         }
 
@@ -284,8 +284,8 @@ try {
         default:
             return false;
         }
-    } 
-    catch (const std::bad_variant_access&) 
+    }
+    catch (const std::bad_variant_access&)
     {
         // Falscher Datentyp für diesen Befehl übergeben
         return false;
@@ -316,12 +316,36 @@ bool fsuMeasurement::writeSettingsToGpib()
     }
 }
 
+bool fsuMeasurement::readSettingsFromGpib()
+{
+    switch (m_lastMeasurementMode) {
+        case MeasurementMode::SWEEP: {
+            readSweepSettings();
+            return true;
+        }
+        case MeasurementMode::IQ: {
+            readIqSettings();
+            return true;
+        }
+        case MeasurementMode::MARKER_PEAK: {
+            readMarkerPeakSettings();
+            return true;
+        }
+
+        case MeasurementMode::COSTUM:{
+            return true;
+        }
+        default:
+            return false;
+    }
+}
+
 
 bool fsuMeasurement::writeSweepSettings(lastSweepSettings settings)
 {
 std::string blockCmd = scpiSetCommands.at(ScpiCommand::START_FREQUENCY   )   + std::to_string(settings.startFreq)+ ";:" +
                         scpiSetCommands.at(ScpiCommand::END_FREQUENCY   )   + std::to_string(settings.stopFreq) + ";:" +
-                        scpiSetCommands.at(ScpiCommand::REF_LEVEL       )   + std::to_string(settings.refLevel) + ";:" +      
+                        scpiSetCommands.at(ScpiCommand::REF_LEVEL       )   + std::to_string(settings.refLevel) + ";:" +
                         scpiSetCommands.at(ScpiCommand::RF_ATTENUATION  )   + std::to_string(settings.att)      + ";:" +
                         scpiSetCommands.at(ScpiCommand::AMPLITUDE_UNIT  )   + settings.unit                     + ";:" +
                         scpiSetCommands.at(ScpiCommand::RBW             )   + std::to_string(settings.rbw)      + ";:" +
@@ -329,7 +353,7 @@ std::string blockCmd = scpiSetCommands.at(ScpiCommand::START_FREQUENCY   )   + s
                         scpiSetCommands.at(ScpiCommand::SWEEP_TIME      )   + settings.sweepTime                + ";:" +
                         scpiSetCommands.at(ScpiCommand::SWEEP_POINTS    )   + std::to_string(settings.points)   + ";:" +
                         scpiSetCommands.at(ScpiCommand::DETECTOR        )   + settings.detector                 + ";";
-         
+
     std::string status = PrologixUsbGpibAdapter::get_instance().write(blockCmd);
 
     std::cout << "written Sweep data: " << status << std::endl;

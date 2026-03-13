@@ -4,7 +4,8 @@
 bool PlotterMesurement(sData* data, int measurementNumber)
 {
     wxArrayString logAdapterReceived;
-    static CsvFile csvFile;
+    static wxString fileName; // Keeps Filename the same;
+    static CsvFile csvFile;   // Keeps Lookuptables persitient
     wxString TypeText;
 
     std::vector<double> MessWerteReal;
@@ -24,31 +25,40 @@ bool PlotterMesurement(sData* data, int measurementNumber)
         //CsvFile csvFileRest;
         //csvFile = csvFileRest;
 
-        data->getFsuSettings();
+        data->importFsuSettings();
+
         int x = data->getNumberOfPts_X();
         int y = data->getNumberOfPts_Y();
         int anz = 625;
+
         switch (fsu->getMeasurementMode())
         {
         case MeasurementMode::SWEEP:
             anz = data->getNumberOfPts_Array();
+            std::cout << " Mode: SWEEP" << std::endl;
             TypeText = "Sweep";
             break;
         case MeasurementMode::IQ:
             anz = data->getRecordLength();
             TypeText = "IQ";
+            std::cout << " Mode: IQ" << std::endl;
             break;
         case MeasurementMode::MARKER_PEAK:
             anz = data->getNumberOfPts_Array();
             TypeText = "Marker";
+            std::cout << " Mode: MARKER" << std::endl;
             break;
         case MeasurementMode::COSTUM:
             TypeText = "Costum";
-            // TODO set the Lenght with skript 
+            // TODO set the Lenght with skript
         default:
             break;
         }
-        
+
+
+        // save data to a Csv file
+        fileName = System::filePathRoot + "LogFiles" + System::fileSystemSlash +
+             data->GetFile() + "_" + TypeText + "_" + data->GetDate() + "_" + data->GetTime() +".csv";
 
         std::cout << "array size " << "x " <<x  <<"y "<< y << "anz "<< anz << std::endl;
         data->resize3DData(x,y,anz);
@@ -68,10 +78,6 @@ bool PlotterMesurement(sData* data, int measurementNumber)
     data->set3DDataReal(MessWerteReal, x, y);
     data->set3DDataImag(MessWerteImag, x, y);
 
-
-    // save data to a Csv file
-    wxString fileName = System::filePathRoot + "LogFiles" + System::fileSystemSlash +
-             data->GetFile() + "_" + TypeText + "_" + data->GetDate() + "_" + data->GetTime() +".csv";
     if(!csvFile.saveCsvFile(fileName, *data, measurementNumber))
     {
         std::cout << "[Error] Failed to save data to CSV file" << std::endl;

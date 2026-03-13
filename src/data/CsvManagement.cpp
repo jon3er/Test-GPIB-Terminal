@@ -127,13 +127,13 @@ bool CsvFile::saveCsvHeader(wxTextFile &file, sData& data)
     sData::sParam* dsParam = data.GetParameter();
 
     //file.AddLine("Header Information"); // Leerzeile
-    file.AddLine(wxString::Format("%s%c%s",   HeaderInfo::fileName.data(),        m_separator, dsParam->File));
-    file.AddLine(wxString::Format("%s%c%s",   HeaderInfo::date.data(),            m_separator, dsParam->Date));
-    file.AddLine(wxString::Format("%s%c%s",   HeaderInfo::time.data(),            m_separator, dsParam->Time));
-    file.AddLine(wxString::Format("%s%c%s",   HeaderInfo::type.data(),            m_separator, dsParam->Type));
-    // Config
-    file.AddLine(wxString::Format("%s%c%d",   HeaderConfig::noPointsX.data(),     m_separator, dsParam->NoPoints_X));
-    file.AddLine(wxString::Format("%s%c%d",   HeaderConfig::noPointsY.data(),     m_separator, dsParam->NoPoints_Y));
+    file.AddLine(wxString::FromUTF8(HeaderInfo::fileName.data()) + m_separator + dsParam->File);
+    file.AddLine(wxString::FromUTF8(HeaderInfo::date.data()) + m_separator + dsParam->Date);
+    file.AddLine(wxString::FromUTF8(HeaderInfo::time.data()) + m_separator + dsParam->Time);
+    file.AddLine(wxString::FromUTF8(HeaderInfo::type.data()) + m_separator + dsParam->Type);
+    // Plotter info
+    file.AddLine(wxString::FromUTF8(HeaderConfig::noPointsX.data()) + m_separator + wxString::Format("%d", dsParam->NoPoints_X));
+    file.AddLine(wxString::FromUTF8(HeaderConfig::noPointsY.data()) + m_separator + wxString::Format("%d", dsParam->NoPoints_Y));
     // Measurement config
     //file.AddLine(wxString::Format("%s%c%d",   HeaderConfig::noPointsArray.data(), m_separator, dsParam->NoPoints_Array));
 
@@ -145,23 +145,22 @@ bool CsvFile::saveCsvHeader(wxTextFile &file, sData& data)
     switch (mode)
     {
         case MeasurementMode::SWEEP:
-            file.AddLine(wxString::Format("%s%c%s", HeaderConfig::mesSettings.data(), m_separator, "Sweep"));
+            file.AddLine(wxString::FromUTF8(HeaderConfig::mesSettings.data()) + m_separator + "Sweep");
             saveCsvSettingsSweep(file, data);
             break;
         case MeasurementMode::IQ:
-            file.AddLine(wxString::Format("%s%c%s", HeaderConfig::mesSettings.data(), m_separator, "IQ"));
+            file.AddLine(wxString::FromUTF8(HeaderConfig::mesSettings.data()) + m_separator + "IQ");
             saveCsvSettingsQI(file, data);
             break;
         case MeasurementMode::MARKER_PEAK:
-            file.AddLine(wxString::Format("%s%c%s", HeaderConfig::mesSettings.data(), m_separator, "Marker Peak"));
+            file.AddLine(wxString::FromUTF8(HeaderConfig::mesSettings.data()) + m_separator + "Marker Peak");
             saveCsvSettingsMarker(file, data);
             break;
         case MeasurementMode::COSTUM:
-            file.AddLine(wxString::Format("%s%c%s", HeaderConfig::mesSettings.data(), m_separator, "Costum"));
-            file.AddLine(wxString::Format("%s%c%s", HeaderConfig::customFile.data(), m_separator, data.getFsuSettings().costumFile.ToUTF8()));
+            file.AddLine(wxString::FromUTF8(HeaderConfig::mesSettings.data()) + m_separator + "Costum");
+            file.AddLine(wxString::FromUTF8(HeaderConfig::customFile.data()) + m_separator + data.getFsuSettings().costumFile);
             break;
     }
-
     file.AddLine(""); // Leerzeile
 
     wxString lineLabel;
@@ -169,18 +168,18 @@ bool CsvFile::saveCsvHeader(wxTextFile &file, sData& data)
     std::vector<double> timeAxis;
     double samplerate;
     int recordLength;
-    double t_sample; 
+    double t_sample;
     std::string timeUnit;
 
     switch (mode)
     {
         case MeasurementMode::SWEEP:
-            // Frequenz-Zeile 
-            lineLabel = wxString::Format("f in %s", dsParam->ampUnit.ToAscii());
+            // Frequenz-Zeile
+            lineLabel = wxString::Format("f in %s", dsParam->ampUnit);
 
             lineDataVector = data.GetFreqStepVector();
 
-            for (size_t i = 0; i < dsParam->NoPoints_Array; i++)
+            for (int i = 0; i < dsParam->NoPoints_Array; i++)
             {
                 lineLabel << m_separator << lineDataVector[i];
             }
@@ -207,7 +206,7 @@ bool CsvFile::saveCsvHeader(wxTextFile &file, sData& data)
             {
                 t_sample = t_sample * 1'000;
                 timeUnit = "ms";
-            }else 
+            }else
             if (t_sample < 1)
             {
                 timeUnit = "s";
@@ -217,7 +216,7 @@ bool CsvFile::saveCsvHeader(wxTextFile &file, sData& data)
 
             lineDataVector = data.GetTimeIQStepVector();
 
-            for (size_t i = 0; i < recordLength; i++)
+            for (int i = 0; i < recordLength; i++)
             {
                 lineLabel << m_separator << lineDataVector[i];
             }
@@ -232,7 +231,7 @@ bool CsvFile::saveCsvHeader(wxTextFile &file, sData& data)
 
     // ID-Zeile zusammenbauen
     wxString lineID = "ID";
-    for (size_t i = 0; i < dsParam->NoPoints_Array; i++)
+    for (int i = 0; i < dsParam->NoPoints_Array; i++)
     {
         lineID << m_separator << (int)i;
     }
@@ -245,16 +244,16 @@ bool CsvFile::saveCsvSettingsSweep(wxTextFile& file, sData& data)
 {
     const auto& s = data.getFsuSettings().sweep;
 
-    file.AddLine(wxString::Format("%s%c%u %s",  wxString::FromUTF8(HeaderConfig::startFreq.data()     ), m_separator, s.startFreq,  s.unit));
-    file.AddLine(wxString::Format("%s%c%u %s",  wxString::FromUTF8(HeaderConfig::endFreq.data()       ), m_separator, s.stopFreq,   s.unit));
-    file.AddLine(wxString::Format("%s%c%d",     wxString::FromUTF8(HeaderConfig::refPegel.data()      ), m_separator, s.refLevel));
-    file.AddLine(wxString::Format("%s%c%u",     wxString::FromUTF8(HeaderConfig::HFDaempfung.data()   ), m_separator, s.att));
-    file.AddLine(wxString::Format("%s%c%s",     wxString::FromUTF8(HeaderConfig::ampUnit.data()       ), m_separator, s.unit));
-    file.AddLine(wxString::Format("%s%c%u",     wxString::FromUTF8(HeaderConfig::RBW.data()           ), m_separator, s.rbw));
-    file.AddLine(wxString::Format("%s%c%u",     wxString::FromUTF8(HeaderConfig::VBW.data()           ), m_separator, s.vbw));
-    file.AddLine(wxString::Format("%s%c%u",     wxString::FromUTF8(HeaderConfig::noPointsArray.data() ), m_separator, s.points));
-    file.AddLine(wxString::Format("%s%c%s",     wxString::FromUTF8(HeaderConfig::sweepTime.data()     ), m_separator, s.sweepTime.c_str()));
-    file.AddLine(wxString::Format("%s%c%s",     wxString::FromUTF8(HeaderConfig::detektor.data()      ), m_separator, s.detector.c_str()));
+    file.AddLine(wxString::FromUTF8(HeaderConfig::startFreq.data()) + m_separator + wxString::FromDouble( s.startFreq) + " " + s.unit);
+    file.AddLine(wxString::FromUTF8(HeaderConfig::endFreq.data()) + m_separator + wxString::FromDouble(s.stopFreq) + " " + s.unit);
+    file.AddLine(wxString::FromUTF8(HeaderConfig::refPegel.data()) + m_separator + wxString::FromDouble(s.refLevel));
+    file.AddLine(wxString::FromUTF8(HeaderConfig::HFDaempfung.data()) + m_separator + wxString::Format("%i", s.att));
+    file.AddLine(wxString::FromUTF8(HeaderConfig::ampUnit.data()) + m_separator + s.unit);
+    file.AddLine(wxString::FromUTF8(HeaderConfig::RBW.data()) + m_separator + wxString::Format("%i", s.rbw));
+    file.AddLine(wxString::FromUTF8(HeaderConfig::VBW.data()) + m_separator + wxString::Format("%i", s.vbw));
+    file.AddLine(wxString::FromUTF8(HeaderConfig::noPointsArray.data()) + m_separator + wxString::Format("%i", s.points));
+    file.AddLine(wxString::FromUTF8(HeaderConfig::sweepTime.data()) + m_separator + s.sweepTime);
+    file.AddLine(wxString::FromUTF8(HeaderConfig::detektor.data()) + m_separator + s.detector);
 
     return true;
 }
@@ -263,16 +262,16 @@ bool CsvFile::saveCsvSettingsQI(wxTextFile& file, sData& data)
 {
     const auto& s = data.getFsuSettings().iq;
 
-    file.AddLine(wxString::Format("%s%c%g %s",  wxString::FromUTF8(HeaderConfig::centerFreq.data()    ), m_separator, s.centerFreq, s.unit));
-    file.AddLine(wxString::Format("%s%c%s",     wxString::FromUTF8(HeaderConfig::refPegel.data()      ), m_separator, s.refLevel));
-    file.AddLine(wxString::Format("%s%c%u",     wxString::FromUTF8(HeaderConfig::HFDaempfung.data()   ), m_separator, s.att));
-    file.AddLine(wxString::Format("%s%c%s",     wxString::FromUTF8(HeaderConfig::ampUnit.data()       ), m_separator, s.unit));
-    file.AddLine(wxString::Format("%s%c%g",     wxString::FromUTF8(HeaderConfig::sampleRate.data()    ), m_separator, s.sampleRate));
-    file.AddLine(wxString::Format("%s%c%d",     wxString::FromUTF8(HeaderConfig::recordLength.data()  ), m_separator, s.recordLength));
-    file.AddLine(wxString::Format("%s%c%g",     wxString::FromUTF8(HeaderConfig::ifBandwidth.data()   ), m_separator, s.ifBandwidth));
-    file.AddLine(wxString::Format("%s%c%s",     wxString::FromUTF8(HeaderConfig::triggerSource.data() ), m_separator, s.triggerSource));
-    file.AddLine(wxString::Format("%s%c%g",     wxString::FromUTF8(HeaderConfig::triggerLevel.data()  ), m_separator, s.triggerLevel));
-    file.AddLine(wxString::Format("%s%c%g",     wxString::FromUTF8(HeaderConfig::triggerDelay.data()  ), m_separator, s.triggerDelay));
+    file.AddLine(wxString::FromUTF8(HeaderConfig::centerFreq.data()) + m_separator + wxString::FromDouble(s.centerFreq) + " " + s.unit);
+    file.AddLine(wxString::FromUTF8(HeaderConfig::refPegel.data()) + m_separator + wxString::FromDouble(s.refLevel));
+    file.AddLine(wxString::FromUTF8(HeaderConfig::HFDaempfung.data()) + m_separator + wxString::Format("%i", s.att));
+    file.AddLine(wxString::FromUTF8(HeaderConfig::ampUnit.data()) + m_separator + s.unit);
+    file.AddLine(wxString::FromUTF8(HeaderConfig::sampleRate.data()) + m_separator + wxString::FromDouble(s.sampleRate));
+    file.AddLine(wxString::FromUTF8(HeaderConfig::recordLength.data()) + m_separator + wxString::Format("%i", s.recordLength));
+    file.AddLine(wxString::FromUTF8(HeaderConfig::ifBandwidth.data()) + m_separator + wxString::FromDouble(s.ifBandwidth));
+    file.AddLine(wxString::FromUTF8(HeaderConfig::triggerSource.data()) + m_separator + s.triggerSource);
+    file.AddLine(wxString::FromUTF8(HeaderConfig::triggerLevel.data()) + m_separator + wxString::FromDouble(s.triggerLevel));
+    file.AddLine(wxString::FromUTF8(HeaderConfig::triggerDelay.data()) + m_separator + wxString::FromDouble(s.triggerDelay));
 
     return true;
 }
@@ -281,14 +280,14 @@ bool CsvFile::saveCsvSettingsMarker(wxTextFile& file, sData& data)
 {
     const auto& s = data.getFsuSettings().marker;
 
-    file.AddLine(wxString::Format("%s%c%u %s",  wxString::FromUTF8(HeaderConfig::startFreq.data()  ), m_separator, s.startFreq,  s.unit));
-    file.AddLine(wxString::Format("%s%c%u %s",  wxString::FromUTF8(HeaderConfig::endFreq.data()    ), m_separator, s.stopFreq,   s.unit));
-    file.AddLine(wxString::Format("%s%c%s",     wxString::FromUTF8(HeaderConfig::refPegel.data()   ), m_separator, s.refLevel));
-    file.AddLine(wxString::Format("%s%c%u",     wxString::FromUTF8(HeaderConfig::HFDaempfung.data()), m_separator, s.att));
-    file.AddLine(wxString::Format("%s%c%s",     wxString::FromUTF8(HeaderConfig::ampUnit.data()    ), m_separator, s.unit));
-    file.AddLine(wxString::Format("%s%c%u",     wxString::FromUTF8(HeaderConfig::RBW.data()        ), m_separator, s.rbw));
-    file.AddLine(wxString::Format("%s%c%u",     wxString::FromUTF8(HeaderConfig::VBW.data()        ), m_separator, s.vbw));
-    file.AddLine(wxString::Format("%s%c%s",     wxString::FromUTF8(HeaderConfig::detektor.data()   ), m_separator, s.detector));
+    file.AddLine(wxString::FromUTF8(HeaderConfig::startFreq.data()) + m_separator + wxString::FromDouble(s.startFreq) + " " + s.unit);
+    file.AddLine(wxString::FromUTF8(HeaderConfig::endFreq.data()) + m_separator + wxString::FromDouble(s.stopFreq) + " " + s.unit);
+    file.AddLine(wxString::FromUTF8(HeaderConfig::refPegel.data()) + m_separator + wxString::FromDouble(s.refLevel));
+    file.AddLine(wxString::FromUTF8(HeaderConfig::HFDaempfung.data()) + m_separator + wxString::Format("%i", s.att));
+    file.AddLine(wxString::FromUTF8(HeaderConfig::ampUnit.data()) + m_separator + s.unit);
+    file.AddLine(wxString::FromUTF8(HeaderConfig::RBW.data()) + m_separator + wxString::Format("%i", s.rbw));
+    file.AddLine(wxString::FromUTF8(HeaderConfig::VBW.data()) + m_separator + wxString::Format("%i", s.vbw));
+    file.AddLine(wxString::FromUTF8(HeaderConfig::detektor.data()) + m_separator + s.detector);
 
     return true;
 }
@@ -300,6 +299,7 @@ bool CsvFile::saveCsvData(wxTextFile& file, sData data, int mesurementNumb, bool
         std::cerr << kErrPrefixStr.CsvSave <<"File not opened" << std::endl;
         return false;
     }
+
 
     int xPoints = data.getNumberOfPts_X();
     int yPoints = data.getNumberOfPts_Y();
@@ -323,12 +323,18 @@ bool CsvFile::saveCsvData(wxTextFile& file, sData data, int mesurementNumb, bool
 
     int count = data.getNumberOfPts_Array();
 
+    std::cout << "Trying to save data: X: " << real.size() << "Y: " << imag.size() << std::endl;
+
+    int j = 0;
     for (int i = 0; i < count; i++)
     {
         file.GetLine(lineNumber) << m_separator << real[i];
 
         file.GetLine(lineNumber + 1) << m_separator << imag[i];
+        j++;
     }
+
+    std::cout << "saved " << j << " data points!";
 
     return true;
 }
@@ -596,8 +602,8 @@ bool CsvFile::readCsvData(wxTextFile& file, sData& data)
         const char* label1 = s_isMarker ? "Freq" : "Real";
         const char* label2 = s_isMarker ? "Amp"  : "Imag";
 
-        wxString realLabel = wxString::Format("%s %s", index, label1);
-        wxString imagLabel = wxString::Format("%s %s", index, label2);
+        wxString realLabel = wxString(index) + " " + label1;
+        wxString imagLabel = wxString(index) + " " + label2;
 
         // Find Real/Freq data line
         int realLineNum = findLineCsv(file, realLabel);

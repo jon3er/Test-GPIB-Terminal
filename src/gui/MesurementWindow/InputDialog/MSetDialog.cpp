@@ -139,6 +139,10 @@ SettingsDialog::SettingsDialog(wxWindow* parent, MeasurementMode mode)
     m_useMultipoint->SetValue(true);
     grid->Add(m_useMultipoint, 1, wxEXPAND);
 
+
+    // Button
+    m_btnGetCurrentSettings = new wxButton( this, wxID_ANY, wxT("Get Settings"), wxDefaultPosition, wxDefaultSize, 0 );
+    m_btnGetCurrentSettings->Bind(wxEVT_BUTTON, &SettingsDialog::OnGetCurrent, this);
     // Layout
     wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
     mainSizer->Add(grid, 1, wxALL | wxEXPAND, 15);
@@ -147,13 +151,16 @@ SettingsDialog::SettingsDialog(wxWindow* parent, MeasurementMode mode)
     wxButton* btnApply  = new wxButton(this, wxID_APPLY,   "Apply");
     m_btnStart          = new wxButton(this, ID_BTN_START, "Start");
     wxButton* btnCancel = new wxButton(this, wxID_CANCEL,  "Cancel");
+
     m_btnStart->Enable(true);   // TODO change back to False
     buttonSizer->Add(btnCancel, 0, wxRIGHT, 5);
+    buttonSizer->Add(m_btnGetCurrentSettings,0 ,wxRIGHT, 5);
     buttonSizer->Add(btnApply,  0, wxRIGHT, 5);
     buttonSizer->Add(m_btnStart, 0);
     mainSizer->Add(buttonSizer, 0, wxALL | wxALIGN_RIGHT, 10);
 
     SetSizer(mainSizer);
+
     RefreshData();
 }
 
@@ -647,6 +654,17 @@ void SettingsDialog::OnStart(wxCommandEvent& /*event*/)
         PlotWindow* mw = new PlotWindow(GetParent());
         mw->Show();
     }
+}
+
+
+void SettingsDialog::OnGetCurrent(wxCommandEvent& /*event*/)
+{
+    fsuMeasurement* fsu = &fsuMeasurement::get_instance();
+
+    fsu->readSettingsFromGpib();
+
+    RefreshData();
+
 }
 
 bool SettingsDialog::VerifyDouble(const wxString& name, double written, double readback, wxString& mismatches)
