@@ -53,6 +53,8 @@ private:
     void ApplyMarkerPeak();
 
     void RefreshData();
+    wxString FormatFrequencyAutoUnit(double hz) const;
+    bool ParseFrequencyInputToHz(const wxString& input, double& hz) const;
 
     // Verifikations-Helfer
     bool VerifyDouble(const wxString& name, double written, double readback, wxString& mismatches);

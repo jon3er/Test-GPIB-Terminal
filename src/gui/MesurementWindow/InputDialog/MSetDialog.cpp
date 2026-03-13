@@ -49,23 +49,19 @@ SettingsDialog::SettingsDialog(wxWindow* parent, MeasurementMode mode)
     // ---- Sweep + MarkerPeak Felder ----
     if (m_mode == MeasurementMode::SWEEP || m_mode == MeasurementMode::MARKER_PEAK) {
         grid->Add(new wxStaticText(this, wxID_ANY, "Start Frequenz (Hz):"), 0, wxALIGN_CENTER_VERTICAL);
-        floatVal.SetPrecision(0);
-        m_txtStartFreq = new wxTextCtrl(this, wxID_ANY, "1000000", wxDefaultPosition, wxDefaultSize, 0, floatVal);
+        m_txtStartFreq = new wxTextCtrl(this, wxID_ANY, "1000000");
         grid->Add(m_txtStartFreq, 1, wxEXPAND);
 
         grid->Add(new wxStaticText(this, wxID_ANY, "Stop Frequenz (Hz):"), 0, wxALIGN_CENTER_VERTICAL);
-        floatVal.SetPrecision(0);
-        m_txtStopFreq = new wxTextCtrl(this, wxID_ANY, "1000000000", wxDefaultPosition, wxDefaultSize, 0, floatVal);
+        m_txtStopFreq = new wxTextCtrl(this, wxID_ANY, "1000000000");
         grid->Add(m_txtStopFreq, 1, wxEXPAND);
 
         grid->Add(new wxStaticText(this, wxID_ANY, "RBW (Hz):"), 0, wxALIGN_CENTER_VERTICAL);
-        floatVal.SetPrecision(0);
-        m_txtRBW = new wxTextCtrl(this, wxID_ANY, "10000", wxDefaultPosition, wxDefaultSize, 0, floatVal);
+        m_txtRBW = new wxTextCtrl(this, wxID_ANY, "10000");
         grid->Add(m_txtRBW, 1, wxEXPAND);
 
         grid->Add(new wxStaticText(this, wxID_ANY, "VBW (Hz):"), 0, wxALIGN_CENTER_VERTICAL);
-        floatVal.SetPrecision(0);
-        m_txtVBW = new wxTextCtrl(this, wxID_ANY, "10000", wxDefaultPosition, wxDefaultSize, 0, floatVal);
+        m_txtVBW = new wxTextCtrl(this, wxID_ANY, "10000");
         grid->Add(m_txtVBW, 1, wxEXPAND);
 
         grid->Add(new wxStaticText(this, wxID_ANY, "Detektor:"), 0, wxALIGN_CENTER_VERTICAL);
@@ -87,13 +83,11 @@ SettingsDialog::SettingsDialog(wxWindow* parent, MeasurementMode mode)
     // ---- Nur IQ ----
     if (m_mode == MeasurementMode::IQ) {
         grid->Add(new wxStaticText(this, wxID_ANY, "Center Frequenz (Hz):"), 0, wxALIGN_CENTER_VERTICAL);
-        floatVal.SetPrecision(0);
-        m_txtCenterFreq = new wxTextCtrl(this, wxID_ANY, "100000000", wxDefaultPosition, wxDefaultSize, 0, floatVal);
+        m_txtCenterFreq = new wxTextCtrl(this, wxID_ANY, "100000000");
         grid->Add(m_txtCenterFreq, 1, wxEXPAND);
 
         grid->Add(new wxStaticText(this, wxID_ANY, "Sample Rate (Hz):"), 0, wxALIGN_CENTER_VERTICAL);
-        floatVal.SetPrecision(0);
-        m_txtSampleRate = new wxTextCtrl(this, wxID_ANY, "32000000", wxDefaultPosition, wxDefaultSize, 0, floatVal);
+        m_txtSampleRate = new wxTextCtrl(this, wxID_ANY, "32000000");
         grid->Add(m_txtSampleRate, 1, wxEXPAND);
 
         grid->Add(new wxStaticText(this, wxID_ANY, "Record Length (Samples):"), 0, wxALIGN_CENTER_VERTICAL);
@@ -102,8 +96,7 @@ SettingsDialog::SettingsDialog(wxWindow* parent, MeasurementMode mode)
         grid->Add(m_txtRecordLength, 1, wxEXPAND);
 
         grid->Add(new wxStaticText(this, wxID_ANY, "IF Bandwidth (Hz):"), 0, wxALIGN_CENTER_VERTICAL);
-        floatVal.SetPrecision(0);
-        m_txtIfBandwidth = new wxTextCtrl(this, wxID_ANY, "10000000", wxDefaultPosition, wxDefaultSize, 0, floatVal);
+        m_txtIfBandwidth = new wxTextCtrl(this, wxID_ANY, "10000000");
         grid->Add(m_txtIfBandwidth, 1, wxEXPAND);
 
         grid->Add(new wxStaticText(this, wxID_ANY, "Trigger Quelle:"), 0, wxALIGN_CENTER_VERTICAL);
@@ -162,15 +155,23 @@ void SettingsDialog::ApplySweep() {
     fsu->setMeasurementMode(MeasurementMode::SWEEP);
 
     double startFreq;
-    m_txtStartFreq->GetValue().ToDouble(&startFreq);
+    if (!ParseFrequencyInputToHz(m_txtStartFreq->GetValue(), startFreq)) {
+        wxMessageBox("Startfrequenz ungueltig! Beispiele: 1000000, 1 MHz, 1.5GHz", "Validierungsfehler", wxOK | wxICON_ERROR); return;
+    }
     double stopFreq;
-    m_txtStopFreq->GetValue().ToDouble(&stopFreq);
+    if (!ParseFrequencyInputToHz(m_txtStopFreq->GetValue(), stopFreq)) {
+        wxMessageBox("Stopfrequenz ungueltig! Beispiele: 2000000, 2 MHz, 2.5GHz", "Validierungsfehler", wxOK | wxICON_ERROR); return;
+    }
     double refLevel;
     m_txtRefLevel->GetValue().ToDouble(&refLevel);
     double rbw;
-    m_txtRBW->GetValue().ToDouble(&rbw);
+    if (!ParseFrequencyInputToHz(m_txtRBW->GetValue(), rbw)) {
+        wxMessageBox("RBW ungueltig! Beispiele: 10000, 10 kHz, 0.01 MHz", "Validierungsfehler", wxOK | wxICON_ERROR); return;
+    }
     double vbw;
-    m_txtVBW->GetValue().ToDouble(&vbw);
+    if (!ParseFrequencyInputToHz(m_txtVBW->GetValue(), vbw)) {
+        wxMessageBox("VBW ungueltig! Beispiele: 10000, 10 kHz, 0.01 MHz", "Validierungsfehler", wxOK | wxICON_ERROR); return;
+    }
 
     // Number of Points
     int points = wxAtoi(m_choiceSweepPoints->GetStringSelection());
@@ -253,10 +254,16 @@ void SettingsDialog::ApplyIq() {
     fsu->setMeasurementMode(MeasurementMode::IQ);
 
     double centerFreq, refLevel, sampleRate, ifBw, trigLevel, trigDelay;
-    m_txtCenterFreq->GetValue().ToDouble(&centerFreq);
+    if (!ParseFrequencyInputToHz(m_txtCenterFreq->GetValue(), centerFreq)) {
+        wxMessageBox("Center Frequenz ungueltig! Beispiele: 100000000, 100 MHz, 0.1 GHz", "Validierungsfehler", wxOK | wxICON_ERROR); return;
+    }
     m_txtRefLevel->GetValue().ToDouble(&refLevel);
-    m_txtSampleRate->GetValue().ToDouble(&sampleRate);
-    m_txtIfBandwidth->GetValue().ToDouble(&ifBw);
+    if (!ParseFrequencyInputToHz(m_txtSampleRate->GetValue(), sampleRate)) {
+        wxMessageBox("Sample Rate ungueltig! Beispiele: 32000000, 32 MHz", "Validierungsfehler", wxOK | wxICON_ERROR); return;
+    }
+    if (!ParseFrequencyInputToHz(m_txtIfBandwidth->GetValue(), ifBw)) {
+        wxMessageBox("IF Bandwidth ungueltig! Beispiele: 10000000, 10 MHz", "Validierungsfehler", wxOK | wxICON_ERROR); return;
+    }
     m_txtTriggerLevel->GetValue().ToDouble(&trigLevel);
     m_txtTriggerDelay->GetValue().ToDouble(&trigDelay);
     int recordLen = wxAtoi(m_txtRecordLength->GetValue());
@@ -343,11 +350,19 @@ void SettingsDialog::ApplyMarkerPeak() {
     fsu->setMeasurementMode(MeasurementMode::MARKER_PEAK);
 
     double startFreq, stopFreq, refLevel, rbw, vbw;
-    m_txtStartFreq->GetValue().ToDouble(&startFreq);
-    m_txtStopFreq->GetValue().ToDouble(&stopFreq);
+    if (!ParseFrequencyInputToHz(m_txtStartFreq->GetValue(), startFreq)) {
+        wxMessageBox("Startfrequenz ungueltig! Beispiele: 1000000, 1 MHz, 1.5GHz", "Validierungsfehler", wxOK | wxICON_ERROR); return;
+    }
+    if (!ParseFrequencyInputToHz(m_txtStopFreq->GetValue(), stopFreq)) {
+        wxMessageBox("Stopfrequenz ungueltig! Beispiele: 2000000, 2 MHz, 2.5GHz", "Validierungsfehler", wxOK | wxICON_ERROR); return;
+    }
     m_txtRefLevel->GetValue().ToDouble(&refLevel);
-    m_txtRBW->GetValue().ToDouble(&rbw);
-    m_txtVBW->GetValue().ToDouble(&vbw);
+    if (!ParseFrequencyInputToHz(m_txtRBW->GetValue(), rbw)) {
+        wxMessageBox("RBW ungueltig! Beispiele: 10000, 10 kHz, 0.01 MHz", "Validierungsfehler", wxOK | wxICON_ERROR); return;
+    }
+    if (!ParseFrequencyInputToHz(m_txtVBW->GetValue(), vbw)) {
+        wxMessageBox("VBW ungueltig! Beispiele: 10000, 10 kHz, 0.01 MHz", "Validierungsfehler", wxOK | wxICON_ERROR); return;
+    }
     std::string det = m_choiceDetector->GetStringSelection().ToStdString();
     int att = m_spinAttenuation->GetValue();
     std::string unit = m_choiceUnit->GetStringSelection().ToStdString();
@@ -420,12 +435,16 @@ void SettingsDialog::RefreshData()
         case MeasurementMode::SWEEP: {
             auto s = fsu->returnSweepSettings();
             m_txtStartFreq     ->SetValue(wxString::Format(wxT("%.0f"),s.startFreq));
+            m_txtStartFreq     ->SetToolTip(FormatFrequencyAutoUnit(s.startFreq));
             m_txtStopFreq      ->SetValue(wxString::Format(wxT("%.0f"),s.stopFreq));
+            m_txtStopFreq      ->SetToolTip(FormatFrequencyAutoUnit(s.stopFreq));
             m_txtRefLevel      ->SetValue(wxString::Format(wxT("%.0f"),s.refLevel));
             m_spinAttenuation  ->SetValue(s.att);
             m_choiceUnit       ->SetStringSelection(s.unit);
-            m_txtRBW           ->SetValue(wxString::Format(wxT("%.i"),s.rbw));
-            m_txtVBW           ->SetValue(wxString::Format(wxT("%.i"),s.vbw));
+            m_txtRBW           ->SetValue(wxString::Format(wxT("%i"),s.rbw));
+            m_txtRBW           ->SetToolTip(FormatFrequencyAutoUnit(static_cast<double>(s.rbw)));
+            m_txtVBW           ->SetValue(wxString::Format(wxT("%i"),s.vbw));
+            m_txtVBW           ->SetToolTip(FormatFrequencyAutoUnit(static_cast<double>(s.vbw)));
             m_choiceSweepPoints->SetStringSelection(std::to_string(s.points));
             m_choiceDetector   ->SetStringSelection(s.detector);
             break;
@@ -436,9 +455,12 @@ void SettingsDialog::RefreshData()
             m_spinAttenuation     ->SetValue(s.att);
             m_choiceUnit          ->SetStringSelection(s.unit);
             m_txtCenterFreq       ->SetValue(wxString::Format(wxT("%.0f"),s.centerFreq));
+            m_txtCenterFreq       ->SetToolTip(FormatFrequencyAutoUnit(s.centerFreq));
             m_txtSampleRate       ->SetValue(wxString::Format(wxT("%.0f"),s.sampleRate));
+            m_txtSampleRate       ->SetToolTip(FormatFrequencyAutoUnit(s.sampleRate));
             m_txtRecordLength     ->SetValue(wxString::Format(wxT("%i"),s.recordLength));
             m_txtIfBandwidth      ->SetValue(wxString::Format(wxT("%.0f"),s.ifBandwidth));
+            m_txtIfBandwidth      ->SetToolTip(FormatFrequencyAutoUnit(s.ifBandwidth));
             m_choiceTriggerSource ->SetStringSelection(s.triggerSource);
             m_txtTriggerLevel     ->SetValue(wxString::Format(wxT("%.0f"),s.triggerLevel));
             m_txtTriggerDelay     ->SetValue(wxString::Format(wxT("%.0f"),s.triggerDelay));
@@ -447,16 +469,93 @@ void SettingsDialog::RefreshData()
         case MeasurementMode::MARKER_PEAK: {
             auto s = fsu->returnMarkerPeakSettings();
             m_txtStartFreq    ->SetValue(wxString::Format(wxT("%.0f"),s.startFreq));
+            m_txtStartFreq    ->SetToolTip(FormatFrequencyAutoUnit(s.startFreq));
             m_txtStopFreq     ->SetValue(wxString::Format(wxT("%.0f"),s.stopFreq));
+            m_txtStopFreq     ->SetToolTip(FormatFrequencyAutoUnit(s.stopFreq));
             m_txtRefLevel     ->SetValue(wxString::Format(wxT("%.0f"),s.refLevel));
             m_spinAttenuation ->SetValue(s.att);
             m_choiceUnit      ->SetStringSelection(s.unit);
             m_txtRBW          ->SetValue(wxString::Format(wxT("%i"),s.rbw));
+            m_txtRBW          ->SetToolTip(FormatFrequencyAutoUnit(s.rbw));
             m_txtVBW          ->SetValue(wxString::Format(wxT("%i"),s.vbw));
+            m_txtVBW          ->SetToolTip(FormatFrequencyAutoUnit(s.vbw));
             m_choiceDetector  ->SetStringSelection(s.detector);
             break;
         }
     }
+}
+
+wxString SettingsDialog::FormatFrequencyAutoUnit(double hz) const
+{
+    double absHz = std::abs(hz);
+    double scaled = hz;
+    const char* unit = "Hz";
+
+    if (absHz >= 1e9) {
+        scaled = hz / 1e9;
+        unit = "GHz";
+    } else if (absHz >= 1e6) {
+        scaled = hz / 1e6;
+        unit = "MHz";
+    } else if (absHz >= 1e3) {
+        scaled = hz / 1e3;
+        unit = "kHz";
+    }
+
+    return wxString::Format("%.3f %s", scaled, unit);
+}
+
+bool SettingsDialog::ParseFrequencyInputToHz(const wxString& input, double& hz) const
+{
+    wxString value = input;
+    value.Trim(true);
+    value.Trim(false);
+
+    if (value.IsEmpty()) {
+        return false;
+    }
+
+    value.Replace(",", ".");
+    wxString lower = value.Lower();
+    lower.Trim(true);
+    lower.Trim(false);
+
+    double factor = 1.0;
+    wxString numberPart = lower;
+
+    if (numberPart.EndsWith("ghz")) {
+        factor = 1e9;
+        numberPart = numberPart.Left(numberPart.Length() - 3);
+    } else if (numberPart.EndsWith("mhz")) {
+        factor = 1e6;
+        numberPart = numberPart.Left(numberPart.Length() - 3);
+    } else if (numberPart.EndsWith("khz")) {
+        factor = 1e3;
+        numberPart = numberPart.Left(numberPart.Length() - 3);
+    } else if (numberPart.EndsWith("hz")) {
+        factor = 1.0;
+        numberPart = numberPart.Left(numberPart.Length() - 2);
+    } else if (numberPart.EndsWith("g")) {
+        factor = 1e9;
+        numberPart = numberPart.Left(numberPart.Length() - 1);
+    } else if (numberPart.EndsWith("m")) {
+        factor = 1e6;
+        numberPart = numberPart.Left(numberPart.Length() - 1);
+    } else if (numberPart.EndsWith("k")) {
+        factor = 1e3;
+        numberPart = numberPart.Left(numberPart.Length() - 1);
+    }
+
+    numberPart.Trim(true);
+    numberPart.Trim(false);
+
+    double base = 0.0;
+    if (!numberPart.ToDouble(&base)) {
+        return false;
+    }
+
+    hz = base * factor;
+    return std::isfinite(hz);
 }
 
 // ---- Verifikations-Helfer ----
