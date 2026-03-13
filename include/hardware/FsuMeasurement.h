@@ -97,8 +97,6 @@ public:
     using SettingValue = std::variant<double,unsigned int, int, std::string>;
     bool checkIfSettingsValidSweep(ScpiCommand command, const SettingValue& value);
 
-
-
     void setMeasurementMode(MeasurementMode mode) { m_lastMeasurementMode = mode; };
     MeasurementMode getMeasurementMode() const { return m_lastMeasurementMode; };
 

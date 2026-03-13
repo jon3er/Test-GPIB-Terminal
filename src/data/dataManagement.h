@@ -127,6 +127,8 @@ public:
     unsigned int getNumberOfPts_Y() {return m_dsParam->NoPoints_Y; };
     unsigned int getTotalNumberOfPts() {return m_dsParam->NoPoints_X * m_dsParam->NoPoints_Y; };
     unsigned int getNumberOfPts_Array() {return m_dsParam->NoPoints_Array; };
+    unsigned int getRecordLength() {return m_dsParam->recordLength; };
+
 
     std::vector<double> GetFreqStepVector();
     std::vector<double> GetTimeIQStepVector();

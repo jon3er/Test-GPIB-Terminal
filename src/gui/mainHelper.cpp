@@ -24,7 +24,24 @@ bool PlotterMesurement(sData* data, int measurementNumber)
         data->getFsuSettings();
         int x = data->getNumberOfPts_X();
         int y = data->getNumberOfPts_Y();
-        int anz = data->getNumberOfPts_Array();
+        int anz = 625;
+        switch (fsu->getMeasurementMode())
+        {
+        case MeasurementMode::SWEEP:
+            anz = data->getNumberOfPts_Array();
+            break;
+        case MeasurementMode::IQ:
+            anz = data->getRecordLength();
+            break;
+        case MeasurementMode::MARKER_PEAK:
+            anz = data->getNumberOfPts_Array();
+            break;
+        case MeasurementMode::COSTUM:
+            // TODO set the Lenght with skript 
+        default:
+            break;
+        }
+        
 
         std::cout << "array size " << "x " <<x  <<"y "<< y << "anz "<< anz << std::endl;
         data->resize3DData(x,y,anz);
