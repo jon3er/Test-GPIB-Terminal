@@ -687,74 +687,11 @@ void PlotWindow::OnMenuFileOpen(wxCommandEvent& event)
             return;
         }
 
-        if (!m_document)
+        if (!LoadImportedData(importedData, filePath))
         {
-            MeasurementDocument* measDoc = new MeasurementDocument(
-                PrologixUsbGpibAdapter::get_instance(), fsuMeasurement::get_instance());
-            SetDocument(measDoc);
-            SetOwnsDocument(true);
-            wxLogMessage("PlotWindow: created local document for imported CSV");
+            wxMessageBox("Imported file does not contain plottable measurement data.",
+                        "Import Error", wxOK | wxICON_ERROR, this);
         }
-
-        if (m_document)
-        {
-            // Copy full imported data into the view document and render via matrix selector path.
-            m_document->GetResultsMutable() = importedData;
-
-            sData::sParam* docParam = m_document->GetResultsMutable().GetParameter();
-            if (!docParam)
-            {
-                wxLogWarning("PlotWindow: imported data has no header");
-                return;
-            }
-
-            UpdateInfoPanel(docParam);
-            PopulateSelectors(static_cast<unsigned int>(std::max(0, docParam->NoPoints_X)),
-                            static_cast<unsigned int>(std::max(0, docParam->NoPoints_Y)));
-
-            int xi = m_choiceXSelector->GetSelection();
-            int yi = m_choiceYSelector->GetSelection();
-            if (!ApplySelectionToPlot(xi, yi, false))
-            {
-                wxLogWarning("PlotWindow: failed to render imported matrix selection");
-            }
-        }
-        else
-        {
-            // Fallback when no document is attached: draw first available measurement.
-            sData::sParam* param = importedData.GetParameter();
-            if (!param)
-            {
-                wxLogWarning("PlotWindow: imported data has no header");
-                return;
-            }
-
-            std::vector<double> xAxis = importedData.GetFreqStepVector();
-            std::vector<double> yReal = importedData.get3DDataReal(0, 0);
-            size_t n = std::min(xAxis.size(), yReal.size());
-            if (n == 0)
-            {
-                wxLogWarning("PlotWindow: imported file contains no plottable data");
-                return;
-            }
-
-            xAxis.resize(n);
-            yReal.resize(n);
-            m_vectorLayer->SetData(xAxis, yReal);
-            m_vectorLayerImag->SetVisible(false);
-            m_plot->Fit();
-            m_plot->Refresh();
-
-            UpdateInfoPanel(param);
-            PopulateSelectors(static_cast<unsigned int>(std::max(0, param->NoPoints_X)),
-                            static_cast<unsigned int>(std::max(0, param->NoPoints_Y)));
-        }
-
-        SetTitle(wxString::Format("Measurement Window %d - %s",
-                m_windowId, filePath.AfterLast('\\').AfterLast('/')));
-
-        std::cout << "[PlotWindow " << m_windowId << "] Imported CSV: "
-                << filePath << std::endl;
     }
     catch (const std::exception& e)
     {
@@ -768,6 +705,53 @@ void PlotWindow::OnMenuFileOpen(wxCommandEvent& event)
         wxMessageBox("Import failed with an unknown error.",
                     "Import Error", wxOK | wxICON_ERROR, this);
     }
+}
+
+bool PlotWindow::LoadImportedData(const sData& importedData, const wxString& sourcePath)
+{
+    if (!m_document)
+    {
+        MeasurementDocument* measDoc = new MeasurementDocument(
+            PrologixUsbGpibAdapter::get_instance(), fsuMeasurement::get_instance());
+        SetDocument(measDoc);
+        SetOwnsDocument(true);
+        wxLogMessage("PlotWindow: created local document for imported CSV");
+    }
+
+    if (!m_document)
+        return false;
+
+    m_document->GetResultsMutable() = importedData;
+
+    sData::sParam* docParam = m_document->GetResultsMutable().GetParameter();
+    if (!docParam)
+    {
+        wxLogWarning("PlotWindow: imported data has no header");
+        return false;
+    }
+
+    UpdateInfoPanel(docParam);
+    PopulateSelectors(static_cast<unsigned int>(std::max(0, docParam->NoPoints_X)),
+                      static_cast<unsigned int>(std::max(0, docParam->NoPoints_Y)));
+
+    int xi = m_choiceXSelector->GetSelection();
+    int yi = m_choiceYSelector->GetSelection();
+    if (!ApplySelectionToPlot(xi, yi, false))
+    {
+        wxLogWarning("PlotWindow: failed to render imported matrix selection");
+        return false;
+    }
+
+    if (!sourcePath.IsEmpty())
+    {
+        SetTitle(wxString::Format("Measurement Window %d - %s",
+                 m_windowId, sourcePath.AfterLast('\\').AfterLast('/')));
+
+        std::cout << "[PlotWindow " << m_windowId << "] Imported CSV: "
+                  << sourcePath << std::endl;
+    }
+
+    return true;
 }
 
 void PlotWindow::OnMenuFileClose(wxCommandEvent& event)

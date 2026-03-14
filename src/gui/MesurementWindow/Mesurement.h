@@ -54,6 +54,12 @@ public:
     mpWindow*    GetPlot()        const { return m_plot; }
     mpFXYVector* GetVectorLayer() const { return m_vectorLayer; }
 
+    /**
+     * Load already parsed measurement data into this window's document and refresh plot/selectors.
+     * Returns true if the data could be rendered.
+     */
+    bool LoadImportedData(const sData& importedData, const wxString& sourcePath = wxEmptyString);
+
 protected:
     wxChoice*     m_selectMesurement;
     mpWindow*     m_plot;

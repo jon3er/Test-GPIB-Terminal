@@ -385,14 +385,13 @@ void MainProgrammWin::MenuMesurementLoad(wxCommandEvent& event)
     PlotWin->SetDocument(measDoc);
     PlotWin->SetOwnsDocument(true);
 
-    // Push the imported data into the plot
-    sData::sParam* param = importedData.GetParameter();
-    std::vector<double> realAmp, imagAmp , freq;
-    importedData.GetData(param, realAmp, imagAmp, freq);
-    PlotWin->GetVectorLayer()->SetData(freq, realAmp);
-    PlotWin->GetPlot()->Fit();
-    PlotWin->SetTitle(wxString::Format("Measurement Window — %s",
-                      filePath.AfterLast('\\').AfterLast('/')));
+    if (!PlotWin->LoadImportedData(importedData, filePath))
+    {
+        wxMessageBox("Imported file does not contain plottable measurement data.",
+                     "Import Error", wxOK | wxICON_ERROR, this);
+        PlotWin->Destroy();
+        return;
+    }
 
     // Track and show
     m_openMeasurementWindows.insert(PlotWin);
