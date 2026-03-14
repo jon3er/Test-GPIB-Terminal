@@ -1,4 +1,5 @@
 #include "GrblScanWindow.h"
+#include "Mesurement.h"
 
 // IDs for events
 enum {
@@ -68,6 +69,47 @@ GrblScanWindow::~GrblScanWindow() {
     }
 }
 
+void GrblScanWindow::EnsureLivePlotWindow()
+{
+    if (m_livePlotWindow && m_livePlotWindow->IsShown())
+    {
+        m_livePlotWindow->Raise();
+        return;
+    }
+
+    m_livePlotWindow = new PlotWindow(this, nullptr);
+    m_livePlotWindow->SetTitle("Live Plotter Scan");
+    m_livePlotWindow->Show();
+
+    m_livePlotWindow->Bind(wxEVT_DESTROY, [this](wxWindowDestroyEvent& event) {
+        if (event.GetEventObject() == m_livePlotWindow)
+        {
+            m_livePlotWindow = nullptr;
+        }
+        event.Skip();
+    });
+}
+
+void GrblScanWindow::UpdateLivePlotWithLatestData(int row, int col)
+{
+    if (!m_livePlotWindow)
+        return;
+
+    sData snapshot = m_currentData;
+
+    this->CallAfter([this, snapshot, row, col]() mutable {
+        if (!m_livePlotWindow)
+            return;
+
+        if (!m_livePlotWindow->LoadImportedData(snapshot, "Live Plotter Scan"))
+        {
+            return;
+        }
+
+        m_livePlotWindow->ShowMatrixPoint(row, col, false);
+    });
+}
+
 void GrblScanWindow::ToggleControls(bool enable) {
     m_txtStartX->Enable(enable);
     m_txtStartY->Enable(enable);
@@ -125,6 +167,26 @@ void GrblScanWindow::OnStart(wxCommandEvent& event) {
         auto fsu = &fsuMeasurement::get_instance();
         fsu->setNoPoints(rows, cols);
 
+        switch (fsu->getMeasurementMode())
+        {
+        case MeasurementMode::SWEEP:
+            MessInfo->MeasurementType = "Sweep";
+            break;
+        case MeasurementMode::IQ:
+            MessInfo->MeasurementType = "IQ";
+            break;
+        case MeasurementMode::MARKER_PEAK:
+            MessInfo->MeasurementType = "Marker";
+            break;
+        case MeasurementMode::COSTUM:
+            MessInfo->MeasurementType = "Costum";
+            break;
+        default:
+            break;
+        }
+
+        EnsureLivePlotWindow();
+
         Layout();
 
         m_workerThread = std::thread([=, this]() {
@@ -152,6 +214,7 @@ void GrblScanWindow::OnStart(wxCommandEvent& event) {
                     if (success)
                     {
                         printf("Messung an Punkt R:%d C:%d erfolgreich beendet.\n", r, c);
+                        UpdateLivePlotWithLatestData(r, c);
                     } else
                     {
                         printf("FEHLER bei Messung an Punkt R:%d C:%d\n", r, c);

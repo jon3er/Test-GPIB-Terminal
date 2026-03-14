@@ -7,6 +7,8 @@
 #include "mainHelper.h"
 #include "FsuMeasurement.h"
 
+class PlotWindow;
+
 class GrblScanWindow : public wxDialog {
 public:
     GrblScanWindow(wxWindow* parent, GrblController* controller);
@@ -34,6 +36,7 @@ private:
 
     // Measurement Data
     sData m_currentData;
+    PlotWindow* m_livePlotWindow = nullptr;
 
     // Events
     void OnStart(wxCommandEvent& event);
@@ -42,6 +45,8 @@ private:
 
     // Helpers
     void ToggleControls(bool enable);
+    void EnsureLivePlotWindow();
+    void UpdateLivePlotWithLatestData(int row, int col);
 
     wxDECLARE_EVENT_TABLE();
 };

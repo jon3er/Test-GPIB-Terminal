@@ -386,16 +386,19 @@ void PlotWindow::updatePlotData()
 
 bool PlotWindow::IsIqMode(const sData::sParam* param, const sData& data) const
 {
+    if (param)
+    {
+        wxString measurementType = param->MeasurementType;
+        measurementType.MakeLower();
+        if (!measurementType.IsEmpty())
+            return measurementType.Find("iq") != wxNOT_FOUND;
+    }
+
     if (data.getFsuSettings().mode == MeasurementMode::IQ)
         return true;
 
     if (!param)
         return false;
-
-    wxString measurementType = param->MeasurementType;
-    measurementType.MakeLower();
-    if (measurementType.Find("iq") != wxNOT_FOUND)
-        return true;
 
     // Fallback for legacy files that have no explicit measurement mode field.
     return (param->recordLength > 0 && param->sampleRate > 0.0);
@@ -813,6 +816,16 @@ bool PlotWindow::LoadImportedData(const sData& importedData, const wxString& sou
     }
 
     return true;
+}
+
+bool PlotWindow::ShowMatrixPoint(int xIndex, int yIndex, bool logSelection)
+{
+    if (m_choiceXSelector)
+        m_choiceXSelector->SetSelection(xIndex);
+    if (m_choiceYSelector)
+        m_choiceYSelector->SetSelection(yIndex);
+
+    return ApplySelectionToPlot(xIndex, yIndex, logSelection);
 }
 
 void PlotWindow::OnMenuFileClose(wxCommandEvent& event)

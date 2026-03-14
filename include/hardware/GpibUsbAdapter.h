@@ -113,6 +113,8 @@ public:
      */
     void checkForGpibBusError(wxWindow* parent);
 
+    bool resetGpibBusBuffer();
+
     // get methodes
     FT_STATUS getStatus();
     FT_HANDLE getHandle();

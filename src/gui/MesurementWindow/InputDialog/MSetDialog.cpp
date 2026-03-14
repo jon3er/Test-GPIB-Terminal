@@ -773,6 +773,8 @@ void SettingsDialog::OnStart(wxCommandEvent& /*event*/)
 {
     EndModal(wxID_OK);
 
+    PrologixUsbGpibAdapter::get_instance().resetGpibBusBuffer();
+
     if (m_useMultipoint->GetValue()) {
         if (m_plotterWindow && m_plotterWindow->IsShown())
         {

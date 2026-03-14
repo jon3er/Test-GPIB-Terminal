@@ -448,6 +448,34 @@ std::string PrologixUsbGpibAdapter::statusText()
     return Text;
 }
 
+bool PrologixUsbGpibAdapter::resetGpibBusBuffer()
+{
+    std::string responce = "1";
+    int i = 0;
+
+    if (m_deviceInfo.Connected)
+    {
+        write("++clr");
+
+        while (!(responce.substr(0,2) == "0,") && (i < 10))
+        {
+            responce = send("SYST:ERR?", 300);
+            i++;
+        }
+
+        if (i >= 10)
+        {
+            std::cerr << "Failed to clear GPIB Bus Buffer" << std::endl;
+            return false;
+        }
+        
+        std::cout << "GPIB Bus Buffer cleared" << std::endl;
+        
+        return true;
+    }
+    return false;
+}
+
 FT_STATUS PrologixUsbGpibAdapter::getStatus()
 {
     return m_deviceInfo.ftStatus;

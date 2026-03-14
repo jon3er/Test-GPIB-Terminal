@@ -60,6 +60,9 @@ public:
      */
     bool LoadImportedData(const sData& importedData, const wxString& sourcePath = wxEmptyString);
 
+    /** Select and render a specific matrix measurement [x ; y] (0-based indices). */
+    bool ShowMatrixPoint(int xIndex, int yIndex, bool logSelection = false);
+
 protected:
     wxChoice*     m_selectMesurement;
     mpWindow*     m_plot;
