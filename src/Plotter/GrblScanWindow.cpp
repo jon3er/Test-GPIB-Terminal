@@ -1,5 +1,5 @@
 #include "GrblScanWindow.h"
-#include "Mesurement.h"
+#include <algorithm>
 
 // IDs for events
 enum {
@@ -13,9 +13,10 @@ wxBEGIN_EVENT_TABLE(GrblScanWindow, wxDialog)
     EVT_CLOSE(GrblScanWindow::OnClose)
 wxEND_EVENT_TABLE()
 
-GrblScanWindow::GrblScanWindow(wxWindow* parent, GrblController* controller)
+GrblScanWindow::GrblScanWindow(wxWindow* parent, GrblController* controller, MeasurementDocument* document)
     : wxDialog(parent, wxID_ANY, "Scanner Configuration", wxDefaultPosition, wxSize(450, 650)),
-      m_controller(controller)
+    m_controller(controller),
+    m_document(document)
 {
     auto* mainSizer = new wxBoxSizer(wxVERTICAL);
     auto* formSizer = new wxFlexGridSizer(2, 5, 10); // 2 cols, 5px hgap, 10px vgap
@@ -69,47 +70,6 @@ GrblScanWindow::~GrblScanWindow() {
     }
 }
 
-void GrblScanWindow::EnsureLivePlotWindow()
-{
-    if (m_livePlotWindow && m_livePlotWindow->IsShown())
-    {
-        m_livePlotWindow->Raise();
-        return;
-    }
-
-    m_livePlotWindow = new PlotWindow(this, nullptr);
-    m_livePlotWindow->SetTitle("Live Plotter Scan");
-    m_livePlotWindow->Show();
-
-    m_livePlotWindow->Bind(wxEVT_DESTROY, [this](wxWindowDestroyEvent& event) {
-        if (event.GetEventObject() == m_livePlotWindow)
-        {
-            m_livePlotWindow = nullptr;
-        }
-        event.Skip();
-    });
-}
-
-void GrblScanWindow::UpdateLivePlotWithLatestData(int row, int col)
-{
-    if (!m_livePlotWindow)
-        return;
-
-    sData snapshot = m_currentData;
-
-    this->CallAfter([this, snapshot, row, col]() mutable {
-        if (!m_livePlotWindow)
-            return;
-
-        if (!m_livePlotWindow->LoadImportedData(snapshot, "Live Plotter Scan"))
-        {
-            return;
-        }
-
-        m_livePlotWindow->ShowMatrixPoint(row, col, false);
-    });
-}
-
 void GrblScanWindow::ToggleControls(bool enable) {
     m_txtStartX->Enable(enable);
     m_txtStartY->Enable(enable);
@@ -131,6 +91,11 @@ void GrblScanWindow::OnStart(wxCommandEvent& event) {
         m_controller->CancelScan();
         m_btnStart->Disable();
         m_btnStart->SetLabel("Stopping...");
+        return;
+    }
+
+    if (!m_document) {
+        wxMessageBox("No measurement document attached.", "Error");
         return;
     }
 
@@ -157,7 +122,8 @@ void GrblScanWindow::OnStart(wxCommandEvent& event) {
         m_btnStart->SetLabel("STOP SCAN"); // Change label
 
         // Set Parameter for mesurement
-        sData::sParam *MessInfo = m_currentData.GetParameter();
+        sData& currentData = m_document->GetResultsMutable();
+        sData::sParam *MessInfo = currentData.GetParameter();
         MessInfo->File = "PlotterScan";
         MessInfo->NoPoints_X = rows;
         MessInfo->NoPoints_Y = cols;
@@ -166,26 +132,6 @@ void GrblScanWindow::OnStart(wxCommandEvent& event) {
 
         auto fsu = &fsuMeasurement::get_instance();
         fsu->setNoPoints(rows, cols);
-
-        switch (fsu->getMeasurementMode())
-        {
-        case MeasurementMode::SWEEP:
-            MessInfo->MeasurementType = "Sweep";
-            break;
-        case MeasurementMode::IQ:
-            MessInfo->MeasurementType = "IQ";
-            break;
-        case MeasurementMode::MARKER_PEAK:
-            MessInfo->MeasurementType = "Marker";
-            break;
-        case MeasurementMode::COSTUM:
-            MessInfo->MeasurementType = "Costum";
-            break;
-        default:
-            break;
-        }
-
-        EnsureLivePlotWindow();
 
         Layout();
 
@@ -202,7 +148,7 @@ void GrblScanWindow::OnStart(wxCommandEvent& event) {
                     try
                     {
 
-                        success = PlotterMesurement(&m_currentData, measurementNumber);
+                        success = PlotterMesurement(&m_document->GetResultsMutable(), measurementNumber);
 
                     }
                     catch (const std::exception& e) {
@@ -213,9 +159,35 @@ void GrblScanWindow::OnStart(wxCommandEvent& event) {
 
                     if (success)
                     {
+                        sData& updatedData = m_document->GetResultsMutable();
+                        int xIndex = 0;
+                        int yIndex = 0;
+                        updatedData.getXYCord(xIndex, yIndex, measurementNumber);
+
+                        std::vector<double> yReal;
+                        try
+                        {
+                            yReal = updatedData.get3DDataReal(xIndex, yIndex);
+                        }
+                        catch (...)
+                        {
+                            yReal.clear();
+                        }
+
+                        std::vector<double> xAxis = updatedData.GetFreqStepVector();
+                        const size_t n = std::min(xAxis.size(), yReal.size());
+                        if (n > 0)
+                        {
+                            xAxis.resize(n);
+                            yReal.resize(n);
+                            m_document->SetXData(xAxis);
+                            m_document->SetYData(yReal);
+                        }
+
+                        m_document->NotifyDataUpdated();
                         printf("Messung an Punkt R:%d C:%d erfolgreich beendet.\n", r, c);
-                        UpdateLivePlotWithLatestData(r, c);
-                    } else
+                    } 
+                    else
                     {
                         printf("FEHLER bei Messung an Punkt R:%d C:%d\n", r, c);
                     }

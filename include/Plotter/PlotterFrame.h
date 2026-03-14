@@ -12,10 +12,14 @@
 #include "GrblConfigDialog.h"
 #include "GrblScanWindow.h"
 
+class MeasurementDocument;
+class PlotWindow;
+
 class PlotterFrame : public wxDialog
 {
 public:
     PlotterFrame();
+    ~PlotterFrame();
 
 private:
     GrblConfigDialog* m_configDlg = nullptr; 
@@ -35,6 +39,7 @@ private:
     
     // Logic setup
     void SetupGrblCallbacks();
+    void EnsureLivePlotWindow();
 
     wxSizer* CreateControlBox(wxPanel* parent);
 
@@ -72,6 +77,8 @@ private:
 
     // Logic - Replaced SerialPortManager with GrblController
     std::unique_ptr<GrblController> m_grbl;
+    MeasurementDocument* m_measurementDoc = nullptr;
+    PlotWindow* m_livePlotWindow = nullptr;
 
     // Event IDs
     enum {

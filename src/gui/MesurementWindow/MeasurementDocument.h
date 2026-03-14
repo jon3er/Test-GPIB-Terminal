@@ -58,6 +58,7 @@ public:
     int                        GetMeasurementNumber()const { return m_measurementNumber; }
     const sData&               GetResults()          const { return m_results; }
     sData&                     GetResultsMutable()         { return m_results; }
+    void                       NotifyDataUpdated()         { NotifyObservers("DataUpdated"); }
 
     // ---- Write data ----
     void SetXData(const std::vector<double>& x)      { m_x = x; }

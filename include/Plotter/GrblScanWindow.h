@@ -6,16 +6,18 @@
 #include "dataManagement.h"
 #include "mainHelper.h"
 #include "FsuMeasurement.h"
+#include "MeasurementDocument.h"
 
 class PlotWindow;
 
 class GrblScanWindow : public wxDialog {
 public:
-    GrblScanWindow(wxWindow* parent, GrblController* controller);
+    GrblScanWindow(wxWindow* parent, GrblController* controller, MeasurementDocument* document);
     ~GrblScanWindow();
 
 private:
     GrblController* m_controller;
+    MeasurementDocument* m_document;
 
     // UI Controls
     wxTextCtrl* m_txtStartX;
@@ -34,10 +36,6 @@ private:
     std::thread m_workerThread;
     std::atomic<bool> m_isScanning{false};
 
-    // Measurement Data
-    sData m_currentData;
-    PlotWindow* m_livePlotWindow = nullptr;
-
     // Events
     void OnStart(wxCommandEvent& event);
     void OnClose(wxCloseEvent& event);
@@ -45,8 +43,6 @@ private:
 
     // Helpers
     void ToggleControls(bool enable);
-    void EnsureLivePlotWindow();
-    void UpdateLivePlotWithLatestData(int row, int col);
 
     wxDECLARE_EVENT_TABLE();
 };

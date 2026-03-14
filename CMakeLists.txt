@@ -76,6 +76,7 @@ target_include_directories(TEST-GPIB-Terminal PRIVATE
     "src/gui/TerminalWindow"
     "src/hardware"
     "src/Plotter"
+    "third-party/wxMathplots"
     ${FTDI_INCLUDE_DIR}
     ${wxMathplots_INCLUDE_DIR}
     ${Boost_INCLUDE_DIRS}

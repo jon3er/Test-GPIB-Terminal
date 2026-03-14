@@ -1,4 +1,8 @@
 #include "PlotterFrame.h"
+#include "Mesurement.h"
+#include "MeasurementDocument.h"
+#include "fkt_d2xx.h"
+#include "FsuMeasurement.h"
 
 // Event Table
 wxBEGIN_EVENT_TABLE(PlotterFrame, wxDialog)
@@ -20,6 +24,10 @@ PlotterFrame::PlotterFrame()
     : wxDialog(NULL, wxID_ANY, "Plotter Controller", wxDefaultPosition, wxSize(1000, 700)),
       m_grbl(std::make_unique<GrblController>())
 {
+    m_measurementDoc = new MeasurementDocument(
+        PrologixUsbGpibAdapter::get_instance(),
+        fsuMeasurement::get_instance());
+
     // --- Create Main Sizer ---
     wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
 
@@ -61,6 +69,41 @@ PlotterFrame::PlotterFrame()
     SetupGrblCallbacks();
     UpdatePortList();
     Centre();
+}
+
+PlotterFrame::~PlotterFrame()
+{
+    if (m_livePlotWindow)
+    {
+        m_livePlotWindow->SetDocument(nullptr);
+        m_livePlotWindow->Destroy();
+        m_livePlotWindow = nullptr;
+    }
+
+    delete m_measurementDoc;
+    m_measurementDoc = nullptr;
+}
+
+void PlotterFrame::EnsureLivePlotWindow()
+{
+    if (!m_measurementDoc)
+        return;
+
+    if (m_livePlotWindow && m_livePlotWindow->IsShown())
+    {
+        m_livePlotWindow->Raise();
+        return;
+    }
+
+    m_livePlotWindow = new PlotWindow(this, nullptr);
+    m_livePlotWindow->SetDocument(m_measurementDoc);
+    m_livePlotWindow->SetOwnsDocument(false);
+    m_livePlotWindow->Bind(wxEVT_DESTROY, [this](wxWindowDestroyEvent& evt) {
+        if (evt.GetEventObject() == m_livePlotWindow)
+            m_livePlotWindow = nullptr;
+        evt.Skip();
+    });
+    m_livePlotWindow->Show();
 }
 
 void PlotterFrame::BuildLeftPanel(wxPanel* parent)
@@ -260,13 +303,20 @@ void PlotterFrame::OnOpenSettings(wxCommandEvent& event) {
 
 void PlotterFrame::OnOpenScanSettings(wxCommandEvent &event)
 {
-        if (!m_grbl->IsConnected()) {
+    if (!m_grbl->IsConnected()) {
         wxMessageBox("Please connect to the machine first.", "Error", wxICON_ERROR);
         return;
     }
 
+    if (!m_measurementDoc) {
+        wxMessageBox("Measurement document is not available.", "Error", wxICON_ERROR);
+        return;
+    }
+
+    EnsureLivePlotWindow();
+
     // Create the dialog
-    GrblScanWindow dlg(this, m_grbl.get());
+    GrblScanWindow dlg(this, m_grbl.get(), m_measurementDoc);
 
     // Register it so we can feed it data
     m_scanDlg = &dlg;
