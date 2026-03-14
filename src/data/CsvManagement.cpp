@@ -1,6 +1,8 @@
 #include "CsvManagement.h"
 #include "systemInfo.h"
 
+#include <algorithm>
+
 
 // Read Csv functions
 //------sData3D Ende------
@@ -322,6 +324,8 @@ bool CsvFile::saveCsvData(wxTextFile& file, sData data, int mesurementNumb, bool
     std::vector<double> imag = data.get3DDataImag(xPosition, yPosition);
 
     int count = data.getNumberOfPts_Array();
+    // Guard against stale NoPoints_Array values (e.g. mode switches) and avoid out-of-range access.
+    count = std::min(count, static_cast<int>(std::min(real.size(), imag.size())));
 
     std::cout << "Trying to save data: X: " << real.size() << "Y: " << imag.size() << std::endl;
 

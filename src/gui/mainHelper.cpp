@@ -45,6 +45,7 @@ bool PlotterMesurement(sData* data, int measurementNumber)
             break;
         case MeasurementMode::MARKER_PEAK:
             anz = 1;
+            // data->setNumberOfPts_Array(1);
             TypeText = "Marker";
             std::cout << " Mode: MARKER" << std::endl;
             break;

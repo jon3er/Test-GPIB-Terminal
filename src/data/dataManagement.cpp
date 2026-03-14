@@ -187,6 +187,7 @@ void sData::applyFsuSettingsToParam()
             m_dsParam->RBW         = s.rbw;
             m_dsParam->VBW         = s.vbw;
             m_dsParam->detektor    = s.detector;
+            m_dsParam->NoPoints_Array = 1;
             break;
         }
         case MeasurementMode::COSTUM:
