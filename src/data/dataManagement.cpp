@@ -362,7 +362,7 @@ bool sData::setTimeAndDate()
     try
     {
         wxDateTime zeitJetzt = wxDateTime::Now();
-        wxString timestamp = zeitJetzt.Format("%H:%M:%S");
+        wxString timestamp = zeitJetzt.Format("%H-%M-%S");
         m_dsParam->Time = timestamp;
 
         wxString dateStamp = zeitJetzt.Format("%Y-%m-%d");

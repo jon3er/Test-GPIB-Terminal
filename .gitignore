@@ -1,6 +1,7 @@
 #LINUX
 bin/
 obj/
+LogFiles/
 Test_GPIB_Terminal.cbp
 Test_GPIB_Terminal.depend
 Test_GPIB_Terminal.layout
