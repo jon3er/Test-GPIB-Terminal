@@ -350,25 +350,36 @@ void MainProgrammWin::MenuFileExit(wxCommandEvent& event)
 
 void MainProgrammWin::MenuMesurementLoad(wxCommandEvent& event)
 {
-    wxFileDialog openFileDialog(this, _("Open CSV File"),
-        System::filePathRoot,
-        "",
-        "CSV Files (*.csv)|*.csv|All Files (*.*)|*.*",
-        wxFD_OPEN | wxFD_FILE_MUST_EXIST);
-
-    if (openFileDialog.ShowModal() == wxID_CANCEL)
-        return;
-
-    wxString filePath = openFileDialog.GetPath();
-
-    // Read CSV into a temporary sData — does NOT affect the main document
+    wxString filePath;
     sData importedData;
-    CsvFile csvFile;
-    if (!csvFile.readCsvFile(filePath, importedData))
+
+    // Reuse the already opened file from MainDocument if available.
+    if (m_doc && m_doc->IsFileOpen())
     {
-        wxMessageBox("Failed to read CSV file:\n" + filePath,
-                     "Import Error", wxOK | wxICON_ERROR, this);
-        return;
+        importedData = m_doc->GetData();
+        filePath = m_doc->GetFilePath();
+    }
+    else
+    {
+        wxFileDialog openFileDialog(this, _("Open CSV File"),
+            System::filePathRoot,
+            "",
+            "CSV Files (*.csv)|*.csv|All Files (*.*)|*.*",
+            wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+
+        if (openFileDialog.ShowModal() == wxID_CANCEL)
+            return;
+
+        filePath = openFileDialog.GetPath();
+
+        // Read CSV into a temporary sData - does NOT affect the main document
+        CsvFile csvFile;
+        if (!csvFile.readCsvFile(filePath, importedData))
+        {
+            wxMessageBox("Failed to read CSV file:\n" + filePath,
+                        "Import Error", wxOK | wxICON_ERROR, this);
+            return;
+        }
     }
 
     // Set File setting to Current settings
