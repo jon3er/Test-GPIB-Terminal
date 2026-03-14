@@ -13,10 +13,16 @@ wxBEGIN_EVENT_TABLE(SettingsDialog, wxDialog)
     EVT_BUTTON(ID_BTN_START, SettingsDialog::OnStart)
 wxEND_EVENT_TABLE()
 
-SettingsDialog::SettingsDialog(wxWindow* parent, MeasurementMode mode)
+SettingsDialog::SettingsDialog(wxWindow* parent, MeasurementMode mode, const sData::sParam* preset)
     : wxDialog(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(420, 520)),
       m_mode(mode)
 {
+    if (preset)
+    {
+        m_preset = *preset;
+        m_hasPreset = true;
+    }
+
     // Titel je nach Modus
     switch (m_mode) {
         case MeasurementMode::SWEEP:       SetTitle("Sweep Einstellungen");       break;
@@ -161,7 +167,10 @@ SettingsDialog::SettingsDialog(wxWindow* parent, MeasurementMode mode)
 
     SetSizer(mainSizer);
 
-    RefreshData();
+    if (m_hasPreset)
+        LoadPresetData();
+    else
+        RefreshData();
 }
 
 // ---- Event Handler ----
@@ -520,6 +529,87 @@ void SettingsDialog::RefreshData()
             m_choiceDetector  ->SetStringSelection(s.detector);
             break;
         }
+    }
+}
+
+void SettingsDialog::LoadPresetData()
+{
+    const sData::sParam& s = m_preset;
+
+    switch (m_mode)
+    {
+        case MeasurementMode::SWEEP:
+        {
+            if (m_txtStartFreq)      m_txtStartFreq->SetValue(wxString::Format(wxT("%.0f"), s.startFreq));
+            if (m_txtStopFreq)       m_txtStopFreq->SetValue(wxString::Format(wxT("%.0f"), s.endFreq));
+            if (m_txtRefLevel)       m_txtRefLevel->SetValue(wxString::Format(wxT("%.0f"), s.refPegel));
+            if (m_spinAttenuation)   m_spinAttenuation->SetValue(s.HFDaempfung);
+            if (m_choiceUnit && !s.ampUnit.empty())
+            {
+                wxString unit = wxString::FromUTF8(s.ampUnit.c_str());
+                if (m_choiceUnit->FindString(unit) != wxNOT_FOUND)
+                    m_choiceUnit->SetStringSelection(unit);
+            }
+            if (m_txtRBW)            m_txtRBW->SetValue(wxString::Format(wxT("%d"), s.RBW));
+            if (m_txtVBW)            m_txtVBW->SetValue(wxString::Format(wxT("%d"), s.VBW));
+            if (m_choiceSweepPoints)
+                m_choiceSweepPoints->SetStringSelection(wxString::Format("%d", s.NoPoints_Array));
+            if (m_choiceDetector && !s.detektor.empty())
+            {
+                wxString detector = wxString::FromUTF8(s.detektor.c_str());
+                if (m_choiceDetector->FindString(detector) != wxNOT_FOUND)
+                    m_choiceDetector->SetStringSelection(detector);
+            }
+            break;
+        }
+        case MeasurementMode::IQ:
+        {
+            if (m_txtRefLevel)       m_txtRefLevel->SetValue(wxString::Format(wxT("%.0f"), s.refPegel));
+            if (m_spinAttenuation)   m_spinAttenuation->SetValue(s.HFDaempfung);
+            if (m_choiceUnit && !s.ampUnit.empty())
+            {
+                wxString unit = wxString::FromUTF8(s.ampUnit.c_str());
+                if (m_choiceUnit->FindString(unit) != wxNOT_FOUND)
+                    m_choiceUnit->SetStringSelection(unit);
+            }
+            if (m_txtCenterFreq)     m_txtCenterFreq->SetValue(wxString::Format(wxT("%.0f"), s.centerFreq));
+            if (m_txtSampleRate)     m_txtSampleRate->SetValue(wxString::Format(wxT("%.0f"), s.sampleRate));
+            if (m_txtRecordLength)   m_txtRecordLength->SetValue(wxString::Format(wxT("%d"), s.recordLength));
+            if (m_txtIfBandwidth)    m_txtIfBandwidth->SetValue(wxString::Format(wxT("%.0f"), s.ifBandwidth));
+            if (m_choiceTriggerSource && !s.triggerSource.empty())
+            {
+                wxString triggerSource = wxString::FromUTF8(s.triggerSource.c_str());
+                if (m_choiceTriggerSource->FindString(triggerSource) != wxNOT_FOUND)
+                    m_choiceTriggerSource->SetStringSelection(triggerSource);
+            }
+            if (m_txtTriggerLevel)   m_txtTriggerLevel->SetValue(wxString::Format(wxT("%.0f"), s.triggerLevel));
+            if (m_txtTriggerDelay)   m_txtTriggerDelay->SetValue(wxString::Format(wxT("%.0f"), s.triggerDelay));
+            break;
+        }
+        case MeasurementMode::MARKER_PEAK:
+        {
+            if (m_txtStartFreq)      m_txtStartFreq->SetValue(wxString::Format(wxT("%.0f"), s.startFreq));
+            if (m_txtStopFreq)       m_txtStopFreq->SetValue(wxString::Format(wxT("%.0f"), s.endFreq));
+            if (m_txtRefLevel)       m_txtRefLevel->SetValue(wxString::Format(wxT("%.0f"), s.refPegel));
+            if (m_spinAttenuation)   m_spinAttenuation->SetValue(s.HFDaempfung);
+            if (m_choiceUnit && !s.ampUnit.empty())
+            {
+                wxString unit = wxString::FromUTF8(s.ampUnit.c_str());
+                if (m_choiceUnit->FindString(unit) != wxNOT_FOUND)
+                    m_choiceUnit->SetStringSelection(unit);
+            }
+            if (m_txtRBW)            m_txtRBW->SetValue(wxString::Format(wxT("%d"), s.RBW));
+            if (m_txtVBW)            m_txtVBW->SetValue(wxString::Format(wxT("%d"), s.VBW));
+            if (m_choiceDetector && !s.detektor.empty())
+            {
+                wxString detector = wxString::FromUTF8(s.detektor.c_str());
+                if (m_choiceDetector->FindString(detector) != wxNOT_FOUND)
+                    m_choiceDetector->SetStringSelection(detector);
+            }
+            break;
+        }
+        default:
+            break;
     }
 }
 

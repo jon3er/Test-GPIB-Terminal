@@ -67,7 +67,7 @@ protected:
     wxStaticText* m_infoText;    ///< Placeholder text inside the info panel
     wxPanel*      m_settingsPanel;  ///< Current FSU device settings panel
     wxStaticText* m_settingsText;   ///< Text inside the settings panel
-    wxStaticText* m_activeSelectionText; ///< Shows active matrix selection
+    wxStaticText* m_selectedMeasurementText; ///< Shows currently selected [x ; y]
 
     // Matrix measurement selector [x ; y]
     wxChoice*     m_choiceXSelector;
@@ -80,9 +80,8 @@ private:
     void getFileNames(const wxString& dirPath, wxArrayString& files);
     void executeScriptEvent(wxCommandEvent& event);
     void OnSelectMeasurement(wxCommandEvent& event);
-    void OnApplyImportedSettings(wxCommandEvent& event);
+    void OnOpenLoadedMeasurementSettings(wxCommandEvent& event);
     void PopulateSelectors(unsigned int nX, unsigned int nY);
-    void UpdateSelectionLabel(int xIndex, int yIndex);
     bool ApplySelectionToPlot(int xIndex, int yIndex, bool logSelection = false);
     bool IsIqMode(const sData::sParam* param, const sData& data) const;
     void updatePlotData();

@@ -3,13 +3,16 @@
 #include <wx/spinctrl.h>
 #include "cmdGpib.h"
 #include "PlotterFrame.h"
+#include "dataManagement.h"
 
 class SettingsDialog : public wxDialog {
 public:
-    SettingsDialog(wxWindow* parent, MeasurementMode mode);
+    SettingsDialog(wxWindow* parent, MeasurementMode mode, const sData::sParam* preset = nullptr);
 
 private:
     MeasurementMode m_mode;
+    bool m_hasPreset = false;
+    sData::sParam m_preset{};
 
     // Gemeinsame Widgets (alle Modi)
     wxTextCtrl* m_txtRefLevel      = nullptr;
@@ -55,6 +58,7 @@ private:
     void ApplyMarkerPeak();
 
     void RefreshData();
+    void LoadPresetData();
     wxString FormatFrequencyAutoUnit(double hz) const;
     bool ParseFrequencyInputToHz(const wxString& input, double& hz) const;
     bool ParseTimeInputToSeconds(const wxString& input, double& seconds) const;

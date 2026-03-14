@@ -1,6 +1,7 @@
 #include "Mesurement.h"
 #include "main.h"
 #include "SettingsWindow.h"
+#include "MSetDialog.h"
 #include "cmdGpib.h"
 #include "mainHelper.h"
 
@@ -82,8 +83,8 @@ PlotWindow::PlotWindow(wxWindow *parent, MainDocument* mainDoc)
 
     wxButton* executeMesurment = new wxButton(this, wxID_ANY, "Execute Mesurement");
     executeMesurment->Bind(wxEVT_BUTTON, &PlotWindow::executeScriptEvent, this);
-    wxButton* applyImportedSettings = new wxButton(this, wxID_ANY, "Apply Imported Settings");
-    applyImportedSettings->Bind(wxEVT_BUTTON, &PlotWindow::OnApplyImportedSettings, this);
+    wxButton* openLoadedSettingsBtn = new wxButton(this, wxID_ANY, "Open Measurement Settings");
+    openLoadedSettingsBtn->Bind(wxEVT_BUTTON, &PlotWindow::OnOpenLoadedMeasurementSettings, this);
     m_selectMesurement = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, m_fileNames);
     m_selectMesurement->SetSelection(0);
 
@@ -169,7 +170,7 @@ PlotWindow::PlotWindow(wxWindow *parent, MainDocument* mainDoc)
     // Left: control buttons and [x ; y] selector
     wxBoxSizer* leftSizer = new wxBoxSizer(wxVERTICAL);
     leftSizer->Add(executeMesurment,   0, wxEXPAND | wxALL, 3);
-    leftSizer->Add(applyImportedSettings, 0, wxEXPAND | wxALL, 3);
+    leftSizer->Add(openLoadedSettingsBtn, 0, wxEXPAND | wxALL, 3);
     leftSizer->Add(m_selectMesurement, 0, wxEXPAND | wxALL, 3);
 
     // [x ; y] matrix measurement selector row
@@ -180,14 +181,12 @@ PlotWindow::PlotWindow(wxWindow *parent, MainDocument* mainDoc)
     m_choiceYSelector = new wxChoice(this, wxID_ANY);
     wxButton* selectBtn = new wxButton(this, wxID_ANY, "Go");
     selectBtn->Bind(wxEVT_BUTTON, &PlotWindow::OnSelectMeasurement, this);
-    m_activeSelectionText = new wxStaticText(this, wxID_ANY, "Active Selection: [- ; -]");
     matrixSizer->Add(matrixLabel,     0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
     matrixSizer->Add(m_choiceXSelector, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 3);
     matrixSizer->Add(matrixSep,          0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, 3);
     matrixSizer->Add(m_choiceYSelector,  0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 3);
     matrixSizer->Add(selectBtn,       0, wxALIGN_CENTER_VERTICAL);
     leftSizer->Add(matrixSizer, 0, wxEXPAND | wxALL, 3);
-    leftSizer->Add(m_activeSelectionText, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 3);
     leftSizer->AddStretchSpacer(1);
 
     // Right: info panel (placeholder)
@@ -198,6 +197,9 @@ PlotWindow::PlotWindow(wxWindow *parent, MainDocument* mainDoc)
     infoTitle->SetFont(infoTitle->GetFont().Bold());
     infoSizer->Add(infoTitle, 0, wxEXPAND | wxALL, 8);
     infoSizer->Add(new wxStaticLine(m_infoPanel), 0, wxEXPAND | wxLEFT | wxRIGHT, 5);
+    m_selectedMeasurementText = new wxStaticText(m_infoPanel, wxID_ANY,
+        "Selected [x ; y]: -", wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT);
+    infoSizer->Add(m_selectedMeasurementText, 0, wxEXPAND | wxLEFT | wxRIGHT | wxTOP, 8);
     m_infoText = new wxStaticText(m_infoPanel, wxID_ANY, wxEmptyString,
         wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT);
     infoSizer->Add(m_infoText, 1, wxEXPAND | wxALL, 8);
@@ -489,7 +491,6 @@ bool PlotWindow::ApplySelectionToPlot(int xIndex, int yIndex, bool logSelection)
 
     m_document->SetXData(xAxis);
     m_document->SetYData(yReal);
-    UpdateSelectionLabel(xIndex, yIndex);
 
     m_plot->Fit();
     m_plot->Refresh();
@@ -499,21 +500,44 @@ bool PlotWindow::ApplySelectionToPlot(int xIndex, int yIndex, bool logSelection)
         wxLogMessage("PlotWindow: selected measurement [%d ; %d]", xIndex + 1, yIndex + 1);
     }
 
+    if (m_selectedMeasurementText)
+        m_selectedMeasurementText->SetLabel(wxString::Format("Selected [x ; y]: [%d ; %d]", xIndex + 1, yIndex + 1));
+
     return true;
 }
 
-void PlotWindow::UpdateSelectionLabel(int xIndex, int yIndex)
+void PlotWindow::OnOpenLoadedMeasurementSettings(wxCommandEvent& /*event*/)
 {
-    if (!m_activeSelectionText)
-        return;
-
-    if (xIndex < 0 || yIndex < 0)
+    if (!m_document)
     {
-        m_activeSelectionText->SetLabel("Active Selection: [- ; -]");
+        wxLogWarning("PlotWindow: no document attached");
         return;
     }
 
-    m_activeSelectionText->SetLabel(wxString::Format("Active Selection: [%d ; %d]", xIndex + 1, yIndex + 1));
+    sData& data = m_document->GetResultsMutable();
+    sData::sParam* param = data.GetParameter();
+    if (!param)
+    {
+        wxLogWarning("PlotWindow: no measurement loaded");
+        return;
+    }
+
+    MeasurementMode mode = MeasurementMode::SWEEP;
+    wxString type = param->Type;
+    type.MakeLower();
+
+    if (type.Find("iq") != wxNOT_FOUND ||
+        (param->recordLength > 0 && param->sampleRate > 0.0 && param->ifBandwidth > 0.0))
+    {
+        mode = MeasurementMode::IQ;
+    }
+    else if (type.Find("marker") != wxNOT_FOUND || type.Find("peak") != wxNOT_FOUND)
+    {
+        mode = MeasurementMode::MARKER_PEAK;
+    }
+
+    SettingsDialog dlg(this, mode, param);
+    dlg.ShowModal();
 }
 
 void PlotWindow::OnSelectMeasurement(wxCommandEvent& /*event*/)
@@ -528,33 +552,6 @@ void PlotWindow::OnSelectMeasurement(wxCommandEvent& /*event*/)
     {
         wxLogWarning("PlotWindow: failed to show selected measurement");
     }
-}
-
-void PlotWindow::OnApplyImportedSettings(wxCommandEvent& /*event*/)
-{
-    if (!m_document)
-    {
-        wxLogWarning("PlotWindow: no document attached");
-        return;
-    }
-
-    sData& data = m_document->GetResultsMutable();
-    sData::sParam* param = data.GetParameter();
-    if (!param)
-    {
-        wxLogWarning("PlotWindow: no imported dataset available");
-        return;
-    }
-
-    data.exportFsuSettings();
-    if (!fsuMeasurement::get_instance().writeSettingsToGpib())
-    {
-        wxLogWarning("PlotWindow: failed to write imported settings to device");
-        return;
-    }
-
-    UpdateSettingsPanel();
-    wxLogMessage("PlotWindow: imported settings applied to device");
 }
 
 void PlotWindow::PopulateSelectors(unsigned int nX, unsigned int nY)
@@ -573,8 +570,6 @@ void PlotWindow::PopulateSelectors(unsigned int nX, unsigned int nY)
         m_choiceYSelector->Append(wxString::Format("%u", i));
     if (nY > 0)
         m_choiceYSelector->SetSelection((prevY >= 0 && static_cast<unsigned int>(prevY) < nY) ? prevY : 0);
-
-    UpdateSelectionLabel(m_choiceXSelector->GetSelection(), m_choiceYSelector->GetSelection());
 }
 
 // -----------------------------------------------------------------------
