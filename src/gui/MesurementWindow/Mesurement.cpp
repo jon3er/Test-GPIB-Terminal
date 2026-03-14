@@ -392,9 +392,13 @@ bool PlotWindow::IsIqMode(const sData::sParam* param, const sData& data) const
     if (!param)
         return false;
 
-    wxString type = param->Type;
-    type.MakeLower();
-    return type.Find("iq") != wxNOT_FOUND;
+    wxString measurementType = param->MeasurementType;
+    measurementType.MakeLower();
+    if (measurementType.Find("iq") != wxNOT_FOUND)
+        return true;
+
+    // Fallback for legacy files that have no explicit measurement mode field.
+    return (param->recordLength > 0 && param->sampleRate > 0.0);
 }
 
 bool PlotWindow::ApplySelectionToPlot(int xIndex, int yIndex, bool logSelection)
@@ -523,15 +527,15 @@ void PlotWindow::OnOpenLoadedMeasurementSettings(wxCommandEvent& /*event*/)
     }
 
     MeasurementMode mode = MeasurementMode::SWEEP;
-    wxString type = param->Type;
-    type.MakeLower();
+    wxString measurementType = param->MeasurementType;
+    measurementType.MakeLower();
 
-    if (type.Find("iq") != wxNOT_FOUND ||
+    if (measurementType.Find("iq") != wxNOT_FOUND ||
         (param->recordLength > 0 && param->sampleRate > 0.0 && param->ifBandwidth > 0.0))
     {
         mode = MeasurementMode::IQ;
     }
-    else if (type.Find("marker") != wxNOT_FOUND || type.Find("peak") != wxNOT_FOUND)
+    else if (measurementType.Find("marker") != wxNOT_FOUND || measurementType.Find("peak") != wxNOT_FOUND)
     {
         mode = MeasurementMode::MARKER_PEAK;
     }
@@ -653,7 +657,10 @@ void PlotWindow::UpdateInfoPanel(sData::sParam* param)
 
     wxString info;
     info += wxString::Format("File Name:\t\t%s\n",      param->File);
-    info += wxString::Format("Measurement Type:\t%s\n", param->Type);
+    wxString measurementType = param->MeasurementType;
+    if (measurementType.IsEmpty())
+        measurementType = "---";
+    info += wxString::Format("Measurement Type:\t%s\n", measurementType);
     info += wxString::Format("Date:\t\t\t%s\n",         param->Date);
     info += wxString::Format("Time:\t\t\t%s\n",         param->Time);
     info += wxString::Format("X Points:\t\t\t%u\n",       param->NoPoints_X);

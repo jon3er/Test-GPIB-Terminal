@@ -12,6 +12,7 @@ sData::sData(const char* type)
     m_dsParam->Date = "Empty";
     m_dsParam->Time = "Empty";
     m_dsParam->Type = type;
+    m_dsParam->MeasurementType = "";
     m_dsParam->NoPoints_X = 1;
     m_dsParam->NoPoints_Y = 1;
     m_dsParam->ampUnit = "DB";
@@ -96,6 +97,13 @@ std::vector<double> sData::GetTimeIQStepVector()
 {
     double samplerate = m_dsParam->sampleRate;
     double recordLength = m_dsParam->recordLength;
+
+    if (samplerate <= 0.0 || recordLength <= 0)
+    {
+        std::cerr << "IQ time axis generation failed: invalid samplerate/recordLength" << std::endl;
+        return {};
+    }
+
     double t_sample = 1 / samplerate;
 
     std::vector<double> timeAxis(recordLength);
@@ -149,6 +157,7 @@ void sData::applyFsuSettingsToParam()
         case MeasurementMode::SWEEP:
         {
             const auto& s = m_fsuSettings.sweep;
+            m_dsParam->MeasurementType = "Sweep";
             m_dsParam->startFreq      = s.startFreq;
             m_dsParam->endFreq        = s.stopFreq;
             m_dsParam->refPegel       = s.refLevel;
@@ -164,6 +173,7 @@ void sData::applyFsuSettingsToParam()
         case MeasurementMode::IQ:
         {
             const auto& s = m_fsuSettings.iq;
+            m_dsParam->MeasurementType = "IQ";
             m_dsParam->centerFreq    = s.centerFreq;
             m_dsParam->refPegel      = s.refLevel;
             m_dsParam->HFDaempfung   = s.att;
@@ -179,6 +189,7 @@ void sData::applyFsuSettingsToParam()
         case MeasurementMode::MARKER_PEAK:
         {
             const auto& s = m_fsuSettings.marker;
+            m_dsParam->MeasurementType = "Marker Peak";
             m_dsParam->startFreq   = s.startFreq;
             m_dsParam->endFreq     = s.stopFreq;
             m_dsParam->refPegel    = s.refLevel;
@@ -191,6 +202,7 @@ void sData::applyFsuSettingsToParam()
             break;
         }
         case MeasurementMode::COSTUM:
+            m_dsParam->MeasurementType = "Costum";
             m_dsParam->costumFile = m_fsuSettings.costumFile.ToStdString();
             break;
     }

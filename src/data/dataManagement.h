@@ -75,6 +75,7 @@ public:
         wxString        Date;
         wxString        Time;
         wxString        Type;
+        wxString        MeasurementType;
 
         int             MeasurementNumb;
         // Plotter
@@ -124,6 +125,7 @@ public:
     wxString GetDate() { return m_dsParam->Date; };
     wxString GetTime() { return m_dsParam->Time; };
     wxString GetType() { return m_dsParam->Type; };
+    wxString GetMeasurementType() { return m_dsParam->MeasurementType; };
 
     int GetMeasurementNumb() { return m_dsParam->MeasurementNumb; };
 

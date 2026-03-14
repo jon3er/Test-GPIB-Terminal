@@ -362,6 +362,9 @@ bool CsvFile::readCsvFile(wxString filename, sData& data)
         return false;
     }
 
+    // Keep separator consistent for all following parsing/tokenizing stages.
+    m_separator = detectSeparator(file);
+
 
     if (!createCsvLookupTable(file))
     {
@@ -410,6 +413,7 @@ bool CsvFile::readCsvHeader(wxTextFile&file, sData& data)
 
     // Detect separator
     char separator = detectSeparator(file);
+    m_separator = separator;
 
     // Parse header metadata (lines 0-6)
     dsParam->File = file.GetLine(0).AfterFirst(separator).Trim(false).Trim();
@@ -428,6 +432,7 @@ bool CsvFile::readCsvHeader(wxTextFile&file, sData& data)
     if (mesSettingsLine >= 0)
     {
         wxString modeName = file.GetLine(mesSettingsLine).AfterFirst(separator).Trim(false).Trim();
+        dsParam->MeasurementType = modeName;
         std::cout << "Mode: " << modeName << std::endl;
 
 
@@ -455,6 +460,7 @@ bool CsvFile::readCsvHeader(wxTextFile&file, sData& data)
 bool CsvFile::readCsvSettingsSweep(wxTextFile& file, sData& data)
 {
     sData::sParam* dsParam = data.GetParameter();
+    dsParam->MeasurementType = "Sweep";
     char separator = detectSeparator(file);
 
     auto readLine = [&](std::string_view label) -> wxString {
@@ -498,6 +504,7 @@ bool CsvFile::readCsvSettingsSweep(wxTextFile& file, sData& data)
 bool CsvFile::readCsvSettingsQI(wxTextFile& file, sData& data)
 {
     sData::sParam* dsParam = data.GetParameter();
+    dsParam->MeasurementType = "IQ";
     char separator = detectSeparator(file);
 
     auto readLine = [&](std::string_view label) -> wxString {
@@ -505,6 +512,11 @@ bool CsvFile::readCsvSettingsQI(wxTextFile& file, sData& data)
         if (line < 0) return "";
         return file.GetLine(line).AfterFirst(separator).Trim(false).Trim();
     };
+
+    wxString centerVal = readLine(HeaderConfig::centerFreq).BeforeFirst(' ');
+    double dVal;
+    if (centerVal.ToDouble(&dVal))
+        dsParam->centerFreq = dVal;
 
     long lVal;
     if (readLine(HeaderConfig::refPegel).ToLong(&lVal))
@@ -515,12 +527,35 @@ bool CsvFile::readCsvSettingsQI(wxTextFile& file, sData& data)
 
     dsParam->ampUnit = readLine(HeaderConfig::ampUnit);
 
+    if (readLine(HeaderConfig::sampleRate).ToDouble(&dVal))
+        dsParam->sampleRate = dVal;
+
+    int iVal;
+    if (readLine(HeaderConfig::recordLength).ToInt(&iVal))
+        dsParam->recordLength = iVal;
+
+    if (readLine(HeaderConfig::ifBandwidth).ToDouble(&dVal))
+        dsParam->ifBandwidth = dVal;
+
+    dsParam->triggerSource = readLine(HeaderConfig::triggerSource).ToStdString();
+
+    if (readLine(HeaderConfig::triggerLevel).ToDouble(&dVal))
+        dsParam->triggerLevel = dVal;
+
+    if (readLine(HeaderConfig::triggerDelay).ToDouble(&dVal))
+        dsParam->triggerDelay = dVal;
+
+    // IQ arrays are sampled in time domain; use record length for per-measurement point count.
+    if (dsParam->recordLength > 0)
+        dsParam->NoPoints_Array = dsParam->recordLength;
+
     return true;
 }
 
 bool CsvFile::readCsvSettingsMarker(wxTextFile& file, sData& data)
 {
     sData::sParam* dsParam = data.GetParameter();
+    dsParam->MeasurementType = "Marker Peak";
     char separator = detectSeparator(file);
 
     auto readLine = [&](std::string_view label) -> wxString {
@@ -559,6 +594,7 @@ bool CsvFile::readCsvSettingsMarker(wxTextFile& file, sData& data)
 bool CsvFile::readCsvSettingsCostum(wxTextFile& file, sData& data)
 {
         sData::sParam* dsParam = data.GetParameter();
+    dsParam->MeasurementType = "Costum";
     char separator = detectSeparator(file);
 
     auto readLine = [&](std::string_view label) -> wxString {
@@ -583,11 +619,13 @@ bool CsvFile::readCsvData(wxTextFile& file, sData& data)
 
     bool continuous = (data.GetType() != "Line");
 
-    if (!file.Open())
+    if (!file.IsOpened())
     {
         std::cout << "Failed to open file" << std::endl;
         return false;
     }
+
+    const char separator = detectSeparator(file);
 
     // Read all available measurements
     for (int mesurementNumb = 1; mesurementNumb <= totalMeasurements; mesurementNumb++)
@@ -633,7 +671,7 @@ bool CsvFile::readCsvData(wxTextFile& file, sData& data)
 
         // Parse Real data
         wxString realLine = file.GetLine(realLineNum);
-        wxStringTokenizer realTokenizer(realLine, m_separator);
+        wxStringTokenizer realTokenizer(realLine, separator);
         if (realTokenizer.HasMoreTokens()) {
             realTokenizer.GetNextToken(); // skip label
         }
@@ -648,7 +686,7 @@ bool CsvFile::readCsvData(wxTextFile& file, sData& data)
 
         // Parse Imag data
         wxString imagLine = file.GetLine(imagLineNum);
-        wxStringTokenizer imagTokenizer(imagLine, m_separator);
+        wxStringTokenizer imagTokenizer(imagLine, separator);
         if (imagTokenizer.HasMoreTokens()) {
             imagTokenizer.GetNextToken(); // skip label
         }
