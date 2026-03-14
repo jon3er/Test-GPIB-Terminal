@@ -14,7 +14,7 @@ wxBEGIN_EVENT_TABLE(SettingsDialog, wxDialog)
 wxEND_EVENT_TABLE()
 
 SettingsDialog::SettingsDialog(wxWindow* parent, MeasurementMode mode, const sData::sParam* preset)
-    : wxDialog(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(420, 520)),
+    : wxDialog(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(420, 720)),
       m_mode(mode)
 {
     if (preset)
@@ -104,6 +104,12 @@ SettingsDialog::SettingsDialog(wxWindow* parent, MeasurementMode mode, const sDa
         m_txtCenterFreq->SetToolTip("Zulaessiger Bereich: 0 bis 26.5 GHz (auch z. B. 100e6, 100 MHz, 0.1 GHz)");
         grid->Add(m_txtCenterFreq, 1, wxEXPAND);
 
+        grid->Add(new wxStaticText(this, wxID_ANY, "Filter Type:"), 0, wxALIGN_CENTER_VERTICAL);
+        wxArrayString filterTypes = {"NORM"};
+        m_choiceFilterType = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, filterTypes);
+        m_choiceFilterType->SetSelection(0);
+        grid->Add(m_choiceFilterType, 1, wxEXPAND);
+
         grid->Add(new wxStaticText(this, wxID_ANY, "Sample Rate (Hz):"), 0, wxALIGN_CENTER_VERTICAL);
         m_txtSampleRate = new wxTextCtrl(this, wxID_ANY, "32000000");
         m_txtSampleRate->SetToolTip("Zulaessiger Bereich: 10 kHz bis 70.4 MHz (z. B. 32e6, 32 MHz)");
@@ -120,13 +126,23 @@ SettingsDialog::SettingsDialog(wxWindow* parent, MeasurementMode mode, const sDa
         m_txtIfBandwidth->SetToolTip("Zulaessiger Bereich: 10 Hz bis 50 MHz (z. B. 10e6, 10 MHz)");
         grid->Add(m_txtIfBandwidth, 1, wxEXPAND);
 
-        // Trigger source Setting (currently disabled)
-        // grid->Add(new wxStaticText(this, wxID_ANY, "Trigger Quelle:"), 0, wxALIGN_CENTER_VERTICAL);
-        // wxArrayString trigsources = {"IMM", "EXT", "IFP"};
-        // m_choiceTriggerSource = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, trigsources);
-        // m_choiceTriggerSource->SetSelection(0);
-        // m_choiceTriggerSource->SetToolTip("Zulaessige Trigger-Quellen: IMM, EXT, IFP");
-        // grid->Add(m_choiceTriggerSource, 1, wxEXPAND);
+        grid->Add(new wxStaticText(this, wxID_ANY, "Trigger Quelle:"), 0, wxALIGN_CENTER_VERTICAL);
+        wxArrayString trigsources = {"IMM", "EXT", "IFP", "FREE"};
+        m_choiceTriggerSource = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, trigsources);
+        m_choiceTriggerSource->SetSelection(0);
+        m_choiceTriggerSource->SetToolTip("Zulaessige Trigger-Quellen: IMM, EXT, IFP, FREE");
+        grid->Add(m_choiceTriggerSource, 1, wxEXPAND);
+
+        grid->Add(new wxStaticText(this, wxID_ANY, "Trigger Slope:"), 0, wxALIGN_CENTER_VERTICAL);
+        wxArrayString triggerSlopes = {"POS", "NEG"};
+        m_choiceTriggerSlope = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, triggerSlopes);
+        m_choiceTriggerSlope->SetSelection(0);
+        grid->Add(m_choiceTriggerSlope, 1, wxEXPAND);
+
+        grid->Add(new wxStaticText(this, wxID_ANY, "Pretrigger Samples:"), 0, wxALIGN_CENTER_VERTICAL);
+        m_txtPretriggerSamples = new wxTextCtrl(this, wxID_ANY, "0");
+        m_txtPretriggerSamples->SetToolTip("Ganzzahliger Wert, z. B. 0, 128, 512");
+        grid->Add(m_txtPretriggerSamples, 1, wxEXPAND);
 
         grid->Add(new wxStaticText(this, wxID_ANY, "Trigger Level (dBm):"), 0, wxALIGN_CENTER_VERTICAL);
         floatVal.SetPrecision(0);
@@ -306,11 +322,18 @@ void SettingsDialog::ApplyIq() {
         wxMessageBox("Trigger Delay ungueltig! Beispiele: 0.5, 500 ms, 250 us", "Validierungsfehler", wxOK | wxICON_ERROR); return;
     }
     int recordLen = wxAtoi(m_txtRecordLength->GetValue());
+    int pretriggerSamples = wxAtoi(m_txtPretriggerSamples->GetValue());
     int att = m_spinAttenuation->GetValue();
     std::string unit = m_choiceUnit->GetStringSelection().ToStdString();
     std::string trigSrc = m_choiceTriggerSource
         ? m_choiceTriggerSource->GetStringSelection().ToStdString()
         : "IMM";
+    std::string filterType = m_choiceFilterType
+        ? m_choiceFilterType->GetStringSelection().ToStdString()
+        : "NORM";
+    std::string trigSlope = m_choiceTriggerSlope
+        ? m_choiceTriggerSlope->GetStringSelection().ToStdString()
+        : "POS";
 
     // Validierung
     if (!fsu->checkIfSettingsValidSweep(ScpiCommand::CENTER_FREQUENCY, centerFreq)) {
@@ -324,6 +347,9 @@ void SettingsDialog::ApplyIq() {
     }
     if (!fsu->checkIfSettingsValidSweep(ScpiCommand::IQ_RECORD_LENGTH, recordLen)) {
         wxMessageBox("Record Length ausserhalb des Bereichs (1 - 16M)!", "Validierungsfehler", wxOK | wxICON_ERROR); return;
+    }
+    if (pretriggerSamples < 0 || pretriggerSamples > recordLen) {
+        wxMessageBox("Pretrigger Samples muss zwischen 0 und Record Length liegen!", "Validierungsfehler", wxOK | wxICON_ERROR); return;
     }
     if (!fsu->checkIfSettingsValidSweep(ScpiCommand::IQ_IF_BANDWIDTH, ifBw)) {
         wxMessageBox("IF Bandwidth ausserhalb des Bereichs (10 Hz - 50 MHz)!", "Validierungsfehler", wxOK | wxICON_ERROR); return;
@@ -343,10 +369,13 @@ void SettingsDialog::ApplyIq() {
     settings.refLevel      = refLevel;
     settings.att           = att;
     settings.unit          = unit;
+    settings.filterType    = filterType;
     settings.sampleRate    = sampleRate;
     settings.recordLength  = recordLen;
     settings.ifBandwidth   = ifBw;
     settings.triggerSource = trigSrc;
+    settings.triggerSlope  = trigSlope;
+    settings.pretriggerSamples = pretriggerSamples;
     settings.triggerLevel  = trigLevel;
     settings.triggerDelay  = trigDelay;
 
@@ -372,6 +401,9 @@ void SettingsDialog::ApplyIq() {
     ok &= VerifyInt("Record Length",      recordLen,   rb.recordLength,  mismatches);
     ok &= VerifyDouble("IF Bandwidth",    ifBw,        rb.ifBandwidth,   mismatches);
     ok &= VerifyString("Trigger Quelle",  trigSrc,     rb.triggerSource, mismatches);
+    ok &= VerifyString("Filter Type",     filterType,  rb.filterType,    mismatches);
+    ok &= VerifyString("Trigger Slope",   trigSlope,   rb.triggerSlope,  mismatches);
+    ok &= VerifyInt("Pretrigger Samples", pretriggerSamples, rb.pretriggerSamples, mismatches);
     ok &= VerifyDouble("Trigger Level",   trigLevel,   rb.triggerLevel,  mismatches);
     ok &= VerifyDouble("Trigger Delay",   trigDelay,   rb.triggerDelay,  mismatches);
 
@@ -501,6 +533,9 @@ void SettingsDialog::RefreshData()
             m_choiceUnit          ->SetStringSelection(s.unit);
             m_txtCenterFreq       ->SetValue(wxString::Format(wxT("%.0f"),s.centerFreq));
             m_txtCenterFreq       ->SetToolTip(FormatFrequencyAutoUnit(s.centerFreq));
+            if (m_choiceFilterType) {
+                m_choiceFilterType->SetStringSelection(s.filterType);
+            }
             m_txtSampleRate       ->SetValue(wxString::Format(wxT("%.0f"),s.sampleRate));
             m_txtSampleRate       ->SetToolTip(FormatFrequencyAutoUnit(s.sampleRate));
             m_txtRecordLength     ->SetValue(wxString::Format(wxT("%i"),s.recordLength));
@@ -508,6 +543,12 @@ void SettingsDialog::RefreshData()
             m_txtIfBandwidth      ->SetToolTip(FormatFrequencyAutoUnit(s.ifBandwidth));
             if (m_choiceTriggerSource) {
                 m_choiceTriggerSource->SetStringSelection(s.triggerSource);
+            }
+            if (m_choiceTriggerSlope) {
+                m_choiceTriggerSlope->SetStringSelection(s.triggerSlope);
+            }
+            if (m_txtPretriggerSamples) {
+                m_txtPretriggerSamples->SetValue(wxString::Format(wxT("%d"), s.pretriggerSamples));
             }
             m_txtTriggerLevel     ->SetValue(wxString::Format(wxT("%.0f"),s.triggerLevel));
             m_txtTriggerDelay     ->SetValue(wxString::Format(wxT("%.0f"),s.triggerDelay));

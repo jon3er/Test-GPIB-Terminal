@@ -31,10 +31,13 @@ private:
 
     // Nur IQ
     wxTextCtrl* m_txtCenterFreq    = nullptr;
+    wxChoice*   m_choiceFilterType = nullptr;
     wxTextCtrl* m_txtSampleRate    = nullptr;
     wxTextCtrl* m_txtRecordLength  = nullptr;
     wxTextCtrl* m_txtIfBandwidth   = nullptr;
     wxChoice*   m_choiceTriggerSource = nullptr;
+    wxChoice*   m_choiceTriggerSlope = nullptr;
+    wxTextCtrl* m_txtPretriggerSamples = nullptr;
     wxTextCtrl* m_txtTriggerLevel  = nullptr;
     wxTextCtrl* m_txtTriggerDelay  = nullptr;
 

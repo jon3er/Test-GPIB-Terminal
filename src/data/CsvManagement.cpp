@@ -168,6 +168,7 @@ bool CsvFile::saveCsvHeader(wxTextFile &file, sData& data)
     wxString lineLabel;
     std::vector<double> lineDataVector;
     std::vector<double> timeAxis;
+    int IndexAmount;
     double samplerate;
     int recordLength;
     double t_sample;
@@ -178,6 +179,8 @@ bool CsvFile::saveCsvHeader(wxTextFile &file, sData& data)
         case MeasurementMode::SWEEP:
             // Frequenz-Zeile
             lineLabel = wxString::Format("f in %s", dsParam->ampUnit);
+
+            IndexAmount = dsParam->NoPoints_Array;
 
             lineDataVector = data.GetFreqStepVector();
 
@@ -192,6 +195,7 @@ bool CsvFile::saveCsvHeader(wxTextFile &file, sData& data)
             // time scale
             samplerate = dsParam->sampleRate;
             recordLength = dsParam->recordLength;
+            IndexAmount = recordLength;
             t_sample = 1 / samplerate;
 
             if (t_sample < 0.000'000'1)
@@ -228,12 +232,14 @@ bool CsvFile::saveCsvHeader(wxTextFile &file, sData& data)
 
         case MeasurementMode::MARKER_PEAK:
 
+            IndexAmount = dsParam->NoPoints_Array;
             break;
     }
 
+
     // ID-Zeile zusammenbauen
     wxString lineID = "ID";
-    for (int i = 0; i < dsParam->NoPoints_Array; i++)
+    for (int i = 1; i < IndexAmount + 1; i++)
     {
         lineID << m_separator << (int)i;
     }

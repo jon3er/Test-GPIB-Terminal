@@ -127,10 +127,13 @@ public:
         double refLevel = 0;
         int att = 0;
         std::string unit = "DBM";
+        std::string filterType = "NORM";
         double sampleRate = 100'000;
         int recordLength = 1024;
         double ifBandwidth = 100'000;
         std::string triggerSource = "IMM";
+        std::string triggerSlope = "POS";
+        int pretriggerSamples = 0;
         double triggerLevel = 0;
         double triggerDelay = 0;
     };

@@ -3,6 +3,8 @@
 #include "cmdGpib.h"
 #include "mainHelper.h"
 
+#include <cctype>
+
 
 
 //------fsuMesurement Beginn-----
@@ -42,7 +44,6 @@ bool fsuMeasurement::executeMeasurement(int TimeOutMs)
     adapter.write("++eos 2");
 
     std::string commaSeparatedValues;
-    std::string IQParameter;
 
     switch (m_lastMeasurementMode)
     {
@@ -67,13 +68,13 @@ bool fsuMeasurement::executeMeasurement(int TimeOutMs)
     case MeasurementMode::IQ:
         adapter.write("INST:SEL SAN");
         adapter.write("TRAC:IQ:STAT ON");
-        IQParameter = m_lastIqSettings.sampleRate;
-        adapter.write("TRAC:IQ:SET NORM, 10MHz, 1024, FREE, POS, 0, 0");      // TODO auf andere Trigger anpassbar machen
+        adapter.write("INIT:CONT OFF");
+        adapter.write("INIT:IMM");
         adapter.write("*WAI");          // wait for measurement to finish
         adapter.write("TRAC:IQ:DATA?");
         adapter.write("++read eoi");
         // auf iq messpunkte anpassen.
-        while (adapter.quaryBuffer() < (0.8*1024 * 18)) // 18 bytes per data point
+        while (adapter.quaryBuffer() < (0.8 * m_lastIqSettings.recordLength * 18)) // 18 bytes per data point
         {
             sleepMs(50);
         }
@@ -272,7 +273,7 @@ try {
 
         case ScpiCommand::TRIGGER_SOURCE: {
             std::string src = std::get<std::string>(value);
-            return (src == "IMM" || src == "EXT" || src == "IFP");
+            return (src == "IMM" || src == "EXT" || src == "IFP" || src == "FREE");
         }
 
         case ScpiCommand::TRIGGER_LEVEL: {
@@ -407,7 +408,7 @@ bool fsuMeasurement::readSweepSettings()
     }
 
     // check if 10 strings where received
-    if (tokens.size() < 9) return false;
+    if (tokens.size() < 10) return false;
 
     // save to member struct
     try {
@@ -436,10 +437,13 @@ bool fsuMeasurement::writeIqSettings(IqSettings settings)
                            scpiSetCommands.at(ScpiCommand::REF_LEVEL)         + std::to_string(settings.refLevel)                     + ";:" +
                            scpiSetCommands.at(ScpiCommand::RF_ATTENUATION)    + std::to_string(settings.att)          + ";:" +
                            scpiSetCommands.at(ScpiCommand::AMPLITUDE_UNIT)    + settings.unit                         + ";:" +
-                           scpiSetCommands.at(ScpiCommand::IQ_SAMPLE_RATE)    + std::to_string(settings.sampleRate)   + ";:" +
-                           scpiSetCommands.at(ScpiCommand::IQ_RECORD_LENGTH)  + std::to_string(settings.recordLength) + ";:" +
-                           scpiSetCommands.at(ScpiCommand::IQ_IF_BANDWIDTH)   + std::to_string(settings.ifBandwidth)  + ";:" +
-                           //scpiSetCommands.at(ScpiCommand::TRIGGER_SOURCE)    + settings.triggerSource                + ";:" +
+                           "TRAC:IQ:SET " + settings.filterType + "," +
+                           std::to_string(settings.ifBandwidth) + "," +
+                           std::to_string(settings.sampleRate) + "," +
+                           settings.triggerSource + "," +
+                           settings.triggerSlope + "," +
+                           std::to_string(settings.pretriggerSamples) + "," +
+                           std::to_string(settings.recordLength) + ";:" +
                            scpiSetCommands.at(ScpiCommand::TRIGGER_LEVEL)     + std::to_string(settings.triggerLevel) + ";:" +
                            scpiSetCommands.at(ScpiCommand::TRIGGER_DELAY)     + std::to_string(settings.triggerDelay) + ";";
 
@@ -452,21 +456,14 @@ bool fsuMeasurement::readIqSettings()
     std::string queryCmd = scpiQueryCommands.at(ScpiCommand::CENTER_FREQUENCY) + ";:" +
                            scpiQueryCommands.at(ScpiCommand::REF_LEVEL)        + ";:" +
                            scpiQueryCommands.at(ScpiCommand::RF_ATTENUATION)   + ";:" +
-                           scpiQueryCommands.at(ScpiCommand::AMPLITUDE_UNIT)   + ";:" +
-                           scpiQueryCommands.at(ScpiCommand::IQ_SAMPLE_RATE)   + ";:" +
-                           scpiQueryCommands.at(ScpiCommand::IQ_RECORD_LENGTH) + ";:" +
-                           scpiQueryCommands.at(ScpiCommand::IQ_IF_BANDWIDTH)  + ";:" +
-                           //scpiQueryCommands.at(ScpiCommand::TRIGGER_SOURCE)   + ";:" +
-                           scpiQueryCommands.at(ScpiCommand::TRIGGER_LEVEL)    + ";:" +
-                           scpiQueryCommands.at(ScpiCommand::TRIGGER_DELAY);
+                           scpiQueryCommands.at(ScpiCommand::AMPLITUDE_UNIT);
 
     auto& adapter = PrologixUsbGpibAdapter::get_instance();
 
     std::string response = adapter.send(queryCmd);
 
-    std::cout << "read IQ settings: " << queryCmd << std::endl;
-
-    std::cout << "response IQ  settings: " << response << std::endl;
+    std::cout << "read IQ base settings: " << queryCmd << std::endl;
+    std::cout << "response IQ base settings: " << response << std::endl;
     if (response.substr(0,6)== "Failed") return false;
 
     std::vector<std::string> tokens;
@@ -477,19 +474,36 @@ bool fsuMeasurement::readIqSettings()
         tokens.push_back(token);
     }
 
-    if (tokens.size() < 10) return false;
+    if (tokens.size() < 4) return false;
+
+    std::string iqSetResponse = adapter.send("TRAC:IQ:SET?");
+    std::cout << "response IQ set settings: " << iqSetResponse << std::endl;
+    if (iqSetResponse.substr(0,6)== "Failed") return false;
+
+    std::vector<std::string> iqSetTokens;
+    std::stringstream ssIq(iqSetResponse);
+    while (std::getline(ssIq, token, ',')) {
+        token.erase(token.find_last_not_of(" \n\r\t") + 1);
+        token.erase(0, token.find_first_not_of(" \n\r\t"));
+        iqSetTokens.push_back(token);
+    }
+
+    if (iqSetTokens.size() < 7) return false;
 
     try {
         m_lastIqSettings.centerFreq    = std::stod(tokens[0]);
         m_lastIqSettings.refLevel      = std::stod(tokens[1]);
         m_lastIqSettings.att           = std::stoi(tokens[2]);
         m_lastIqSettings.unit          = tokens[3];
-        m_lastIqSettings.sampleRate    = std::stod(tokens[4]);
-        m_lastIqSettings.recordLength  = std::stoi(tokens[5]);
-        m_lastIqSettings.ifBandwidth   = std::stod(tokens[6]);
-        // Trigger source is currently not part of the IQ query block.
-        m_lastIqSettings.triggerLevel  = std::stod(tokens[7]);
-        m_lastIqSettings.triggerDelay  = std::stod(tokens[8]);
+
+        // TRAC:IQ:SET? -> <FilterType>,<RBW>,<SampleRate>,<TriggerSource>,<TriggerSlope>,<PretriggerSamples>,<NumberofSamples>
+        m_lastIqSettings.filterType       = iqSetTokens[0];
+        m_lastIqSettings.ifBandwidth      = std::stod(iqSetTokens[1]);
+        m_lastIqSettings.sampleRate       = std::stod(iqSetTokens[2]);
+        m_lastIqSettings.triggerSource    = iqSetTokens[3];
+        m_lastIqSettings.triggerSlope     = iqSetTokens[4];
+        m_lastIqSettings.pretriggerSamples= std::stoi(iqSetTokens[5]);
+        m_lastIqSettings.recordLength     = std::stoi(iqSetTokens[6]);
         return true;
     }
     catch (const std::exception& e) {
