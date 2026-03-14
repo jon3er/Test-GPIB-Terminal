@@ -21,11 +21,13 @@
 #include "FunctionWindow.h"
 #include "SettingsWindow.h"
 #include "MSetDialog.h"
+#include "helpTab/helpWin.h"
 // document header
 #include "MeasurementDocument.h"
 #include "MultiMessDocument.h"
 #include "TerminalDocument.h"
 #include "SettingsDocument.h"
+#include "helpTab/helpDocument.h"
 // Data
 #include "dataManagement.h"
 #include "CsvManagement.h"
@@ -93,6 +95,7 @@ protected:
     wxMenuItem* m_menuTest_Item_Ploter;
 
     wxMenuItem* m_menuHelp_Item_About;
+    wxMenuItem* m_menuHelp_Item_ResetDevices;
 
 
 
@@ -150,6 +153,7 @@ public:
 
 
     void MenuHelpAbout(wxCommandEvent& event);
+    void MenuHelpResetDevices(wxCommandEvent& event);
 };
 
 

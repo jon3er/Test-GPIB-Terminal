@@ -55,6 +55,7 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, MainDocument* doc, wxWindowI
     Bind(wxEVT_MENU, &MainProgrammWin::MenuTestPloter,      this, MainMenuBar::ID_Main_Test_Ploter);
     // Help Menu binds
     Bind(wxEVT_MENU, &MainProgrammWin::MenuHelpAbout,       this, MainMenuBar::ID_Main_Help_About);
+    Bind(wxEVT_MENU, &MainProgrammWin::MenuHelpResetDevices, this, MainMenuBar::ID_Main_Help_ResetDevices);
 
 
 	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
@@ -159,9 +160,12 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, MainDocument* doc, wxWindowI
 
     // create submenu elemets
 	m_menuHelp_Item_About = new wxMenuItem( m_menu_Help, ID_Main_Help_About, wxString( wxT("About") ) , wxEmptyString, wxITEM_NORMAL );
+    m_menuHelp_Item_ResetDevices = new wxMenuItem( m_menu_Help, ID_Main_Help_ResetDevices, wxString( wxT("Reset Devices") ) , wxEmptyString, wxITEM_NORMAL );
 
     // set submenu order
     m_menu_Help->Append( m_menuHelp_Item_About );
+    m_menu_Help->AppendSeparator();
+    m_menu_Help->Append( m_menuHelp_Item_ResetDevices );
 
 	//------------------  end Submenu --------------------
 
@@ -532,6 +536,17 @@ void MainProgrammWin::MenuMesurement2DMess(wxCommandEvent& event)
 void MainProgrammWin::MenuHelpAbout(wxCommandEvent& event)
 {
 
+}
+
+void MainProgrammWin::MenuHelpResetDevices(wxCommandEvent& event)
+{
+    HelpDocument helpDoc(PrologixUsbGpibAdapter::get_instance());
+
+    HelpWin* helpWin = new HelpWin(this);
+    helpWin->SetDocument(&helpDoc);
+    helpWin->ShowModal();
+    helpWin->SetDocument(nullptr);
+    helpWin->Destroy();
 }
 
 

@@ -58,6 +58,7 @@ enum MainMenuBar
 
     ID_Main_Help            = 60,
     ID_Main_Help_About      = 61,
+    ID_Main_Help_ResetDevices = 62,
 
     // PlotWindow-local menu IDs (must not collide with main menu IDs)
     ID_Plot_File_Open       = 70,

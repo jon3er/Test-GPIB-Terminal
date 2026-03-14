@@ -103,8 +103,12 @@ std::string PrologixUsbGpibAdapter::send(std::string msg, int DelayMs)
 
     while ((quaryBuffer() < 1)&& (i < DelayMs))
     {
-        sleepMs(1);
-        i++;
+        sleepMs(5);
+        i= i + 5;
+        if (i % 100 == 0)
+        {
+            std::cerr << "Waiting for response... " << i << " ms elapsed" << std::endl;
+        }
     }
 
     std::cout << "send Responce Time: " << 5 + i << " ms" << std::endl;
@@ -424,7 +428,7 @@ std::string PrologixUsbGpibAdapter::statusText()
 
     if (m_deviceInfo.Connected)
     {
-        Text = "Connected to a Device ";
+        Text = "Connected to a Device \nCurrent Status: " + send("++spoll",300);
     }
     else
     {

@@ -29,7 +29,7 @@ set(VCPKG_APPLOCAL_DEPS ON CACHE BOOL "")
 # supress wxMathplotswarnigs
 
 # 3. Sources (Tipp: Vermeide GLOB, aber für Prototypen okay)
-file(GLOB_RECURSE SOURCE_FILES "src/**/*.cpp" "third-party/*.cpp")
+file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS "src/**/*.cpp" "third-party/*.cpp")
 
 add_executable(TEST-GPIB-Terminal ${SOURCE_FILES})
 if(WIN32)
