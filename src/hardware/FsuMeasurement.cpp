@@ -324,16 +324,13 @@ bool fsuMeasurement::readSettingsFromGpib()
 {
     switch (m_lastMeasurementMode) {
         case MeasurementMode::SWEEP: {
-            readSweepSettings();
-            return true;
+            return readSweepSettings();
         }
         case MeasurementMode::IQ: {
-            readIqSettings();
-            return true;
+            return readIqSettings();
         }
         case MeasurementMode::MARKER_PEAK: {
-            readMarkerPeakSettings();
-            return true;
+            return readMarkerPeakSettings();
         }
 
         case MeasurementMode::COSTUM:{
@@ -410,7 +407,7 @@ bool fsuMeasurement::readSweepSettings()
     }
 
     // check if 10 strings where received
-    if (tokens.size() < 10) return false;
+    if (tokens.size() < 9) return false;
 
     // save to member struct
     try {
@@ -490,9 +487,9 @@ bool fsuMeasurement::readIqSettings()
         m_lastIqSettings.sampleRate    = std::stod(tokens[4]);
         m_lastIqSettings.recordLength  = std::stoi(tokens[5]);
         m_lastIqSettings.ifBandwidth   = std::stod(tokens[6]);
-        m_lastIqSettings.triggerSource = tokens[7];
-        m_lastIqSettings.triggerLevel  = std::stod(tokens[8]);
-        m_lastIqSettings.triggerDelay  = std::stod(tokens[9]);
+        // Trigger source is currently not part of the IQ query block.
+        m_lastIqSettings.triggerLevel  = std::stod(tokens[7]);
+        m_lastIqSettings.triggerDelay  = std::stod(tokens[8]);
         return true;
     }
     catch (const std::exception& e) {

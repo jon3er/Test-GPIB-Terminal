@@ -762,7 +762,14 @@ void SettingsDialog::OnGetCurrent(wxCommandEvent& /*event*/)
 {
     fsuMeasurement* fsu = &fsuMeasurement::get_instance();
 
-    fsu->readSettingsFromGpib();
+    // Read back settings for the mode shown in this dialog.
+    fsu->setMeasurementMode(m_mode);
+
+    if (!fsu->readSettingsFromGpib())
+    {
+        wxMessageBox("Failed to read settings from instrument.", "Read Error", wxOK | wxICON_ERROR);
+        return;
+    }
 
     RefreshData();
 

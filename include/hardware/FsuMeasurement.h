@@ -194,7 +194,7 @@ private:
     std::string m_filePathCustomMeasurement;
     std::string m_fileNameCustomMeasurement;
 
-    MeasurementMode m_lastMeasurementMode;
+    MeasurementMode m_lastMeasurementMode = MeasurementMode::SWEEP;
     // Settings
     lastSweepSettings m_lastSwpSettings;
     IqSettings m_lastIqSettings;
