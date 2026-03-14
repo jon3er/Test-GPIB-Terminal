@@ -496,7 +496,61 @@ bool PlotWindow::ApplySelectionToPlot(int xIndex, int yIndex, bool logSelection)
     m_document->SetXData(xAxis);
     m_document->SetYData(yReal);
 
-    m_plot->Fit();
+    const auto [xMinIt, xMaxIt] = std::minmax_element(xAxis.begin(), xAxis.end());
+    double xMin = *xMinIt;
+    double xMax = *xMaxIt;
+
+    double yMin = 0.0;
+    double yMax = 0.0;
+    bool yRangeInitialized = false;
+
+    auto extendYRange = [&](const std::vector<double>& values)
+    {
+        if (values.empty())
+            return;
+
+        const auto [minIt, maxIt] = std::minmax_element(values.begin(), values.end());
+        if (!yRangeInitialized)
+        {
+            yMin = *minIt;
+            yMax = *maxIt;
+            yRangeInitialized = true;
+            return;
+        }
+
+        yMin = std::min(yMin, *minIt);
+        yMax = std::max(yMax, *maxIt);
+    };
+
+    extendYRange(yReal);
+    if (iqMode && m_vectorLayerImag->IsVisible())
+    {
+        std::vector<double> yImagForRange = data.get3DDataImag(xIndex, yIndex);
+        if (!yImagForRange.empty())
+            yImagForRange.resize(std::min(xAxis.size(), yImagForRange.size()));
+        extendYRange(yImagForRange);
+    }
+
+    // Avoid zero-size view box if all values are equal.
+    if (xMin == xMax)
+    {
+        const double margin = (xMin == 0.0) ? 1.0 : std::abs(xMin) * 0.05;
+        xMin -= margin;
+        xMax += margin;
+    }
+    if (!yRangeInitialized)
+    {
+        yMin = -1.0;
+        yMax = 1.0;
+    }
+    else if (yMin == yMax)
+    {
+        const double margin = (yMin == 0.0) ? 1.0 : std::abs(yMin) * 0.05;
+        yMin -= margin;
+        yMax += margin;
+    }
+
+    m_plot->Fit(xMin, xMax, yMin, yMax);
     m_plot->Refresh();
 
     if (logSelection)
