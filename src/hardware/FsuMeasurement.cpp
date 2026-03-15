@@ -32,13 +32,16 @@ fsuMeasurement::~fsuMeasurement()
 bool fsuMeasurement::executeMeasurement(int TimeOutMs)
 {
     // TODO Auf enums anpassen
-
+    int TimePassed = 0;
     auto& adapter = PrologixUsbGpibAdapter::get_instance();
+    int ProzessingTimeMs = 20;
+    int WaitTimeMs = 50;
 
     // Setup adapter settings for measurement
     // clears old msgs
     
     adapter.write("++clr"); // Clear buffer to prevent old messages from interfering with new measurement data
+    sleepMs(ProzessingTimeMs);
     adapter.write("++mode 1");
     adapter.write("++auto 0");
     adapter.write("++eos 2");
@@ -52,13 +55,20 @@ bool fsuMeasurement::executeMeasurement(int TimeOutMs)
         adapter.write("INIT:IMM");      // trigger measurement
         adapter.write("*WAI");          // wait for measurement to finish
         adapter.write("TRAC? TRACE1");
-        sleepMs(10);
+        std::cout << "Sweep Measurement Triggered!" << std::endl;
+        sleepMs(ProzessingTimeMs);
         adapter.write("++read eoi");
-        while (adapter.quaryBuffer() < (0.8*m_lastSwpSettings.points * 18)) // 18 bytes per data point
-        {
-            sleepMs(50);
+        while (adapter.quaryBuffer() < (0.8*m_lastSwpSettings.points * 18)) // 18 bytes per data point Wait for 80% of estimated data  
+        { // 18 bytes per data point
+            sleepMs(WaitTimeMs);
+            TimePassed += WaitTimeMs;
+            if (TimeOutMs <= TimePassed)
+            {
+                std::cout << "Measurement Timeout!" << std::endl;
+                break;
+            }
         }
-        sleepMs(50);
+        sleepMs(WaitTimeMs);
         commaSeparatedValues = adapter.read();
         //commaSeparatedValues = adapter.send("++read eoi", 3000);
 
@@ -72,13 +82,22 @@ bool fsuMeasurement::executeMeasurement(int TimeOutMs)
         adapter.write("INIT:IMM");
         adapter.write("*WAI");          // wait for measurement to finish
         adapter.write("TRAC:IQ:DATA?");
+        std::cout << "IQ Measurement Triggered!" << std::endl;
+        sleepMs(ProzessingTimeMs);
         adapter.write("++read eoi");
         // auf iq messpunkte anpassen.
-        while (adapter.quaryBuffer() < (0.8 * m_lastIqSettings.recordLength * 18)) // 18 bytes per data point
+        while (adapter.quaryBuffer() < (0.8 * m_lastIqSettings.recordLength * 18)) // 18 bytes per data point        
         {
-            sleepMs(50);
+            sleepMs(WaitTimeMs);
+            TimePassed += WaitTimeMs;
+            if (TimeOutMs <= TimePassed)
+            {
+                std::cout << "Measurement Timeout!" << std::endl;
+                break;
+            }
+  
         }
-        sleepMs(50);
+        sleepMs(WaitTimeMs);
         commaSeparatedValues = adapter.read();
         break;
 
@@ -87,14 +106,28 @@ bool fsuMeasurement::executeMeasurement(int TimeOutMs)
         adapter.write("INIT:CONT OFF;INIT;*WAI");          // wait for measurement to finishCALC:MARK1:X?;Y?
         adapter.write("CALC:MARK1:ON");
         adapter.write("CALC:MARK1:MAX");        // TODO make type of marker selectable MIN / MAX
+        std::cout << "Marker Measurement Triggered!" << std::endl;
         // adapter.write("++read");
-        sleepMs(50);
+        sleepMs(ProzessingTimeMs);
+        while (adapter.quaryBuffer() < 1) // 18 bytes per data point        
+        {
+            sleepMs(WaitTimeMs);
+            TimePassed += WaitTimeMs;
+            if (TimeOutMs <= TimePassed)
+            {
+                std::cout << "Measurement Timeout!" << std::endl;
+                break;
+            }
+        }
         commaSeparatedValues = adapter.send("CALC:MARK1:X?;Y?", 5000);// Save x and y values
 
 
         break;
     case MeasurementMode::COSTUM:
-        adapter.readScriptFile(getFilePath(),getFileName());
+        adapter.readScriptFile(getFilePath(),getFileName()); // TODO FIX Implementation
+        std::cout << "Costum Measurement Triggered!" << std::endl;
+
+        return true;
         break;
 
     default:
@@ -171,18 +204,23 @@ std::vector<double> fsuMeasurement::calcFreqData()
     std::vector<double> freqRange;
     freqRange.clear();
 
-    std::cerr << "Total points: " << totalPoints << std::endl;
+    std::cout << "Total points: " << totalPoints << std::endl;
     double range = m_FreqEnd-m_FreqStart;
 
-    double step = range/totalPoints;
-    std::cerr << "Range: " << range << "   Step: " << step << std::endl;
+    double step = 0;
+    if (totalPoints != 1)
+    {
+        step = range/(totalPoints-1);
+    }
+    
+    std::cout << "Range: " << range << "   Step: " << step << std::endl;
     double newYPoint = m_FreqStart;
 
     for(int i = 0; i < totalPoints; i++)
     {
-        newYPoint = newYPoint + step;
         freqRange.push_back(newYPoint);
-        std::cerr << "Y Berechnet: " << freqRange[i] << std::endl;
+        newYPoint = newYPoint + step;
+        std::cout << "Y Berechnet: " << freqRange[i] << std::endl;
     }
 
     return freqRange;
@@ -345,9 +383,9 @@ bool fsuMeasurement::readSettingsFromGpib()
 
 bool fsuMeasurement::writeSweepSettings(lastSweepSettings settings)
 {
-std::string blockCmd = scpiSetCommands.at(ScpiCommand::START_FREQUENCY   )   + std::to_string(settings.startFreq)+ ";:" +
-                        scpiSetCommands.at(ScpiCommand::END_FREQUENCY   )   + std::to_string(settings.stopFreq) + ";:" +
-                        scpiSetCommands.at(ScpiCommand::REF_LEVEL       )   + std::to_string(settings.refLevel) + ";:" +
+std::string blockCmd = scpiSetCommands.at(ScpiCommand::START_FREQUENCY   )   + std::format("{}",settings.startFreq)+ ";:" +
+                        scpiSetCommands.at(ScpiCommand::END_FREQUENCY   )   + std::format("{}",settings.stopFreq) + ";:" +
+                        scpiSetCommands.at(ScpiCommand::REF_LEVEL       )   + std::format("{}",settings.refLevel) + ";:" +
                         scpiSetCommands.at(ScpiCommand::RF_ATTENUATION  )   + std::to_string(settings.att)      + ";:" +
                         scpiSetCommands.at(ScpiCommand::AMPLITUDE_UNIT  )   + settings.unit                     + ";:" +
                         scpiSetCommands.at(ScpiCommand::RBW             )   + std::to_string(settings.rbw)      + ";:" +
@@ -362,7 +400,7 @@ std::string blockCmd = scpiSetCommands.at(ScpiCommand::START_FREQUENCY   )   + s
 
     if (status.substr(0,3) == "Msg")
     {
-        std::cout << "write succsess" << std::endl;
+        std::cout << "write successfull!" << std::endl;
         return true;
     }
     else
@@ -389,7 +427,7 @@ bool fsuMeasurement::readSweepSettings()
 
     std::cout << "read Sweep settings: " << queryCmd << std::endl;
 
-
+    adapter.resetGpibBusBuffer();
     std::string response = adapter.send(queryCmd);
     std::cout << "response Sweep settings: " << response << std::endl;
 
@@ -417,8 +455,8 @@ bool fsuMeasurement::readSweepSettings()
         m_lastSwpSettings.refLevel  = std::stod(tokens[2]);
         m_lastSwpSettings.att       = std::stoi(tokens[3]);
         m_lastSwpSettings.unit      = tokens[4];                // std::string
-        m_lastSwpSettings.rbw       = std::stod(tokens[5]);
-        m_lastSwpSettings.vbw       = std::stod(tokens[6]);
+        m_lastSwpSettings.rbw       = std::stoi(tokens[5]);
+        m_lastSwpSettings.vbw       = std::stoi(tokens[6]);
         m_lastSwpSettings.sweepTime = tokens[7];                // std::string
         m_lastSwpSettings.points    = std::stoi(tokens[8]);
         m_lastSwpSettings.detector  = tokens[9];                // std::string
@@ -433,19 +471,19 @@ bool fsuMeasurement::readSweepSettings()
 
 bool fsuMeasurement::writeIqSettings(IqSettings settings)
 {
-    std::string blockCmd = scpiSetCommands.at(ScpiCommand::CENTER_FREQUENCY)  + std::to_string(settings.centerFreq)   + ";:" +
-                           scpiSetCommands.at(ScpiCommand::REF_LEVEL)         + std::to_string(settings.refLevel)                     + ";:" +
+    std::string blockCmd = scpiSetCommands.at(ScpiCommand::CENTER_FREQUENCY)  + std::format("{}",settings.centerFreq)   + ";:" +
+                           scpiSetCommands.at(ScpiCommand::REF_LEVEL)         + std::format("{}",settings.refLevel)                     + ";:" +
                            scpiSetCommands.at(ScpiCommand::RF_ATTENUATION)    + std::to_string(settings.att)          + ";:" +
                            scpiSetCommands.at(ScpiCommand::AMPLITUDE_UNIT)    + settings.unit                         + ";:" +
                            "TRAC:IQ:SET " + settings.filterType + "," +
-                           std::to_string(settings.ifBandwidth) + "," +
-                           std::to_string(settings.sampleRate) + "," +
+                           std::format("{}",settings.ifBandwidth) + "," +
+                           std::format("{}",settings.sampleRate) + "," +
                            settings.triggerSource + "," +
                            settings.triggerSlope + "," +
                            std::to_string(settings.pretriggerSamples) + "," +
                            std::to_string(settings.recordLength) + ";:" +
-                           scpiSetCommands.at(ScpiCommand::TRIGGER_LEVEL)     + std::to_string(settings.triggerLevel) + ";:" +
-                           scpiSetCommands.at(ScpiCommand::TRIGGER_DELAY)     + std::to_string(settings.triggerDelay) + ";";
+                           scpiSetCommands.at(ScpiCommand::TRIGGER_LEVEL)     + std::format("{}",settings.triggerLevel) + ";:" +
+                           scpiSetCommands.at(ScpiCommand::TRIGGER_DELAY)     + std::format("{}",settings.triggerDelay) + ";";
 
     std::string status = PrologixUsbGpibAdapter::get_instance().write(blockCmd);
     return (status.substr(0, 3) == "Msg");
@@ -460,6 +498,7 @@ bool fsuMeasurement::readIqSettings()
 
     auto& adapter = PrologixUsbGpibAdapter::get_instance();
 
+    adapter.resetGpibBusBuffer();
     std::string response = adapter.send(queryCmd);
 
     std::cout << "read IQ base settings: " << queryCmd << std::endl;
@@ -476,6 +515,7 @@ bool fsuMeasurement::readIqSettings()
 
     if (tokens.size() < 4) return false;
 
+    adapter.resetGpibBusBuffer();
     std::string iqSetResponse = adapter.send("TRAC:IQ:SET?");
     std::cout << "response IQ set settings: " << iqSetResponse << std::endl;
     if (iqSetResponse.substr(0,6)== "Failed") return false;
@@ -514,13 +554,13 @@ bool fsuMeasurement::readIqSettings()
 
 bool fsuMeasurement::writeMarkerPeakSettings(MarkerPeakSettings settings)
 {
-    std::string blockCmd = scpiSetCommands.at(ScpiCommand::START_FREQUENCY)  + std::to_string(settings.startFreq) + ";:" +
-                           scpiSetCommands.at(ScpiCommand::END_FREQUENCY)    + std::to_string(settings.stopFreq)  + ";:" +
-                           scpiSetCommands.at(ScpiCommand::REF_LEVEL)        + std::to_string(settings.refLevel)  + ";:" +
-                           scpiSetCommands.at(ScpiCommand::RF_ATTENUATION)   + std::to_string(settings.att)       + ";:" +
+    std::string blockCmd = scpiSetCommands.at(ScpiCommand::START_FREQUENCY)  + std::format("{}",settings.startFreq) + ";:" +
+                           scpiSetCommands.at(ScpiCommand::END_FREQUENCY)    + std::format("{}",settings.stopFreq)  + ";:" +
+                           scpiSetCommands.at(ScpiCommand::REF_LEVEL)        + std::format("{}",settings.refLevel)  + ";:" +
+                           scpiSetCommands.at(ScpiCommand::RF_ATTENUATION)   + std::format("{}",settings.att)       + ";:" +
                            scpiSetCommands.at(ScpiCommand::AMPLITUDE_UNIT)   + settings.unit                      + ";:" +
-                           scpiSetCommands.at(ScpiCommand::RBW)              + std::to_string(settings.rbw)       + ";:" +
-                           scpiSetCommands.at(ScpiCommand::VBW)              + std::to_string(settings.vbw)       + ";:" +
+                           scpiSetCommands.at(ScpiCommand::RBW)              + std::format("{}",settings.rbw)       + ";:" +
+                           scpiSetCommands.at(ScpiCommand::VBW)              + std::format("{}",settings.vbw)       + ";:" +
                            scpiSetCommands.at(ScpiCommand::DETECTOR)         + settings.detector                  + ";";
 
     std::string status = PrologixUsbGpibAdapter::get_instance().write(blockCmd);
@@ -540,6 +580,8 @@ bool fsuMeasurement::readMarkerPeakSettings()
                            scpiQueryCommands.at(ScpiCommand::DETECTOR);
 
     auto& adapter = PrologixUsbGpibAdapter::get_instance();
+
+    adapter.resetGpibBusBuffer();
     std::string response = adapter.send(queryCmd);
 
     std::cout << "read Marker settings: " << queryCmd << std::endl;

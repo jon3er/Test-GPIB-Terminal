@@ -110,8 +110,8 @@ public:
         int points = 625;
         int att = 0;
         std::string unit = "DBM";
-        int rbw = 1;
-        int vbw = 1;
+        int rbw = 20000;
+        int vbw = 20000;
         std::string sweepTime = "ON";
         std::string detector = "APE";
     };
@@ -129,7 +129,7 @@ public:
         std::string unit = "DBM";
         std::string filterType = "NORM";
         double sampleRate = 100'000;
-        int recordLength = 1024;
+        int recordLength = 128;
         double ifBandwidth = 100'000;
         std::string triggerSource = "IMM";
         std::string triggerSlope = "POS";
@@ -185,11 +185,11 @@ private:
 
     std::vector<double> m_x_Data;
     std::vector<double> m_y_Data;
-    double m_FreqStart;
-    double m_FreqEnd;
+    double m_FreqStart = 0;
+    double m_FreqEnd = 100'000'000;
     wxString m_lastMesurementTime;
-    unsigned int m_NoPoints_x;
-    unsigned int m_NoPoints_y;
+    int m_NoPoints_x = 1;
+    int m_NoPoints_y = 1;
 
     bool m_ImagValues = false;
 

@@ -63,7 +63,7 @@ std::string PrologixUsbGpibAdapter::write(std::string msg)
 {
     std::string Text;
 
-    std::cerr << "Write Command Entered" << std::endl;
+    std::cout << "Write Command Entered" << std::endl;
 
     if (m_deviceInfo.Connected)
     {
@@ -73,7 +73,7 @@ std::string PrologixUsbGpibAdapter::write(std::string msg)
         //Check String if Adapter or GPIB Command and check for ASCII 10, 13, 27, 43
         std::vector<char> charArrWriteGpib = checkAscii(CheckText);
 
-        std::cerr << "Trying to write to Device... " << std::string(charArrWriteGpib.begin(),charArrWriteGpib.end()) << std::endl;
+        std::cout << "Trying to write to Device... " << std::string(charArrWriteGpib.begin(),charArrWriteGpib.end()) << std::endl;
 
         FT_STATUS ftStatus =writeUsbDev(m_deviceInfo.ftHandle, charArrWriteGpib, bytesWritten);
 
@@ -456,6 +456,13 @@ bool PrologixUsbGpibAdapter::resetGpibBusBuffer()
     if (m_deviceInfo.Connected)
     {
         write("++clr");
+
+        sleepMs(20);
+
+        if (quaryBuffer() > 0)
+        {
+            std::cout << "Old Buffered Msg: "<< read() << std::endl;
+        }
 
         while (!(responce.substr(0,2) == "0,") && (i < 10))
         {

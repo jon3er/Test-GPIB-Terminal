@@ -304,8 +304,6 @@ void SettingsDialog::ApplySweep() {
         wxMessageBox("Fehler beim Senden der Einstellungen!", "Fehler", wxOK | wxICON_ERROR); return;
     }
 
-    sleepMs(150);
-
     // Read back and verify
     if (!fsu->readSweepSettings()) {
         wxMessageBox("Einstellungen gesendet, aber Ruecklesen fehlgeschlagen!", "Warnung", wxOK | wxICON_WARNING);
@@ -419,8 +417,6 @@ void SettingsDialog::ApplyIq() {
         wxMessageBox("Fehler beim Senden der IQ-Einstellungen!", "Fehler", wxOK | wxICON_ERROR); return;
     }
 
-    sleepMs(150);
-
     if (!fsu->readIqSettings()) {
         wxMessageBox("IQ-Einstellungen gesendet, aber Ruecklesen fehlgeschlagen!", "Warnung", wxOK | wxICON_WARNING);
         return;
@@ -508,8 +504,6 @@ void SettingsDialog::ApplyMarkerPeak() {
     if (!fsu->writeMarkerPeakSettings(settings)) {
         wxMessageBox("Fehler beim Senden der MarkerPeak-Einstellungen!", "Fehler", wxOK | wxICON_ERROR); return;
     }
-
-    sleepMs(150);
 
     if (!fsu->readMarkerPeakSettings()) {
         wxMessageBox("MarkerPeak-Einstellungen gesendet, aber Ruecklesen fehlgeschlagen!", "Warnung", wxOK | wxICON_WARNING);
