@@ -96,6 +96,12 @@ void MeasurementDocument::StopMeasurement()
     m_measuring = false;
 }
 
+void MeasurementDocument::SetResults(const sData& results)
+{
+    m_results = results;
+    NotifyObservers("DataUpdated");
+}
+
 void MeasurementDocument::WriteMarker1(bool setToMax, const std::string& freqRaw)
 {
     if (setToMax)

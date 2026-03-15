@@ -60,6 +60,9 @@ public:
     sData&                     GetResultsMutable()         { return m_results; }
     void                       NotifyDataUpdated()         { NotifyObservers("DataUpdated"); }
 
+    /** Replace current result data and notify observers. */
+    void SetResults(const sData& results);
+
     // ---- Write data ----
     void SetXData(const std::vector<double>& x)      { m_x = x; }
     void SetYData(const std::vector<double>& y)      { m_y = y; }

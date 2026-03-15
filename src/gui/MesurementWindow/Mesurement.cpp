@@ -271,7 +271,10 @@ void PlotWindow::SetDocument(MeasurementDocument* doc)
     m_ownsDocument = false;  // caller-owned by default
 
     if (m_document)
+    {
         m_document->AddObserver(this);
+        RefreshFromDocument();
+    }
 }
 
 void PlotWindow::OnDocumentChanged(const std::string& changeType)
@@ -287,31 +290,14 @@ void PlotWindow::OnDocumentChanged(const std::string& changeType)
             if (!m_document)
                 return;
 
-            sData& results = m_document->GetResultsMutable();
-            sData::sParam* param = results.GetParameter();
-
-            if (param)
+            if (RefreshFromDocument())
             {
-                PopulateSelectors(static_cast<unsigned int>(std::max(0, param->NoPoints_X)),
-                                  static_cast<unsigned int>(std::max(0, param->NoPoints_Y)));
-
-                int xi = m_choiceXSelector->GetSelection();
-                int yi = m_choiceYSelector->GetSelection();
-                if (ApplySelectionToPlot(xi, yi, false))
-                {
-                    std::cout << "[PlotWindow] Plot refreshed from selected matrix point" << std::endl;
-                    return;
-                }
+                std::cout << "[PlotWindow] Plot refreshed from selected matrix point" << std::endl;
             }
-
-            // Fallback: show latest live vector data if matrix selection cannot be resolved yet.
-            auto x = m_document->GetXData();
-            auto y = m_document->GetYData();
-            m_vectorLayer->SetData(x, y);
-            m_vectorLayerImag->SetVisible(false);
-            m_plot->Fit();
-            m_plot->Refresh();
-            std::cout << "[PlotWindow] Plot refreshed from document" << std::endl;
+            else
+            {
+                std::cout << "[PlotWindow] Plot refreshed from document" << std::endl;
+            }
         });
     }
     // MeasurementStarted / MeasurementStopped — no visual action needed here
@@ -380,6 +366,35 @@ void PlotWindow::updatePlotData()
     }
     m_plot->Fit();
     m_plot->Refresh();
+}
+
+bool PlotWindow::RefreshFromDocument()
+{
+    if (!m_document)
+        return false;
+
+    sData& results = m_document->GetResultsMutable();
+    sData::sParam* param = results.GetParameter();
+
+    if (param)
+    {
+        UpdateInfoPanel(param);
+        PopulateSelectors(static_cast<unsigned int>(std::max(0, param->NoPoints_X)),
+                          static_cast<unsigned int>(std::max(0, param->NoPoints_Y)));
+
+        int xi = m_choiceXSelector->GetSelection();
+        int yi = m_choiceYSelector->GetSelection();
+        if (ApplySelectionToPlot(xi, yi, false))
+        {
+            UpdateSettingsPanel();
+            return true;
+        }
+    }
+
+    // Fallback: show latest live vector data if matrix selection cannot be resolved yet.
+    updatePlotData();
+    UpdateSettingsPanel();
+    return false;
 }
 
 bool PlotWindow::IsIqMode(const sData::sParam* param, const sData& data) const
@@ -804,7 +819,7 @@ bool PlotWindow::LoadImportedData(const sData& importedData, const wxString& sou
     if (!m_document)
         return false;
 
-    m_document->GetResultsMutable() = importedData;
+    m_document->SetResults(importedData);
 
     sData::sParam* docParam = m_document->GetResultsMutable().GetParameter();
     if (!docParam)
@@ -813,19 +828,11 @@ bool PlotWindow::LoadImportedData(const sData& importedData, const wxString& sou
         return false;
     }
 
-    UpdateInfoPanel(docParam);
-    PopulateSelectors(static_cast<unsigned int>(std::max(0, docParam->NoPoints_X)),
-                      static_cast<unsigned int>(std::max(0, docParam->NoPoints_Y)));
-
-    int xi = m_choiceXSelector->GetSelection();
-    int yi = m_choiceYSelector->GetSelection();
-    if (!ApplySelectionToPlot(xi, yi, false))
+    if (!RefreshFromDocument())
     {
         wxLogWarning("PlotWindow: failed to render imported matrix selection");
         return false;
     }
-
-    UpdateSettingsPanel();
 
     if (!sourcePath.IsEmpty())
     {
@@ -1168,7 +1175,7 @@ void PlotWindowSetMarker::GetSelectedValue2()
     int selection = m_choice2->GetSelection();
     double val;
 
-    if (!m_Marker1Freq.ToDouble(&val))
+    if (!m_Marker2Freq.ToDouble(&val))
     {
         std::cerr << "Failed to convert input" << std::endl;
         return;

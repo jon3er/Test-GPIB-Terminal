@@ -94,6 +94,7 @@ private:
     bool ApplySelectionToPlot(int xIndex, int yIndex, bool logSelection = false);
     bool IsIqMode(const sData::sParam* param, const sData& data) const;
     void updatePlotData();
+    bool RefreshFromDocument();
     void OnClose(wxCloseEvent& event);
 
     // Menu handlers (File)

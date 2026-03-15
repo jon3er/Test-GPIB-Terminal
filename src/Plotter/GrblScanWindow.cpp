@@ -189,7 +189,7 @@ void GrblScanWindow::OnStart(wxCommandEvent& event) {
                         {
                             yReal.clear();
                         }
-
+                        //this->CallAfter([this](){
                         std::vector<double> xAxis = updatedData.GetFreqStepVector();
                         const size_t n = std::min(xAxis.size(), yReal.size());
                         if (n > 0)
@@ -201,13 +201,14 @@ void GrblScanWindow::OnStart(wxCommandEvent& event) {
                         }
 
                         m_document->NotifyDataUpdated();
+                        //});
                         printf("Messung an Punkt R:%d C:%d erfolgreich beendet.\n", r, c);
                     } 
                     else
                     {
                         printf("FEHLER bei Messung an Punkt R:%d C:%d\n", r, c);
                     }
-                    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+                    // std::this_thread::sleep_for(std::chrono::milliseconds(500));
                     printf("Reached Point R:%d C:%d at (%.2f, %.2f)\n", r, c, x, y);
 
                     // ====================================== End Added Measurement function ============================
