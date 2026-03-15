@@ -57,8 +57,6 @@ private:
 
     // Track all open measurement windows for proper cleanup
     std::set<PlotWindow*> m_openMeasurementWindows;
-
-    PlotterFrame* m_plotterWindow = nullptr;
 public:
     /** Called by PlotWindow to unregister itself when closing */
     void UnregisterMeasurementWindow(PlotWindow* win) { m_openMeasurementWindows.erase(win); }

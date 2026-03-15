@@ -454,17 +454,7 @@ void MainProgrammWin::MenuMesurementCustom(wxCommandEvent& event)
     fsu->setFilePath(scriptFolderPath);
     fsu->setFileName(scriptFileName);
 
-    if (m_plotterWindow && m_plotterWindow->IsShown())
-    {
-        m_plotterWindow->Raise();  // move window to foreground
-        return;
-    }
-
-    // open Plotter settings window
-    m_plotterWindow = new PlotterFrame();
-    m_plotterWindow->ShowModal();
-    m_plotterWindow->Destroy();
-    m_plotterWindow = nullptr;
+    PlotterFrame::ShowOrRaise();
 
 }
 
@@ -510,9 +500,7 @@ void MainProgrammWin::MenuTestFunc(wxCommandEvent& event)
 }
 void MainProgrammWin::MenuTestPloter(wxCommandEvent& event)
 {
-        PlotterFrame* Plotframe = new PlotterFrame();
-        Plotframe->ShowModal();
-        Plotframe->Destroy();
+    PlotterFrame::ShowOrRaise();
 }
 
 void MainProgrammWin::MenuMesurementSetMarker(wxCommandEvent& event)

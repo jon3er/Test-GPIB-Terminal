@@ -806,17 +806,7 @@ void SettingsDialog::OnStart(wxCommandEvent& /*event*/)
     PrologixUsbGpibAdapter::get_instance().resetGpibBusBuffer();
 
     if (m_useMultipoint->GetValue()) {
-        if (m_plotterWindow && m_plotterWindow->IsShown())
-        {
-            m_plotterWindow->Raise();  // Move window to foreground.
-            return;
-        }
-
-        // Open plotter settings window.
-        m_plotterWindow = new PlotterFrame();
-        m_plotterWindow->ShowModal();
-        m_plotterWindow->Destroy();
-        m_plotterWindow = nullptr;
+        PlotterFrame::ShowOrRaise();
     } else {
         fsuMeasurement* fsu = &fsuMeasurement::get_instance();
 

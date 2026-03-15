@@ -48,8 +48,6 @@ private:
     // Buttons
     wxButton* m_btnStart = nullptr;
     wxButton* m_btnGetCurrentSettings = nullptr;
-    // Plotter window
-    PlotterFrame* m_plotterWindow = nullptr;
 
     // Event Handler
     void OnApply(wxCommandEvent& event);

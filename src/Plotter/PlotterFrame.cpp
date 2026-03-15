@@ -4,8 +4,11 @@
 #include "fkt_d2xx.h"
 #include "FsuMeasurement.h"
 
+wxWeakRef<PlotterFrame> PlotterFrame::s_openInstance;
+
 // Event Table
 wxBEGIN_EVENT_TABLE(PlotterFrame, wxDialog)
+    EVT_CLOSE(PlotterFrame::OnClose)
     EVT_BUTTON(ID_CONNECT, PlotterFrame::OnConnect)
     EVT_BUTTON(ID_REFRESH, PlotterFrame::OnRefresh)
     EVT_BUTTON(ID_SEND, PlotterFrame::OnSend)
@@ -19,6 +22,26 @@ wxBEGIN_EVENT_TABLE(PlotterFrame, wxDialog)
     EVT_BUTTON(ID_SETTINGS_TOOL, PlotterFrame::OnOpenSettings)
     EVT_BUTTON(ID_SETTINGS_SCAN, PlotterFrame::OnOpenScanSettings)
 wxEND_EVENT_TABLE()
+
+PlotterFrame* PlotterFrame::ShowOrRaise()
+{
+    if (s_openInstance)
+    {
+        if (s_openInstance->IsIconized())
+            s_openInstance->Iconize(false);
+
+        s_openInstance->Show(true);
+        s_openInstance->Raise();
+        s_openInstance->SetFocus();
+        return s_openInstance;
+    }
+
+    PlotterFrame* frame = new PlotterFrame();
+    s_openInstance = frame;
+    frame->Show(true);
+    frame->Raise();
+    return frame;
+}
 
 PlotterFrame::PlotterFrame()
     : wxDialog(NULL, wxID_ANY, "Plotter Controller", wxDefaultPosition, wxSize(1000, 700)),
@@ -73,6 +96,9 @@ PlotterFrame::PlotterFrame()
 
 PlotterFrame::~PlotterFrame()
 {
+    if (s_openInstance.get() == this)
+        s_openInstance = nullptr;
+
     if (m_livePlotWindow)
     {
         m_livePlotWindow->SetDocument(nullptr);
@@ -82,6 +108,12 @@ PlotterFrame::~PlotterFrame()
 
     delete m_measurementDoc;
     m_measurementDoc = nullptr;
+}
+
+void PlotterFrame::OnClose(wxCloseEvent& event)
+{
+    Destroy();
+    event.Skip(false);
 }
 
 void PlotterFrame::EnsureLivePlotWindow()

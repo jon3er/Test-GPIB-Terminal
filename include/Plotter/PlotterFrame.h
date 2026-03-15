@@ -6,6 +6,7 @@
 #include <wx/wx.h>
 #include <wx/splitter.h>
 #include <wx/artprov.h>
+#include <wx/weakref.h>
 #include <memory>
 #include "CoordinatePanel.h"
 #include "GrblController.h"
@@ -18,10 +19,14 @@ class PlotWindow;
 class PlotterFrame : public wxDialog
 {
 public:
+    static PlotterFrame* ShowOrRaise();
+
     PlotterFrame();
     ~PlotterFrame();
 
 private:
+    static wxWeakRef<PlotterFrame> s_openInstance;
+
     GrblConfigDialog* m_configDlg = nullptr; 
     GrblScanWindow* m_scanDlg = nullptr;
 
@@ -53,6 +58,7 @@ private:
     void OnPause(wxCommandEvent& event);
     void OnResume(wxCommandEvent& event);
     void OnReset(wxCommandEvent& event);
+    void OnClose(wxCloseEvent& event);
 
     // Helper Methods
     void UpdatePortList();
