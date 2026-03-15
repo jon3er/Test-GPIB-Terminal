@@ -26,7 +26,8 @@ HelpDocument::~HelpDocument()
 
 void HelpDocument::AddObserver(IHelpObserver* observer)
 {
-    m_observers.push_back(observer);
+    if (observer && std::find(m_observers.begin(), m_observers.end(), observer) == m_observers.end())
+        m_observers.push_back(observer);
 }
 
 void HelpDocument::RemoveObserver(IHelpObserver* observer)
@@ -40,7 +41,8 @@ void HelpDocument::NotifyObservers(const std::string& changeType)
 {
     for (IHelpObserver* obs : m_observers)
     {
-        obs->OnHelpDocumentChanged(changeType);
+        if (obs)
+            obs->OnHelpDocumentChanged(changeType);
     }
 }
 

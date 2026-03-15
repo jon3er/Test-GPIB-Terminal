@@ -39,6 +39,8 @@ HelpWin::HelpWin(wxWindow* parent)
 //----- Help Window Destructor -----
 HelpWin::~HelpWin()
 {
+	if (m_document)
+		m_document->RemoveObserver(this);
 }
 
 //----- Document binding -----

@@ -66,6 +66,9 @@ FunctionWindow::FunctionWindow(wxWindow* parent)
 //----- Function Window Destructor -----
 FunctionWindow::~FunctionWindow()
 {
+    if (m_document)
+        m_document->RemoveObserver(this);
+
     // Disconnection is handled by FunctionDocument's destructor.
     
     std::cerr << "Function Window Closed" << std::endl;

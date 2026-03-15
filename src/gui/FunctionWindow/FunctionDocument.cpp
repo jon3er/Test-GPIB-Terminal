@@ -2,6 +2,7 @@
 #include "systemInfo.h"
 #include "mainHelper.h"   // sleepMs, dataManagement; wx headers are transitive
 
+#include <algorithm>
 #include <ctime>
 #include <iostream>
 #include <random>
@@ -42,7 +43,8 @@ FunctionDocument::~FunctionDocument()
 // --------------------------------------------------------------------------
 void FunctionDocument::AddObserver(IFunctionObserver* observer)
 {
-    m_observers.push_back(observer);
+    if (observer && std::find(m_observers.begin(), m_observers.end(), observer) == m_observers.end())
+        m_observers.push_back(observer);
 }
 
 void FunctionDocument::RemoveObserver(IFunctionObserver* observer)
@@ -56,7 +58,8 @@ void FunctionDocument::NotifyObservers(const std::string& changeType)
 {
     for (IFunctionObserver* obs : m_observers)
     {
-        obs->OnFunctionDocumentChanged(changeType);
+        if (obs)
+            obs->OnFunctionDocumentChanged(changeType);
     }
 }
 
