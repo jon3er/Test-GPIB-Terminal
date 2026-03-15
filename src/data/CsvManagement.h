@@ -41,40 +41,41 @@ class CsvFile
          * @return true on success 
          */
         bool readCsvFile(wxString filePath, sData& data);
-
-        // Separator
-        void setSeparator(char separator)   { m_separator = separator; };
-        char getSeparator()                 { return m_separator; };
-
+        
     protected:
 
-        // save Helper Functions
         /**
          * @brief save header info from sData to file
          */
         bool saveCsvHeader(wxTextFile& file, sData& data);
-
+        // save header Helper Functions
+        bool savePlotterData(wxTextFile& file, sData& data);
         bool saveCsvSettingsSweep(wxTextFile& file, sData& data);
         bool saveCsvSettingsQI(wxTextFile& file, sData& data);
         bool saveCsvSettingsMarker(wxTextFile& file, sData& data);
-        bool savePlotterData(wxTextFile& file, sData& data);
-
+        
 
         /**
          * @brief save measurement data to file
          */
         bool saveCsvData(wxTextFile& file, sData data, int mesurementNumb, bool cont = false);
 
-        // read Helper Functions
-        bool readCsvHeader(wxTextFile& file, sData& data);
+        
 
+        /**
+         *  @brief reads header information from file into sData 
+         */
+        bool readCsvHeader(wxTextFile& file, sData& data);
+        // read Header Helper Function
+        bool readPlotterData(wxTextFile& file, sData& data);
         bool readCsvSettingsSweep(wxTextFile& file, sData& data);
         bool readCsvSettingsQI(wxTextFile& file, sData& data);
         bool readCsvSettingsMarker(wxTextFile& file, sData& data);
         bool readCsvSettingsCostum(wxTextFile& file, sData& data);
-        bool readPlotterData(wxTextFile& file, sData& data);
-
-
+        
+        /**
+         * @brief reads measurement data from file into sData
+         */
         bool readCsvData(wxTextFile& file, sData& data);
 
         // helper functions
