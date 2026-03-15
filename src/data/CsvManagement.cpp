@@ -180,7 +180,7 @@ bool CsvFile::saveCsvHeader(wxTextFile &file, sData& data)
     {
         case MeasurementMode::SWEEP:
             // Frequenz-Zeile
-            lineLabel = wxString::Format("f in %s", dsParam->ampUnit);
+            lineLabel = wxString::Format("f in Hz");
 
             IndexAmount = dsParam->NoPoints_Array;
 
@@ -267,8 +267,8 @@ bool CsvFile::saveCsvSettingsSweep(wxTextFile& file, sData& data)
 {
     const auto& s = data.getFsuSettings().sweep;
 
-    file.AddLine(wxString::FromUTF8(HeaderConfig::startFreq.data()) + m_separator + wxString::FromDouble( s.startFreq) + " " + s.unit);
-    file.AddLine(wxString::FromUTF8(HeaderConfig::endFreq.data()) + m_separator + wxString::FromDouble(s.stopFreq) + " " + s.unit);
+    file.AddLine(wxString::FromUTF8(HeaderConfig::startFreq.data()) + m_separator + wxString::FromDouble( s.startFreq));
+    file.AddLine(wxString::FromUTF8(HeaderConfig::endFreq.data()) + m_separator + wxString::FromDouble(s.stopFreq));
     file.AddLine(wxString::FromUTF8(HeaderConfig::refPegel.data()) + m_separator + wxString::FromDouble(s.refLevel));
     file.AddLine(wxString::FromUTF8(HeaderConfig::HFDaempfung.data()) + m_separator + wxString::Format("%i", s.att));
     file.AddLine(wxString::FromUTF8(HeaderConfig::ampUnit.data()) + m_separator + s.unit);
@@ -285,7 +285,7 @@ bool CsvFile::saveCsvSettingsQI(wxTextFile& file, sData& data)
 {
     const auto& s = data.getFsuSettings().iq;
 
-    file.AddLine(wxString::FromUTF8(HeaderConfig::centerFreq.data()) + m_separator + wxString::FromDouble(s.centerFreq) + " " + s.unit);
+    file.AddLine(wxString::FromUTF8(HeaderConfig::centerFreq.data()) + m_separator + wxString::FromDouble(s.centerFreq));
     file.AddLine(wxString::FromUTF8(HeaderConfig::refPegel.data()) + m_separator + wxString::FromDouble(s.refLevel));
     file.AddLine(wxString::FromUTF8(HeaderConfig::HFDaempfung.data()) + m_separator + wxString::Format("%i", s.att));
     file.AddLine(wxString::FromUTF8(HeaderConfig::ampUnit.data()) + m_separator + s.unit);
@@ -303,8 +303,8 @@ bool CsvFile::saveCsvSettingsMarker(wxTextFile& file, sData& data)
 {
     const auto& s = data.getFsuSettings().marker;
 
-    file.AddLine(wxString::FromUTF8(HeaderConfig::startFreq.data()) + m_separator + wxString::FromDouble(s.startFreq) + " " + s.unit);
-    file.AddLine(wxString::FromUTF8(HeaderConfig::endFreq.data()) + m_separator + wxString::FromDouble(s.stopFreq) + " " + s.unit);
+    file.AddLine(wxString::FromUTF8(HeaderConfig::startFreq.data()) + m_separator + wxString::FromDouble(s.startFreq));
+    file.AddLine(wxString::FromUTF8(HeaderConfig::endFreq.data()) + m_separator + wxString::FromDouble(s.stopFreq));
     file.AddLine(wxString::FromUTF8(HeaderConfig::refPegel.data()) + m_separator + wxString::FromDouble(s.refLevel));
     file.AddLine(wxString::FromUTF8(HeaderConfig::HFDaempfung.data()) + m_separator + wxString::Format("%i", s.att));
     file.AddLine(wxString::FromUTF8(HeaderConfig::ampUnit.data()) + m_separator + s.unit);
