@@ -18,7 +18,7 @@
 
 #include "mathplot.h"
 #include "MeasurementDocument.h"
-#include "MultiMessDocument.h"
+
 
 
 /**
@@ -189,72 +189,4 @@ public:
     void GetSelectedValue1();
     void GetSelectedValue2();
     void GetValues();
-};
-
-/**
- * @brief Pure View for multi-point measurements. Observes a MultiMessDocument.
- */
-class MultiMessWindow : public wxDialog, public IMultiMessObserver
-{
-public:
-    explicit MultiMessWindow(wxWindow* parent,
-                             wxWindowID id    = wxID_ANY,
-                             const wxString& title = wxT("Multi Punkt Messung"),
-                             const wxPoint& pos    = wxDefaultPosition,
-                             const wxSize&  size   = wxSize(621, 563),
-                             long style = wxDEFAULT_DIALOG_STYLE);
-    ~MultiMessWindow();
-
-    /** Attach / detach document. Registers/unregisters this as observer. */
-    void SetDocument(MultiMessDocument* doc);
-
-    // IMultiMessObserver
-    void OnMultiMessDocumentChanged(const std::string& changeType) override;
-
-private:
-    void startButton(wxCommandEvent& event);
-    void stopButton (wxCommandEvent& event);
-    void resetButton(wxCommandEvent& event);
-    void nextButton (wxCommandEvent& event);
-
-    void PushValuesToDocument();
-    void PullValuesFromDocument();
-    void UpdateProgressBar();
-    void SetValues();
-
-    // Non-owning pointer to document
-    MultiMessDocument* m_document = nullptr;
-
-protected:
-        // Label text
-		wxStaticText*   m_staticTextXMess;
-        wxStaticText*   m_staticTextYMess;
-        wxStaticText*   m_staticTextXStartCord;
-        wxStaticText*   m_staticTextYStartCord;
-        wxStaticText*   m_staticTextXAbstand;
-        wxStaticText*   m_staticTextYAbstand;
-        wxStaticText*   m_staticTextStrtFreq;
-        wxStaticText*   m_staticTextEndFreq;
-        wxStaticText*   m_staticTextAnzahlSweep;
-        wxStaticText*   m_staticTextProgress;
-        // Text input
-		wxTextCtrl*     m_textCtrlXMess;
-        wxTextCtrl*     m_textCtrlYMess;
-		wxTextCtrl*     m_textCtrlXStartCord;
-		wxTextCtrl*     m_textCtrlYStartCord;
-		wxTextCtrl*     m_textCtrlXAbstand;
-		wxTextCtrl*     m_textCtrlYAbstand;
-		wxTextCtrl*     m_textCtrlStrtFreq;
-		wxTextCtrl*     m_textCtrlEndFreq;
-        wxTextCtrl*     m_textCtrlAnzahlSweep;
-        // Unit selection
-		wxChoice*       m_choiceEinheitFreq1;
-		wxChoice*       m_choiceEinheitFreq2;
-		// buttons
-		wxButton*       m_buttonStart;
-		wxButton*       m_buttonStop;
-		wxButton*       m_buttonReset;
-		wxButton*       m_buttonNext;
-        // Progressbar
-		wxGauge*        m_gaugeProgress;
 };

@@ -1,6 +1,7 @@
 #pragma once
 #include <wx/wx.h>
 #include <wx/spinctrl.h>
+#include <wx/valnum.h>
 #include "cmdGpib.h"
 #include "PlotterFrame.h"
 #include "dataManagement.h"
@@ -60,6 +61,16 @@ private:
     void ApplyIq();
     void ApplyMarkerPeak();
 
+    // Constructor helper blocks
+    void SetDialogTitleForMode();
+    void BuildCommonFields(wxWindow* parent, wxFlexGridSizer* grid, wxFloatingPointValidator<double>& floatVal);
+    void BuildSweepMarkerFields(wxWindow* parent, wxFlexGridSizer* grid);
+    void BuildSweepFields(wxWindow* parent, wxFlexGridSizer* grid);
+    void BuildIqFields(wxWindow* parent, wxFlexGridSizer* grid, wxFloatingPointValidator<double>& floatVal);
+    void BuildBottomOptions(wxWindow* parent, wxFlexGridSizer* grid);
+    void BuildActionButtons(wxWindow* parent, wxBoxSizer* buttonSizer, wxButton*& btnApply, wxButton*& btnCancel);
+    void BindActionEvents(wxButton* btnApply);
+
     void RefreshData();
     void LoadPresetData();
     wxString FormatFrequencyAutoUnit(double hz) const;
@@ -70,6 +81,4 @@ private:
     bool VerifyDouble(const wxString& name, double written, double readback, wxString& mismatches);
     bool VerifyInt(const wxString& name, int written, int readback, wxString& mismatches);
     bool VerifyString(const wxString& name, const std::string& written, const std::string& readback, wxString& mismatches);
-
-    wxDECLARE_EVENT_TABLE();
 };

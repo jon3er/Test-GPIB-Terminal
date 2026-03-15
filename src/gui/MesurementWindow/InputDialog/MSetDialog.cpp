@@ -6,42 +6,25 @@
 #include <wx/valnum.h>
 #include <cmath>
 
-enum { ID_BTN_START = wxID_HIGHEST + 1 };
-
-wxBEGIN_EVENT_TABLE(SettingsDialog, wxDialog)
-    EVT_BUTTON(wxID_APPLY,   SettingsDialog::OnApply)
-    EVT_BUTTON(ID_BTN_START, SettingsDialog::OnStart)
-wxEND_EVENT_TABLE()
-
-SettingsDialog::SettingsDialog(wxWindow* parent, MeasurementMode mode, const sData::sParam* preset)
-    : wxDialog(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(420, 720)),
-      m_mode(mode)
+//----- Dialog Setup Helpers -----
+void SettingsDialog::SetDialogTitleForMode()
 {
-    if (preset)
-    {
-        m_preset = *preset;
-        m_hasPreset = true;
-    }
-
-    // Titel je nach Modus
     switch (m_mode) {
         case MeasurementMode::SWEEP:       SetTitle("Sweep Einstellungen");       break;
         case MeasurementMode::IQ:          SetTitle("IQ Analyse Einstellungen");  break;
         case MeasurementMode::MARKER_PEAK: SetTitle("Marker Peak Einstellungen"); break;
     }
+}
 
-    wxFlexGridSizer* grid = new wxFlexGridSizer(2, wxSize(10, 10));
-    grid->AddGrowableCol(1);
-    wxFloatingPointValidator<double> floatVal;
-
-    // ---- Gemeinsame Felder (alle Modi) ----
-    grid->Add(new wxStaticText(this, wxID_ANY, "Ref. Pegel:"), 0, wxALIGN_CENTER_VERTICAL);
+void SettingsDialog::BuildCommonFields(wxWindow* parent, wxFlexGridSizer* grid, wxFloatingPointValidator<double>& floatVal)
+{
+    grid->Add(new wxStaticText(parent, wxID_ANY, "Ref. Pegel:"), 0, wxALIGN_CENTER_VERTICAL);
     floatVal.SetPrecision(2);
-    m_txtRefLevel = new wxTextCtrl(this, wxID_ANY, "0", wxDefaultPosition, wxDefaultSize, 0, floatVal);
+    m_txtRefLevel = new wxTextCtrl(parent, wxID_ANY, "0", wxDefaultPosition, wxDefaultSize, 0, floatVal);
     m_txtRefLevel->SetToolTip("Zulaessiger Bereich: -130.00 bis +30.00 dBm");
 
     wxArrayString units = {"DBM", "V", "W", "DBUV"};
-    m_choiceUnit = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, units);
+    m_choiceUnit = new wxChoice(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, units);
     m_choiceUnit->SetSelection(0);
     m_choiceUnit->SetToolTip("Zulaessige Einheiten: DBM, V, W, DBUV");
 
@@ -50,138 +33,191 @@ SettingsDialog::SettingsDialog(wxWindow* parent, MeasurementMode mode, const sDa
     refLevelSizer->Add(m_choiceUnit, 0);
     grid->Add(refLevelSizer, 1, wxEXPAND);
 
-    grid->Add(new wxStaticText(this, wxID_ANY, "HF-Daempfung (dB):"), 0, wxALIGN_CENTER_VERTICAL);
-    m_spinAttenuation = new wxSpinCtrl(this, wxID_ANY);
+    grid->Add(new wxStaticText(parent, wxID_ANY, "HF-Daempfung (dB):"), 0, wxALIGN_CENTER_VERTICAL);
+    m_spinAttenuation = new wxSpinCtrl(parent, wxID_ANY);
     m_spinAttenuation->SetRange(0, 75);
     m_spinAttenuation->SetIncrement(5);
     m_spinAttenuation->SetToolTip("Zulaessiger Bereich: 0 bis 75 dB in 5-dB Schritten");
     grid->Add(m_spinAttenuation, 1, wxEXPAND);
+}
 
-    // ---- Sweep + MarkerPeak Felder ----
-    if (m_mode == MeasurementMode::SWEEP || m_mode == MeasurementMode::MARKER_PEAK) {
-        grid->Add(new wxStaticText(this, wxID_ANY, "Start Frequenz (Hz):"), 0, wxALIGN_CENTER_VERTICAL);
-        m_txtStartFreq = new wxTextCtrl(this, wxID_ANY, "1000000");
-        m_txtStartFreq->SetToolTip("Zulaessiger Bereich: 0 bis 26.5 GHz (auch z. B. 1e6, 1 MHz, 0.1 GHz)");
-        grid->Add(m_txtStartFreq, 1, wxEXPAND);
+void SettingsDialog::BuildSweepMarkerFields(wxWindow* parent, wxFlexGridSizer* grid)
+{
+    grid->Add(new wxStaticText(parent, wxID_ANY, "Start Frequenz (Hz):"), 0, wxALIGN_CENTER_VERTICAL);
+    m_txtStartFreq = new wxTextCtrl(parent, wxID_ANY, "1000000");
+    m_txtStartFreq->SetToolTip("Zulaessiger Bereich: 0 bis 26.5 GHz (auch z. B. 1e6, 1 MHz, 0.1 GHz)");
+    grid->Add(m_txtStartFreq, 1, wxEXPAND);
 
-        grid->Add(new wxStaticText(this, wxID_ANY, "Stop Frequenz (Hz):"), 0, wxALIGN_CENTER_VERTICAL);
-        m_txtStopFreq = new wxTextCtrl(this, wxID_ANY, "1000000000");
-        m_txtStopFreq->SetToolTip("Zulaessiger Bereich: 0 bis 26.5 GHz (auch z. B. 2e6, 2 MHz, 0.2 GHz)");
-        grid->Add(m_txtStopFreq, 1, wxEXPAND);
+    grid->Add(new wxStaticText(parent, wxID_ANY, "Stop Frequenz (Hz):"), 0, wxALIGN_CENTER_VERTICAL);
+    m_txtStopFreq = new wxTextCtrl(parent, wxID_ANY, "1000000000");
+    m_txtStopFreq->SetToolTip("Zulaessiger Bereich: 0 bis 26.5 GHz (auch z. B. 2e6, 2 MHz, 0.2 GHz)");
+    grid->Add(m_txtStopFreq, 1, wxEXPAND);
 
-        grid->Add(new wxStaticText(this, wxID_ANY, "RBW (Hz):"), 0, wxALIGN_CENTER_VERTICAL);
-        m_txtRBW = new wxTextCtrl(this, wxID_ANY, "10000");
-        m_txtRBW->SetToolTip("Zulaessiger Bereich: 1 Hz bis 50 MHz (z. B. 10000, 10 kHz, 0.01 MHz)");
-        grid->Add(m_txtRBW, 1, wxEXPAND);
+    grid->Add(new wxStaticText(parent, wxID_ANY, "RBW (Hz):"), 0, wxALIGN_CENTER_VERTICAL);
+    m_txtRBW = new wxTextCtrl(parent, wxID_ANY, "10000");
+    m_txtRBW->SetToolTip("Zulaessiger Bereich: 1 Hz bis 50 MHz (z. B. 10000, 10 kHz, 0.01 MHz)");
+    grid->Add(m_txtRBW, 1, wxEXPAND);
 
-        grid->Add(new wxStaticText(this, wxID_ANY, "VBW (Hz):"), 0, wxALIGN_CENTER_VERTICAL);
-        m_txtVBW = new wxTextCtrl(this, wxID_ANY, "10000");
-        m_txtVBW->SetToolTip("Zulaessiger Bereich: 1 Hz bis 50 MHz (z. B. 10000, 10 kHz, 0.01 MHz)");
-        grid->Add(m_txtVBW, 1, wxEXPAND);
+    grid->Add(new wxStaticText(parent, wxID_ANY, "VBW (Hz):"), 0, wxALIGN_CENTER_VERTICAL);
+    m_txtVBW = new wxTextCtrl(parent, wxID_ANY, "10000");
+    m_txtVBW->SetToolTip("Zulaessiger Bereich: 1 Hz bis 50 MHz (z. B. 10000, 10 kHz, 0.01 MHz)");
+    grid->Add(m_txtVBW, 1, wxEXPAND);
 
-        grid->Add(new wxStaticText(this, wxID_ANY, "Detektor:"), 0, wxALIGN_CENTER_VERTICAL);
-        wxArrayString detectors = {"APE", "POS", "NEG", "SAMP", "RMS", "AVER"};
-        m_choiceDetector = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, detectors);
-        m_choiceDetector->SetSelection(1);
-        m_choiceDetector->SetToolTip("Zulaessige Detektoren: APE, POS, NEG, SAMP, RMS, AVER");
-        grid->Add(m_choiceDetector, 1, wxEXPAND);
-    }
+    grid->Add(new wxStaticText(parent, wxID_ANY, "Detektor:"), 0, wxALIGN_CENTER_VERTICAL);
+    wxArrayString detectors = {"APE", "POS", "NEG", "SAMP", "RMS", "AVER"};
+    m_choiceDetector = new wxChoice(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, detectors);
+    m_choiceDetector->SetSelection(1);
+    m_choiceDetector->SetToolTip("Zulaessige Detektoren: APE, POS, NEG, SAMP, RMS, AVER");
+    grid->Add(m_choiceDetector, 1, wxEXPAND);
+}
 
-    // ---- Nur Sweep ----
-    if (m_mode == MeasurementMode::SWEEP) {
-        grid->Add(new wxStaticText(this, wxID_ANY, "Sweep Punkte:"), 0, wxALIGN_CENTER_VERTICAL);
-        wxArrayString points = {"155", "313", "625", "1251", "1999", "2501", "5001", "10001", "20001", "30001"};
-        m_choiceSweepPoints = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, points);
-        m_choiceSweepPoints->SetSelection(2);
-        m_choiceSweepPoints->SetToolTip("Zulaessige Sweep-Punkte: 155, 313, 625, 1251, 1999, 2501, 5001, 10001, 20001, 30001");
-        grid->Add(m_choiceSweepPoints, 1, wxEXPAND);
-    }
+void SettingsDialog::BuildSweepFields(wxWindow* parent, wxFlexGridSizer* grid)
+{
+    grid->Add(new wxStaticText(parent, wxID_ANY, "Sweep Punkte:"), 0, wxALIGN_CENTER_VERTICAL);
+    wxArrayString points = {"155", "313", "625", "1251", "1999", "2501", "5001", "10001", "20001", "30001"};
+    m_choiceSweepPoints = new wxChoice(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, points);
+    m_choiceSweepPoints->SetSelection(2);
+    m_choiceSweepPoints->SetToolTip("Zulaessige Sweep-Punkte: 155, 313, 625, 1251, 1999, 2501, 5001, 10001, 20001, 30001");
+    grid->Add(m_choiceSweepPoints, 1, wxEXPAND);
+}
 
-    // ---- Nur IQ ----
-    if (m_mode == MeasurementMode::IQ) {
-        grid->Add(new wxStaticText(this, wxID_ANY, "Center Frequenz (Hz):"), 0, wxALIGN_CENTER_VERTICAL);
-        m_txtCenterFreq = new wxTextCtrl(this, wxID_ANY, "100000000");
-        m_txtCenterFreq->SetToolTip("Zulaessiger Bereich: 0 bis 26.5 GHz (auch z. B. 100e6, 100 MHz, 0.1 GHz)");
-        grid->Add(m_txtCenterFreq, 1, wxEXPAND);
+void SettingsDialog::BuildIqFields(wxWindow* parent, wxFlexGridSizer* grid, wxFloatingPointValidator<double>& floatVal)
+{
+    grid->Add(new wxStaticText(parent, wxID_ANY, "Center Frequenz (Hz):"), 0, wxALIGN_CENTER_VERTICAL);
+    m_txtCenterFreq = new wxTextCtrl(parent, wxID_ANY, "100000000");
+    m_txtCenterFreq->SetToolTip("Zulaessiger Bereich: 0 bis 26.5 GHz (auch z. B. 100e6, 100 MHz, 0.1 GHz)");
+    grid->Add(m_txtCenterFreq, 1, wxEXPAND);
 
-        grid->Add(new wxStaticText(this, wxID_ANY, "Filter Type:"), 0, wxALIGN_CENTER_VERTICAL);
-        wxArrayString filterTypes = {"NORM"};
-        m_choiceFilterType = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, filterTypes);
-        m_choiceFilterType->SetSelection(0);
-        grid->Add(m_choiceFilterType, 1, wxEXPAND);
+    grid->Add(new wxStaticText(parent, wxID_ANY, "Filter Type:"), 0, wxALIGN_CENTER_VERTICAL);
+    wxArrayString filterTypes = {"NORM"};
+    m_choiceFilterType = new wxChoice(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, filterTypes);
+    m_choiceFilterType->SetSelection(0);
+    grid->Add(m_choiceFilterType, 1, wxEXPAND);
 
-        grid->Add(new wxStaticText(this, wxID_ANY, "Sample Rate (Hz):"), 0, wxALIGN_CENTER_VERTICAL);
-        m_txtSampleRate = new wxTextCtrl(this, wxID_ANY, "32000000");
-        m_txtSampleRate->SetToolTip("Zulaessiger Bereich: 10 kHz bis 70.4 MHz (z. B. 32e6, 32 MHz)");
-        grid->Add(m_txtSampleRate, 1, wxEXPAND);
+    grid->Add(new wxStaticText(parent, wxID_ANY, "Sample Rate (Hz):"), 0, wxALIGN_CENTER_VERTICAL);
+    m_txtSampleRate = new wxTextCtrl(parent, wxID_ANY, "32000000");
+    m_txtSampleRate->SetToolTip("Zulaessiger Bereich: 10 kHz bis 70.4 MHz (z. B. 32e6, 32 MHz)");
+    grid->Add(m_txtSampleRate, 1, wxEXPAND);
 
-        grid->Add(new wxStaticText(this, wxID_ANY, "Record Length (Samples):"), 0, wxALIGN_CENTER_VERTICAL);
-        floatVal.SetPrecision(0);
-        m_txtRecordLength = new wxTextCtrl(this, wxID_ANY, "1024", wxDefaultPosition, wxDefaultSize, 0, floatVal);
-        m_txtRecordLength->SetToolTip("Zulaessiger Bereich: 1 bis 16,000,000 Samples");
-        grid->Add(m_txtRecordLength, 1, wxEXPAND);
+    grid->Add(new wxStaticText(parent, wxID_ANY, "Record Length (Samples):"), 0, wxALIGN_CENTER_VERTICAL);
+    floatVal.SetPrecision(0);
+    m_txtRecordLength = new wxTextCtrl(parent, wxID_ANY, "1024", wxDefaultPosition, wxDefaultSize, 0, floatVal);
+    m_txtRecordLength->SetToolTip("Zulaessiger Bereich: 1 bis 16,000,000 Samples");
+    grid->Add(m_txtRecordLength, 1, wxEXPAND);
 
-        grid->Add(new wxStaticText(this, wxID_ANY, "IF Bandwidth (Hz):"), 0, wxALIGN_CENTER_VERTICAL);
-        m_txtIfBandwidth = new wxTextCtrl(this, wxID_ANY, "10000000");
-        m_txtIfBandwidth->SetToolTip("Zulaessiger Bereich: 10 Hz bis 50 MHz (z. B. 10e6, 10 MHz)");
-        grid->Add(m_txtIfBandwidth, 1, wxEXPAND);
+    grid->Add(new wxStaticText(parent, wxID_ANY, "IF Bandwidth (Hz):"), 0, wxALIGN_CENTER_VERTICAL);
+    m_txtIfBandwidth = new wxTextCtrl(parent, wxID_ANY, "10000000");
+    m_txtIfBandwidth->SetToolTip("Zulaessiger Bereich: 10 Hz bis 50 MHz (z. B. 10e6, 10 MHz)");
+    grid->Add(m_txtIfBandwidth, 1, wxEXPAND);
 
-        grid->Add(new wxStaticText(this, wxID_ANY, "Trigger Quelle:"), 0, wxALIGN_CENTER_VERTICAL);
-        wxArrayString trigsources = {"IMM", "EXT", "IFP", "FREE"};
-        m_choiceTriggerSource = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, trigsources);
-        m_choiceTriggerSource->SetSelection(0);
-        m_choiceTriggerSource->SetToolTip("Zulaessige Trigger-Quellen: IMM, EXT, IFP, FREE");
-        grid->Add(m_choiceTriggerSource, 1, wxEXPAND);
+    grid->Add(new wxStaticText(parent, wxID_ANY, "Trigger Quelle:"), 0, wxALIGN_CENTER_VERTICAL);
+    wxArrayString trigsources = {"IMM", "EXT", "IFP", "FREE"};
+    m_choiceTriggerSource = new wxChoice(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, trigsources);
+    m_choiceTriggerSource->SetSelection(0);
+    m_choiceTriggerSource->SetToolTip("Zulaessige Trigger-Quellen: IMM, EXT, IFP, FREE");
+    grid->Add(m_choiceTriggerSource, 1, wxEXPAND);
 
-        grid->Add(new wxStaticText(this, wxID_ANY, "Trigger Slope:"), 0, wxALIGN_CENTER_VERTICAL);
-        wxArrayString triggerSlopes = {"POS", "NEG"};
-        m_choiceTriggerSlope = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, triggerSlopes);
-        m_choiceTriggerSlope->SetSelection(0);
-        grid->Add(m_choiceTriggerSlope, 1, wxEXPAND);
+    grid->Add(new wxStaticText(parent, wxID_ANY, "Trigger Slope:"), 0, wxALIGN_CENTER_VERTICAL);
+    wxArrayString triggerSlopes = {"POS", "NEG"};
+    m_choiceTriggerSlope = new wxChoice(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, triggerSlopes);
+    m_choiceTriggerSlope->SetSelection(0);
+    grid->Add(m_choiceTriggerSlope, 1, wxEXPAND);
 
-        grid->Add(new wxStaticText(this, wxID_ANY, "Pretrigger Samples:"), 0, wxALIGN_CENTER_VERTICAL);
-        m_txtPretriggerSamples = new wxTextCtrl(this, wxID_ANY, "0");
-        m_txtPretriggerSamples->SetToolTip("Ganzzahliger Wert, z. B. 0, 128, 512");
-        grid->Add(m_txtPretriggerSamples, 1, wxEXPAND);
+    grid->Add(new wxStaticText(parent, wxID_ANY, "Pretrigger Samples:"), 0, wxALIGN_CENTER_VERTICAL);
+    m_txtPretriggerSamples = new wxTextCtrl(parent, wxID_ANY, "0");
+    m_txtPretriggerSamples->SetToolTip("Ganzzahliger Wert, z. B. 0, 128, 512");
+    grid->Add(m_txtPretriggerSamples, 1, wxEXPAND);
 
-        grid->Add(new wxStaticText(this, wxID_ANY, "Trigger Level (dBm):"), 0, wxALIGN_CENTER_VERTICAL);
-        floatVal.SetPrecision(0);
-        m_txtTriggerLevel = new wxTextCtrl(this, wxID_ANY, "-20", wxDefaultPosition, wxDefaultSize, 0, floatVal);
-        m_txtTriggerLevel->SetToolTip("Zulaessiger Bereich: -130 bis +30 dBm");
-        grid->Add(m_txtTriggerLevel, 1, wxEXPAND);
+    grid->Add(new wxStaticText(parent, wxID_ANY, "Trigger Level (dBm):"), 0, wxALIGN_CENTER_VERTICAL);
+    floatVal.SetPrecision(0);
+    m_txtTriggerLevel = new wxTextCtrl(parent, wxID_ANY, "-20", wxDefaultPosition, wxDefaultSize, 0, floatVal);
+    m_txtTriggerLevel->SetToolTip("Zulaessiger Bereich: -130 bis +30 dBm");
+    grid->Add(m_txtTriggerLevel, 1, wxEXPAND);
 
-        grid->Add(new wxStaticText(this, wxID_ANY, "Trigger Delay (s):"), 0, wxALIGN_CENTER_VERTICAL);
-        m_txtTriggerDelay = new wxTextCtrl(this, wxID_ANY, "0");
-        m_txtTriggerDelay->SetToolTip("Zulaessiger Bereich: -1 bis 65 s (auch z. B. 500 ms, 250 us)");
-        grid->Add(m_txtTriggerDelay, 1, wxEXPAND);
-    }
+    grid->Add(new wxStaticText(parent, wxID_ANY, "Trigger Delay (s):"), 0, wxALIGN_CENTER_VERTICAL);
+    m_txtTriggerDelay = new wxTextCtrl(parent, wxID_ANY, "0");
+    m_txtTriggerDelay->SetToolTip("Zulaessiger Bereich: -1 bis 65 s (auch z. B. 500 ms, 250 us)");
+    grid->Add(m_txtTriggerDelay, 1, wxEXPAND);
+}
 
-    grid->Add(new wxStaticText(this, wxID_ANY, wxString::FromUTF8("Messung mit Plotter durchführen")), 0, wxALIGN_CENTER_VERTICAL);
-    m_useMultipoint = new wxCheckBox(this, wxID_ANY,"", wxDefaultPosition, wxDefaultSize, 0);
+void SettingsDialog::BuildBottomOptions(wxWindow* parent, wxFlexGridSizer* grid)
+{
+    grid->Add(new wxStaticText(parent, wxID_ANY, wxString::FromUTF8("Messung mit Plotter durchführen")), 0, wxALIGN_CENTER_VERTICAL);
+    m_useMultipoint = new wxCheckBox(parent, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, 0);
     m_useMultipoint->SetValue(true);
     grid->Add(m_useMultipoint, 1, wxEXPAND);
+}
 
+void SettingsDialog::BuildActionButtons(wxWindow* parent, wxBoxSizer* buttonSizer, wxButton*& btnApply, wxButton*& btnCancel)
+{
+    m_btnGetCurrentSettings = new wxButton(parent, wxID_ANY, wxT("Get Settings"), wxDefaultPosition, wxDefaultSize, 0);
+    btnApply = new wxButton(parent, wxID_APPLY, "Apply");
+    m_btnStart = new wxButton(parent, wxID_ANY, "Start");
+    btnCancel = new wxButton(parent, wxID_CANCEL, "Cancel");
 
-    // Button
-    m_btnGetCurrentSettings = new wxButton( this, wxID_ANY, wxT("Get Settings"), wxDefaultPosition, wxDefaultSize, 0 );
+    m_btnStart->Enable(true);   // TODO change back to False
+    buttonSizer->Add(btnCancel, 0, wxRIGHT, 5);
+    buttonSizer->Add(m_btnGetCurrentSettings, 0, wxRIGHT, 5);
+    buttonSizer->Add(btnApply, 0, wxRIGHT, 5);
+    buttonSizer->Add(m_btnStart, 0);
+}
+
+void SettingsDialog::BindActionEvents(wxButton* btnApply)
+{
+    btnApply->Bind(wxEVT_BUTTON, &SettingsDialog::OnApply, this);
+    m_btnStart->Bind(wxEVT_BUTTON, &SettingsDialog::OnStart, this);
     m_btnGetCurrentSettings->Bind(wxEVT_BUTTON, &SettingsDialog::OnGetCurrent, this);
+}
+
+SettingsDialog::SettingsDialog(wxWindow* parent, MeasurementMode mode, const sData::sParam* preset)
+    : wxDialog(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(420, 620)),
+      m_mode(mode)
+{
+    if (preset)
+    {
+        m_preset = *preset;
+        m_hasPreset = true;
+    }
+
+    SetDialogTitleForMode();
+
+    // Controls
+    wxPanel* panel = new wxPanel(this);
+    wxFlexGridSizer* grid = new wxFlexGridSizer(2, wxSize(10, 10));
+    grid->AddGrowableCol(1);
+    wxFloatingPointValidator<double> floatVal;
+
+    BuildCommonFields(panel, grid, floatVal);
+    if (m_mode == MeasurementMode::SWEEP || m_mode == MeasurementMode::MARKER_PEAK) {
+        BuildSweepMarkerFields(panel, grid);
+    }
+    if (m_mode == MeasurementMode::SWEEP) {
+        BuildSweepFields(panel, grid);
+    }
+    if (m_mode == MeasurementMode::IQ) {
+        BuildIqFields(panel, grid, floatVal);
+    }
+    BuildBottomOptions(panel, grid);
+
+    wxButton* btnApply = nullptr;
+    wxButton* btnCancel = nullptr;
+
     // Layout
     wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
     mainSizer->Add(grid, 1, wxALL | wxEXPAND, 15);
 
     wxBoxSizer* buttonSizer = new wxBoxSizer(wxHORIZONTAL);
-    wxButton* btnApply  = new wxButton(this, wxID_APPLY,   "Apply");
-    m_btnStart          = new wxButton(this, ID_BTN_START, "Start");
-    wxButton* btnCancel = new wxButton(this, wxID_CANCEL,  "Cancel");
-
-    m_btnStart->Enable(true);   // TODO change back to False
-    buttonSizer->Add(btnCancel, 0, wxRIGHT, 5);
-    buttonSizer->Add(m_btnGetCurrentSettings,0 ,wxRIGHT, 5);
-    buttonSizer->Add(btnApply,  0, wxRIGHT, 5);
-    buttonSizer->Add(m_btnStart, 0);
+    BuildActionButtons(panel, buttonSizer, btnApply, btnCancel);
     mainSizer->Add(buttonSizer, 0, wxALL | wxALIGN_RIGHT, 10);
 
-    SetSizer(mainSizer);
+    // Bindings
+    BindActionEvents(btnApply);
+
+    panel->SetSizerAndFit(mainSizer);
+
+    wxBoxSizer* rootSizer = new wxBoxSizer(wxVERTICAL);
+    rootSizer->Add(panel, 1, wxEXPAND);
+    SetSizerAndFit(rootSizer);
 
     if (m_hasPreset)
         LoadPresetData();
@@ -189,7 +225,7 @@ SettingsDialog::SettingsDialog(wxWindow* parent, MeasurementMode mode, const sDa
         RefreshData();
 }
 
-// ---- Event Handler ----
+//----- Event Handlers -----
 void SettingsDialog::OnApply(wxCommandEvent& event) {
     switch (m_mode) {
         case MeasurementMode::SWEEP:       ApplySweep();      break;
@@ -199,10 +235,10 @@ void SettingsDialog::OnApply(wxCommandEvent& event) {
 
 }
 
-// ---- Sweep Apply + Verifikation ----
+//----- Sweep Apply + Verification -----
 void SettingsDialog::ApplySweep() {
     fsuMeasurement* fsu = &fsuMeasurement::get_instance();
-    // Set Mode for Measurement
+    // Set mode for measurement.
     fsu->setMeasurementMode(MeasurementMode::SWEEP);
 
     double startFreq;
@@ -224,16 +260,16 @@ void SettingsDialog::ApplySweep() {
         wxMessageBox("VBW ungueltig! Beispiele: 10000, 10 kHz, 0.01 MHz", "Validierungsfehler", wxOK | wxICON_ERROR); return;
     }
 
-    // Number of Points
+    // Number of points
     int points = wxAtoi(m_choiceSweepPoints->GetStringSelection());
-    // detector Selction
+    // Detector selection
     std::string det = m_choiceDetector->GetStringSelection().ToStdString();
     // Attenuation
     int att = m_spinAttenuation->GetValue();
     // Unit
     std::string unit = m_choiceUnit->GetStringSelection().ToStdString();
 
-    // Validierung
+    // Validation
     if (!fsu->checkIfSettingsValidSweep(ScpiCommand::START_FREQUENCY, startFreq)) {
         wxMessageBox("Startfrequenz ausserhalb des Bereichs (0 - 26.5 GHz)!", "Validierungsfehler", wxOK | wxICON_ERROR); return;
     }
@@ -270,7 +306,7 @@ void SettingsDialog::ApplySweep() {
 
     sleepMs(150);
 
-    // Ruecklesen und verifizieren
+    // Read back and verify
     if (!fsu->readSweepSettings()) {
         wxMessageBox("Einstellungen gesendet, aber Ruecklesen fehlgeschlagen!", "Warnung", wxOK | wxICON_WARNING);
         return;
@@ -300,10 +336,10 @@ void SettingsDialog::ApplySweep() {
     RefreshData();
 }
 
-// ---- IQ Apply + Verifikation ----
+//----- IQ Apply + Verification -----
 void SettingsDialog::ApplyIq() {
     fsuMeasurement* fsu = &fsuMeasurement::get_instance();
-    // Set Mode for Measurement
+    // Set mode for measurement.
     fsu->setMeasurementMode(MeasurementMode::IQ);
 
     double centerFreq, refLevel, sampleRate, ifBw, trigLevel, trigDelay;
@@ -335,7 +371,7 @@ void SettingsDialog::ApplyIq() {
         ? m_choiceTriggerSlope->GetStringSelection().ToStdString()
         : "POS";
 
-    // Validierung
+    // Validation
     if (!fsu->checkIfSettingsValidSweep(ScpiCommand::CENTER_FREQUENCY, centerFreq)) {
         wxMessageBox("Center Frequenz ausserhalb des Bereichs (0 - 26.5 GHz)!", "Validierungsfehler", wxOK | wxICON_ERROR); return;
     }
@@ -418,10 +454,10 @@ void SettingsDialog::ApplyIq() {
     RefreshData();
 }
 
-// ---- MarkerPeak Apply + Verifikation ----
+//----- Marker Peak Apply + Verification -----
 void SettingsDialog::ApplyMarkerPeak() {
     fsuMeasurement* fsu = &fsuMeasurement::get_instance();
-    // Set Mode for Measurement
+    // Set mode for measurement.
     fsu->setMeasurementMode(MeasurementMode::MARKER_PEAK);
 
     double startFreq, stopFreq, refLevel, rbw, vbw;
@@ -442,7 +478,7 @@ void SettingsDialog::ApplyMarkerPeak() {
     int att = m_spinAttenuation->GetValue();
     std::string unit = m_choiceUnit->GetStringSelection().ToStdString();
 
-    // Validierung
+    // Validation
     if (!fsu->checkIfSettingsValidSweep(ScpiCommand::START_FREQUENCY, startFreq)) {
         wxMessageBox("Startfrequenz ausserhalb des Bereichs (0 - 26.5 GHz)!", "Validierungsfehler", wxOK | wxICON_ERROR); return;
     }
@@ -503,7 +539,7 @@ void SettingsDialog::ApplyMarkerPeak() {
     RefreshData();
 }
 
-// ---- RefreshData: aktuelle Geraetewerte in GUI laden ----
+//----- Refresh Data -----
 void SettingsDialog::RefreshData()
 {
     fsuMeasurement* fsu = &fsuMeasurement::get_instance();
@@ -768,7 +804,7 @@ bool SettingsDialog::ParseTimeInputToSeconds(const wxString& input, double& seco
     return std::isfinite(seconds);
 }
 
-// ---- Verifikations-Helfer ----
+//----- Start / Readback Handlers -----
 void SettingsDialog::OnStart(wxCommandEvent& /*event*/)
 {
     EndModal(wxID_OK);
@@ -778,11 +814,11 @@ void SettingsDialog::OnStart(wxCommandEvent& /*event*/)
     if (m_useMultipoint->GetValue()) {
         if (m_plotterWindow && m_plotterWindow->IsShown())
         {
-            m_plotterWindow->Raise();  // move window to foreground
+            m_plotterWindow->Raise();  // Move window to foreground.
             return;
         }
 
-        // open Plotter settings window
+        // Open plotter settings window.
         m_plotterWindow = new PlotterFrame();
         m_plotterWindow->ShowModal();
         m_plotterWindow->Destroy();

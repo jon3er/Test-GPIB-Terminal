@@ -24,7 +24,6 @@
 #include "helpTab/helpWin.h"
 // document header
 #include "MeasurementDocument.h"
-#include "MultiMessDocument.h"
 #include "TerminalDocument.h"
 #include "SettingsDocument.h"
 #include "helpTab/helpDocument.h"
@@ -115,7 +114,7 @@ protected:
 
 public:
 
-	MainProgrammWin( wxWindow* parent, MainDocument* doc, wxWindowID id = wxID_ANY, const wxString& title = wxT("GPIB Messurement"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 814,454 ), long style = wxDEFAULT_FRAME_STYLE|wxTAB_TRAVERSAL );
+	MainProgrammWin( wxWindow* parent, MainDocument* doc, wxWindowID id = wxID_ANY, const wxString& title = wxT("GPIB Messurement"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 500,400 ), long style = wxDEFAULT_FRAME_STYLE|wxTAB_TRAVERSAL );
 	~MainProgrammWin();
 
     // Document access

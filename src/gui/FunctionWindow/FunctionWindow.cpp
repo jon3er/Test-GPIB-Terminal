@@ -172,17 +172,7 @@ void FunctionWindow::OnUsbConfig(wxCommandEvent& event)
 
 void FunctionWindow::OnTestMultiMess(wxCommandEvent& event)
 {
-    // MultiMessDocument owns all multi-measurement state.
-    MultiMessDocument multiDoc(PrologixUsbGpibAdapter::get_instance(), fsuMeasurement::get_instance());
 
-    MultiMessWindow* MultiMessWin = new MultiMessWindow(this);
-    MultiMessWin->SetDocument(&multiDoc);
-    MultiMessWin->ShowModal();
-    MultiMessWin->SetDocument(nullptr);
-    MultiMessWin->Destroy();
-
-    // Log completion note in the function document.
-    if (m_document) m_document->TestMultiMeasurement();
 }
 
 void FunctionWindow::OnTest(wxCommandEvent& event)
