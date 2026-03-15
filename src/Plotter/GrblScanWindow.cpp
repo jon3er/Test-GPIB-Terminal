@@ -121,17 +121,33 @@ void GrblScanWindow::OnStart(wxCommandEvent& event) {
         m_btnStart->Enable(true);
         m_btnStart->SetLabel("STOP SCAN"); // Change label
 
+        // ========================================= Setup Measuremnt ==============================================
         // Set Parameter for mesurement
         sData& currentData = m_document->GetResultsMutable();
         sData::sParam *MessInfo = currentData.GetParameter();
         MessInfo->File = "PlotterScan";
         MessInfo->NoPoints_X = rows;
         MessInfo->NoPoints_Y = cols;
+        bool isVertical;
+        wxString TypeSting;
+        // set Scan travel mode
+        if (zigzag == true)
+            TypeSting = "Continuous";
+        else
+            TypeSting = "Line";
+        currentData.setFileType(TypeSting);
+        // set scan direction
+        if (dir == DIR_Vertical)
+            isVertical = true;
+        else
+            isVertical = false;
+        currentData.setPlotterPositions(stepX, stepY, startX, startY, isVertical);
 
         std::cout << "Start Measurement" << std::endl;
 
         auto fsu = &fsuMeasurement::get_instance();
         fsu->setNoPoints(rows, cols);
+        // ======================================== Setup Measuremnt Added =========================================
 
         Layout();
 
@@ -144,7 +160,7 @@ void GrblScanWindow::OnStart(wxCommandEvent& event) {
                     std::cout << "Mesurement number: " << measurementNumber << std::endl;
 
                     bool success;
-                    // 2. Die Messfunktion aufrufen
+                    // ======================= Added Measurement funciton ================================
                     try
                     {
 
@@ -193,6 +209,8 @@ void GrblScanWindow::OnStart(wxCommandEvent& event) {
                     }
                     std::this_thread::sleep_for(std::chrono::milliseconds(500));
                     printf("Reached Point R:%d C:%d at (%.2f, %.2f)\n", r, c, x, y);
+
+                    // ====================================== End Added Measurement function ============================
                 },
                 dir, zigzag, speed
             );

@@ -15,6 +15,7 @@ sData::sData(const char* type)
     m_dsParam->MeasurementType = "";
     m_dsParam->NoPoints_X = 1;
     m_dsParam->NoPoints_Y = 1;
+    m_dsParam->hasPlotterData = false;
     m_dsParam->NoPoints_Array = 1;
     m_dsParam->ampUnit = "DB";
     m_dsParam->startFreq = 0;
@@ -126,6 +127,17 @@ void sData::getXYCord(int& x, int& y, int mesurementNumber)
 
     x = ((mesurementNumber - 1) / yPoints);
     y = ((mesurementNumber - 1) % yPoints);
+}
+
+void sData::setPlotterPositions(double xSpacingmm, double ySpacingmm, double xStartingPointmm, 
+                                    double yStartingPointmm, bool   isVertical)
+{
+    m_dsParam->xSpacingmm = xSpacingmm;
+    m_dsParam->ySpacingmm = ySpacingmm;
+    m_dsParam->xStartingPointmm = xStartingPointmm;
+    m_dsParam->yStartingPointmm = yStartingPointmm;
+    m_dsParam->isVertical = isVertical;
+    m_dsParam->hasPlotterData = true;
 }
 
 void sData::importFsuSettings()

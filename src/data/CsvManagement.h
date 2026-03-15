@@ -57,6 +57,7 @@ class CsvFile
         bool saveCsvSettingsSweep(wxTextFile& file, sData& data);
         bool saveCsvSettingsQI(wxTextFile& file, sData& data);
         bool saveCsvSettingsMarker(wxTextFile& file, sData& data);
+        bool savePlotterData(wxTextFile& file, sData& data);
 
 
         /**
@@ -71,6 +72,7 @@ class CsvFile
         bool readCsvSettingsQI(wxTextFile& file, sData& data);
         bool readCsvSettingsMarker(wxTextFile& file, sData& data);
         bool readCsvSettingsCostum(wxTextFile& file, sData& data);
+        bool readPlotterData(wxTextFile& file, sData& data);
 
 
         bool readCsvData(wxTextFile& file, sData& data);
@@ -131,6 +133,11 @@ struct HeaderConfig
     // Plotter Parameter
     static constexpr std::string_view noPointsX     = "Number Points X";
     static constexpr std::string_view noPointsY     = "Number Points Y";
+    static constexpr std::string_view stepX         = "Step X [mm]";
+    static constexpr std::string_view stepY         = "Step Y [mm]";
+    static constexpr std::string_view startX        = "Start X [mm]";
+    static constexpr std::string_view startY        = "Start Y [mm]";
+    static constexpr std::string_view isVertical    = "Scan Vertical";
     // Frequenz Parameter
     static constexpr std::string_view startFreq     = "Start Frequency";        // ScpiCmdLookup.at(ScpiCmd::FREQ_STAR)
     static constexpr std::string_view endFreq       = "End Frequency";          // ScpiCmdLookup.at(ScpiCmd::FREQ_STOP)

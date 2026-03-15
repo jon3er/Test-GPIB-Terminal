@@ -133,6 +133,11 @@ bool CsvFile::saveCsvHeader(wxTextFile &file, sData& data)
     // Plotter info
     file.AddLine(wxString::FromUTF8(HeaderConfig::noPointsX.data()) + m_separator + wxString::Format("%d", dsParam->NoPoints_X));
     file.AddLine(wxString::FromUTF8(HeaderConfig::noPointsY.data()) + m_separator + wxString::Format("%d", dsParam->NoPoints_Y));
+    if (dsParam->hasPlotterData && (dsParam->NoPoints_X * dsParam->NoPoints_Y) > 1 && !savePlotterData(file, data))
+    {
+        std::cout << kErrPrefixStr.CsvSave <<"Failed to write plotter data" << std::endl;
+        return false;
+    }
     // Measurement config
     //file.AddLine(wxString::Format("%s%c%d",   HeaderConfig::noPointsArray.data(), m_separator, dsParam->NoPoints_Array));
 
@@ -241,6 +246,19 @@ bool CsvFile::saveCsvHeader(wxTextFile &file, sData& data)
         lineID << m_separator << (int)i;
     }
     file.AddLine(lineID);
+
+    return true;
+}
+
+bool CsvFile::savePlotterData(wxTextFile& file, sData& data)
+{
+    sData::sParam* dsParam = data.GetParameter();
+
+    file.AddLine(wxString::FromUTF8(HeaderConfig::stepX.data()) + m_separator + wxString::FromDouble(dsParam->xSpacingmm));
+    file.AddLine(wxString::FromUTF8(HeaderConfig::stepY.data()) + m_separator + wxString::FromDouble(dsParam->ySpacingmm));
+    file.AddLine(wxString::FromUTF8(HeaderConfig::startX.data()) + m_separator + wxString::FromDouble(dsParam->xStartingPointmm));
+    file.AddLine(wxString::FromUTF8(HeaderConfig::startY.data()) + m_separator + wxString::FromDouble(dsParam->yStartingPointmm));
+    file.AddLine(wxString::FromUTF8(HeaderConfig::isVertical.data()) + m_separator + (dsParam->isVertical ? "1" : "0"));
 
     return true;
 }
@@ -442,6 +460,11 @@ bool CsvFile::readCsvHeader(wxTextFile&file, sData& data)
     if (!readByLabel(HeaderConfig::noPointsY, value) || !value.ToLong(&lVal)) return false;
     dsParam->NoPoints_Y = lVal;
 
+    if (!readPlotterData(file, data))
+    {
+        std::cout << kErrPrefixStr.CsvRead <<"Failed to read plotter data" << std::endl;
+    }
+
     // Messeinstellungen je nach Modus einlesen
     int mesSettingsLine = findLineCsv(file, wxString(HeaderConfig::mesSettings.data()));
     if (mesSettingsLine >= 0)
@@ -468,6 +491,67 @@ bool CsvFile::readCsvHeader(wxTextFile&file, sData& data)
     data.resize3DData(dsParam->NoPoints_X, dsParam->NoPoints_Y, dsParam->NoPoints_Array);
 
     std::cout << dsParam->NoPoints_X << " x " << dsParam->NoPoints_Y << " x " << dsParam->NoPoints_Array << std::endl;
+
+    return true;
+}
+
+bool CsvFile::readPlotterData(wxTextFile& file, sData& data)
+{
+    char separator = m_separator;
+
+    auto readLine = [&](std::string_view label, wxString& out) -> bool {
+        int line = findLineCsv(file, wxString::FromUTF8(label.data()));
+        if (line < 0)
+        {
+            return false;
+        }
+        out = file.GetLine(line).AfterFirst(separator).Trim(false).Trim();
+        return true;
+    };
+
+    wxString stepXText;
+    wxString stepYText;
+    wxString startXText;
+    wxString startYText;
+    wxString verticalText;
+
+    // Optional block: if first line does not exist, simply skip.
+    if (!readLine(HeaderConfig::stepX, stepXText)) return true;
+    if (!readLine(HeaderConfig::stepY, stepYText)) return true;
+    if (!readLine(HeaderConfig::startX, startXText)) return true;
+    if (!readLine(HeaderConfig::startY, startYText)) return true;
+    if (!readLine(HeaderConfig::isVertical, verticalText)) return true;
+
+    double stepX = 0.0;
+    double stepY = 0.0;
+    double startX = 0.0;
+    double startY = 0.0;
+    long isVerticalLong = 0;
+
+    if (!stepXText.ToDouble(&stepX)) return true;
+    if (!stepYText.ToDouble(&stepY)) return true;
+    if (!startXText.ToDouble(&startX)) return true;
+    if (!startYText.ToDouble(&startY)) return true;
+
+    bool isVertical = false;
+    if (verticalText.CmpNoCase("true") == 0)
+    {
+        isVertical = true;
+    }
+    else if (verticalText.CmpNoCase("false") == 0)
+    {
+        isVertical = false;
+    }
+    else if (verticalText.ToLong(&isVerticalLong))
+    {
+        isVertical = (isVerticalLong != 0);
+    }
+    else
+    {
+        return true;
+    }
+
+    data.setPlotterPositions(stepX, stepY, startX, startY, isVertical);
 
     return true;
 }

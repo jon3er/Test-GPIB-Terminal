@@ -81,24 +81,29 @@ public:
         // Plotter
         int             NoPoints_X;
         int             NoPoints_Y;
+        double          xSpacingmm;
+        double          ySpacingmm;
+        double          xStartingPointmm;
+        double          yStartingPointmm;
+        bool            isVertical;
+        bool            hasPlotterData;
         // Detection
         int             NoPoints_Array;
-        std::string     Detektor;
         // Frequenz
         double          startFreq;
         double          endFreq;
+        double          centerFreq;
+        double          spanFreq;
         // Amplitude und Pegel
         double          refPegel;
         int             HFDaempfung;
         std::string     ampUnit;
-
         int             RBW ;
         int             VBW;
-        // Erfassung
+        // Detectors
         std::string     sweepTime;
         std::string     detektor;
-        // IQ
-        double          centerFreq;
+        // IQ Settings
         double          sampleRate;
         int             recordLength;
         double          ifBandwidth;
@@ -153,6 +158,11 @@ public:
     bool setNumberOfPts_X(int NumbPtsX);
     bool setNumberOfPts_Y(int NumbPtsY);
     void setNumberofPts_Array(int numb = 0);
+    void setPlotterPositions(double xSpacingmm,
+        double ySpacingmm,
+        double xStartingPointmm,
+        double yStartingPointmm,
+        bool   isHorizontal);
     // set Mesurement var
     bool setAmpUnit(std::string Unit);
     bool setStartFreq(double StartFreq);
