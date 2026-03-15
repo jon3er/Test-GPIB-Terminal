@@ -236,6 +236,8 @@ bool fsuMeasurement::checkIfSettingsValidSweep(ScpiCommand command, const Settin
 try {
     switch (command)
     {
+        case ScpiCommand::CENTER_FREQUENCY:
+        case ScpiCommand::SPAN_FREQUENCY:
         case ScpiCommand::START_FREQUENCY:
         case ScpiCommand::END_FREQUENCY: {
             double freq = std::get<double>(value);
@@ -262,16 +264,16 @@ try {
         }
 
         case ScpiCommand::SWEEP_POINTS: {
-                int points = std::get<int>(value);
+            int points = std::get<int>(value);
 
-                // Definierte zulässige Festwerte für R&S FSU
-                static const std::set<int> allowedPoints = {
-                    155, 313, 625, 1251, 1999, 2501, 5001, 10001, 20001, 30001
-                };
+            // Definierte zulässige Festwerte für R&S FSU
+            static const std::set<int> allowedPoints = {
+                155, 313, 625, 1251, 1999, 2501, 5001, 10001, 20001, 30001
+            };
 
-                // Prüfen, ob der eingegebene Wert exakt in der Liste enthalten ist
-                return allowedPoints.find(points) != allowedPoints.end();
-            }
+            // Prüfen, ob der eingegebene Wert exakt in der Liste enthalten ist
+            return allowedPoints.find(points) != allowedPoints.end();
+        }
 
         case ScpiCommand::DETECTOR: {
             std::string det = std::get<std::string>(value);
@@ -283,12 +285,6 @@ try {
         case ScpiCommand::AMPLITUDE_UNIT: {
             std::string unit = std::get<std::string>(value);
             return (unit == "DBM" || unit == "V" || unit == "W" || unit == "DBUV");
-        }
-
-        case ScpiCommand::CENTER_FREQUENCY:
-        case ScpiCommand::SPAN_FREQUENCY: {
-            double freq = std::get<double>(value);
-            return (freq >= 0.0 && freq <= 26.5e9);
         }
 
         case ScpiCommand::IQ_SAMPLE_RATE: {

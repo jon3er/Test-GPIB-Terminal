@@ -610,8 +610,14 @@ void PlotWindow::OnOpenLoadedMeasurementSettings(wxCommandEvent& /*event*/)
         mode = MeasurementMode::MARKER_PEAK;
     }
 
+    MSetDocument msetDoc(PrologixUsbGpibAdapter::get_instance(),
+                         fsuMeasurement::get_instance(),
+                         mode);
+
     SettingsDialog dlg(this, mode, param);
+    dlg.SetDocument(&msetDoc);
     dlg.ShowModal();
+    dlg.SetDocument(nullptr);
 }
 
 void PlotWindow::OnSelectMeasurement(wxCommandEvent& /*event*/)

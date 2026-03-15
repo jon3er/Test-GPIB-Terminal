@@ -221,8 +221,49 @@ SettingsDialog::SettingsDialog(wxWindow* parent, MeasurementMode mode, const sDa
 
     if (m_hasPreset)
         LoadPresetData();
-    else
+}
+
+SettingsDialog::~SettingsDialog()
+{
+    if (m_document)
+        m_document->RemoveObserver(this);
+}
+
+void SettingsDialog::SetDocument(MSetDocument* document)
+{
+    if (m_document)
+        m_document->RemoveObserver(this);
+
+    m_document = document;
+
+    if (m_document)
+    {
+        m_document->AddObserver(this);
+        if (m_hasPreset)
+            LoadPresetData();
+        else
+            RefreshData();
+    }
+}
+
+void SettingsDialog::OnDocumentChanged(const std::string& changeType)
+{
+    if (!m_document)
+        return;
+
+    if (changeType == "SettingsChanged")
+    {
         RefreshData();
+    }
+    else if (changeType == "ApplyResult")
+    {
+        const auto& result = m_document->GetLastResult();
+        m_btnStart->Enable(result.startEnabled);
+
+        wxMessageBox(wxString::FromUTF8(result.message.c_str()),
+                     result.success ? "Erfolg" : "Fehler",
+                     wxOK | (result.success ? wxICON_INFORMATION : wxICON_WARNING));
+    }
 }
 
 //----- Event Handlers -----
@@ -237,9 +278,8 @@ void SettingsDialog::OnApply(wxCommandEvent& event) {
 
 //----- Sweep Apply + Verification -----
 void SettingsDialog::ApplySweep() {
-    fsuMeasurement* fsu = &fsuMeasurement::get_instance();
-    // Set mode for measurement.
-    fsu->setMeasurementMode(MeasurementMode::SWEEP);
+    if (!m_document)
+        return;
 
     double startFreq;
     if (!ParseFrequencyInputToHz(m_txtStartFreq->GetValue(), startFreq)) {
@@ -262,83 +302,25 @@ void SettingsDialog::ApplySweep() {
 
     // Number of points
     int points = wxAtoi(m_choiceSweepPoints->GetStringSelection());
-    // Detector selection
-    std::string det = m_choiceDetector->GetStringSelection().ToStdString();
-    // Attenuation
-    int att = m_spinAttenuation->GetValue();
-    // Unit
-    std::string unit = m_choiceUnit->GetStringSelection().ToStdString();
-
-    // Validation
-    if (!fsu->checkIfSettingsValidSweep(ScpiCommand::START_FREQUENCY, startFreq)) {
-        wxMessageBox("Startfrequenz ausserhalb des Bereichs (0 - 26.5 GHz)!", "Validierungsfehler", wxOK | wxICON_ERROR); return;
-    }
-    if (!fsu->checkIfSettingsValidSweep(ScpiCommand::END_FREQUENCY, stopFreq)) {
-        wxMessageBox("Stopfrequenz ausserhalb des Bereichs (0 - 26.5 GHz)!", "Validierungsfehler", wxOK | wxICON_ERROR); return;
-    }
-    if (!fsu->checkIfSettingsValidSweep(ScpiCommand::RF_ATTENUATION, att)) {
-        wxMessageBox("Daempfung muss in 5-dB Schritten erfolgen (0-75 dB)!", "Validierungsfehler", wxOK | wxICON_ERROR); return;
-    }
-    if (!fsu->checkIfSettingsValidSweep(ScpiCommand::RBW, rbw)) {
-        wxMessageBox("RBW ausserhalb des gueltigen Bereichs (1 Hz - 50 MHz)!", "Validierungsfehler", wxOK | wxICON_ERROR); return;
-    }
-    if (!fsu->checkIfSettingsValidSweep(ScpiCommand::VBW, vbw)) {
-        wxMessageBox("VBW ausserhalb des gueltigen Bereichs (1 Hz - 50 MHz)!", "Validierungsfehler", wxOK | wxICON_ERROR); return;
-    }
-    if (!fsu->checkIfSettingsValidSweep(ScpiCommand::SWEEP_POINTS, points)) {
-        wxMessageBox("Ungueltige Sweep Punkte!", "Validierungsfehler", wxOK | wxICON_ERROR); return;
-    }
 
     fsuMeasurement::lastSweepSettings settings{};
     settings.startFreq  = startFreq;
     settings.stopFreq   = stopFreq;
     settings.refLevel   = refLevel;
     settings.points     = points;
-    settings.detector   = det;
-    settings.att        = att;
+    settings.detector   = m_choiceDetector->GetStringSelection().ToStdString();
+    settings.att        = m_spinAttenuation->GetValue();
     settings.rbw        = static_cast<int>(rbw);
     settings.vbw        = static_cast<int>(vbw);
-    settings.unit      = unit;
+    settings.unit       = m_choiceUnit->GetStringSelection().ToStdString();
 
-    if (!fsu->writeSweepSettings(settings)) {
-        wxMessageBox("Fehler beim Senden der Einstellungen!", "Fehler", wxOK | wxICON_ERROR); return;
-    }
-
-    // Read back and verify
-    if (!fsu->readSweepSettings()) {
-        wxMessageBox("Einstellungen gesendet, aber Ruecklesen fehlgeschlagen!", "Warnung", wxOK | wxICON_WARNING);
-        return;
-    }
-
-    auto rb = fsu->returnSweepSettings();
-    wxString mismatches;
-    bool ok = true;
-    ok &= VerifyDouble("Start Frequenz", startFreq, rb.startFreq, mismatches);
-    ok &= VerifyDouble("Stop Frequenz",  stopFreq,  rb.stopFreq,  mismatches);
-    ok &= VerifyDouble("Ref. Pegel",     refLevel,  rb.refLevel,  mismatches);
-    ok &= VerifyInt("Daempfung",         att,       rb.att,       mismatches);
-    ok &= VerifyInt("RBW", static_cast<int>(rbw),   rb.rbw,       mismatches);
-    ok &= VerifyInt("VBW",  static_cast<int>(vbw),   rb.vbw,       mismatches);
-    ok &= VerifyInt("Sweep Punkte",      points,    rb.points,    mismatches);
-    ok &= VerifyString("Detektor",       det,       rb.detector,  mismatches);
-    ok &= VerifyString("Einheit",        unit,      rb.unit,      mismatches);
-
-    if (ok) {
-        wxMessageBox("Einstellungen erfolgreich uebernommen und verifiziert!", "Erfolg", wxOK | wxICON_INFORMATION);
-        m_btnStart->Enable(true);
-    } else {
-        wxMessageBox("Abweichungen festgestellt:\n\n" + mismatches, "Verifikation", wxOK | wxICON_WARNING);
-        m_btnStart->Enable(false);
-    }
-
-    RefreshData();
+    m_document->ApplySweep(settings);
 }
 
 //----- IQ Apply + Verification -----
 void SettingsDialog::ApplyIq() {
-    fsuMeasurement* fsu = &fsuMeasurement::get_instance();
-    // Set mode for measurement.
-    fsu->setMeasurementMode(MeasurementMode::IQ);
+    if (!m_document)
+        return;
 
     double centerFreq, refLevel, sampleRate, ifBw, trigLevel, trigDelay;
     if (!ParseFrequencyInputToHz(m_txtCenterFreq->GetValue(), centerFreq)) {
@@ -357,8 +339,6 @@ void SettingsDialog::ApplyIq() {
     }
     int recordLen = wxAtoi(m_txtRecordLength->GetValue());
     int pretriggerSamples = wxAtoi(m_txtPretriggerSamples->GetValue());
-    int att = m_spinAttenuation->GetValue();
-    std::string unit = m_choiceUnit->GetStringSelection().ToStdString();
     std::string trigSrc = m_choiceTriggerSource
         ? m_choiceTriggerSource->GetStringSelection().ToStdString()
         : "IMM";
@@ -369,40 +349,11 @@ void SettingsDialog::ApplyIq() {
         ? m_choiceTriggerSlope->GetStringSelection().ToStdString()
         : "POS";
 
-    // Validation
-    if (!fsu->checkIfSettingsValidSweep(ScpiCommand::CENTER_FREQUENCY, centerFreq)) {
-        wxMessageBox("Center Frequenz ausserhalb des Bereichs (0 - 26.5 GHz)!", "Validierungsfehler", wxOK | wxICON_ERROR); return;
-    }
-    if (!fsu->checkIfSettingsValidSweep(ScpiCommand::RF_ATTENUATION, att)) {
-        wxMessageBox("Daempfung muss in 5-dB Schritten erfolgen (0-75 dB)!", "Validierungsfehler", wxOK | wxICON_ERROR); return;
-    }
-    if (!fsu->checkIfSettingsValidSweep(ScpiCommand::IQ_SAMPLE_RATE, sampleRate)) {
-        wxMessageBox("Sample Rate ausserhalb des Bereichs (10 kHz - 70.4 MHz)!", "Validierungsfehler", wxOK | wxICON_ERROR); return;
-    }
-    if (!fsu->checkIfSettingsValidSweep(ScpiCommand::IQ_RECORD_LENGTH, recordLen)) {
-        wxMessageBox("Record Length ausserhalb des Bereichs (1 - 16M)!", "Validierungsfehler", wxOK | wxICON_ERROR); return;
-    }
-    if (pretriggerSamples < 0 || pretriggerSamples > recordLen) {
-        wxMessageBox("Pretrigger Samples muss zwischen 0 und Record Length liegen!", "Validierungsfehler", wxOK | wxICON_ERROR); return;
-    }
-    if (!fsu->checkIfSettingsValidSweep(ScpiCommand::IQ_IF_BANDWIDTH, ifBw)) {
-        wxMessageBox("IF Bandwidth ausserhalb des Bereichs (10 Hz - 50 MHz)!", "Validierungsfehler", wxOK | wxICON_ERROR); return;
-    }
-    if (!fsu->checkIfSettingsValidSweep(ScpiCommand::TRIGGER_SOURCE, trigSrc)) {
-        wxMessageBox("Ungueltige Trigger Quelle!", "Validierungsfehler", wxOK | wxICON_ERROR); return;
-    }
-    if (!fsu->checkIfSettingsValidSweep(ScpiCommand::TRIGGER_LEVEL, trigLevel)) {
-        wxMessageBox("Trigger Level ausserhalb des Bereichs (-130 - +30 dBm)!", "Validierungsfehler", wxOK | wxICON_ERROR); return;
-    }
-    if (!fsu->checkIfSettingsValidSweep(ScpiCommand::TRIGGER_DELAY, trigDelay)) {
-        wxMessageBox("Trigger Delay ausserhalb des Bereichs (-1 - 65 s)!", "Validierungsfehler", wxOK | wxICON_ERROR); return;
-    }
-
     fsuMeasurement::IqSettings settings{};
     settings.centerFreq    = centerFreq;
     settings.refLevel      = refLevel;
-    settings.att           = att;
-    settings.unit          = unit;
+    settings.att           = m_spinAttenuation->GetValue();
+    settings.unit          = m_choiceUnit->GetStringSelection().ToStdString();
     settings.filterType    = filterType;
     settings.sampleRate    = sampleRate;
     settings.recordLength  = recordLen;
@@ -413,48 +364,13 @@ void SettingsDialog::ApplyIq() {
     settings.triggerLevel  = trigLevel;
     settings.triggerDelay  = trigDelay;
 
-    if (!fsu->writeIqSettings(settings)) {
-        wxMessageBox("Fehler beim Senden der IQ-Einstellungen!", "Fehler", wxOK | wxICON_ERROR); return;
-    }
-
-    if (!fsu->readIqSettings()) {
-        wxMessageBox("IQ-Einstellungen gesendet, aber Ruecklesen fehlgeschlagen!", "Warnung", wxOK | wxICON_WARNING);
-        return;
-    }
-
-    auto rb = fsu->returnIqSettings();
-    wxString mismatches;
-    bool ok = true;
-    ok &= VerifyDouble("Center Frequenz", centerFreq,  rb.centerFreq,    mismatches);
-    ok &= VerifyDouble("Ref. Pegel",      refLevel,    rb.refLevel,      mismatches);
-    ok &= VerifyInt("Daempfung",          att,         rb.att,           mismatches);
-    ok &= VerifyString("Einheit",         unit,        rb.unit,          mismatches);
-    ok &= VerifyDouble("Sample Rate",     sampleRate,  rb.sampleRate,    mismatches);
-    ok &= VerifyInt("Record Length",      recordLen,   rb.recordLength,  mismatches);
-    ok &= VerifyDouble("IF Bandwidth",    ifBw,        rb.ifBandwidth,   mismatches);
-    ok &= VerifyString("Trigger Quelle",  trigSrc,     rb.triggerSource, mismatches);
-    ok &= VerifyString("Filter Type",     filterType,  rb.filterType,    mismatches);
-    ok &= VerifyString("Trigger Slope",   trigSlope,   rb.triggerSlope,  mismatches);
-    ok &= VerifyInt("Pretrigger Samples", pretriggerSamples, rb.pretriggerSamples, mismatches);
-    ok &= VerifyDouble("Trigger Level",   trigLevel,   rb.triggerLevel,  mismatches);
-    ok &= VerifyDouble("Trigger Delay",   trigDelay,   rb.triggerDelay,  mismatches);
-
-    if (ok) {
-        wxMessageBox("IQ-Einstellungen erfolgreich uebernommen und verifiziert!", "Erfolg", wxOK | wxICON_INFORMATION);
-        m_btnStart->Enable(true);
-    } else {
-        wxMessageBox("Abweichungen festgestellt:\n\n" + mismatches, "Verifikation", wxOK | wxICON_WARNING);
-        m_btnStart->Enable(false);
-    }
-
-    RefreshData();
+    m_document->ApplyIq(settings);
 }
 
 //----- Marker Peak Apply + Verification -----
 void SettingsDialog::ApplyMarkerPeak() {
-    fsuMeasurement* fsu = &fsuMeasurement::get_instance();
-    // Set mode for measurement.
-    fsu->setMeasurementMode(MeasurementMode::MARKER_PEAK);
+    if (!m_document)
+        return;
 
     double startFreq, stopFreq, refLevel, rbw, vbw;
     if (!ParseFrequencyInputToHz(m_txtStartFreq->GetValue(), startFreq)) {
@@ -470,77 +386,29 @@ void SettingsDialog::ApplyMarkerPeak() {
     if (!ParseFrequencyInputToHz(m_txtVBW->GetValue(), vbw)) {
         wxMessageBox("VBW ungueltig! Beispiele: 10000, 10 kHz, 0.01 MHz", "Validierungsfehler", wxOK | wxICON_ERROR); return;
     }
-    std::string det = m_choiceDetector->GetStringSelection().ToStdString();
-    int att = m_spinAttenuation->GetValue();
-    std::string unit = m_choiceUnit->GetStringSelection().ToStdString();
-
-    // Validation
-    if (!fsu->checkIfSettingsValidSweep(ScpiCommand::START_FREQUENCY, startFreq)) {
-        wxMessageBox("Startfrequenz ausserhalb des Bereichs (0 - 26.5 GHz)!", "Validierungsfehler", wxOK | wxICON_ERROR); return;
-    }
-    if (!fsu->checkIfSettingsValidSweep(ScpiCommand::END_FREQUENCY, stopFreq)) {
-        wxMessageBox("Stopfrequenz ausserhalb des Bereichs (0 - 26.5 GHz)!", "Validierungsfehler", wxOK | wxICON_ERROR); return;
-    }
-    if (!fsu->checkIfSettingsValidSweep(ScpiCommand::RF_ATTENUATION, att)) {
-        wxMessageBox("Daempfung muss in 5-dB Schritten erfolgen (0-75 dB)!", "Validierungsfehler", wxOK | wxICON_ERROR); return;
-    }
-    if (!fsu->checkIfSettingsValidSweep(ScpiCommand::RBW, rbw)) {
-        wxMessageBox("RBW ausserhalb des gueltigen Bereichs (1 Hz - 50 MHz)!", "Validierungsfehler", wxOK | wxICON_ERROR); return;
-    }
-    if (!fsu->checkIfSettingsValidSweep(ScpiCommand::VBW, vbw)) {
-        wxMessageBox("VBW ausserhalb des gueltigen Bereichs (1 Hz - 50 MHz)!", "Validierungsfehler", wxOK | wxICON_ERROR); return;
-    }
 
     fsuMeasurement::MarkerPeakSettings settings{};
     settings.startFreq = startFreq;
     settings.stopFreq  = stopFreq;
     settings.refLevel  = refLevel;
-    settings.att       = att;
-    settings.unit      = unit;
-    settings.rbw       = rbw;
-    settings.vbw       = vbw;
-    settings.detector  = det;
+    settings.att       = m_spinAttenuation->GetValue();
+    settings.unit      = m_choiceUnit->GetStringSelection().ToStdString();
+    settings.rbw       = static_cast<int>(rbw);
+    settings.vbw       = static_cast<int>(vbw);
+    settings.detector  = m_choiceDetector->GetStringSelection().ToStdString();
 
-    if (!fsu->writeMarkerPeakSettings(settings)) {
-        wxMessageBox("Fehler beim Senden der MarkerPeak-Einstellungen!", "Fehler", wxOK | wxICON_ERROR); return;
-    }
-
-    if (!fsu->readMarkerPeakSettings()) {
-        wxMessageBox("MarkerPeak-Einstellungen gesendet, aber Ruecklesen fehlgeschlagen!", "Warnung", wxOK | wxICON_WARNING);
-        return;
-    }
-
-    auto rb = fsu->returnMarkerPeakSettings();
-    wxString mismatches;
-    bool ok = true;
-    ok &= VerifyDouble("Start Frequenz", startFreq, rb.startFreq, mismatches);
-    ok &= VerifyDouble("Stop Frequenz",  stopFreq,  rb.stopFreq,  mismatches);
-    ok &= VerifyDouble("Ref. Pegel",     refLevel,  rb.refLevel,  mismatches);
-    ok &= VerifyInt("Daempfung",         att,       rb.att,       mismatches);
-    ok &= VerifyString("Einheit",        unit,      rb.unit,      mismatches);
-    ok &= VerifyDouble("RBW",            rbw,       rb.rbw,       mismatches);
-    ok &= VerifyDouble("VBW",            vbw,       rb.vbw,       mismatches);
-    ok &= VerifyString("Detektor",       det,       rb.detector,  mismatches);
-
-    if (ok) {
-        wxMessageBox("MarkerPeak-Einstellungen erfolgreich uebernommen und verifiziert!", "Erfolg", wxOK | wxICON_INFORMATION);
-        m_btnStart->Enable(true);
-    } else {
-        wxMessageBox("Abweichungen festgestellt:\n\n" + mismatches, "Verifikation", wxOK | wxICON_WARNING);
-        m_btnStart->Enable(false);
-    }
-
-    RefreshData();
+    m_document->ApplyMarkerPeak(settings);
 }
 
 //----- Refresh Data -----
 void SettingsDialog::RefreshData()
 {
-    fsuMeasurement* fsu = &fsuMeasurement::get_instance();
+    if (!m_document)
+        return;
 
     switch (m_mode) {
         case MeasurementMode::SWEEP: {
-            auto s = fsu->returnSweepSettings();
+            auto s = m_document->GetSweepSettings();
             m_txtStartFreq     ->SetValue(wxString::Format(wxT("%.0f"),s.startFreq));
             m_txtStartFreq     ->SetToolTip(FormatFrequencyAutoUnit(s.startFreq));
             m_txtStopFreq      ->SetValue(wxString::Format(wxT("%.0f"),s.stopFreq));
@@ -557,7 +425,7 @@ void SettingsDialog::RefreshData()
             break;
         }
         case MeasurementMode::IQ: {
-            auto s = fsu->returnIqSettings();
+            auto s = m_document->GetIqSettings();
             m_txtRefLevel         ->SetValue(wxString::Format(wxT("%.0f"),s.refLevel));
             m_spinAttenuation     ->SetValue(s.att);
             m_choiceUnit          ->SetStringSelection(s.unit);
@@ -585,7 +453,7 @@ void SettingsDialog::RefreshData()
             break;
         }
         case MeasurementMode::MARKER_PEAK: {
-            auto s = fsu->returnMarkerPeakSettings();
+            auto s = m_document->GetMarkerPeakSettings();
             m_txtStartFreq    ->SetValue(wxString::Format(wxT("%.0f"),s.startFreq));
             m_txtStartFreq    ->SetToolTip(FormatFrequencyAutoUnit(s.startFreq));
             m_txtStopFreq     ->SetValue(wxString::Format(wxT("%.0f"),s.stopFreq));
@@ -823,45 +691,10 @@ void SettingsDialog::OnStart(wxCommandEvent& /*event*/)
 
 void SettingsDialog::OnGetCurrent(wxCommandEvent& /*event*/)
 {
-    fsuMeasurement* fsu = &fsuMeasurement::get_instance();
-
-    // Read back settings for the mode shown in this dialog.
-    fsu->setMeasurementMode(m_mode);
-
-    if (!fsu->readSettingsFromGpib())
-    {
-        wxMessageBox("Failed to read settings from instrument.", "Read Error", wxOK | wxICON_ERROR);
+    if (!m_document)
         return;
-    }
 
-    RefreshData();
+    m_document->ReadCurrent();
 
 }
 
-bool SettingsDialog::VerifyDouble(const wxString& name, double written, double readback, wxString& mismatches)
-{
-    double tol = std::max(std::abs(written) * 0.01, 1.0);
-    if (std::abs(written - readback) > tol) {
-        mismatches += wxString::Format("  %s: gesendet=%.4g, gelesen=%.4g\n", name, written, readback);
-        return false;
-    }
-    return true;
-}
-
-bool SettingsDialog::VerifyInt(const wxString& name, int written, int readback, wxString& mismatches)
-{
-    if (written != readback) {
-        mismatches += wxString::Format("  %s: gesendet=%d, gelesen=%d\n", name, written, readback);
-        return false;
-    }
-    return true;
-}
-
-bool SettingsDialog::VerifyString(const wxString& name, const std::string& written, const std::string& readback, wxString& mismatches)
-{
-    if (written != readback) {
-        mismatches += wxString::Format("  %s: gesendet=%s, gelesen=%s\n", name, written, readback);
-        return false;
-    }
-    return true;
-}

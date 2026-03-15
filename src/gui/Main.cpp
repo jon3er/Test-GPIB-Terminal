@@ -410,21 +410,36 @@ void MainProgrammWin::MenuMesurementLoad(wxCommandEvent& event)
 }
 void MainProgrammWin::MenuMesurementSweep(wxCommandEvent& event)
 {
-    // Open sweep Dialog
+    MSetDocument msetDoc(PrologixUsbGpibAdapter::get_instance(),
+                         fsuMeasurement::get_instance(),
+                         MeasurementMode::SWEEP);
+
     SettingsDialog dlg(this, MeasurementMode::SWEEP);
+    dlg.SetDocument(&msetDoc);
     dlg.ShowModal();
+    dlg.SetDocument(nullptr);
 };
 void MainProgrammWin::MenuMesurementIQ(wxCommandEvent& event)
 {
-    // Open IQ Dialog
+    MSetDocument msetDoc(PrologixUsbGpibAdapter::get_instance(),
+                         fsuMeasurement::get_instance(),
+                         MeasurementMode::IQ);
+
     SettingsDialog dlg(this, MeasurementMode::IQ);
+    dlg.SetDocument(&msetDoc);
     dlg.ShowModal();
+    dlg.SetDocument(nullptr);
 }
 void MainProgrammWin::MenuMesurementMarkerPeak(wxCommandEvent& event)
 {
-    // Open Marker Peak Dialog
+    MSetDocument msetDoc(PrologixUsbGpibAdapter::get_instance(),
+                         fsuMeasurement::get_instance(),
+                         MeasurementMode::MARKER_PEAK);
+
     SettingsDialog dlg(this, MeasurementMode::MARKER_PEAK);
+    dlg.SetDocument(&msetDoc);
     dlg.ShowModal();
+    dlg.SetDocument(nullptr);
 }
 
 void MainProgrammWin::MenuMesurementCustom(wxCommandEvent& event)

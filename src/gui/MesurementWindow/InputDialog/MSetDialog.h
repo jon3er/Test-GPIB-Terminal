@@ -5,15 +5,23 @@
 #include "cmdGpib.h"
 #include "PlotterFrame.h"
 #include "dataManagement.h"
+#include "MSetDocument.h"
 
-class SettingsDialog : public wxDialog {
+class SettingsDialog : public wxDialog, public IMSetObserver {
 public:
     SettingsDialog(wxWindow* parent, MeasurementMode mode, const sData::sParam* preset = nullptr);
+    ~SettingsDialog() override;
+
+    void SetDocument(MSetDocument* document);
+
+    // IMSetObserver
+    void OnDocumentChanged(const std::string& changeType) override;
 
 private:
     MeasurementMode m_mode;
     bool m_hasPreset = false;
     sData::sParam m_preset{};
+    MSetDocument* m_document = nullptr;
 
     // Gemeinsame Widgets (alle Modi)
     wxTextCtrl* m_txtRefLevel      = nullptr;
@@ -74,9 +82,4 @@ private:
     wxString FormatFrequencyAutoUnit(double hz) const;
     bool ParseFrequencyInputToHz(const wxString& input, double& hz) const;
     bool ParseTimeInputToSeconds(const wxString& input, double& seconds) const;
-
-    // Verifikations-Helfer
-    bool VerifyDouble(const wxString& name, double written, double readback, wxString& mismatches);
-    bool VerifyInt(const wxString& name, int written, int readback, wxString& mismatches);
-    bool VerifyString(const wxString& name, const std::string& written, const std::string& readback, wxString& mismatches);
 };
