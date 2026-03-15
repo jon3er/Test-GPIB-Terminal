@@ -85,7 +85,12 @@ class CsvFile
         /**
          * @brief writes all matrix indexes for one measurement to file
          */
-        bool writeMatrixIndexCsv(wxTextFile& file, sData data);
+        bool writeMatrixIndexCsv(wxTextFile& file, sData data, bool continuous = false);
+
+        /**
+         * @brief converts a measurement number to zero-based matrix coordinates
+         */
+        bool measurementToCoordinates(int xPoints, int yPoints, int mesurementNumb, bool continuous, int& xPosition, int& yPosition) const;
 
         /**
          * @brief finds the line number of a given entry

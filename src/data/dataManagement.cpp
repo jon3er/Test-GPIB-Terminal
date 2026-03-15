@@ -7,7 +7,7 @@
 sData::sData(const char* type)
 {
     //init Struct
-    m_dsParam = new sParam;
+    m_dsParam = new sParam{};
     m_dsParam->File = "Empty";
     m_dsParam->Date = "Empty";
     m_dsParam->Time = "Empty";
@@ -15,6 +15,7 @@ sData::sData(const char* type)
     m_dsParam->MeasurementType = "";
     m_dsParam->NoPoints_X = 1;
     m_dsParam->NoPoints_Y = 1;
+    m_dsParam->NoPoints_Array = 1;
     m_dsParam->ampUnit = "DB";
     m_dsParam->startFreq = 0;
     m_dsParam->endFreq = 100000;
@@ -380,6 +381,10 @@ bool sData::set3DDataReal(std::vector<double> Array , int x, int y)
 {
     try
     {
+        if (Array.size() > static_cast<size_t>(std::max(0, m_dsParam->NoPoints_Array)))
+        {
+            throw std::length_error("sData::set3DDataReal array larger than allocated measurement size");
+        }
         std::memcpy(m_Real3D.getDataPtr(x,y), Array.data(), Array.size()* sizeof(double));
         m_dsR = Array;
         return true;
@@ -399,6 +404,10 @@ bool sData::set3DDataImag(std::vector<double> Array , int x, int y)
 {
     try
     {
+        if (Array.size() > static_cast<size_t>(std::max(0, m_dsParam->NoPoints_Array)))
+        {
+            throw std::length_error("sData::set3DDataImag array larger than allocated measurement size");
+        }
         std::memcpy(m_Imag3D.getDataPtr(x,y), Array.data(), Array.size()* sizeof(double));
         m_dsI = Array;
         return true;

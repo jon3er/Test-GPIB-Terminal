@@ -638,12 +638,27 @@ void PlotWindow::PopulateSelectors(unsigned int nX, unsigned int nY)
 // -----------------------------------------------------------------------
 void PlotWindow::UpdateSettingsPanel()
 {
+    const fsuMeasurement::FsuSettings* settings = nullptr;
+    const sData::sParam* param = nullptr;
+
+    if (m_document)
+    {
+        sData& results = m_document->GetResultsMutable();
+        param = results.GetParameter();
+        if (param && !param->MeasurementType.IsEmpty())
+        {
+            settings = &results.getFsuSettings();
+        }
+    }
+
     fsuMeasurement* fsu = &fsuMeasurement::get_instance();
     wxString info;
 
-    switch (fsu->getMeasurementMode()) {
+    auto mode = settings ? settings->mode : fsu->getMeasurementMode();
+
+    switch (mode) {
         case MeasurementMode::SWEEP: {
-            auto s = fsu->returnSweepSettings();
+            auto s = settings ? settings->sweep : fsu->returnSweepSettings();
             info += "Mode:\t\tSweep\n";
             info += wxString::Format("Start Freq:\t%g Hz\n", s.startFreq);
             info += wxString::Format("Stop Freq:\t%g Hz\n", s.stopFreq);
@@ -657,7 +672,7 @@ void PlotWindow::UpdateSettingsPanel()
             break;
         }
         case MeasurementMode::IQ: {
-            auto s = fsu->returnIqSettings();
+            auto s = settings ? settings->iq : fsu->returnIqSettings();
             info += "Mode:\t\tIQ\n";
             info += wxString::Format("Center Freq:\t%g Hz\n", s.centerFreq);
             info += wxString::Format("Ref Level:\t%g dBm\n", s.refLevel);
@@ -672,7 +687,7 @@ void PlotWindow::UpdateSettingsPanel()
             break;
         }
         case MeasurementMode::MARKER_PEAK: {
-            auto s = fsu->returnMarkerPeakSettings();
+            auto s = settings ? settings->marker : fsu->returnMarkerPeakSettings();
             info += "Mode:\t\tMarker Peak\n";
             info += wxString::Format("Start Freq:\t%g Hz\n", s.startFreq);
             info += wxString::Format("Stop Freq:\t%g Hz\n", s.stopFreq);
@@ -682,6 +697,12 @@ void PlotWindow::UpdateSettingsPanel()
             info += wxString::Format("RBW:\t\t%d Hz\n", s.rbw);
             info += wxString::Format("VBW:\t\t%d Hz\n", s.vbw);
             info += wxString::Format("Detector:\t%s", s.detector.c_str());
+            break;
+        }
+        case MeasurementMode::COSTUM: {
+            wxString fileName = settings ? settings->costumFile : wxString::FromUTF8(fsu->getFileName());
+            info += "Mode:\t\tCostum\n";
+            info += wxString::Format("Script:\t\t%s", fileName);
             break;
         }
         default:
@@ -805,6 +826,8 @@ bool PlotWindow::LoadImportedData(const sData& importedData, const wxString& sou
         wxLogWarning("PlotWindow: failed to render imported matrix selection");
         return false;
     }
+
+    UpdateSettingsPanel();
 
     if (!sourcePath.IsEmpty())
     {

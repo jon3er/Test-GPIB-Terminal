@@ -191,6 +191,11 @@ public:
     const fsuMeasurement::FsuSettings& getFsuSettings() const { return m_fsuSettings; };
 
     /**
+     * @brief Returns mutable access for CSV import to populate cached settings.
+     */
+    fsuMeasurement::FsuSettings& getMutableFsuSettings() { return m_fsuSettings; };
+
+    /**
      * @brief Copies the matching fields from m_fsuSettings into m_dsParam
      * (mode-dependent: Sweep, IQ, MarkerPeak, Costum)
      */

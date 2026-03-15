@@ -53,6 +53,8 @@ bool CsvFile::saveCsvFile(wxString& filename, sData& data, int mesurementNumb)
         return false;
     }
 
+    const bool cont = (data.GetType() != "Line");
+
     if (mesurementNumb == 1 || mesurementNumb == 0) // weiteren check hinzufügen
     {
         // Import current fsu settings once before writing
@@ -69,7 +71,7 @@ bool CsvFile::saveCsvFile(wxString& filename, sData& data, int mesurementNumb)
         }
         std::cout << "write matrix" << std::endl;
         // Write indexes
-        if (!writeMatrixIndexCsv(file, data))
+        if (!writeMatrixIndexCsv(file, data, cont))
         {
             std::cout << kErrPrefixStr.CsvSave <<"Failed to write indexes" << std::endl;
             return false;
@@ -91,7 +93,11 @@ bool CsvFile::saveCsvFile(wxString& filename, sData& data, int mesurementNumb)
 
         for (size_t i = 1; i <= count; i++)
         {
-            saveCsvData(file, data, i);
+            if (!saveCsvData(file, data, i, cont))
+            {
+                std::cout << kErrPrefixStr.CsvSave <<"Failed to save measurement " << i << std::endl;
+                return false;
+            }
         }
 
         file.Write();
@@ -100,20 +106,11 @@ bool CsvFile::saveCsvFile(wxString& filename, sData& data, int mesurementNumb)
     }
 
     // save one measurement
-    // check Mesurement type
-    bool cont;
-
-    if (data.GetType() == "Line")
+    if (!saveCsvData(file, data, mesurementNumb, cont))
     {
-
-        cont = false;
+        std::cout << kErrPrefixStr.CsvSave <<"Failed to save measurement " << mesurementNumb << std::endl;
+        return false;
     }
-    else
-    {
-        cont = true;
-    }
-
-    saveCsvData(file, data, mesurementNumb, cont);
 
 
     file.Write();
@@ -319,6 +316,11 @@ bool CsvFile::saveCsvData(wxTextFile& file, sData data, int mesurementNumb, bool
     wxString indexText = getIndexNumbers(xPoints, yPoints, mesurementNumb, cont) + " " + label1;
 
     int lineNumber = findLineCsv(file, indexText);
+    if (lineNumber < 0 || static_cast<size_t>(lineNumber + 1) >= file.GetLineCount())
+    {
+        std::cerr << kErrPrefixStr.CsvSave <<"Invalid data line for measurement " << mesurementNumb << std::endl;
+        return false;
+    }
     // std::cout << "line Found: " << lineNumber << std::endl;
 
     int xPosition;
@@ -411,21 +413,34 @@ bool CsvFile::readCsvHeader(wxTextFile&file, sData& data)
         return false;
     }
 
-    // Detect separator
-    char separator = detectSeparator(file);
-    m_separator = separator;
+    // Use the cached separator from readCsvFile for deterministic parsing.
+    char separator = m_separator;
 
-    // Parse header metadata (lines 0-6)
-    dsParam->File = file.GetLine(0).AfterFirst(separator).Trim(false).Trim();
-    dsParam->Date = file.GetLine(1).AfterFirst(separator).Trim(false).Trim();
-    dsParam->Time = file.GetLine(2).AfterFirst(separator).Trim(false).Trim();
-    dsParam->Type = file.GetLine(3).AfterFirst(separator).Trim(false).Trim();
+    auto readByLabel = [&](std::string_view label, wxString& outVal) -> bool {
+        int line = findLineCsv(file, wxString::FromUTF8(label.data()));
+        if (line < 0)
+        {
+            return false;
+        }
+        outVal = file.GetLine(line).AfterFirst(separator).Trim(false).Trim();
+        return true;
+    };
+
+    wxString value;
+    if (!readByLabel(HeaderInfo::fileName, value)) return false;
+    dsParam->File = value;
+    if (!readByLabel(HeaderInfo::date, value)) return false;
+    dsParam->Date = value;
+    if (!readByLabel(HeaderInfo::time, value)) return false;
+    dsParam->Time = value;
+    if (!readByLabel(HeaderInfo::type, value)) return false;
+    dsParam->Type = value;
 
     long lVal;
-    if (file.GetLine(4).AfterFirst(separator).ToLong(&lVal))
-        dsParam->NoPoints_X = lVal;
-    if (file.GetLine(5).AfterFirst(separator).ToLong(&lVal))
-        dsParam->NoPoints_Y = lVal;
+    if (!readByLabel(HeaderConfig::noPointsX, value) || !value.ToLong(&lVal)) return false;
+    dsParam->NoPoints_X = lVal;
+    if (!readByLabel(HeaderConfig::noPointsY, value) || !value.ToLong(&lVal)) return false;
+    dsParam->NoPoints_Y = lVal;
 
     // Messeinstellungen je nach Modus einlesen
     int mesSettingsLine = findLineCsv(file, wxString(HeaderConfig::mesSettings.data()));
@@ -460,8 +475,10 @@ bool CsvFile::readCsvHeader(wxTextFile&file, sData& data)
 bool CsvFile::readCsvSettingsSweep(wxTextFile& file, sData& data)
 {
     sData::sParam* dsParam = data.GetParameter();
+    auto& settings = data.getMutableFsuSettings();
     dsParam->MeasurementType = "Sweep";
-    char separator = detectSeparator(file);
+    settings.mode = MeasurementMode::SWEEP;
+    char separator = m_separator;
 
     auto readLine = [&](std::string_view label) -> wxString {
         int line = findLineCsv(file, wxString(label.data()));
@@ -476,27 +493,37 @@ bool CsvFile::readCsvSettingsSweep(wxTextFile& file, sData& data)
     long freqVal;
     if (startVal.ToLong(&freqVal))  dsParam->startFreq = freqVal;
     if (endVal.ToLong(&freqVal))    dsParam->endFreq   = freqVal;
+    settings.sweep.startFreq = dsParam->startFreq;
+    settings.sweep.stopFreq = dsParam->endFreq;
 
     long lVal;
     if (readLine(HeaderConfig::refPegel).ToLong(&lVal))
         dsParam->refPegel = static_cast<int>(lVal);
+    settings.sweep.refLevel = dsParam->refPegel;
 
     if (readLine(HeaderConfig::HFDaempfung).ToLong(&lVal))
         dsParam->HFDaempfung = lVal;
+    settings.sweep.att = dsParam->HFDaempfung;
 
     dsParam->ampUnit = readLine(HeaderConfig::ampUnit);
+    settings.sweep.unit = dsParam->ampUnit;
 
     if (readLine(HeaderConfig::RBW).ToLong(&lVal))
         dsParam->RBW = lVal;
     if (readLine(HeaderConfig::VBW).ToLong(&lVal))
         dsParam->VBW = lVal;
+    settings.sweep.rbw = dsParam->RBW;
+    settings.sweep.vbw = dsParam->VBW;
 
     int iVal;
     if (readLine(HeaderConfig::noPointsArray).ToInt(&iVal))
         dsParam->NoPoints_Array = iVal;
+    settings.sweep.points = dsParam->NoPoints_Array;
 
     dsParam->sweepTime = readLine(HeaderConfig::sweepTime).ToStdString();
     dsParam->detektor  = readLine(HeaderConfig::detektor).ToStdString();
+    settings.sweep.sweepTime = dsParam->sweepTime;
+    settings.sweep.detector = dsParam->detektor;
 
     return true;
 }
@@ -504,8 +531,10 @@ bool CsvFile::readCsvSettingsSweep(wxTextFile& file, sData& data)
 bool CsvFile::readCsvSettingsQI(wxTextFile& file, sData& data)
 {
     sData::sParam* dsParam = data.GetParameter();
+    auto& settings = data.getMutableFsuSettings();
     dsParam->MeasurementType = "IQ";
-    char separator = detectSeparator(file);
+    settings.mode = MeasurementMode::IQ;
+    char separator = m_separator;
 
     auto readLine = [&](std::string_view label) -> wxString {
         int line = findLineCsv(file, wxString(label.data()));
@@ -517,33 +546,43 @@ bool CsvFile::readCsvSettingsQI(wxTextFile& file, sData& data)
     double dVal;
     if (centerVal.ToDouble(&dVal))
         dsParam->centerFreq = dVal;
+    settings.iq.centerFreq = dsParam->centerFreq;
 
     long lVal;
     if (readLine(HeaderConfig::refPegel).ToLong(&lVal))
         dsParam->refPegel = static_cast<int>(lVal);
+    settings.iq.refLevel = dsParam->refPegel;
 
     if (readLine(HeaderConfig::HFDaempfung).ToLong(&lVal))
         dsParam->HFDaempfung = lVal;
+    settings.iq.att = dsParam->HFDaempfung;
 
     dsParam->ampUnit = readLine(HeaderConfig::ampUnit);
+    settings.iq.unit = dsParam->ampUnit;
 
     if (readLine(HeaderConfig::sampleRate).ToDouble(&dVal))
         dsParam->sampleRate = dVal;
+    settings.iq.sampleRate = dsParam->sampleRate;
 
     int iVal;
     if (readLine(HeaderConfig::recordLength).ToInt(&iVal))
         dsParam->recordLength = iVal;
+    settings.iq.recordLength = dsParam->recordLength;
 
     if (readLine(HeaderConfig::ifBandwidth).ToDouble(&dVal))
         dsParam->ifBandwidth = dVal;
+    settings.iq.ifBandwidth = dsParam->ifBandwidth;
 
     dsParam->triggerSource = readLine(HeaderConfig::triggerSource).ToStdString();
+    settings.iq.triggerSource = dsParam->triggerSource;
 
     if (readLine(HeaderConfig::triggerLevel).ToDouble(&dVal))
         dsParam->triggerLevel = dVal;
+    settings.iq.triggerLevel = dsParam->triggerLevel;
 
     if (readLine(HeaderConfig::triggerDelay).ToDouble(&dVal))
         dsParam->triggerDelay = dVal;
+    settings.iq.triggerDelay = dsParam->triggerDelay;
 
     // IQ arrays are sampled in time domain; use record length for per-measurement point count.
     if (dsParam->recordLength > 0)
@@ -555,8 +594,10 @@ bool CsvFile::readCsvSettingsQI(wxTextFile& file, sData& data)
 bool CsvFile::readCsvSettingsMarker(wxTextFile& file, sData& data)
 {
     sData::sParam* dsParam = data.GetParameter();
+    auto& settings = data.getMutableFsuSettings();
     dsParam->MeasurementType = "Marker Peak";
-    char separator = detectSeparator(file);
+    settings.mode = MeasurementMode::MARKER_PEAK;
+    char separator = m_separator;
 
     auto readLine = [&](std::string_view label) -> wxString {
         int line = findLineCsv(file, wxString(label.data()));
@@ -570,23 +611,32 @@ bool CsvFile::readCsvSettingsMarker(wxTextFile& file, sData& data)
     long freqVal;
     if (startVal.ToLong(&freqVal))  dsParam->startFreq = freqVal;
     if (endVal.ToLong(&freqVal))    dsParam->endFreq   = freqVal;
+    settings.marker.startFreq = dsParam->startFreq;
+    settings.marker.stopFreq = dsParam->endFreq;
 
     long lVal;
     if (readLine(HeaderConfig::refPegel).ToLong(&lVal))
         dsParam->refPegel = static_cast<int>(lVal);
+    settings.marker.refLevel = dsParam->refPegel;
 
     if (readLine(HeaderConfig::HFDaempfung).ToLong(&lVal))
         dsParam->HFDaempfung = lVal;
+    settings.marker.att = dsParam->HFDaempfung;
 
     dsParam->ampUnit = readLine(HeaderConfig::ampUnit);
+    settings.marker.unit = dsParam->ampUnit;
 
     double dVal;
     if (readLine(HeaderConfig::RBW).ToDouble(&dVal))
         dsParam->RBW = (unsigned int)dVal;
     if (readLine(HeaderConfig::VBW).ToDouble(&dVal))
         dsParam->VBW = (unsigned int)dVal;
+    settings.marker.rbw = dsParam->RBW;
+    settings.marker.vbw = dsParam->VBW;
 
     dsParam->detektor = readLine(HeaderConfig::detektor).ToStdString();
+    settings.marker.detector = dsParam->detektor;
+    dsParam->NoPoints_Array = 1;
 
     return true;
 }
@@ -594,8 +644,10 @@ bool CsvFile::readCsvSettingsMarker(wxTextFile& file, sData& data)
 bool CsvFile::readCsvSettingsCostum(wxTextFile& file, sData& data)
 {
         sData::sParam* dsParam = data.GetParameter();
+    auto& settings = data.getMutableFsuSettings();
     dsParam->MeasurementType = "Costum";
-    char separator = detectSeparator(file);
+    settings.mode = MeasurementMode::COSTUM;
+    char separator = m_separator;
 
     auto readLine = [&](std::string_view label) -> wxString {
         int line = findLineCsv(file, wxString(label.data()));
@@ -604,6 +656,7 @@ bool CsvFile::readCsvSettingsCostum(wxTextFile& file, sData& data)
     };
 
     dsParam->costumFile = readLine(HeaderConfig::customFile);
+    settings.costumFile = dsParam->costumFile;
 
     return true;
 }
@@ -625,7 +678,15 @@ bool CsvFile::readCsvData(wxTextFile& file, sData& data)
         return false;
     }
 
-    const char separator = detectSeparator(file);
+    const char separator = m_separator;
+    const int expectedPoints = data.getNumberOfPts_Array();
+
+    const std::string firstIdx = getIndexNumbers(xPoints, yPoints, 1, continuous);
+    const bool isMarker = (findLineCsv(file, wxString::Format("%s Freq", firstIdx)) >= 0);
+    const char* label1 = isMarker ? "Freq" : "Real";
+    const char* label2 = isMarker ? "Amp"  : "Imag";
+
+    bool hadErrors = false;
 
     // Read all available measurements
     for (int mesurementNumb = 1; mesurementNumb <= totalMeasurements; mesurementNumb++)
@@ -636,20 +697,6 @@ bool CsvFile::readCsvData(wxTextFile& file, sData& data)
         // ID Für Real und Imag Nummern suchen (Marker: Freq/Amp)
         std::string index = getIndexNumbers(xPoints, yPoints, mesurementNumb, continuous);
 
-        // Detect marker mode from CSV: check if Freq label exists for first measurement
-        bool isMarker = false;
-        if (mesurementNumb == 1)
-        {
-            std::string firstIdx = getIndexNumbers(xPoints, yPoints, 1, continuous);
-            wxString testLabel = wxString::Format("%s Freq", firstIdx);
-            isMarker = (findLineCsv(file, testLabel) >= 0);
-        }
-        static bool s_isMarker = false;
-        if (mesurementNumb == 1) s_isMarker = isMarker;
-
-        const char* label1 = s_isMarker ? "Freq" : "Real";
-        const char* label2 = s_isMarker ? "Amp"  : "Imag";
-
         wxString realLabel = wxString(index) + " " + label1;
         wxString imagLabel = wxString(index) + " " + label2;
 
@@ -658,6 +705,7 @@ bool CsvFile::readCsvData(wxTextFile& file, sData& data)
         if (realLineNum == -1)
         {
             std::cerr << kErrPrefixStr.CsvRead <<"Could not find " << label1 << " data line for measurement " << mesurementNumb << std::endl;
+            hadErrors = true;
             continue;
         }
 
@@ -666,6 +714,7 @@ bool CsvFile::readCsvData(wxTextFile& file, sData& data)
         if (imagLineNum == -1)
         {
             std::cerr << kErrPrefixStr.CsvRead <<"Could not find " << label2 << " data line for measurement " << mesurementNumb << std::endl;
+            hadErrors = true;
             continue;
         }
 
@@ -703,27 +752,24 @@ bool CsvFile::readCsvData(wxTextFile& file, sData& data)
         if (real.size() != imag.size())
         {
             std::cerr << kErrPrefixStr.CsvRead <<"Warning: Real/Imag data arrays have different sizes for measurement " << mesurementNumb << "!" << std::endl;
+            hadErrors = true;
             continue;
         }
 
-        // Calculate x, y coordinates from measurement number
-        int xPos, yPos;
-        if (!continuous) // line by line
+        if (expectedPoints > 0 && static_cast<int>(real.size()) != expectedPoints)
         {
-            xPos = ((mesurementNumb - 1) / yPoints);
-            yPos = ((mesurementNumb - 1) % yPoints);
+            std::cerr << kErrPrefixStr.CsvRead <<"Unexpected number of points for measurement " << mesurementNumb
+                      << " (expected " << expectedPoints << ", got " << real.size() << ")" << std::endl;
+            hadErrors = true;
+            continue;
         }
-        else // snaking
+
+        // Calculate x, y coordinates from measurement number using shared mapping logic.
+        int xPos, yPos;
+        if (!measurementToCoordinates(xPoints, yPoints, mesurementNumb, continuous, xPos, yPos))
         {
-            xPos = ((mesurementNumb - 1) / yPoints);
-            if (xPos % 2 == 0) // is even
-            {
-                yPos = yPoints - ((mesurementNumb - 1) % yPoints) - 1;
-            }
-            else
-            {
-                yPos = ((mesurementNumb - 1) % yPoints);
-            }
+            hadErrors = true;
+            continue;
         }
 
         // Store data into 3D arrays
@@ -733,14 +779,12 @@ bool CsvFile::readCsvData(wxTextFile& file, sData& data)
         std::cerr << kErrPrefixStr.CsvRead <<"Stored measurement " << mesurementNumb << " at position [" << xPos << "," << yPos << "]" << std::endl;
     }
 
-    file.Close();
-
-    return true;
+    return !hadErrors;
 }
 
 // Helper functions Index
 
-bool CsvFile::writeMatrixIndexCsv(wxTextFile& file, sData data)
+bool CsvFile::writeMatrixIndexCsv(wxTextFile& file, sData data, bool continuous)
 {
     // ID Für Real Nummern einfügen
     int xPoints = data.getNumberOfPts_X();
@@ -754,7 +798,7 @@ bool CsvFile::writeMatrixIndexCsv(wxTextFile& file, sData data)
 
     for (size_t i = 0; i < count; i++)
     {
-        std::string index = getIndexNumbers(xPoints, yPoints, i + 1);
+        std::string index = getIndexNumbers(xPoints, yPoints, i + 1, continuous);
 
         file.AddLine(wxString::Format("%s %s", index, label1));
 
@@ -766,8 +810,8 @@ bool CsvFile::writeMatrixIndexCsv(wxTextFile& file, sData data)
 
 std::string CsvFile::getIndexNumbers(int xPoints, int yPoints, int mesurementNumb, bool continuous)
 {
-    int xPosition;
-    int yPosition;
+    int xPosition = 0;
+    int yPosition = 0;
     std::string matrixSeparator;
 
     // Set second separator to save Matrix index
@@ -781,35 +825,14 @@ std::string CsvFile::getIndexNumbers(int xPoints, int yPoints, int mesurementNum
     }
 
 
-    if (mesurementNumb < 1 || mesurementNumb > xPoints * yPoints)
+    if (!measurementToCoordinates(xPoints, yPoints, mesurementNumb, continuous, xPosition, yPosition))
     {
         std::string text = "[0" + matrixSeparator + "0]";
         return text;
     }
-
-    int idx = mesurementNumb - 1;
-
-    xPosition = (idx / yPoints) + 1;
-    // get position in matrix for normal test
-    if (!continuous) // line by line
-    {
-        yPosition = (idx % yPoints) + 1;
-    }
-    else // snaking
-    {
-
-        if (xPosition % 2 == 0) // is even
-        {
-            yPosition = yPoints - (idx % yPoints) + 1;
-        }
-        else
-        {
-            yPosition = (idx % yPoints) + 1;
-        }
-    }
     //std::cout << "x pts "<< xPoints << " y pts " << yPoints << std::endl;
 
-    std::string text = "[" + std::to_string(xPosition) + matrixSeparator + std::to_string(yPosition) + "]";
+    std::string text = "[" + std::to_string(xPosition + 1) + matrixSeparator + std::to_string(yPosition + 1) + "]";
     //std::cout << text << " Nr. " << mesurementNumb <<std::endl;
 
     return  text;
@@ -825,7 +848,7 @@ int CsvFile::findLineCsv(wxTextFile& file, wxString findText)
 
     if (it != m_CsvLookupTable.end())
     {
-        int entryLine = m_CsvLookupTable[findText.Upper().ToStdString()];
+        int entryLine = it->second;
         //std::cerr << "Found on Line: " << entryLine << std::endl;
         return entryLine;
     }
@@ -848,7 +871,7 @@ bool CsvFile::createCsvLookupTable(wxTextFile& file)
     m_CsvLookupTable.clear();
     m_CsvLookupTable.reserve(lineCount);
 
-    char separator = detectSeparator(file);
+    char separator = m_separator;
 
     for (size_t i = 0; i < (size_t)lineCount; i++)
     {
@@ -857,6 +880,36 @@ bool CsvFile::createCsvLookupTable(wxTextFile& file)
         if (!firstColumnValue.empty())
         {
             m_CsvLookupTable[firstColumnValue] = i;
+        }
+    }
+
+    return true;
+}
+
+bool CsvFile::measurementToCoordinates(int xPoints, int yPoints, int mesurementNumb, bool continuous, int& xPosition, int& yPosition) const
+{
+    if (xPoints <= 0 || yPoints <= 0 || mesurementNumb < 1 || mesurementNumb > xPoints * yPoints)
+    {
+        return false;
+    }
+
+    const int idx = mesurementNumb - 1;
+    xPosition = idx / yPoints;
+
+    if (!continuous)
+    {
+        yPosition = idx % yPoints;
+    }
+    else
+    {
+        const int xOneBased = xPosition + 1;
+        if (xOneBased % 2 == 0)
+        {
+            yPosition = yPoints - (idx % yPoints) - 1;
+        }
+        else
+        {
+            yPosition = idx % yPoints;
         }
     }
 
