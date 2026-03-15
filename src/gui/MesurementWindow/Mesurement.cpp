@@ -1065,6 +1065,8 @@ PlotWindowSetMarker::PlotWindowSetMarker(wxWindow* parent, wxWindowID id, const 
 }
 PlotWindowSetMarker::~PlotWindowSetMarker()
 {
+    if (m_document)
+        m_document->RemoveObserver(this);
 }
 
 void PlotWindowSetMarker::GetValues()
@@ -1195,7 +1197,52 @@ void PlotWindowSetMarker::GetSelectedValue2()
 }
 void PlotWindowSetMarker::SetDocument(MeasurementDocument* doc)
 {
+    if (m_document)
+        m_document->RemoveObserver(this);
+
     m_document = doc;
+
+    if (m_document)
+    {
+        m_document->AddObserver(this);
+        UpdateView();
+    }
+}
+
+void PlotWindowSetMarker::OnDocumentChanged(const std::string& changeType)
+{
+    if (changeType == "MeasurementStarted" ||
+        changeType == "MeasurementStopped" ||
+        changeType == "MarkerUpdated")
+    {
+        UpdateView();
+    }
+}
+
+void PlotWindowSetMarker::UpdateView()
+{
+    const bool hasDocument = (m_document != nullptr);
+    const bool enableControls = hasDocument && !m_document->IsMeasuring();
+
+    m_button1->Enable(enableControls);
+    m_button2->Enable(enableControls);
+    m_checkBox1->Enable(enableControls);
+    m_checkBox2->Enable(enableControls);
+    m_checkBox3->Enable(enableControls);
+    m_checkBox4->Enable(enableControls);
+
+    if (enableControls)
+    {
+        toggleSelection1fkt();
+        toggleSelection2fkt();
+    }
+    else
+    {
+        m_textCtrl1->Enable(false);
+        m_textCtrl2->Enable(false);
+        m_choice1->Enable(false);
+        m_choice2->Enable(false);
+    }
 }
 
 void PlotWindowSetMarker::SetSelection1(wxCommandEvent& event)
@@ -1217,7 +1264,6 @@ void PlotWindowSetMarker::SetSelection1(wxCommandEvent& event)
         GetSelectedValue1();
         m_document->WriteMarker1(false, std::string(m_FreqMarker1Raw.ToUTF8()));
     }
-    //TODO Get X Y From Device and display in the Menu
 }
 void PlotWindowSetMarker::SetSelection2(wxCommandEvent& event)
 {
@@ -1238,7 +1284,6 @@ void PlotWindowSetMarker::SetSelection2(wxCommandEvent& event)
         GetSelectedValue2();
         m_document->WriteMarker2(false, std::string(m_FreqMarker2Raw.ToUTF8()));
     }
-    //TODO Get X Y From Device and display in the Menu
 }
 
 //-----Plot Window Set Marker ENDE-------

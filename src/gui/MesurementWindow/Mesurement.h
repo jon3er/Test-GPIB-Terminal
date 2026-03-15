@@ -139,7 +139,7 @@ private:
 /**
  * @brief Marker-set dialog. Uses a MeasurementDocument to write SCPI marker commands.
  */
-class PlotWindowSetMarker : public wxDialog
+class PlotWindowSetMarker : public wxDialog, public IMeasurementObserver
 {
 private:
     bool m_Marker1FreqSet = false;
@@ -181,6 +181,9 @@ public:
     /** Attach / detach document. */
     void SetDocument(MeasurementDocument* doc);
 
+    // IMeasurementObserver
+    void OnDocumentChanged(const std::string& changeType) override;
+
     void toggleSelection1(wxCommandEvent& event);
     void toggleSelection2(wxCommandEvent& event);
     void SetSelection1(wxCommandEvent& event);
@@ -190,4 +193,7 @@ public:
     void GetSelectedValue1();
     void GetSelectedValue2();
     void GetValues();
+
+private:
+    void UpdateView();
 };

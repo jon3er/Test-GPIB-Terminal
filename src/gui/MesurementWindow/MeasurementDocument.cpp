@@ -108,11 +108,13 @@ void MeasurementDocument::WriteMarker1(bool setToMax, const std::string& freqRaw
     {
         std::string cmd = ScpiCmdLookup.at(ScpiCmd::CALC_MARK_MAX);
         m_adapter.write(cmd);
+        NotifyObservers("MarkerUpdated");
     }
     else if (!freqRaw.empty())
     {
         std::string cmd = ScpiCmdLookup.at(ScpiCmd::CALC_MARK_MAX) + " " + freqRaw;
         m_adapter.write(cmd);
+        NotifyObservers("MarkerUpdated");
     }
 }
 
@@ -121,10 +123,12 @@ void MeasurementDocument::WriteMarker2(bool setToMax, const std::string& freqRaw
     if (setToMax)
     {
         m_adapter.write(std::string("CALC:MARK2:MAX"));
+        NotifyObservers("MarkerUpdated");
     }
     else if (!freqRaw.empty())
     {
         m_adapter.write(std::string("CALC:MARK2:MAX ") + freqRaw);
+        NotifyObservers("MarkerUpdated");
     }
 }
 
