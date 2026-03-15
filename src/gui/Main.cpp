@@ -45,7 +45,6 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, MainDocument* doc, wxWindowI
     Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementSweep,     this, MainMenuBar::ID_Main_Mesurement_Sweep);
     Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementIQ,        this, MainMenuBar::ID_Main_Mesurement_IQ);
     Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementMarkerPeak,this, MainMenuBar::ID_Main_Mesurement_MarkerPeak);
-    Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurement2DMess,    this, MainMenuBar::ID_Main_Mesurement_2D_Mess);
     Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementSetMarker, this, MainMenuBar::ID_Main_Mesurement_SetMarker);
     Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementSettings,  this, MainMenuBar::ID_Main_Mesurement_Settings);
     Bind(wxEVT_MENU, &MainProgrammWin::MenuMesurementCustom,    this, MainMenuBar::ID_Main_Mesurement_Custom);
@@ -104,10 +103,9 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, MainDocument* doc, wxWindowI
 	m_menuMesure_Item_Preset_1      = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_Sweep,      wxString( wxT("Sweep Measurement") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menuMesure_Item_Preset_2      = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_IQ,         wxString( wxT("IQ Measurement") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menuMesure_Item_Preset_3      = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_MarkerPeak, wxString( wxT("Marker Measurement") ) , wxEmptyString, wxITEM_NORMAL );
-	m_menuMesure_Item_2DMesurment   = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_2D_Mess,    wxString( wxT("2D Plot Mesurment") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menuMesure_Item_SetMarker     = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_SetMarker,  wxString( wxT("Set Marker") ) , wxEmptyString, wxITEM_NORMAL );
 	m_menuMesure_Item_Settings      = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_Settings,   wxString( wxT("Settings") ) , wxEmptyString, wxITEM_NORMAL );
-    m_menuMesure_Item_Custom      = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_Custom,     wxString( wxT("Load Custom Script") ) , wxEmptyString, wxITEM_NORMAL );
+    m_menuMesure_Item_Custom        = new wxMenuItem( m_menu_Mesurement, ID_Main_Mesurement_Custom,     wxString( wxT("Load Custom Script") ) , wxEmptyString, wxITEM_NORMAL );
 
 
     // "New Mesurement" submenu with Load config and Presets
@@ -127,8 +125,6 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, MainDocument* doc, wxWindowI
     m_menu_Mesurement->AppendSubMenu( m_submenu_NewMesurement, wxT("New Mesurement") );
 	m_menu_Mesurement->AppendSeparator();
 	m_menu_Mesurement->Append( m_menuMesure_Item_Open );
-    m_menu_Mesurement->AppendSeparator();
-	m_menu_Mesurement->Append( m_menuMesure_Item_2DMesurment );
     m_menu_Mesurement->AppendSeparator();
 	m_menu_Mesurement->Append( m_menuMesure_Item_SetMarker );
 	m_menu_Mesurement->AppendSeparator();

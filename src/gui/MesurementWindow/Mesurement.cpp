@@ -53,8 +53,6 @@ PlotWindow::PlotWindow(wxWindow *parent, MainDocument* mainDoc)
     menuMesurement->AppendSeparator();
     menuMesurement->Append(MainMenuBar::ID_Main_Mesurement_Open,       wxT("Open Saved Mesurement"));
     menuMesurement->AppendSeparator();
-    menuMesurement->Append(MainMenuBar::ID_Main_Mesurement_2D_Mess,    wxT("2D Plot Mesurment"));
-    menuMesurement->AppendSeparator();
     menuMesurement->Append(MainMenuBar::ID_Main_Mesurement_SetMarker,  wxT("Set Marker"));
     menuMesurement->AppendSeparator();
     menuMesurement->Append(MainMenuBar::ID_Main_Mesurement_Settings,   wxT("Settings"));
