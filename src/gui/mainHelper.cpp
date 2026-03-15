@@ -1,7 +1,7 @@
 #include "mainHelper.h"
 
 
-bool PlotterMesurement(sData* data, int measurementNumber)
+bool PlotterMeasurement(sData* data, int measurementNumber)
 {
     wxArrayString logAdapterReceived;
     static wxString fileName; // Keeps Filename the same;

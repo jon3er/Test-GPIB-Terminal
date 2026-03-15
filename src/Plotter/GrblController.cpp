@@ -111,7 +111,7 @@ void GrblController::StartScanCycle(double startX, double startY, int rows, int 
     MoveTo(startX, startY, feedRate);
     WaitForArrival(startX, startY);
 
-    onPointReached(0, 0, startX, startY);
+    //onPointReached(0, 0, startX, startY); // 
 
     bool isHorizontal = (direction == DIR_Horizontal);
     int outerLimit = isHorizontal ? rows : cols;

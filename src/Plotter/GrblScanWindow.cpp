@@ -156,16 +156,16 @@ void GrblScanWindow::OnStart(wxCommandEvent& event) {
             // This now respects the m_shouldCancel flag
             m_controller->StartScanCycle(startX, startY, rows, cols, stepX, stepY,
                 [this, rows, cols](int r, int c, double x, double y) {
+
+                    // ======================= Added Measurement funciton ================================
                     int measurementNumber = (r * cols + c) + 1 ;  // Korrekte Berechnung Messnummer beginnt mit 1 nicht 0!!!
                     std::cout << "Mesurement number: " << measurementNumber << std::endl;
 
                     bool success;
-                    // ======================= Added Measurement funciton ================================
+                    
                     try
-                    {
-
-                        success = PlotterMesurement(&m_document->GetResultsMutable(), measurementNumber);
-
+                    {   // Execute Main Measurement Function
+                        success = PlotterMeasurement(&m_document->GetResultsMutable(), measurementNumber);
                     }
                     catch (const std::exception& e) {
                         // Hier holst du den Grund ab:
@@ -189,7 +189,7 @@ void GrblScanWindow::OnStart(wxCommandEvent& event) {
                         {
                             yReal.clear();
                         }
-                        //this->CallAfter([this](){
+                        
                         std::vector<double> xAxis = updatedData.GetFreqStepVector();
                         const size_t n = std::min(xAxis.size(), yReal.size());
                         if (n > 0)
@@ -199,9 +199,8 @@ void GrblScanWindow::OnStart(wxCommandEvent& event) {
                             m_document->SetXData(xAxis);
                             m_document->SetYData(yReal);
                         }
-
+                        // Updated Through CallAfter so it is Thread safe.
                         m_document->NotifyDataUpdated();
-                        //});
                         printf("Messung an Punkt R:%d C:%d erfolgreich beendet.\n", r, c);
                     } 
                     else

@@ -14,7 +14,7 @@
 
 // Helper functions for komplex main functions
 
-bool PlotterMesurement(sData* data, int mesurementNumber);
+bool PlotterMeasurement(sData* data, int mesurementNumber);
 
 wxString terminalTimestampOutput(wxString Text);
 
