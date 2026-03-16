@@ -78,6 +78,12 @@ public:
                           const std::string& scriptName,
                           int                measurementNumber);
 
+    /** Select separator used by CsvFile when writing measurement output. */
+    void SetCsvSeparator(char separator) { m_csvSeparator = separator; }
+
+    /** Include or omit plotter settings in the saved CSV header. */
+    void SetIncludePlotterSettings(bool include) { m_includePlotterSettings = include; }
+
     /**
      * Signal the running thread to stop and block until it joins.
      */
@@ -116,6 +122,9 @@ private:
     std::thread             m_thread;
     std::atomic<bool>       m_stopFlag{false};
     std::atomic<bool>       m_measuring{false};
+
+    char                    m_csvSeparator = ',';
+    bool                    m_includePlotterSettings = true;
 
     std::vector<IMeasurementObserver*> m_observers;
 };

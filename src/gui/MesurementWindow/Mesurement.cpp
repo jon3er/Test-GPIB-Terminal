@@ -19,8 +19,6 @@ PlotWindow::PlotWindow(wxWindow *parent, MainDocument* mainDoc)
     , m_mainDoc(mainDoc)
     , m_windowId(s_windowCounter)
 {
-    getFileNames(m_filePath, m_fileNames);
-
     //------------------ Menubar --------------------
     m_menuBar = new wxMenuBar(0);
 
@@ -57,8 +55,15 @@ PlotWindow::PlotWindow(wxWindow *parent, MainDocument* mainDoc)
     menuMesurement->AppendSeparator();
     menuMesurement->Append(MainMenuBar::ID_Main_Mesurement_Settings,   wxT("Settings"));
 
+    //------------------ Help menu --------------------
+    wxMenu* menuHelp = new wxMenu();
+    menuHelp->Append(MainMenuBar::ID_Main_Help_About,        wxT("About"));
+    menuHelp->AppendSeparator();
+    menuHelp->Append(MainMenuBar::ID_Main_Help_ResetDevices, wxT("Devices"));
+
     m_menuBar->Append(menuFile,        wxT("File"));
     m_menuBar->Append(menuMesurement,  wxT("Mesurement"));
+    m_menuBar->Append(menuHelp,        wxT("Help"));
     this->SetMenuBar(m_menuBar);
 
     // Bind File menu handlers (local to this window)
@@ -77,14 +82,23 @@ PlotWindow::PlotWindow(wxWindow *parent, MainDocument* mainDoc)
     Bind(wxEVT_MENU, &PlotWindow::OnMenuMesurement2DMess,    this, MainMenuBar::ID_Main_Mesurement_2D_Mess);
     Bind(wxEVT_MENU, &PlotWindow::OnMenuMesurementSetMarker, this, MainMenuBar::ID_Main_Mesurement_SetMarker);
     Bind(wxEVT_MENU, &PlotWindow::OnMenuMesurementSettings,  this, MainMenuBar::ID_Main_Mesurement_Settings);
+
+    // Bind Help menu handlers (forward to parent MainProgrammWin)
+    Bind(wxEVT_MENU, &PlotWindow::OnMenuHelpAbout,        this, MainMenuBar::ID_Main_Help_About);
+    Bind(wxEVT_MENU, &PlotWindow::OnMenuHelpResetDevices, this, MainMenuBar::ID_Main_Help_ResetDevices);
     //------------------ End Menubar --------------------
 
-    wxButton* executeMesurment = new wxButton(this, wxID_ANY, "Execute Mesurement");
+    wxButton* executeMesurment = new wxButton(this, wxID_ANY, "Start Single measurement");
     executeMesurment->Bind(wxEVT_BUTTON, &PlotWindow::executeScriptEvent, this);
     wxButton* openLoadedSettingsBtn = new wxButton(this, wxID_ANY, "Open Measurement Settings");
     openLoadedSettingsBtn->Bind(wxEVT_BUTTON, &PlotWindow::OnOpenLoadedMeasurementSettings, this);
-    m_selectMesurement = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, m_fileNames);
-    m_selectMesurement->SetSelection(0);
+
+    wxArrayString separatorChoices;
+    separatorChoices.Add(",");
+    separatorChoices.Add(";");
+    m_selectSeparator = new wxChoice(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, separatorChoices);
+    m_selectSeparator->SetSelection(0);
+    m_selectSeparator->Bind(wxEVT_CHOICE, &PlotWindow::OnSeparatorChanged, this);
 
     // Plot container panel — the mpWindow will be kept square and centred
     // inside this panel via the wxEVT_SIZE handler below.
@@ -169,7 +183,12 @@ PlotWindow::PlotWindow(wxWindow *parent, MainDocument* mainDoc)
     wxBoxSizer* leftSizer = new wxBoxSizer(wxVERTICAL);
     leftSizer->Add(executeMesurment,   0, wxEXPAND | wxALL, 3);
     leftSizer->Add(openLoadedSettingsBtn, 0, wxEXPAND | wxALL, 3);
-    leftSizer->Add(m_selectMesurement, 0, wxEXPAND | wxALL, 3);
+
+    wxBoxSizer* separatorSizer = new wxBoxSizer(wxHORIZONTAL);
+    wxStaticText* separatorLabel = new wxStaticText(this, wxID_ANY, "Save separator:");
+    separatorSizer->Add(separatorLabel,   0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 6);
+    separatorSizer->Add(m_selectSeparator, 1, wxEXPAND);
+    leftSizer->Add(separatorSizer, 0, wxEXPAND | wxALL, 3);
 
     // [x ; y] matrix measurement selector row
     wxBoxSizer* matrixSizer = new wxBoxSizer(wxHORIZONTAL);
@@ -187,7 +206,7 @@ PlotWindow::PlotWindow(wxWindow *parent, MainDocument* mainDoc)
     leftSizer->Add(matrixSizer, 0, wxEXPAND | wxALL, 3);
     leftSizer->AddStretchSpacer(1);
 
-    // Right: info panel (placeholder)
+    // Right: info panel
     m_infoPanel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_SIMPLE);
     wxBoxSizer* infoSizer = new wxBoxSizer(wxVERTICAL);
     wxStaticText* infoTitle = new wxStaticText(m_infoPanel, wxID_ANY, "Measurement Info",
@@ -203,7 +222,7 @@ PlotWindow::PlotWindow(wxWindow *parent, MainDocument* mainDoc)
     infoSizer->Add(m_infoText, 1, wxEXPAND | wxALL, 8);
     m_infoPanel->SetSizer(infoSizer);
 
-    // Populate info panel from pre-loaded document (or show placeholder)
+    // Populate info panel from pre-loaded document
     if (m_mainDoc != nullptr && m_mainDoc->IsFileOpen())
         UpdateInfoPanel(m_mainDoc->GetData().GetParameter());
     else
@@ -273,8 +292,20 @@ void PlotWindow::SetDocument(MeasurementDocument* doc)
     if (m_document)
     {
         m_document->AddObserver(this);
+        m_document->SetCsvSeparator(m_currentCsvSeparator);
         RefreshFromDocument();
     }
+}
+
+void PlotWindow::OnSeparatorChanged(wxCommandEvent& /*event*/)
+{
+    if (!m_selectSeparator)
+        return;
+
+    m_currentCsvSeparator = (m_selectSeparator->GetSelection() == 1) ? ';' : ',';
+
+    if (m_document)
+        m_document->SetCsvSeparator(m_currentCsvSeparator);
 }
 
 void PlotWindow::OnDocumentChanged(const std::string& changeType)
@@ -308,24 +339,6 @@ wxString PlotWindow::formatOutput(const std::string& text)
     return terminalTimestampOutput(wxString::FromUTF8(text.c_str()));
 }
 
-void PlotWindow::getFileNames(const wxString& dirPath, wxArrayString& files)
-{
-    wxDir dir(dirPath);
-
-    if (!dir.IsOpened())
-    {
-        return;
-    }
-
-    wxString filename;
-    bool cont = dir.GetFirst(&filename, "*.txt", wxDIR_FILES);
-
-    while (cont) {
-
-        files.Add(filename);
-        cont = dir.GetNext(&filename);
-    }
-}
 void PlotWindow::executeScriptEvent(wxCommandEvent& event)
 {
     if (!m_document)
@@ -340,20 +353,29 @@ void PlotWindow::executeScriptEvent(wxCommandEvent& event)
         return;
     }
 
-    wxString fileName = m_selectMesurement->GetStringSelection();
-    std::cerr << "Starting measurement for: " << fileName << std::endl;
+    if (m_selectSeparator)
+        m_currentCsvSeparator = (m_selectSeparator->GetSelection() == 1) ? ';' : ',';
 
-    // Set basic metadata on the first pass
-    if (m_mesurementNumber == 1)
+    m_document->SetCsvSeparator(m_currentCsvSeparator);
+    m_document->SetIncludePlotterSettings(false);
+
+    std::cerr << "Starting single measurement" << std::endl;
+
+    // Single-shot mode: always one data set.
+    m_mesurementNumber = 1;
+    if (sData::sParam* info = m_document->GetResultsMutable().GetParameter())
     {
         wxDateTime now = wxDateTime::Now();
-        sData::sParam* info = m_document->GetResultsMutable().GetParameter();
         info->File = "Mesurement";
         info->Date = now.FormatISODate();
         info->Time = now.FormatISOTime();
+        info->NoPoints_X = 1;
+        info->NoPoints_Y = 1;
+        info->hasPlotterData = false;
     }
 
-    m_document->StartMeasurement(m_filePath.ToStdString(), fileName.ToStdString(), m_mesurementNumber);
+    // Empty script name -> MeasurementDocument runs one direct device measurement.
+    m_document->StartMeasurement(m_filePath.ToStdString(), "", m_mesurementNumber);
 }
 void PlotWindow::updatePlotData()
 {
@@ -952,6 +974,20 @@ void PlotWindow::OnMenuMesurementSettings(wxCommandEvent& event)
     MainProgrammWin* parent = dynamic_cast<MainProgrammWin*>(GetParent());
     if (parent)
         parent->MenuMesurementSettings(event);
+}
+
+void PlotWindow::OnMenuHelpAbout(wxCommandEvent& event)
+{
+    MainProgrammWin* parent = dynamic_cast<MainProgrammWin*>(GetParent());
+    if (parent)
+        parent->MenuHelpAbout(event);
+}
+
+void PlotWindow::OnMenuHelpResetDevices(wxCommandEvent& event)
+{
+    MainProgrammWin* parent = dynamic_cast<MainProgrammWin*>(GetParent());
+    if (parent)
+        parent->MenuHelpResetDevices(event);
 }
 
 void PlotWindow::OnClose(wxCloseEvent& event)

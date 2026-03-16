@@ -64,7 +64,7 @@ public:
     bool ShowMatrixPoint(int xIndex, int yIndex, bool logSelection = false);
 
 protected:
-    wxChoice*     m_selectMesurement;
+    wxChoice*     m_selectSeparator;
     mpWindow*     m_plot;
     mpFXYVector*  m_vectorLayer;
     mpFXYVector*  m_vectorLayerImag;
@@ -84,10 +84,9 @@ protected:
 
 private:
     wxString      m_filePath = System::filePathSystem;
-    wxArrayString m_fileNames;
 
-    void getFileNames(const wxString& dirPath, wxArrayString& files);
     void executeScriptEvent(wxCommandEvent& event);
+    void OnSeparatorChanged(wxCommandEvent& event);
     void OnSelectMeasurement(wxCommandEvent& event);
     void OnOpenLoadedMeasurementSettings(wxCommandEvent& event);
     void PopulateSelectors(unsigned int nX, unsigned int nY);
@@ -115,6 +114,10 @@ private:
     void OnMenuMesurementSetMarker(wxCommandEvent& event);
     void OnMenuMesurementSettings(wxCommandEvent& event);
 
+    // Menu handlers (Help) — forward to parent MainProgrammWin
+    void OnMenuHelpAbout(wxCommandEvent& event);
+    void OnMenuHelpResetDevices(wxCommandEvent& event);
+
     // Helper for formatting output with timestamp
     wxString formatOutput(const std::string& text);
 
@@ -133,6 +136,7 @@ private:
     MainDocument* m_mainDoc = nullptr;
 
     int m_mesurementNumber = 1;
+    char m_currentCsvSeparator = ',';
     int m_windowId = 0;
 };
 

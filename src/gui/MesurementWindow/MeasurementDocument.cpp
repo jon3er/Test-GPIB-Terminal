@@ -141,7 +141,7 @@ void MeasurementDocument::WorkerThread(const std::string& dirPath,
                                        int                measurementNumber)
 {
     std::cout << "MeasurementDocument: worker thread started" << std::endl;
-    CsvFile csvFile;
+    CsvFile csvFile(m_csvSeparator);
 
     try
     {
@@ -149,8 +149,20 @@ void MeasurementDocument::WorkerThread(const std::string& dirPath,
         wxString wxDirPath    = wxString::FromUTF8(dirPath);
         wxString wxScriptName = wxString::FromUTF8(scriptName);
 
-        // Execute the GPIB script — blocks until completed or stopped
-        m_adapter.readScriptFile(wxDirPath, wxScriptName, &logAdapterReceived, &m_stopFlag);
+        // Prefer direct device measurement when no script is provided.
+        // Custom-script mode still works via fsuMeasurement::executeMeasurement().
+        if (scriptName.empty())
+        {
+            if (!m_messung.executeMeasurement())
+            {
+                throw std::runtime_error("executeMeasurement failed");
+            }
+        }
+        else
+        {
+            // Execute the GPIB script — blocks until completed or stopped
+            m_adapter.readScriptFile(wxDirPath, wxScriptName, &logAdapterReceived, &m_stopFlag);
+        }
 
         for (size_t i = 0; i < logAdapterReceived.GetCount(); i++)
             std::cerr << logAdapterReceived[i] << std::endl;
@@ -162,7 +174,9 @@ void MeasurementDocument::WorkerThread(const std::string& dirPath,
         sData::sParam* info = m_results.GetParameter();
 
         if (measurementNumber == 1)
+        {
             m_results.setNumberofPts_Array(x_copy.size());
+        }
 
         int xPos = 0, yPos = 0;
         m_results.getXYCord(xPos, yPos, measurementNumber);
@@ -184,6 +198,10 @@ void MeasurementDocument::WorkerThread(const std::string& dirPath,
         wxString filePath = System::filePathRoot + System::fileSystemSlash
                           + "LogFiles" + System::fileSystemSlash
                           + "Messung " + info->Time;
+
+        if (info && !m_includePlotterSettings)
+            info->hasPlotterData = false;
+
         wxTextFile file(filePath);
         file.Create();
         if (!file.Open())
