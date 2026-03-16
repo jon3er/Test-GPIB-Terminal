@@ -44,7 +44,7 @@ PlotterFrame* PlotterFrame::ShowOrRaise()
 }
 
 PlotterFrame::PlotterFrame()
-    : wxDialog(NULL, wxID_ANY, "Plotter Controller", wxDefaultPosition, wxSize(1000, 700)),
+    : wxDialog(wxTheApp->GetTopWindow(), wxID_ANY, "Plotter Controller", wxDefaultPosition, wxSize(1000, 700)),
       m_grbl(std::make_unique<GrblController>())
 {
     m_measurementDoc = new MeasurementDocument(

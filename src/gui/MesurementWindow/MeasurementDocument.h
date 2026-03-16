@@ -60,6 +60,8 @@ public:
     const sData&               GetResults()          const { return m_results; }
     sData&                     GetResultsMutable()         { return m_results; }
     void                       NotifyDataUpdated()         { NotifyObservers("DataUpdated"); }
+    /** Notify observers that fresh live x/y vector data is ready (bypasses matrix selection in PlotWindow). */
+    void                       NotifyLiveDataUpdated()     { NotifyObservers("LiveDataUpdated"); }
 
     /** Replace current result data and notify observers. */
     void SetResults(const sData& results);

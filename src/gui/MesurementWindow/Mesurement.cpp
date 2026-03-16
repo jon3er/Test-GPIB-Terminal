@@ -331,6 +331,16 @@ void PlotWindow::OnDocumentChanged(const std::string& changeType)
             }
         });
     }
+    else if (changeType == "LiveDataUpdated")
+    {
+        // Live scan data — show the latest x/y vectors directly, bypass matrix selection
+        wxEvtHandler::CallAfter([this]()
+        {
+            if (!m_document)
+                return;
+            updatePlotData();
+        });
+    }
     // MeasurementStarted / MeasurementStopped — no visual action needed here
 }
 

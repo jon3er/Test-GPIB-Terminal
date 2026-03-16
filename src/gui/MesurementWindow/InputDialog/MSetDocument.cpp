@@ -1,5 +1,5 @@
 #include "MSetDocument.h"
-
+#include "mainHelper.h"
 #include <algorithm>
 #include <cmath>
 #include <sstream>
@@ -132,6 +132,8 @@ bool MSetDocument::ApplySweep(const fsuMeasurement::lastSweepSettings& settings)
         SetResult(false, false, "Fehler beim Senden der Einstellungen!");
         return false;
     }
+    // wait for settings to apply before reading back
+    sleepMs(150);
 
     if (!m_fsu.readSweepSettings())
     {
@@ -221,6 +223,8 @@ bool MSetDocument::ApplyIq(const fsuMeasurement::IqSettings& settings)
         return false;
     }
 
+    sleepMs(150);
+
     if (!m_fsu.readIqSettings())
     {
         SetResult(false, false, "IQ-Einstellungen gesendet, aber Ruecklesen fehlgeschlagen!");
@@ -292,6 +296,8 @@ bool MSetDocument::ApplyMarkerPeak(const fsuMeasurement::MarkerPeakSettings& set
         SetResult(false, false, "Fehler beim Senden der MarkerPeak-Einstellungen!");
         return false;
     }
+
+    sleepMs(150);
 
     if (!m_fsu.readMarkerPeakSettings())
     {

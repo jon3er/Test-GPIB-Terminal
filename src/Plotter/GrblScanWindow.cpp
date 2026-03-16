@@ -119,7 +119,8 @@ void GrblScanWindow::OnStart(wxCommandEvent& event) {
         ToggleControls(false); // Disable inputs
 
         m_btnStart->Enable(true);
-        m_btnStart->SetLabel("STOP SCAN"); // Change label
+        m_btnStart->SetLabel("STOP SCAN"); // Change labe   
+
 
         // ========================================= Setup Measuremnt ==============================================
         // Set Parameter for mesurement
@@ -196,11 +197,14 @@ void GrblScanWindow::OnStart(wxCommandEvent& event) {
                         {
                             xAxis.resize(n);
                             yReal.resize(n);
-                            m_document->SetXData(xAxis);
-                            m_document->SetYData(yReal);
+                            // Marshal to main thread: SetXData/SetYData and notify must not run on worker thread.
+                            this->CallAfter([this, x = std::move(xAxis), y = std::move(yReal)]() mutable {
+                                if (!m_document) return;
+                                m_document->SetXData(x);
+                                m_document->SetYData(y);
+                                m_document->NotifyLiveDataUpdated();
+                            });
                         }
-                        // Updated Through CallAfter so it is Thread safe.
-                        m_document->NotifyDataUpdated();
                         printf("Messung an Punkt R:%d C:%d erfolgreich beendet.\n", r, c);
                     } 
                     else
