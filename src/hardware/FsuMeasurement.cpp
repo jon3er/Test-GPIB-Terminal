@@ -65,6 +65,8 @@ bool fsuMeasurement::executeMeasurement(int TimeOutMs)
         if (!adapter.checkIfMsgAvailable(checkTimeoutMs))
         {
             setErrorMessage("Sweep Measurement Timeout waiting for MAV");
+            adapter.write("INIT:CONT ON"); // turn on continous measurement
+            adapter.write("++auto 1");
             return false;
         }
 
@@ -77,7 +79,9 @@ bool fsuMeasurement::executeMeasurement(int TimeOutMs)
             if (TimeOutMs <= TimePassed)
             {
                 setErrorMessage("Sweep: timeout while receiving data");
-                break;
+                adapter.write("INIT:CONT ON"); // turn on continous measurement
+                adapter.write("++auto 1");
+                return false;
             }
         }
         sleepMs(WaitTimeMs);
@@ -101,6 +105,8 @@ bool fsuMeasurement::executeMeasurement(int TimeOutMs)
         if (!adapter.checkIfMsgAvailable(checkTimeoutMs))
         {
             setErrorMessage("IQ Measurement Timeout waiting for MAV");
+            adapter.write("INIT:CONT ON"); // turn on continous measurement
+            adapter.write("++auto 1");
             return false;
         }
 
@@ -112,7 +118,9 @@ bool fsuMeasurement::executeMeasurement(int TimeOutMs)
             if (TimeOutMs <= TimePassed)
             {
                 setErrorMessage("IQ: timeout while receiving data");
-                break;
+                adapter.write("INIT:CONT ON"); // turn on continous measurement
+                adapter.write("++auto 1");
+                return false;
             }
   
         }
@@ -133,6 +141,8 @@ bool fsuMeasurement::executeMeasurement(int TimeOutMs)
         if (!adapter.checkIfMsgAvailable(checkTimeoutMs))
         {
             setErrorMessage("Marker Measurement Timeout waiting for MAV");
+            adapter.write("INIT:CONT ON"); // turn on continous measurement
+            adapter.write("++auto 1");
             return false;
         }
 
@@ -145,7 +155,9 @@ bool fsuMeasurement::executeMeasurement(int TimeOutMs)
             if (TimeOutMs <= TimePassed)
             {
                 setErrorMessage("Marker: timeout while receiving data");
-                break;
+                adapter.write("INIT:CONT ON"); // turn on continous measurement
+                adapter.write("++auto 1");
+                return false;
             }
         }
         commaSeparatedValues = adapter.read(); // Save x and y values
