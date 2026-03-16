@@ -2,6 +2,19 @@
 #include "cmdGpib.h"
 #include <cstdio>
 
+/**
+ * @file    Main.cpp
+ * @brief   Steuerungssoftware für Rohde & Schwarz Spektrumanalysatoren
+ * 
+ * Projekt:         Automatisierung von Spektrumanalystor-Messungen
+ * Hardware:        Prologix GPIB-USB Controller (D2XX Treiber)
+ * Framework:       wxWidgets
+ * Visualisierung:  wxMathPlot / Custom Plotter
+ * 
+ * @author  Jonathan Dreyer
+ * @date    2026-03-16
+ * @version 1.0
+ */
 
 wxIMPLEMENT_APP(MainWin);
 
@@ -550,7 +563,7 @@ void MainProgrammWin::MenuMesurement2DMess(wxCommandEvent& event)
 void MainProgrammWin::MenuHelpAbout(wxCommandEvent& event)
 {
     wxString aboutText;
-    aboutText << "GPIB-FSU-Measurement Tool\n"
+    aboutText << "GPIB-Measurement Tool\n"
               << "Version: 1.0\n"
               << "\n"
               << "GPIB measurement and control tool\n"

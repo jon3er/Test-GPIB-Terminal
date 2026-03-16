@@ -85,6 +85,7 @@ void HelpWin::OnHelpDocumentChanged(const std::string& changeType)
 	}
 }
 
+//----- Update View -----
 void HelpWin::UpdateView()
 {
 	if (!m_document) return;
@@ -97,27 +98,32 @@ void HelpWin::OnResetAdapter(wxCommandEvent& event)
 {
 	if (m_document) m_document->ResetAdapter();
 }
-
+// ---- Button Functions
+//----- Reset Devices Button Pressed ------
 void HelpWin::OnResetDevice(wxCommandEvent& event)
 {
 	if (m_document) m_document->ResetDevice();
 }
-
+//----- Get Adapter Status Button Pressed ------
 void HelpWin::OnGetAdapterStatus(wxCommandEvent& event)
 {
 	if (m_document) m_document->GetAdapterStatus();
 }
-
+//----- Get Adapter Status Button Pressed ------
 void HelpWin::OnGetDeviceStatus(wxCommandEvent& event)
 {
 	if (m_document) m_document->GetDeviceStatus();
 }
 
+/**
+ * @brief Function to unload the drivers that block the FTDI Drivers For the Prologix Adapter
+ */
 void HelpWin::OnUnloadAdapterDriver(wxCommandEvent& event)
 {
 #ifdef __linux__
 	int response = wxMessageBox(
-		"To unload Adapter Drivers make sure programm is running as SU.",
+		"To unload Adapter Drivers make sure programm is running as SU.\n
+		Please disconnect all other USB Devices",
 		"Unload Adapter Driver",
 		wxYES_NO | wxICON_WARNING,
 		this);
@@ -130,7 +136,7 @@ void HelpWin::OnUnloadAdapterDriver(wxCommandEvent& event)
 	(void)event;
 #endif
 }
-
+// --------- Get the Last Measurement Error
 void HelpWin::OnDisplayLastError(wxCommandEvent& event)
 {
 	(void)event;

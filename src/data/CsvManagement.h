@@ -20,7 +20,7 @@ class CsvFile
          * @brief Save measurement data to csv file
          * @param separator Set separator for US or DE usage
          */
-        CsvFile(char separator = ',');
+        CsvFile(char separator = ';');
         ~CsvFile();
 
         // write
