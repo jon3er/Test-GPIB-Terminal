@@ -534,7 +534,22 @@ void MainProgrammWin::MenuMesurement2DMess(wxCommandEvent& event)
 
 void MainProgrammWin::MenuHelpAbout(wxCommandEvent& event)
 {
+    wxString aboutText;
+    aboutText << "GPIB-FSU-Measurement Tool\n"
+              << "Version: 1.0\n"
+              << "\n"
+              << "GPIB measurement and control tool\n"
+              << "based on wxWidgets and Prologix USB-GPIB adapter.\n"
+              << "\n"
+              << "GitHub: \n"
+              << "https://github.com/jon3er/Test-GPIB-Terminal";
 
+    wxMessageBox(
+        aboutText,
+        "About",
+        wxOK | wxICON_INFORMATION,
+        this
+    );
 }
 
 void MainProgrammWin::MenuHelpResetDevices(wxCommandEvent& event)
