@@ -232,6 +232,12 @@ void GrblScanWindow::OnStart(wxCommandEvent& event) {
                 // Optional: Check if it was a real finish or a cancel
                 // (You'd need a getter for m_shouldCancel if you want different messages)
                 wxMessageBox("Scan cycle ended. \nStatus: ", "Info");
+
+                // Notify AFTER the message box is dismissed so that the PlotWindow's
+                // RefreshFromDocument / PopulateSelectors runs on a clean event loop
+                // without interference from the modal's nested event loop.
+                if (m_document)
+                    m_document->NotifyDataUpdated();
             });
         });
 
