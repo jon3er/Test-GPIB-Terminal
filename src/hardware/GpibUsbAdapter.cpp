@@ -591,7 +591,7 @@ std::vector<char> PrologixUsbGpibAdapter::checkAscii(std::string input)
     return vCharOutputGpib;
 }
 
-void prepareFTDIDevice() {
+void PrologixUsbGpibAdapter::prepareFTDIDevice() {
     std::cout << "Prüfe auf aktive VCP-Treiber (ftdi_sio)..." << std::endl;
 
     // check if module is loaded (lsmod | grep)

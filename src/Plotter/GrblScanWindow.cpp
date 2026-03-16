@@ -206,6 +206,7 @@ void GrblScanWindow::OnStart(wxCommandEvent& event) {
                     else
                     {
                         printf("FEHLER bei Messung an Punkt R:%d C:%d\n", r, c);
+                        return false;
                     }
                     // std::this_thread::sleep_for(std::chrono::milliseconds(500));
                     printf("Reached Point R:%d C:%d at (%.2f, %.2f)\n", r, c, x, y);
@@ -226,7 +227,7 @@ void GrblScanWindow::OnStart(wxCommandEvent& event) {
 
                 // Optional: Check if it was a real finish or a cancel
                 // (You'd need a getter for m_shouldCancel if you want different messages)
-                wxMessageBox("Scan cycle ended.", "Info");
+                wxMessageBox("Scan cycle ended. \nStatus: ", "Info");
             });
         });
 

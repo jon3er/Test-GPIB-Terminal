@@ -117,8 +117,8 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, MainDocument* doc, wxWindowI
     m_submenu_NewMesurement->Append( m_menuMesure_Item_Preset_1 );
     m_submenu_NewMesurement->Append( m_menuMesure_Item_Preset_2 );
     m_submenu_NewMesurement->Append( m_menuMesure_Item_Preset_3 );
-    m_submenu_NewMesurement->AppendSeparator();
-    m_submenu_NewMesurement->Append( m_menuMesure_Item_Custom );
+    // m_submenu_NewMesurement->AppendSeparator();
+    // m_submenu_NewMesurement->Append( m_menuMesure_Item_Custom );
 
 
     // set submenu order
@@ -156,7 +156,7 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, MainDocument* doc, wxWindowI
 
     // create submenu elemets
 	m_menuHelp_Item_About = new wxMenuItem( m_menu_Help, ID_Main_Help_About, wxString( wxT("About") ) , wxEmptyString, wxITEM_NORMAL );
-    m_menuHelp_Item_ResetDevices = new wxMenuItem( m_menu_Help, ID_Main_Help_ResetDevices, wxString( wxT("Reset Devices") ) , wxEmptyString, wxITEM_NORMAL );
+    m_menuHelp_Item_ResetDevices = new wxMenuItem( m_menu_Help, ID_Main_Help_ResetDevices, wxString( wxT("Devices") ) , wxEmptyString, wxITEM_NORMAL );
 
     // set submenu order
     m_menu_Help->Append( m_menuHelp_Item_About );

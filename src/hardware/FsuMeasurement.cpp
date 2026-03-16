@@ -41,7 +41,7 @@ bool fsuMeasurement::executeMeasurement(int TimeOutMs)
 
     // Setup adapter settings for measurement
     // clears old msgs
-    
+    clearLastError();
     adapter.write("++clr"); // Clear buffer to prevent old messages from interfering with new measurement data
     sleepMs(ProzessingTimeMs);
     adapter.write("++mode 1");
