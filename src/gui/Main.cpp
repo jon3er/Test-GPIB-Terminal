@@ -52,6 +52,7 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, MainDocument* doc, wxWindowI
     Bind(wxEVT_MENU, &MainProgrammWin::MenuTestTerminal,    this, MainMenuBar::ID_Main_Test_Terminal);
     Bind(wxEVT_MENU, &MainProgrammWin::MenuTestFunc,        this, MainMenuBar::ID_Main_Test_Func);
     Bind(wxEVT_MENU, &MainProgrammWin::MenuTestPloter,      this, MainMenuBar::ID_Main_Test_Ploter);
+    Bind(wxEVT_MENU, &MainProgrammWin::MenuTestValidation,  this, MainMenuBar::ID_Main_Test_Validation);
     // Help Menu binds
     Bind(wxEVT_MENU, &MainProgrammWin::MenuHelpAbout,       this, MainMenuBar::ID_Main_Help_About);
     Bind(wxEVT_MENU, &MainProgrammWin::MenuHelpResetDevices, this, MainMenuBar::ID_Main_Help_ResetDevices);
@@ -145,11 +146,14 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, MainDocument* doc, wxWindowI
 	m_menuTest_Item_Terminal    = new wxMenuItem( m_menu_Test, ID_Main_Test_Terminal, wxString( wxT("Terminal") ) + wxT('\t') + wxT("Ctrl+Shift+T"), wxEmptyString, wxITEM_NORMAL );
 	m_menuTest_Item_Func        = new wxMenuItem( m_menu_Test, ID_Main_Test_Func, wxString( wxT("Function Test") ) + wxT('\t') + wxT("F1"), wxEmptyString, wxITEM_NORMAL );
     m_menuTest_Item_Ploter      = new wxMenuItem( m_menu_Test, ID_Main_Test_Ploter, wxString( wxT("Ploter") ) + wxT('\t') + wxT("F2"), wxEmptyString, wxITEM_NORMAL );
+    m_menuTest_Item_Validation  = new wxMenuItem( m_menu_Test, ID_Main_Test_Validation, wxString( wxT("Validierung") ) + wxT('\t') + wxT("Ctrl+Shift+V"), wxEmptyString, wxITEM_NORMAL );
 
     // set submenu order
     m_menu_Test->Append( m_menuTest_Item_Terminal );
 	m_menu_Test->Append( m_menuTest_Item_Func );
     m_menu_Test->Append( m_menuTest_Item_Ploter );
+    m_menu_Test->AppendSeparator();
+    m_menu_Test->Append( m_menuTest_Item_Validation );
 
     //------------------ Help menu --------------------
 	m_menu_Help = new wxMenu();
@@ -512,6 +516,17 @@ void MainProgrammWin::MenuTestFunc(wxCommandEvent& event)
 void MainProgrammWin::MenuTestPloter(wxCommandEvent& event)
 {
     PlotterFrame::ShowOrRaise();
+}
+
+void MainProgrammWin::MenuTestValidation(wxCommandEvent& event)
+{
+    ValidationDocument validationDoc(PrologixUsbGpibAdapter::get_instance());
+
+    ValidationWindow* validationWin = new ValidationWindow(this);
+    validationWin->SetDocument(&validationDoc);
+    validationWin->ShowModal();
+    validationWin->SetDocument(nullptr);
+    validationWin->Destroy();
 }
 
 void MainProgrammWin::MenuMesurementSetMarker(wxCommandEvent& event)

@@ -10,7 +10,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # 1. wxWidgets & Boost
-find_package(wxWidgets REQUIRED COMPONENTS core base adv net)
+find_package(wxWidgets REQUIRED COMPONENTS core base adv net richtext)
 include(${wxWidgets_USE_FILE})
 
 find_package(Boost REQUIRED COMPONENTS system)

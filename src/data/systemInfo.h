@@ -54,6 +54,7 @@ enum MainMenuBar
     ID_Main_Test_Terminal   = 51,
     ID_Main_Test_Func       = 52,
     ID_Main_Test_Ploter     = 53,
+    ID_Main_Test_Validation = 54,
 
 
     ID_Main_Help            = 60,
