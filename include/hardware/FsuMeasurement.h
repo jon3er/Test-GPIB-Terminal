@@ -19,9 +19,9 @@ struct SweepTimeoutRef
     // Measured and tested ref values
     double spanHzRef = 80e6;          // z.B. stop-start der Referenz
     double rbwHzRef = 20e3;           // z.B. 20 kHz
-    double vbwHzRef = 20e3;           // z.B. 20 kHz
+    double vbwHzRef = 10e3;           // z.B. 20 kHz
     int pointsRef = 625;
-    int checkTimeMsRef = 200;        // measured time untill MAV=true (Msg avaliable)
+    int checkTimeMsRef = 300;        // measured time untill MAV=true (Msg avaliable)
 };
 
 struct IqTimeoutRef
