@@ -46,7 +46,6 @@ std::string PrologixUsbGpibAdapter::read(unsigned int forceReadBytes)
         else
         {
             Text = "Failed to Receive Data - TimeOut after 5s\n";
-            m_deviceInfo.Connected = false;
         }
     }
     else
@@ -99,6 +98,8 @@ std::string PrologixUsbGpibAdapter::send(std::string msg, int DelayMs)
 {
     write(msg);
     int i = 0;
+    if (!(msg.substr(0,2) == "++") && (msg.find("?") != std::string::npos))
+        write("++read eoi");    // for reliable responce even when set to ++auto 0
     sleepMs(5);
 
     while ((quaryBuffer() < 1)&& (i < DelayMs))
@@ -130,14 +131,14 @@ std::string PrologixUsbGpibAdapter::sendForceDelay(std::string msg, int DelayMs)
 bool PrologixUsbGpibAdapter::checkIfMsgAvailable(int TimeOutMs)
 {
     int elapsedMs = 0;
-    int pollIntervalMs = 30; // Abfrage-Intervall (verhindert 100% CPU-Last)
+    int pollIntervalMs = 50; // Abfrage-Intervall (verhindert 100% CPU-Last)
     bool msgReceived = false;
 
     while (elapsedMs < TimeOutMs) {
         // Status-Byte abfragen
         write("++spoll");
 
-        sleepMs(10);
+        sleepMs(20);
 
         if(quaryBuffer() > 0)
         {
@@ -149,13 +150,12 @@ bool PrologixUsbGpibAdapter::checkIfMsgAvailable(int TimeOutMs)
                 // check MAV-Bit (Message Available, Bit 4)
                 if (statusByte & 0x10) {
                     msgReceived = true;
+                    std::cout << "[GPIB BUS] "<<"Msg available" << std::endl;
                     break; // Msg available
                 }
                 else if (statusByte & 0x04) // Bit 2 Error Available
                 {
-                    write("SYST:ERR?");
-                    sleepMs(10);
-                    std::string errorMsg = read();
+                    std::string errorMsg = send("SYST:ERR?",200);
 
                     std::cout << "[GPIB BUS ERROR] "<< errorMsg << std::endl;
                     return msgReceived = false;
@@ -164,9 +164,11 @@ bool PrologixUsbGpibAdapter::checkIfMsgAvailable(int TimeOutMs)
 
             }
         }
-        sleepMs(pollIntervalMs-10);
+        sleepMs(pollIntervalMs-20);
         elapsedMs += (pollIntervalMs);
     }
+
+    std::cerr << "[GPIB BUS ERROR] Timed out after " << elapsedMs << "ms waiting for message." << std::endl;
 
     return msgReceived;
 }

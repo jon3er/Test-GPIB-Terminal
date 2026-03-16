@@ -4,6 +4,7 @@
 #include "mainHelper.h"
 
 #include <cctype>
+#include <algorithm>
 
 
 
@@ -36,6 +37,7 @@ bool fsuMeasurement::executeMeasurement(int TimeOutMs)
     auto& adapter = PrologixUsbGpibAdapter::get_instance();
     int ProzessingTimeMs = 20;
     int WaitTimeMs = 50;
+    int checkTimeoutMs = 1000;
 
     // Setup adapter settings for measurement
     // clears old msgs
@@ -52,19 +54,29 @@ bool fsuMeasurement::executeMeasurement(int TimeOutMs)
     {
     case MeasurementMode::SWEEP:
         adapter.write("INIT:CONT OFF"); // turn of continous measurement
+        adapter.write("FORM ASC");
         adapter.write("INIT:IMM");      // trigger measurement
         adapter.write("*WAI");          // wait for measurement to finish
         adapter.write("TRAC? TRACE1");
         std::cout << "Sweep Measurement Triggered!" << std::endl;
         sleepMs(ProzessingTimeMs);
+
+        checkTimeoutMs = estimateMeasurementTime(); // calc estimated max time
+        if (!adapter.checkIfMsgAvailable(checkTimeoutMs))
+        {
+            setErrorMessage("Sweep Measurement Timeout waiting for MAV");
+            return false;
+        }
+
         adapter.write("++read eoi");
+
         while (adapter.quaryBuffer() < (0.8*m_lastSwpSettings.points * 18)) // 18 bytes per data point Wait for 80% of estimated data  
         { // 18 bytes per data point
             sleepMs(WaitTimeMs);
             TimePassed += WaitTimeMs;
             if (TimeOutMs <= TimePassed)
             {
-                std::cout << "Measurement Timeout!" << std::endl;
+                setErrorMessage("Sweep: timeout while receiving data");
                 break;
             }
         }
@@ -84,15 +96,22 @@ bool fsuMeasurement::executeMeasurement(int TimeOutMs)
         adapter.write("TRAC:IQ:DATA?");
         std::cout << "IQ Measurement Triggered!" << std::endl;
         sleepMs(ProzessingTimeMs);
+
+        checkTimeoutMs = estimateMeasurementTimeIQ(); // calc estimated max time
+        if (!adapter.checkIfMsgAvailable(checkTimeoutMs))
+        {
+            setErrorMessage("IQ Measurement Timeout waiting for MAV");
+            return false;
+        }
+
         adapter.write("++read eoi");
-        // auf iq messpunkte anpassen.
-        while (adapter.quaryBuffer() < (0.8 * m_lastIqSettings.recordLength * 18)) // 18 bytes per data point        
+        while (adapter.quaryBuffer() < (0.8 * m_lastIqSettings.recordLength * 18)) // 18 bytes per data point Ascii       
         {
             sleepMs(WaitTimeMs);
             TimePassed += WaitTimeMs;
             if (TimeOutMs <= TimePassed)
             {
-                std::cout << "Measurement Timeout!" << std::endl;
+                setErrorMessage("IQ: timeout while receiving data");
                 break;
             }
   
@@ -102,25 +121,34 @@ bool fsuMeasurement::executeMeasurement(int TimeOutMs)
         break;
 
     case MeasurementMode::MARKER_PEAK:
-        adapter.write("++auto 1");
+        //adapter.write("++auto 1");
         adapter.write("INIT:CONT OFF;INIT;*WAI");          // wait for measurement to finishCALC:MARK1:X?;Y?
         adapter.write("CALC:MARK1:ON");
         adapter.write("CALC:MARK1:MAX");        // TODO make type of marker selectable MIN / MAX
         std::cout << "Marker Measurement Triggered!" << std::endl;
-        // adapter.write("++read");
+        adapter.write("CALC:MARK1:X?;Y?");
+        
         sleepMs(ProzessingTimeMs);
+        checkTimeoutMs = estimateMeasurementTime(); // calc estimated max time
+        if (!adapter.checkIfMsgAvailable(checkTimeoutMs))
+        {
+            setErrorMessage("Marker Measurement Timeout waiting for MAV");
+            return false;
+        }
+
+        adapter.write("++read eoi");
+
         while (adapter.quaryBuffer() < 1) // 18 bytes per data point        
         {
             sleepMs(WaitTimeMs);
             TimePassed += WaitTimeMs;
             if (TimeOutMs <= TimePassed)
             {
-                std::cout << "Measurement Timeout!" << std::endl;
+                setErrorMessage("Marker: timeout while receiving data");
                 break;
             }
         }
-        commaSeparatedValues = adapter.send("CALC:MARK1:X?;Y?", 5000);// Save x and y values
-
+        commaSeparatedValues = adapter.read(); // Save x and y values
 
         break;
     case MeasurementMode::COSTUM:
@@ -613,7 +641,89 @@ bool fsuMeasurement::readMarkerPeakSettings()
     }
 }
 
-//------fsuMesurement Ende-----
+void fsuMeasurement::setErrorMessage(std::string error)
+{
+    m_lastError = error;
+    std::cerr << terminalTimestampOutput << m_lastError << std::endl;
+}
+
+// estimate Time sweep will take for different settings
+int fsuMeasurement::estimateMeasurementTime()
+{
+    double  startFreqHz =   m_lastSwpSettings.startFreq;
+    double  stopFreqHz  = m_lastSwpSettings.stopFreq;
+    double  rbwHz       = m_lastSwpSettings.rbw;
+    double  vbwHz       = m_lastSwpSettings.vbw;
+    int     points      =  m_lastSwpSettings.points;
+
+    const SweepTimeoutRef& ref = m_sweepTimeoutRef;
+
+    double safetyFactor = 1.4;
+    int offsetMs        = 300;               // add extra saft time
+    int minMs           = 500;                  // lower limit
+    int maxMs           = 120000;                // upper limit
+
+    // prevent too small values (std::max returns the bigger of two values)
+    const double spanHz = std::max(1.0, std::abs(stopFreqHz - startFreqHz));
+    const double rbw = std::max(1.0, rbwHz);
+    const double vbw = std::max(1.0, vbwHz);
+    const int nPts = std::max(1, points);
+
+    // Ref values
+    const double spanRef = std::max(1.0, ref.spanHzRef);
+    const double rbwRef  = std::max(1.0, ref.rbwHzRef);
+    const double vbwRef  = std::max(1.0, ref.vbwHzRef);
+    const int ptsRef     = std::max(1, ref.pointsRef);
+    const int tRefMs     = std::max(1, ref.checkTimeMsRef);
+
+    // Factors
+    const double fSpan   = spanHz / spanRef;
+    const double fRbw    = (rbwRef / rbw) * (rbwRef / rbw);      // ~1/RBW^2
+    const double fVbw    = std::max(1.0, vbwRef / vbw);          // only when vbw is smaller
+    const double fPoints = static_cast<double>(nPts) / static_cast<double>(ptsRef);
+
+    const double tMs =
+        offsetMs +
+        safetyFactor * static_cast<double>(tRefMs) * fSpan * fRbw * fVbw * fPoints;
+
+    const int timeoutMs = static_cast<int>(std::ceil(tMs));
+    return std::clamp(timeoutMs, minMs, maxMs);
+}
+
+int fsuMeasurement::estimateMeasurementTimeIQ()
+{
+    int recordLength        = m_lastIqSettings.recordLength;
+    double sampleRateHz     = m_lastIqSettings.sampleRate;
+    double ifBandwidthHz    = m_lastIqSettings.ifBandwidth;
+
+    const IqTimeoutRef& ref = m_iqTimeoutRef;
+
+    double safetyFactor = 1.5;
+    int offsetMs        = 300;
+    int minMs           = 500;
+    int maxMs           = 120'000; 
+
+
+
+    const int n     = std::max(1, recordLength);
+    const double fs = std::max(1.0, sampleRateHz);
+    const double bw = std::max(1.0, ifBandwidthHz);
+
+    const int nRef      = std::max(1, ref.recordLengthRef);
+    const double fsRef  = std::max(1.0, ref.sampleRateHzRef);
+    const double bwRef  = std::max(1.0, ref.ifBandwidthHzRef);
+    const int tRef      = std::max(1, ref.checkTimeMsRef);
+
+    const double fCapture = (static_cast<double>(n) / fs) / (static_cast<double>(nRef) / fsRef);
+    const double fIfBw = std::max(1.0, bwRef / bw);
+
+    const double tMs = offsetMs + safetyFactor * static_cast<double>(tRef) * fCapture * fIfBw;
+
+    const int timeoutMs = static_cast<int>(std::ceil(tMs));
+
+    return std::clamp(timeoutMs, minMs, maxMs);
+}
+//------fsuMesurement End-----
 
 // Helper functions
 

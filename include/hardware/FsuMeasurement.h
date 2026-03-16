@@ -14,10 +14,24 @@
 #include "GpibUsbAdapter.h"
 #include <wx/textfile.h>
 
+struct SweepTimeoutRef
+{
+    // Measured and tested ref values
+    double spanHzRef = 80e6;          // z.B. stop-start der Referenz
+    double rbwHzRef = 20e3;           // z.B. 20 kHz
+    double vbwHzRef = 20e3;           // z.B. 20 kHz
+    int pointsRef = 625;
+    int checkTimeMsRef = 200;        // measured time untill MAV=true (Msg avaliable)
+};
 
-
-
-
+struct IqTimeoutRef
+{
+    // Measured and tested ref values
+    int recordLengthRef = 128;
+    double sampleRateHzRef = 100000.0;
+    double ifBandwidthHzRef = 100000.0;
+    int checkTimeMsRef = 200; // measured at the above reference settings
+};
 
 /**
  * @brief single instance class to Performe frequency mesurements with a R&S instrument
@@ -90,7 +104,15 @@ public:
      * @return Frequancy range
      */
     std::vector<double> calcFreqData();
-
+    /**
+     * @brief estimate Time a full (Sweep / Marker) measurement 
+     */
+    int estimateMeasurementTime(); 
+    /**
+     * @brief estimate Time a IQ measurement 
+     */
+    int estimateMeasurementTimeIQ();
+    
     // Helper functions
     // Definition der unterstützten Datentypen für die Parameter
 
@@ -113,7 +135,7 @@ public:
         int rbw = 20000;
         int vbw = 20000;
         std::string sweepTime = "ON";
-        std::string detector = "APE";
+        std::string detector = "POS";
     };
 
     bool writeSweepSettings(lastSweepSettings settings);
@@ -150,9 +172,9 @@ public:
         double refLevel = 0;
         int att = 0;
         std::string unit = "DBM";
-        int rbw = 1;
-        int vbw = 1;
-        std::string detector = "APE";
+        int rbw = 10000;
+        int vbw = 10000;
+        std::string detector = "POS";
     };
 
     bool writeMarkerPeakSettings(MarkerPeakSettings settings);
@@ -181,6 +203,12 @@ public:
     bool writeSettingsToGpib();
     bool readSettingsFromGpib();
 
+    // Error Handeling
+    std::string getLastError() {return m_lastError;}
+    void setErrorMessage(std::string error);
+    void clearLastError() {m_lastError = "";}
+
+
 private:
 
     std::vector<double> m_x_Data;
@@ -193,6 +221,9 @@ private:
 
     bool m_ImagValues = false;
 
+    // Error Handeling
+    std::string m_lastError;
+
     // Custom Measurement file Paths
     std::string m_filePathCustomMeasurement;
     std::string m_fileNameCustomMeasurement;
@@ -202,6 +233,9 @@ private:
     lastSweepSettings m_lastSwpSettings;
     IqSettings m_lastIqSettings;
     MarkerPeakSettings m_lastMarkerPeakSettings;
+
+    SweepTimeoutRef m_sweepTimeoutRef;
+    IqTimeoutRef    m_iqTimeoutRef;
 };
 
 
