@@ -1001,6 +1001,7 @@ bool CsvFile::createCsvLookupTable(wxTextFile& file)
     return true;
 }
 
+
 bool CsvFile::measurementToCoordinates(int xPoints, int yPoints, int mesurementNumb, bool continuous, int& xPosition, int& yPosition) const
 {
     if (xPoints <= 0 || yPoints <= 0 || mesurementNumb < 1 || mesurementNumb > xPoints * yPoints)
