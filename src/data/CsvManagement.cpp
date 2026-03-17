@@ -315,7 +315,7 @@ bool CsvFile::saveCsvSettingsMarker(wxTextFile& file, sData& data)
     return true;
 }
 
-bool CsvFile::saveCsvData(wxTextFile& file, sData data, int mesurementNumb, bool cont)
+bool CsvFile::saveCsvData(wxTextFile& file, const sData& data, int mesurementNumb, bool cont)
 {
     if (!file.IsOpened())
     {
@@ -326,6 +326,12 @@ bool CsvFile::saveCsvData(wxTextFile& file, sData data, int mesurementNumb, bool
 
     int xPoints = data.getNumberOfPts_X();
     int yPoints = data.getNumberOfPts_Y();
+
+    if (xPoints <= 0 || yPoints <= 0 || mesurementNumb < 1 || mesurementNumb > (xPoints * yPoints))
+    {
+        std::cerr << kErrPrefixStr.CsvSave << "Invalid measurement index or point dimensions" << std::endl;
+        return false;
+    }
 
     // find line with current
     bool isMarker = (data.getFsuSettings().mode == MeasurementMode::MARKER_PEAK);
@@ -355,14 +361,27 @@ bool CsvFile::saveCsvData(wxTextFile& file, sData data, int mesurementNumb, bool
 
     std::cout << "Trying to save data: X: " << real.size() << "Y: " << imag.size() << std::endl;
 
+    if (count <= 0)
+    {
+        std::cerr << kErrPrefixStr.CsvSave << "No datapoints available for measurement " << mesurementNumb << std::endl;
+        return false;
+    }
+
+    wxString realLine = file.GetLine(lineNumber);
+    wxString imagLine = file.GetLine(lineNumber + 1);
+
     int j = 0;
     for (int i = 0; i < count; i++)
     {
-        file.GetLine(lineNumber) << m_separator << real[i];
-
-        file.GetLine(lineNumber + 1) << m_separator << imag[i];
+        realLine << m_separator << wxString::Format("%.15g", real[i]);
+        imagLine << m_separator << wxString::Format("%.15g", imag[i]);
         j++;
     }
+
+    file.RemoveLine(lineNumber + 1);
+    file.RemoveLine(lineNumber);
+    file.InsertLine(realLine, lineNumber);
+    file.InsertLine(imagLine, lineNumber + 1);
 
     std::cout << "saved " << j << " data points!";
 
@@ -868,7 +887,7 @@ bool CsvFile::readCsvData(wxTextFile& file, sData& data)
 
 // Helper functions Index
 
-bool CsvFile::writeMatrixIndexCsv(wxTextFile& file, sData data, bool continuous)
+bool CsvFile::writeMatrixIndexCsv(wxTextFile& file, const sData& data, bool continuous)
 {
     // ID Für Real Nummern einfügen
     int xPoints = data.getNumberOfPts_X();

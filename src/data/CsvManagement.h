@@ -58,7 +58,7 @@ class CsvFile
         /**
          * @brief save measurement data to file
          */
-        bool saveCsvData(wxTextFile& file, sData data, int mesurementNumb, bool cont = false);
+        bool saveCsvData(wxTextFile& file, const sData& data, int mesurementNumb, bool cont = false);
 
         
 
@@ -88,7 +88,7 @@ class CsvFile
         /**
          * @brief writes all matrix indexes for one measurement to file
          */
-        bool writeMatrixIndexCsv(wxTextFile& file, sData data, bool continuous = false);
+        bool writeMatrixIndexCsv(wxTextFile& file, const sData& data, bool continuous = false);
 
         /**
          * @brief converts a measurement number to zero-based matrix coordinates

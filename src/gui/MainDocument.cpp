@@ -3,15 +3,13 @@
 #include <algorithm>
 #include <iostream>
 
-// -----------------------------------------------------------------------
 MainDocument::MainDocument()
     : m_fileOpen(false)
 {
 }
 
-// -----------------------------------------------------------------------
+
 // Observer management
-// -----------------------------------------------------------------------
 void MainDocument::AddObserver(IMainObserver* observer)
 {
     if (observer &&
@@ -28,9 +26,7 @@ void MainDocument::RemoveObserver(IMainObserver* observer)
         m_observers.end());
 }
 
-// -----------------------------------------------------------------------
 // File operations
-// -----------------------------------------------------------------------
 bool MainDocument::OpenFile(const wxString& filePath)
 {
     sData newData;
@@ -93,9 +89,8 @@ void MainDocument::CloseFile()
     NotifyFileChanged();
 }
 
-// -----------------------------------------------------------------------
+
 // Notifications
-// -----------------------------------------------------------------------
 void MainDocument::NotifyFileChanged()
 {
     // Iterate over a copy so observers may safely deregister themselves

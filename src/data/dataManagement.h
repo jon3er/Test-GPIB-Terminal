@@ -50,7 +50,7 @@ public:
      * @param y y-coordinte (row)
      * @return selected Array as std::vector
      */
-    std::vector<double> getSingleArray(int x, int y);
+    std::vector<double> getSingleArray(int x, int y) const;
 private:
     // Array scaling variables
     int m_X_Messpunkte;
@@ -134,11 +134,11 @@ public:
 
     int GetMeasurementNumb() { return m_dsParam->MeasurementNumb; };
 
-    int getNumberOfPts_X() {return m_dsParam->NoPoints_X; };
-    int getNumberOfPts_Y() {return m_dsParam->NoPoints_Y; };
-    int getTotalNumberOfPts() {return m_dsParam->NoPoints_X * m_dsParam->NoPoints_Y; };
-    int getNumberOfPts_Array() {return m_dsParam->NoPoints_Array; };
-    int getRecordLength() {return m_dsParam->recordLength; };
+    int getNumberOfPts_X() const {return m_dsParam->NoPoints_X; };
+    int getNumberOfPts_Y() const {return m_dsParam->NoPoints_Y; };
+    int getTotalNumberOfPts() const {return m_dsParam->NoPoints_X * m_dsParam->NoPoints_Y; };
+    int getNumberOfPts_Array() const {return m_dsParam->NoPoints_Array; };
+    int getRecordLength() const {return m_dsParam->recordLength; };
 
 
     std::vector<double> GetFreqStepVector();
@@ -173,8 +173,8 @@ public:
     bool set3DDataImag(std::vector<double> Array , int x, int y);
 
     // get methodes
-    std::vector<double> get3DDataReal(int x, int y);
-    std::vector<double> get3DDataImag(int x, int y);
+    std::vector<double> get3DDataReal(int x, int y) const;
+    std::vector<double> get3DDataImag(int x, int y) const;
 
     // helper methodes
     void resize3DData(int x, int y, int Anzahl) { m_Real3D.resize(x, y, Anzahl); m_Imag3D.resize(x, y, Anzahl); };
@@ -182,7 +182,7 @@ public:
     /**
      * @brief gets x, y Coodinates for current mesurement number
     */
-    void getXYCord(int& x, int& y, int MesurementNumber);
+    void getXYCord(int& x, int& y, int MesurementNumber) const;
 
     /**
      * @brief Reads current settings from fsuMeasurement singleton into m_fsuSettings

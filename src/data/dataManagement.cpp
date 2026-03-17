@@ -120,7 +120,7 @@ std::vector<double> sData::GetTimeIQStepVector()
 }
 
 
-void sData::getXYCord(int& x, int& y, int mesurementNumber)
+void sData::getXYCord(int& x, int& y, int mesurementNumber) const
 {
     // für den das Array ist die addressierung von 0 bis n-1
     int yPoints = m_dsParam->NoPoints_Y;
@@ -407,7 +407,7 @@ bool sData::set3DDataReal(std::vector<double> Array , int x, int y)
     }
     return false;
 }
-std::vector<double> sData::get3DDataReal(int x, int y)
+std::vector<double> sData::get3DDataReal(int x, int y) const
 {
     return m_Real3D.getSingleArray(x,y);
 }
@@ -430,7 +430,7 @@ bool sData::set3DDataImag(std::vector<double> Array , int x, int y)
     }
     return false;
 }
-std::vector<double> sData::get3DDataImag(int x, int y)
+std::vector<double> sData::get3DDataImag(int x, int y) const
 {
     return m_Imag3D.getSingleArray(x,y);
 }
@@ -474,7 +474,7 @@ double* sData3D::getDataPtr(int x, int y)
     return &m_dataArray[index];
 }
 
-std::vector<double> sData3D::getSingleArray(int x, int y)
+std::vector<double> sData3D::getSingleArray(int x, int y) const
 {
     if (x < 0 || y < 0 || x >= m_X_Messpunkte || y >= m_Y_Messpunkte)
     {
