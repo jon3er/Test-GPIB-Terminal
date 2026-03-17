@@ -6,22 +6,32 @@
 #include <cctype>
 #include <algorithm>
 
+namespace {
+bool startsWith(const std::string& value, const std::string& prefix)
+{
+    return value.rfind(prefix, 0) == 0;
+}
+
+std::string trimCopy(const std::string& value)
+{
+    const std::string whitespace = " \n\r\t";
+    const size_t first = value.find_first_not_of(whitespace);
+    if (first == std::string::npos)
+    {
+        return "";
+    }
+
+    const size_t last = value.find_last_not_of(whitespace);
+    return value.substr(first, last - first + 1);
+}
+}
+
 
 
 //------fsuMesurement Beginn-----
-
 fsuMeasurement::fsuMeasurement()
 {
-    /*
-    m_x_Data = {0};
-    m_y_Data = {0};
 
-    m_FreqStart = 75'000'000;
-    m_FreqEnd = 125'000'000;
-
-    m_NoPoints_x = 0;
-    m_NoPoints_y = 0;
-    */
 }
 
 fsuMeasurement::~fsuMeasurement()
@@ -373,8 +383,6 @@ try {
 
 bool fsuMeasurement::writeSettingsToGpib()
 {
-
-
     switch (m_lastMeasurementMode)
     {
         case MeasurementMode::SWEEP:
@@ -434,7 +442,7 @@ std::string blockCmd = scpiSetCommands.at(ScpiCommand::START_FREQUENCY   )   + s
 
     std::cout << "written Sweep data: " << status << std::endl;
 
-    if (status.substr(0,3) == "Msg")
+    if (startsWith(status, "Msg"))
     {
         std::cout << "write successfull!" << std::endl;
         return true;
@@ -468,7 +476,7 @@ bool fsuMeasurement::readSweepSettings()
     std::cout << "response Sweep settings: " << response << std::endl;
 
 
-    if (response.substr(0,6)== "Failed") return false;
+    if (startsWith(response, "Failed")) return false;
 
     // split strings
     std::vector<std::string> tokens;
@@ -476,8 +484,7 @@ bool fsuMeasurement::readSweepSettings()
     std::string token;
 
     while (std::getline(ss, token, ';')) {
-        // Steuerzeichen am Ende (wie \r oder \n) entfernen
-        token.erase(token.find_last_not_of(" \n\r\t") + 1);
+        token = trimCopy(token);
         tokens.push_back(token);
     }
 
@@ -522,7 +529,7 @@ bool fsuMeasurement::writeIqSettings(IqSettings settings)
                            scpiSetCommands.at(ScpiCommand::TRIGGER_DELAY)     + std::format("{}",settings.triggerDelay) + ";";
 
     std::string status = PrologixUsbGpibAdapter::get_instance().write(blockCmd);
-    return (status.substr(0, 3) == "Msg");
+    return startsWith(status, "Msg");
 }
 
 bool fsuMeasurement::readIqSettings()
@@ -539,13 +546,13 @@ bool fsuMeasurement::readIqSettings()
 
     std::cout << "read IQ base settings: " << queryCmd << std::endl;
     std::cout << "response IQ base settings: " << response << std::endl;
-    if (response.substr(0,6)== "Failed") return false;
+    if (startsWith(response, "Failed")) return false;
 
     std::vector<std::string> tokens;
     std::stringstream ss(response);
     std::string token;
     while (std::getline(ss, token, ';')) {
-        token.erase(token.find_last_not_of(" \n\r\t") + 1);
+        token = trimCopy(token);
         tokens.push_back(token);
     }
 
@@ -554,13 +561,12 @@ bool fsuMeasurement::readIqSettings()
     adapter.resetGpibBusBuffer();
     std::string iqSetResponse = adapter.send("TRAC:IQ:SET?");
     std::cout << "response IQ set settings: " << iqSetResponse << std::endl;
-    if (iqSetResponse.substr(0,6)== "Failed") return false;
+    if (startsWith(iqSetResponse, "Failed")) return false;
 
     std::vector<std::string> iqSetTokens;
     std::stringstream ssIq(iqSetResponse);
     while (std::getline(ssIq, token, ',')) {
-        token.erase(token.find_last_not_of(" \n\r\t") + 1);
-        token.erase(0, token.find_first_not_of(" \n\r\t"));
+        token = trimCopy(token);
         iqSetTokens.push_back(token);
     }
 
@@ -601,7 +607,7 @@ bool fsuMeasurement::writeMarkerPeakSettings(MarkerPeakSettings settings)
 
     std::string status = PrologixUsbGpibAdapter::get_instance().write(blockCmd);
 
-    return (status.substr(0, 3) == "Msg");
+    return startsWith(status, "Msg");
 }
 
 bool fsuMeasurement::readMarkerPeakSettings()
@@ -624,13 +630,13 @@ bool fsuMeasurement::readMarkerPeakSettings()
 
     std::cout << "responce Marker settings: " << response << std::endl;
 
-    if (response.substr(0,6)== "Failed") return false;
+    if (startsWith(response, "Failed")) return false;
 
     std::vector<std::string> tokens;
     std::stringstream ss(response);
     std::string token;
     while (std::getline(ss, token, ';')) {
-        token.erase(token.find_last_not_of(" \n\r\t") + 1);
+        token = trimCopy(token);
         tokens.push_back(token);
     }
 

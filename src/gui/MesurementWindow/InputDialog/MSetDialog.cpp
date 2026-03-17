@@ -155,7 +155,7 @@ void SettingsDialog::BuildActionButtons(wxWindow* parent, wxBoxSizer* buttonSize
     m_btnStart = new wxButton(parent, wxID_ANY, "Start");
     btnCancel = new wxButton(parent, wxID_CANCEL, "Cancel");
 
-    m_btnStart->Enable(true);   // TODO change back to False
+    m_btnStart->Enable(false);   // TODO change back to False
     buttonSizer->Add(btnCancel, 0, wxRIGHT, 5);
     buttonSizer->Add(m_btnGetCurrentSettings, 0, wxRIGHT, 5);
     buttonSizer->Add(btnApply, 0, wxRIGHT, 5);

@@ -96,7 +96,7 @@ public:
     /**
      * @brief checks if Adapter buffer has data avalibe to read
      */
-    DWORD       quaryBuffer();
+    DWORD quaryBuffer();
 
     /**
      * @brief reads command from a .txt file

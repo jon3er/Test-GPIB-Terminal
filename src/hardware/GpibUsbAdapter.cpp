@@ -2,6 +2,13 @@
 #include "FsuMeasurement.h"
 #include "mainHelper.h"
 
+namespace {
+bool startsWith(const std::string& value, const std::string& prefix)
+{
+    return value.rfind(prefix, 0) == 0;
+}
+}
+
 
 //TODO Create Device Class and Create new read read and write funtions
 PrologixUsbGpibAdapter::PrologixUsbGpibAdapter()
@@ -98,7 +105,7 @@ std::string PrologixUsbGpibAdapter::send(std::string msg, int DelayMs)
 {
     write(msg);
     int i = 0;
-    if (!(msg.substr(0,2) == "++") && (msg.find("?") != std::string::npos))
+    if (!startsWith(msg, "++") && (msg.find("?") != std::string::npos))
         write("++read eoi");    // for reliable responce even when set to ++auto 0
     sleepMs(5);
 
@@ -160,8 +167,9 @@ bool PrologixUsbGpibAdapter::checkIfMsgAvailable(int TimeOutMs)
                     std::cout << "[GPIB BUS ERROR] "<< errorMsg << std::endl;
                     return msgReceived = false;
                 }
-            } catch (...) {
-
+            } catch (const std::exception& ex) {
+                std::cerr << "[GPIB BUS ERROR] Failed parsing status byte: " << ex.what() << std::endl;
+                return false;
             }
         }
         sleepMs(pollIntervalMs-20);
@@ -213,9 +221,9 @@ bool PrologixUsbGpibAdapter::checkIfGpibDeviceAvailable()
         {
             spollStatus = std::stoi(statusStr);
         }
-        catch(...)
+        catch(const std::exception& ex)
         {
-            std::cout << "failed to convert String" << std::endl;
+            std::cout << "failed to convert String: " << ex.what() << std::endl;
             return false;
         }
 
@@ -241,6 +249,14 @@ bool PrologixUsbGpibAdapter::connect()
     {
         m_deviceInfo.ftStatus = FT_Open(m_deviceInfo.numDev,&m_deviceInfo.ftHandle);
         printErrD2XX(m_deviceInfo.ftStatus,"Failed to Connect");
+
+        if (m_deviceInfo.ftStatus != FT_OK)
+        {
+            m_deviceInfo.Connected = false;
+            m_deviceInfo.ftHandle = NULL;
+            return false;
+        }
+
         write("SYST:DISP:UDP ON"); //Turn on monitor
 
         if (m_deviceInfo.ftStatus == FT_OK)
@@ -251,6 +267,7 @@ bool PrologixUsbGpibAdapter::connect()
         }
         else
         {
+            
             m_deviceInfo.Connected = false;
             return false;
         }
@@ -262,6 +279,11 @@ bool PrologixUsbGpibAdapter::connect()
 }
 bool PrologixUsbGpibAdapter::disconnect()
 {
+    if (!m_deviceInfo.Connected)
+    {
+        return true;
+    }
+
     write(ProLogixCmdLookup.at(ProLogixCmd::AUTO) + " 0");
     write(ScpiCmdLookup.at(ScpiCmd::CLR));
     write(ProLogixCmdLookup.at(ProLogixCmd::LOC));
@@ -276,6 +298,8 @@ bool PrologixUsbGpibAdapter::disconnect()
     {
         std::cerr << "Connected to " << m_deviceInfo.numDev << std::endl;
         m_deviceInfo.Connected = false;
+        m_deviceInfo.configFin = false;
+        m_deviceInfo.ftHandle = NULL;
         return true;
     }
     else
@@ -283,6 +307,7 @@ bool PrologixUsbGpibAdapter::disconnect()
         return false;
     }
 }
+
 void PrologixUsbGpibAdapter::config()
 {
     UCHAR LatencyTimer = 16;
@@ -333,6 +358,14 @@ void PrologixUsbGpibAdapter::readScriptFile(const wxString& dirPath, const wxStr
 {
     wxTextFile textFile;
 
+    auto appendLog = [logAdapterReceived](const std::string& msg)
+    {
+        if (logAdapterReceived != nullptr)
+        {
+            logAdapterReceived->Add(msg);
+        }
+    };
+
     if (textFile.Open(dirPath + fileName))
     {
         if (!getConnected())
@@ -355,14 +388,14 @@ void PrologixUsbGpibAdapter::readScriptFile(const wxString& dirPath, const wxStr
             {
                 std::cerr << "line " << i << ": Empty" << std::endl;
             }
-            else if (line.substr(0,1) == "#")
+            else if (line.StartsWith("#"))
             {
-                std::cerr << "line " << i << ": Kommentar: " << line.substr(1) << std::endl;
+                std::cerr << "line " << i << ": Kommentar: " << line.Mid(1) << std::endl;
             }
-            else if (line.substr(0,5) == "wait ")
+            else if (line.StartsWith("wait "))
             {
                 int wait;
-                wxString strWait = line.substr(5);
+                wxString strWait = line.Mid(5);
                 if (strWait.ToInt(&wait))
                 {
                     std::cerr << "wait for " << wait << "ms" << std::endl;
@@ -373,26 +406,28 @@ void PrologixUsbGpibAdapter::readScriptFile(const wxString& dirPath, const wxStr
                     std::cerr << "Invalid wait Time input: " << strWait << std::endl;
                 }
             }
-            else if (line.substr(0,5) == "send ")
+            else if (line.StartsWith("send "))
             {
                 std::cerr << "line " << i << ": manuell send: " << line << std::endl;
-                line = line.substr(5);
-                logAdapterReceived->Add(send(std::string(line.ToUTF8())));
-                std::cerr << "responce: " << logAdapterReceived->Last() << std::endl;
+                line = line.Mid(5);
+                std::string response = send(std::string(line.ToUTF8()));
+                appendLog(response);
+                std::cerr << "responce: " << response << std::endl;
             }
-            else if (line.substr(0,6) == "write ")
+            else if (line.StartsWith("write "))
             {
                 std::cerr << "line " << i << ": manuell write: " << line << std::endl;
-                line = line.substr(6);
+                line = line.Mid(6);
                 write(std::string(line.ToUTF8()));
             }
-            else if (line.substr(0,4) == "read")
+            else if (line.StartsWith("read"))
             {
                 std::cerr << "line " << i << ": manuell read" << std::endl;
-                logAdapterReceived->Add(read());
-                std::cerr << "responce: " << logAdapterReceived->Last() << std::endl;
+                std::string response = read();
+                appendLog(response);
+                std::cerr << "responce: " << response << std::endl;
             }
-            else if(line.Contains("?") && line.substr(0,4) == "TRAC")
+            else if(line.Contains("?") && line.StartsWith("TRAC"))
             {
                 std::vector<double> bufferReal;
                 std::vector<double> bufferImag;
@@ -401,9 +436,10 @@ void PrologixUsbGpibAdapter::readScriptFile(const wxString& dirPath, const wxStr
                 write(std::string(line.ToUTF8()));
                 write(ProLogixCmdLookup.at(ProLogixCmd::READ) + " eoi");
                 sleepMs(300); // TODO change logic to be more efficent
-                logAdapterReceived->Add(read());
-                std::cerr << "responce: " << logAdapterReceived->Last() << std::endl;
-                fsuMeasurement::get_instance().seperateDataBlock(logAdapterReceived->Last(), bufferReal, bufferImag);
+                std::string response = read();
+                appendLog(response);
+                std::cerr << "responce: " << response << std::endl;
+                fsuMeasurement::get_instance().seperateDataBlock(response, bufferReal, bufferImag);
                 fsuMeasurement::get_instance().setX_Data(bufferReal);
                 fsuMeasurement::get_instance().setY_Data(bufferImag);
                 //Messung.calcYdata(); //start und end frequenz angeben
@@ -412,8 +448,9 @@ void PrologixUsbGpibAdapter::readScriptFile(const wxString& dirPath, const wxStr
             else if(line.Contains("?"))
             {
                 std::cerr << "line " << i << ": send: " << line << std::endl;
-                logAdapterReceived->Add(send(std::string(line.ToUTF8())));
-                std::cerr << "responce: " << logAdapterReceived->Last() << std::endl;
+                std::string response = send(std::string(line.ToUTF8()));
+                appendLog(response);
+                std::cerr << "responce: " << response << std::endl;
             }
             else
             {
@@ -466,7 +503,7 @@ bool PrologixUsbGpibAdapter::resetGpibBusBuffer()
             std::cout << "Old Buffered Msg: "<< read() << std::endl;
         }
 
-        while (!(responce.substr(0,2) == "0,") && (i < 10))
+        while (!startsWith(responce, "0,") && (i < 10))
         {
             responce = send("SYST:ERR?", 300);
             i++;
@@ -517,29 +554,15 @@ void PrologixUsbGpibAdapter::setBaudrate(int BaudrateNew)
 
 std::vector<char> PrologixUsbGpibAdapter::checkAscii(std::string input)
 {
-    const char* charInput = input.c_str();
-    int DataSize = strlen(input.c_str());
-
     std::cerr << "Length in function:" << std::endl;
-    std::cerr << std::to_string(DataSize) << std::endl;
+    std::cerr << std::to_string(input.size()) << std::endl;
 
-    char* charInputBuffer = new char[input.length()+1];
-    strcpy(charInputBuffer, charInput);
-    //allocate output for max possible length
-    char* charOutputBuffer = new char[input.length()*2 + 2];
-
-    if (input.substr(0,2) == "++")  //Adapter Command
+    if (startsWith(input, "++"))  //Adapter Command
     {
-        strcpy(charOutputBuffer,charInputBuffer);
-        size_t BufferSize = strlen(charInputBuffer);
-        charOutputBuffer[BufferSize] = '\n';
-        charOutputBuffer[BufferSize + 1] = '\0';
-        std::vector<char> vCharOutputAdptr(charOutputBuffer,charOutputBuffer + strlen(charOutputBuffer));
+        std::vector<char> vCharOutputAdptr(input.begin(), input.end());
+        vCharOutputAdptr.push_back('\n');
 
         std::cerr << "Adapter Command: " << std::string(vCharOutputAdptr.begin(),vCharOutputAdptr.end()) << std::endl;
-
-        delete[] charInputBuffer;
-        delete[] charOutputBuffer;
         //return adapter command
         return vCharOutputAdptr;
     }
@@ -548,47 +571,39 @@ std::vector<char> PrologixUsbGpibAdapter::checkAscii(std::string input)
     wxString OgString;
     wxString ModString;
 
-    int j = 0;
+    std::vector<char> charOutputBuffer;
+    charOutputBuffer.reserve(input.size() * 2 + 1);
 
-    for (int i=0;i < DataSize;i++)
+    for (size_t i = 0; i < input.size(); i++)
     {
-        switch(charInputBuffer[i])
+        unsigned char current = static_cast<unsigned char>(input[i]);
+        switch(current)
         {
             case 10:
             case 13:
             case 27:
             case 43:
-                charOutputBuffer[j] = {27};
-                ModString = ModString + std::to_string(charOutputBuffer[j]) + " ";
-                j++;
+                charOutputBuffer.push_back(27);
+                ModString = ModString + std::to_string(charOutputBuffer.back()) + " ";
 
                 break;
             default:
 
                 break;
         }
-        charOutputBuffer[j]= charInputBuffer[i];
+        charOutputBuffer.push_back(static_cast<char>(current));
 
-        OgString = OgString + std::to_string(charInputBuffer[i]) + " ";
-        ModString = ModString + std::to_string(charOutputBuffer[j]) + " ";
-
-        j++;
+        OgString = OgString + std::to_string(current) + " ";
+        ModString = ModString + std::to_string(static_cast<unsigned char>(charOutputBuffer.back())) + " ";
     }
     //Add LF to end "nicht notwendig wenn ++eos 2 und eigenglich müsste ascii 27 angehängt werden"
-    charOutputBuffer[j] = '\n';
-    charOutputBuffer[j+1] = '\0';
-    ModString = ModString + std::to_string(charOutputBuffer[j]) + " ";
-    ModString = ModString + std::to_string(charOutputBuffer[j + 1]);
+    charOutputBuffer.push_back('\n');
+    ModString = ModString + std::to_string(static_cast<unsigned char>(charOutputBuffer.back())) + " ";
 
     // std::cerr << "Input str in ascii: " << OgString << std::endl;
     // std::cerr << "Output str in ascii: " << ModString << std::endl;
 
-    std::vector<char> vCharOutputGpib(charOutputBuffer,charOutputBuffer + strlen(charOutputBuffer));
-
-    delete[] charInputBuffer;
-    delete[] charOutputBuffer;
-
-    return vCharOutputGpib;
+    return charOutputBuffer;
 }
 
 void PrologixUsbGpibAdapter::prepareFTDIDevice() {
@@ -643,7 +658,7 @@ void PrologixUsbGpibAdapter::checkForGpibBusError(wxWindow* parent)
 
                 // 5. wxWidgets warning window popup
                 wxMessageBox(
-                    wxString::Format("Spektrumanalysator meldet einen Fehler:\n%s", errorMsg),
+                    wxString::Format("Spektrumanalysator meldet einen Fehler:\n%s", errorMsg.c_str()),
                     "Gerätefehler",
                     wxOK | wxICON_WARNING | wxCENTRE,
                     parent
