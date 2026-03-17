@@ -84,7 +84,7 @@ public:
     void StartScanCycle(double startX, double startY, 
     int rows, int cols, 
     double stepX, double stepY, 
-    std::function<void(int, int, double, double)> onPointReached,
+    std::function<bool(int, int, double, double)> onPointReached,
     Direction direction,
     bool zigzag = false,
     double speed = 6000);

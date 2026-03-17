@@ -281,7 +281,7 @@ void fsuMeasurement::setFreqStartEnd(unsigned int FreqS, unsigned int FreqE)
     m_FreqEnd = FreqE;
 }
 
-bool fsuMeasurement::checkIfSettingsValidSweep(ScpiCommand command, const SettingValue& value)
+bool fsuMeasurement::checkIfSettingsValid(ScpiCommand command, const SettingValue& value)
 {
 try {
     switch (command)

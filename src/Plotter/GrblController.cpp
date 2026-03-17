@@ -104,7 +104,7 @@ bool GrblController::ParseSetting(const std::string& line) {
     return true;
 }
 
-void GrblController::StartScanCycle(double startX, double startY, int rows, int cols, double stepX, double stepY, std::function<void(int, int, double, double)> onPointReached, Direction direction, bool zigzag, double feedRate)
+void GrblController::StartScanCycle(double startX, double startY, int rows, int cols, double stepX, double stepY, std::function<bool(int, int, double, double)> onPointReached, Direction direction, bool zigzag, double feedRate)
 {
     m_shouldCancel = false;
 
@@ -136,7 +136,11 @@ void GrblController::StartScanCycle(double startX, double startY, int rows, int 
             MoveTo(targetX, targetY, feedRate);
             WaitForArrival(targetX, targetY);
 
-            onPointReached(r, c, targetX, targetY);
+            if (!onPointReached(r, c, targetX, targetY))
+            {
+                m_shouldCancel = true;
+                return;
+            }
         }
     }
 }

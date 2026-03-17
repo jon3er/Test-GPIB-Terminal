@@ -96,32 +96,32 @@ bool MSetDocument::ApplySweep(const fsuMeasurement::lastSweepSettings& settings)
 {
     m_fsu.setMeasurementMode(MeasurementMode::SWEEP);
 
-    if (!m_fsu.checkIfSettingsValidSweep(ScpiCommand::START_FREQUENCY, settings.startFreq))
+    if (!m_fsu.checkIfSettingsValid(ScpiCommand::START_FREQUENCY, settings.startFreq))
     {
         SetResult(false, false, "Startfrequenz ausserhalb des Bereichs (0 - 26.5 GHz)!");
         return false;
     }
-    if (!m_fsu.checkIfSettingsValidSweep(ScpiCommand::END_FREQUENCY, settings.stopFreq))
+    if (!m_fsu.checkIfSettingsValid(ScpiCommand::END_FREQUENCY, settings.stopFreq))
     {
         SetResult(false, false, "Stopfrequenz ausserhalb des Bereichs (0 - 26.5 GHz)!");
         return false;
     }
-    if (!m_fsu.checkIfSettingsValidSweep(ScpiCommand::RF_ATTENUATION, settings.att))
+    if (!m_fsu.checkIfSettingsValid(ScpiCommand::RF_ATTENUATION, settings.att))
     {
         SetResult(false, false, "Daempfung muss in 5-dB Schritten erfolgen (0-75 dB)!");
         return false;
     }
-    if (!m_fsu.checkIfSettingsValidSweep(ScpiCommand::RBW, static_cast<double>(settings.rbw)))
+    if (!m_fsu.checkIfSettingsValid(ScpiCommand::RBW, static_cast<double>(settings.rbw)))
     {
         SetResult(false, false, "RBW ausserhalb des gueltigen Bereichs (1 Hz - 50 MHz)!");
         return false;
     }
-    if (!m_fsu.checkIfSettingsValidSweep(ScpiCommand::VBW, static_cast<double>(settings.vbw)))
+    if (!m_fsu.checkIfSettingsValid(ScpiCommand::VBW, static_cast<double>(settings.vbw)))
     {
         SetResult(false, false, "VBW ausserhalb des gueltigen Bereichs (1 Hz - 50 MHz)!");
         return false;
     }
-    if (!m_fsu.checkIfSettingsValidSweep(ScpiCommand::SWEEP_POINTS, settings.points))
+    if (!m_fsu.checkIfSettingsValid(ScpiCommand::SWEEP_POINTS, settings.points))
     {
         SetResult(false, false, "Ungueltige Sweep Punkte!");
         return false;
@@ -171,22 +171,22 @@ bool MSetDocument::ApplyIq(const fsuMeasurement::IqSettings& settings)
 {
     m_fsu.setMeasurementMode(MeasurementMode::IQ);
 
-    if (!m_fsu.checkIfSettingsValidSweep(ScpiCommand::CENTER_FREQUENCY, settings.centerFreq))
+    if (!m_fsu.checkIfSettingsValid(ScpiCommand::CENTER_FREQUENCY, settings.centerFreq))
     {
         SetResult(false, false, "Center Frequenz ausserhalb des Bereichs (0 - 26.5 GHz)!");
         return false;
     }
-    if (!m_fsu.checkIfSettingsValidSweep(ScpiCommand::RF_ATTENUATION, settings.att))
+    if (!m_fsu.checkIfSettingsValid(ScpiCommand::RF_ATTENUATION, settings.att))
     {
         SetResult(false, false, "Daempfung muss in 5-dB Schritten erfolgen (0-75 dB)!");
         return false;
     }
-    if (!m_fsu.checkIfSettingsValidSweep(ScpiCommand::IQ_SAMPLE_RATE, settings.sampleRate))
+    if (!m_fsu.checkIfSettingsValid(ScpiCommand::IQ_SAMPLE_RATE, settings.sampleRate))
     {
         SetResult(false, false, "Sample Rate ausserhalb des Bereichs (10 kHz - 70.4 MHz)!");
         return false;
     }
-    if (!m_fsu.checkIfSettingsValidSweep(ScpiCommand::IQ_RECORD_LENGTH, settings.recordLength))
+    if (!m_fsu.checkIfSettingsValid(ScpiCommand::IQ_RECORD_LENGTH, settings.recordLength))
     {
         SetResult(false, false, "Record Length ausserhalb des Bereichs (1 - 16M)!");
         return false;
@@ -196,22 +196,22 @@ bool MSetDocument::ApplyIq(const fsuMeasurement::IqSettings& settings)
         SetResult(false, false, "Pretrigger Samples muss zwischen 0 und Record Length liegen!");
         return false;
     }
-    if (!m_fsu.checkIfSettingsValidSweep(ScpiCommand::IQ_IF_BANDWIDTH, settings.ifBandwidth))
+    if (!m_fsu.checkIfSettingsValid(ScpiCommand::IQ_IF_BANDWIDTH, settings.ifBandwidth))
     {
         SetResult(false, false, "IF Bandwidth ausserhalb des Bereichs (10 Hz - 50 MHz)!");
         return false;
     }
-    if (!m_fsu.checkIfSettingsValidSweep(ScpiCommand::TRIGGER_SOURCE, settings.triggerSource))
+    if (!m_fsu.checkIfSettingsValid(ScpiCommand::TRIGGER_SOURCE, settings.triggerSource))
     {
         SetResult(false, false, "Ungueltige Trigger Quelle!");
         return false;
     }
-    if (!m_fsu.checkIfSettingsValidSweep(ScpiCommand::TRIGGER_LEVEL, settings.triggerLevel))
+    if (!m_fsu.checkIfSettingsValid(ScpiCommand::TRIGGER_LEVEL, settings.triggerLevel))
     {
         SetResult(false, false, "Trigger Level ausserhalb des Bereichs (-130 - +30 dBm)!");
         return false;
     }
-    if (!m_fsu.checkIfSettingsValidSweep(ScpiCommand::TRIGGER_DELAY, settings.triggerDelay))
+    if (!m_fsu.checkIfSettingsValid(ScpiCommand::TRIGGER_DELAY, settings.triggerDelay))
     {
         SetResult(false, false, "Trigger Delay ausserhalb des Bereichs (-1 - 65 s)!");
         return false;
@@ -265,27 +265,27 @@ bool MSetDocument::ApplyMarkerPeak(const fsuMeasurement::MarkerPeakSettings& set
 {
     m_fsu.setMeasurementMode(MeasurementMode::MARKER_PEAK);
 
-    if (!m_fsu.checkIfSettingsValidSweep(ScpiCommand::START_FREQUENCY, settings.startFreq))
+    if (!m_fsu.checkIfSettingsValid(ScpiCommand::START_FREQUENCY, settings.startFreq))
     {
         SetResult(false, false, "Startfrequenz ausserhalb des Bereichs (0 - 26.5 GHz)!");
         return false;
     }
-    if (!m_fsu.checkIfSettingsValidSweep(ScpiCommand::END_FREQUENCY, settings.stopFreq))
+    if (!m_fsu.checkIfSettingsValid(ScpiCommand::END_FREQUENCY, settings.stopFreq))
     {
         SetResult(false, false, "Stopfrequenz ausserhalb des Bereichs (0 - 26.5 GHz)!");
         return false;
     }
-    if (!m_fsu.checkIfSettingsValidSweep(ScpiCommand::RF_ATTENUATION, settings.att))
+    if (!m_fsu.checkIfSettingsValid(ScpiCommand::RF_ATTENUATION, settings.att))
     {
         SetResult(false, false, "Daempfung muss in 5-dB Schritten erfolgen (0-75 dB)!");
         return false;
     }
-    if (!m_fsu.checkIfSettingsValidSweep(ScpiCommand::RBW, static_cast<double>(settings.rbw)))
+    if (!m_fsu.checkIfSettingsValid(ScpiCommand::RBW, static_cast<double>(settings.rbw)))
     {
         SetResult(false, false, "RBW ausserhalb des gueltigen Bereichs (1 Hz - 50 MHz)!");
         return false;
     }
-    if (!m_fsu.checkIfSettingsValidSweep(ScpiCommand::VBW, static_cast<double>(settings.vbw)))
+    if (!m_fsu.checkIfSettingsValid(ScpiCommand::VBW, static_cast<double>(settings.vbw)))
     {
         SetResult(false, false, "VBW ausserhalb des gueltigen Bereichs (1 Hz - 50 MHz)!");
         return false;
