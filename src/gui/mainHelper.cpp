@@ -20,11 +20,8 @@ bool PlotterMeasurement(sData* data, int measurementNumber)
 
     data->setMeasurementNumb(measurementNumber);
 
-    if (measurementNumber == 1)
+    if (measurementNumber == 1) // first measurement
     {
-        //CsvFile csvFileRest;
-        //csvFile = csvFileRest;
-
         data->importFsuSettings();
 
         int x = data->getNumberOfPts_X();

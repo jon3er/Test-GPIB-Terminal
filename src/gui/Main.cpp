@@ -136,7 +136,7 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, MainDocument* doc, wxWindowI
 
 
     // set submenu order
-    m_menu_Mesurement->AppendSubMenu( m_submenu_NewMesurement, wxT("New Mesurement") );
+    m_menu_Mesurement->AppendSubMenu( m_submenu_NewMesurement, wxT("New Measurement") );
 	m_menu_Mesurement->AppendSeparator();
 	m_menu_Mesurement->Append( m_menuMesure_Item_Open );
     m_menu_Mesurement->AppendSeparator();
@@ -165,8 +165,8 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, MainDocument* doc, wxWindowI
     m_menu_Test->Append( m_menuTest_Item_Terminal );
 	m_menu_Test->Append( m_menuTest_Item_Func );
     m_menu_Test->Append( m_menuTest_Item_Ploter );
-    m_menu_Test->AppendSeparator();
-    m_menu_Test->Append( m_menuTest_Item_Validation );
+    //m_menu_Test->AppendSeparator();
+    //m_menu_Test->Append( m_menuTest_Item_Validation );
 
     //------------------ Help menu --------------------
 	m_menu_Help = new wxMenu();
@@ -186,7 +186,7 @@ MainProgrammWin::MainProgrammWin( wxWindow* parent, MainDocument* doc, wxWindowI
     //------------------ set Menubar order --------------------
     m_menubarMainProg->Append( m_menu_File,         wxT("File") );
     m_menubarMainProg->Append( m_menu_Sim,          wxT("Simulation") );
-    m_menubarMainProg->Append( m_menu_Mesurement,   wxT("Mesurement") );
+    m_menubarMainProg->Append( m_menu_Mesurement,   wxT("Measurement") );
     m_menubarMainProg->Append( m_menu_Processing,   wxT("Processing") );
     m_menubarMainProg->Append( m_menu_Test,         wxT("Test") );
 	m_menubarMainProg->Append( m_menu_Help,         wxT("Help") );
@@ -270,10 +270,8 @@ void MainProgrammWin::ButtonRefresh(wxCommandEvent& event)
     m_textCtrlDeviceStatus->SetValue(Text);
     auto& adapter = PrologixUsbGpibAdapter::get_instance();
 
-
     if (adapter.checkIfAdapterAvailable())
     {
-
         if (!adapter.connect())
         {
             m_textCtrlAdapterStatus->SetValue("Error! Check Connection");
@@ -282,7 +280,6 @@ void MainProgrammWin::ButtonRefresh(wxCommandEvent& event)
         {
             m_textCtrlAdapterStatus->SetValue("Adapter Found");
         }
-
         if (!adapter.checkIfGpibDeviceAvailable())
         {
             Text = "No GPIB Device Found Check Connection";
@@ -290,11 +287,8 @@ void MainProgrammWin::ButtonRefresh(wxCommandEvent& event)
         else
         {
             Text = "Device Found";
-
             adapter.config();
-
         }
-
         m_textCtrlDeviceStatus->SetValue(Text);
     }
     else
@@ -432,9 +426,9 @@ void MainProgrammWin::MenuMesurementSweep(wxCommandEvent& event)
                          MeasurementMode::SWEEP);
 
     SettingsDialog dlg(this, MeasurementMode::SWEEP);
-    dlg.SetDocument(&msetDoc);
+    dlg.SetDocument(&msetDoc); // set Doc
     dlg.ShowModal();
-    dlg.SetDocument(nullptr);
+    dlg.SetDocument(nullptr); // delete Doc
 };
 void MainProgrammWin::MenuMesurementIQ(wxCommandEvent& event)
 {
@@ -533,13 +527,7 @@ void MainProgrammWin::MenuTestPloter(wxCommandEvent& event)
 
 void MainProgrammWin::MenuTestValidation(wxCommandEvent& event)
 {
-    ValidationDocument validationDoc(PrologixUsbGpibAdapter::get_instance());
 
-    ValidationWindow* validationWin = new ValidationWindow(this);
-    validationWin->SetDocument(&validationDoc);
-    validationWin->ShowModal();
-    validationWin->SetDocument(nullptr);
-    validationWin->Destroy();
 }
 
 void MainProgrammWin::MenuMesurementSetMarker(wxCommandEvent& event)
@@ -570,7 +558,7 @@ void MainProgrammWin::MenuHelpAbout(wxCommandEvent& event)
               << "based on wxWidgets and Prologix USB-GPIB adapter.\n"
               << "\n"
               << "GitHub: \n"
-              << "https://github.com/jon3er/Test-GPIB-Terminal";
+              << "https://github.com/jon3er/GPIB-Measurement-Tool";
 
     wxMessageBox(
         aboutText,
@@ -592,9 +580,9 @@ void MainProgrammWin::MenuHelpResetDevices(wxCommandEvent& event)
 }
 
 
-// -----------------------------------------------------------------------
+
 // IMainObserver implementation
-// -----------------------------------------------------------------------
+
 void MainProgrammWin::OnFileChanged(const sData& data, bool isOpen)
 {
     // Enable/disable file-menu items that require an open file

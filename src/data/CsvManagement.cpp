@@ -9,6 +9,7 @@
 
 CsvFile::CsvFile(char separator)
 {
+    // Set File Separator ; or ,
     m_separator = separator;
 }
 
@@ -26,7 +27,7 @@ bool CsvFile::saveCsvFile(wxString& filename, sData& data, int mesurementNumb)
 
     std::cout << "saveCsvFile()" << std::endl;
 
-    // filename.Append(timestamp);
+    // Adds correct File extention if missing
     if (!filename.Lower().EndsWith(".csv"))
     {
         filename.Append(".csv");
@@ -53,14 +54,12 @@ bool CsvFile::saveCsvFile(wxString& filename, sData& data, int mesurementNumb)
         return false;
     }
 
+    // Get Measurement path TODO Update the logic
     const bool cont = (data.GetType() != "Line");
 
     if (mesurementNumb == 1 || mesurementNumb == 0) // weiteren check hinzufügen
     {
         // Import current fsu settings once before writing
-
-        // create array
-        //data.resize3DData(data.getNumberOfPts_X(),data.getNumberOfPts_Y(),data.getNumberOfPts_Array());
 
         // Write header
         std::cout << "save header" << std::endl;
@@ -123,13 +122,14 @@ bool CsvFile::saveCsvFile(wxString& filename, sData& data, int mesurementNumb)
 
 bool CsvFile::saveCsvHeader(wxTextFile &file, sData& data)
 {
+    // get Pointer to data Struct
     sData::sParam* dsParam = data.GetParameter();
 
-    //file.AddLine("Header Information"); // Leerzeile
-    file.AddLine(wxString::FromUTF8(HeaderInfo::fileName.data()) + m_separator + dsParam->File);
-    file.AddLine(wxString::FromUTF8(HeaderInfo::date.data()) + m_separator + dsParam->Date);
-    file.AddLine(wxString::FromUTF8(HeaderInfo::time.data()) + m_separator + dsParam->Time);
-    file.AddLine(wxString::FromUTF8(HeaderInfo::type.data()) + m_separator + dsParam->Type);
+    // Write Data struct info to header file
+    file.AddLine(wxString::FromUTF8(HeaderInfo::fileName.data())+ m_separator + dsParam->File);
+    file.AddLine(wxString::FromUTF8(HeaderInfo::date.data())    + m_separator + dsParam->Date);
+    file.AddLine(wxString::FromUTF8(HeaderInfo::time.data())    + m_separator + dsParam->Time);
+    file.AddLine(wxString::FromUTF8(HeaderInfo::type.data())    + m_separator + dsParam->Type);
     // Plotter info
     file.AddLine(wxString::FromUTF8(HeaderConfig::noPointsX.data()) + m_separator + wxString::Format("%d", dsParam->NoPoints_X));
     file.AddLine(wxString::FromUTF8(HeaderConfig::noPointsY.data()) + m_separator + wxString::Format("%d", dsParam->NoPoints_Y));
@@ -138,14 +138,13 @@ bool CsvFile::saveCsvHeader(wxTextFile &file, sData& data)
         std::cout << kErrPrefixStr.CsvSave <<"Failed to write plotter data" << std::endl;
         return false;
     }
-    // Measurement config
-    //file.AddLine(wxString::Format("%s%c%d",   HeaderConfig::noPointsArray.data(), m_separator, dsParam->NoPoints_Array));
 
     file.AddLine(""); // Leerzeile
 
-    // Messeinstellungen je nach Modus (from cached settings)
+    // Get current measurement mode from FsuMeasurement
     MeasurementMode mode = data.getFsuSettings().mode;
 
+    // writes conresponding Measurement setting to File
     switch (mode)
     {
         case MeasurementMode::SWEEP:
@@ -176,6 +175,7 @@ bool CsvFile::saveCsvHeader(wxTextFile &file, sData& data)
     double t_sample;
     std::string timeUnit;
 
+    // Calculate the Frequencey / time Array
     switch (mode)
     {
         case MeasurementMode::SWEEP:
@@ -239,7 +239,7 @@ bool CsvFile::saveCsvHeader(wxTextFile &file, sData& data)
     }
 
 
-    // ID-Zeile zusammenbauen
+    // Write ID Line
     wxString lineID = "ID";
     for (int i = 1; i < IndexAmount + 1; i++)
     {
@@ -252,21 +252,24 @@ bool CsvFile::saveCsvHeader(wxTextFile &file, sData& data)
 
 bool CsvFile::savePlotterData(wxTextFile& file, sData& data)
 {
+    // Get Pointer to sData
     sData::sParam* dsParam = data.GetParameter();
-
-    file.AddLine(wxString::FromUTF8(HeaderConfig::stepX.data()) + m_separator + wxString::FromDouble(dsParam->xSpacingmm));
-    file.AddLine(wxString::FromUTF8(HeaderConfig::stepY.data()) + m_separator + wxString::FromDouble(dsParam->ySpacingmm));
-    file.AddLine(wxString::FromUTF8(HeaderConfig::startX.data()) + m_separator + wxString::FromDouble(dsParam->xStartingPointmm));
-    file.AddLine(wxString::FromUTF8(HeaderConfig::startY.data()) + m_separator + wxString::FromDouble(dsParam->yStartingPointmm));
-    file.AddLine(wxString::FromUTF8(HeaderConfig::isVertical.data()) + m_separator + (dsParam->isVertical ? "1" : "0"));
+    // Save Plotter Location Data to header
+    file.AddLine(wxString::FromUTF8(HeaderConfig::stepX.data())     + m_separator + wxString::FromDouble(dsParam->xSpacingmm));
+    file.AddLine(wxString::FromUTF8(HeaderConfig::stepY.data())     + m_separator + wxString::FromDouble(dsParam->ySpacingmm));
+    file.AddLine(wxString::FromUTF8(HeaderConfig::startX.data())    + m_separator + wxString::FromDouble(dsParam->xStartingPointmm));
+    file.AddLine(wxString::FromUTF8(HeaderConfig::startY.data())    + m_separator + wxString::FromDouble(dsParam->yStartingPointmm));
+    file.AddLine(wxString::FromUTF8(HeaderConfig::isVertical.data())+ m_separator + (dsParam->isVertical ? "1" : "0"));
 
     return true;
 }
 
 bool CsvFile::saveCsvSettingsSweep(wxTextFile& file, sData& data)
 {
+    // Gets Currently saved Sweep setting from FsuMeasurement-Class
     const auto& s = data.getFsuSettings().sweep;
 
+    // Save current Sweep-settings to File
     file.AddLine(wxString::FromUTF8(HeaderConfig::startFreq.data()) + m_separator + wxString::FromDouble( s.startFreq));
     file.AddLine(wxString::FromUTF8(HeaderConfig::endFreq.data()) + m_separator + wxString::FromDouble(s.stopFreq));
     file.AddLine(wxString::FromUTF8(HeaderConfig::refPegel.data()) + m_separator + wxString::FromDouble(s.refLevel));
@@ -283,8 +286,10 @@ bool CsvFile::saveCsvSettingsSweep(wxTextFile& file, sData& data)
 
 bool CsvFile::saveCsvSettingsQI(wxTextFile& file, sData& data)
 {
+    // Gets Currently saved IQ setting from FsuMeasurement-Class
     const auto& s = data.getFsuSettings().iq;
 
+    // Save current IQ-settings to File
     file.AddLine(wxString::FromUTF8(HeaderConfig::centerFreq.data()) + m_separator + wxString::FromDouble(s.centerFreq));
     file.AddLine(wxString::FromUTF8(HeaderConfig::refPegel.data()) + m_separator + wxString::FromDouble(s.refLevel));
     file.AddLine(wxString::FromUTF8(HeaderConfig::HFDaempfung.data()) + m_separator + wxString::Format("%i", s.att));
@@ -301,75 +306,79 @@ bool CsvFile::saveCsvSettingsQI(wxTextFile& file, sData& data)
 
 bool CsvFile::saveCsvSettingsMarker(wxTextFile& file, sData& data)
 {
+    // Gets Currently saved Marker setting from FsuMeasurement-Class
     const auto& s = data.getFsuSettings().marker;
-
-    file.AddLine(wxString::FromUTF8(HeaderConfig::startFreq.data()) + m_separator + wxString::FromDouble(s.startFreq));
-    file.AddLine(wxString::FromUTF8(HeaderConfig::endFreq.data()) + m_separator + wxString::FromDouble(s.stopFreq));
-    file.AddLine(wxString::FromUTF8(HeaderConfig::refPegel.data()) + m_separator + wxString::FromDouble(s.refLevel));
-    file.AddLine(wxString::FromUTF8(HeaderConfig::HFDaempfung.data()) + m_separator + wxString::Format("%i", s.att));
-    file.AddLine(wxString::FromUTF8(HeaderConfig::ampUnit.data()) + m_separator + s.unit);
-    file.AddLine(wxString::FromUTF8(HeaderConfig::RBW.data()) + m_separator + wxString::Format("%i", s.rbw));
-    file.AddLine(wxString::FromUTF8(HeaderConfig::VBW.data()) + m_separator + wxString::Format("%i", s.vbw));
-    file.AddLine(wxString::FromUTF8(HeaderConfig::detektor.data()) + m_separator + s.detector);
+    // Save current Marker-settings to File
+    file.AddLine(wxString::FromUTF8(HeaderConfig::startFreq.data())     + m_separator + wxString::FromDouble(s.startFreq));
+    file.AddLine(wxString::FromUTF8(HeaderConfig::endFreq.data())       + m_separator + wxString::FromDouble(s.stopFreq));
+    file.AddLine(wxString::FromUTF8(HeaderConfig::refPegel.data())      + m_separator + wxString::FromDouble(s.refLevel));
+    file.AddLine(wxString::FromUTF8(HeaderConfig::HFDaempfung.data())   + m_separator + wxString::Format("%i", s.att));
+    file.AddLine(wxString::FromUTF8(HeaderConfig::ampUnit.data())       + m_separator + s.unit);
+    file.AddLine(wxString::FromUTF8(HeaderConfig::RBW.data())           + m_separator + wxString::Format("%i", s.rbw));
+    file.AddLine(wxString::FromUTF8(HeaderConfig::VBW.data())           + m_separator + wxString::Format("%i", s.vbw));
+    file.AddLine(wxString::FromUTF8(HeaderConfig::detektor.data())      + m_separator + s.detector);
 
     return true;
 }
 
-bool CsvFile::saveCsvData(wxTextFile& file, const sData& data, int mesurementNumb, bool cont)
+bool CsvFile::saveCsvData(wxTextFile& file, const sData& data, int measurementNumb, bool cont)
 {
+
     if (!file.IsOpened())
     {
         std::cerr << kErrPrefixStr.CsvSave <<"File not opened" << std::endl;
         return false;
     }
-
-
+    // import number of points
     int xPoints = data.getNumberOfPts_X();
     int yPoints = data.getNumberOfPts_Y();
 
-    if (xPoints <= 0 || yPoints <= 0 || mesurementNumb < 1 || mesurementNumb > (xPoints * yPoints))
+    // check if the set values are within range
+    if (xPoints <= 0 || yPoints <= 0 || measurementNumb < 1 || measurementNumb > (xPoints * yPoints))
     {
         std::cerr << kErrPrefixStr.CsvSave << "Invalid measurement index or point dimensions" << std::endl;
         return false;
     }
 
-    // find line with current
+    // Detect if it is a Marker Measurement or not
     bool isMarker = (data.getFsuSettings().mode == MeasurementMode::MARKER_PEAK);
     const char* label1 = isMarker ? "Freq" : "Real";
 
-    wxString indexText = getIndexNumbers(xPoints, yPoints, mesurementNumb, cont) + " " + label1;
+    wxString indexText = getIndexNumbers(xPoints, yPoints, measurementNumb, cont) + " " + label1;
 
     int lineNumber = findLineCsv(file, indexText);
     if (lineNumber < 0 || static_cast<size_t>(lineNumber + 1) >= file.GetLineCount())
     {
-        std::cerr << kErrPrefixStr.CsvSave <<"Invalid data line for measurement " << mesurementNumb << std::endl;
+        std::cerr << kErrPrefixStr.CsvSave <<"Invalid data line for measurement " << measurementNumb << std::endl;
         return false;
     }
-    // std::cout << "line Found: " << lineNumber << std::endl;
 
     int xPosition;
     int yPosition;
 
-    data.getXYCord(xPosition, yPosition, mesurementNumb);
+    // Get current x/y Position for the current measurement number
+    data.getXYCord(xPosition, yPosition, measurementNumb);
 
+    // get a single Array from 3D-Array
     std::vector<double> real = data.get3DDataReal(xPosition, yPosition);
     std::vector<double> imag = data.get3DDataImag(xPosition, yPosition);
 
     int count = data.getNumberOfPts_Array();
-    // Guard against stale NoPoints_Array values (e.g. mode switches) and avoid out-of-range access.
+    // check that real and set Arraysize is the same
     count = std::min(count, static_cast<int>(std::min(real.size(), imag.size())));
 
     std::cout << "Trying to save data: X: " << real.size() << "Y: " << imag.size() << std::endl;
 
     if (count <= 0)
     {
-        std::cerr << kErrPrefixStr.CsvSave << "No datapoints available for measurement " << mesurementNumb << std::endl;
+        std::cerr << kErrPrefixStr.CsvSave << "No datapoints available for measurement " << measurementNumb << std::endl;
         return false;
     }
 
     wxString realLine = file.GetLine(lineNumber);
     wxString imagLine = file.GetLine(lineNumber + 1);
 
+    // add Measurement Data to file
     int j = 0;
     for (int i = 0; i < count; i++)
     {
@@ -377,9 +386,10 @@ bool CsvFile::saveCsvData(wxTextFile& file, const sData& data, int mesurementNum
         imagLine << m_separator << wxString::Format("%.15g", imag[i]);
         j++;
     }
-
+    // Remove old line bevor writing
     file.RemoveLine(lineNumber + 1);
     file.RemoveLine(lineNumber);
+    // Insert new line
     file.InsertLine(realLine, lineNumber);
     file.InsertLine(imagLine, lineNumber + 1);
 
@@ -444,7 +454,7 @@ bool CsvFile::readCsvHeader(wxTextFile&file, sData& data)
     sData::sParam* dsParam = data.GetParameter();
 
     size_t lineCount = file.GetLineCount();
-    // Minimale Zeilenanzahl prüfen
+    // check for minimum amount of lines
     if (lineCount < 9) {
         std::cerr << kErrPrefixStr.CsvRead <<"File too short, insufficient header" << std::endl;
         return false;
@@ -453,6 +463,7 @@ bool CsvFile::readCsvHeader(wxTextFile&file, sData& data)
     // Use the cached separator from readCsvFile for deterministic parsing.
     char separator = m_separator;
 
+    // Get data from a file
     auto readByLabel = [&](std::string_view label, wxString& outVal) -> bool {
         int line = findLineCsv(file, wxString::FromUTF8(label.data()));
         if (line < 0)
@@ -535,6 +546,7 @@ bool CsvFile::readPlotterData(wxTextFile& file, sData& data)
     wxString verticalText;
 
     // Optional block: if first line does not exist, simply skip.
+    // get Plotter Settings
     if (!readLine(HeaderConfig::stepX, stepXText)) return true;
     if (!readLine(HeaderConfig::stepY, stepYText)) return true;
     if (!readLine(HeaderConfig::startX, startXText)) return true;
@@ -547,6 +559,7 @@ bool CsvFile::readPlotterData(wxTextFile& file, sData& data)
     double startY = 0.0;
     long isVerticalLong = 0;
 
+    // set Plotter Settings
     if (!stepXText.ToDouble(&stepX)) return true;
     if (!stepYText.ToDouble(&stepY)) return true;
     if (!startXText.ToDouble(&startX)) return true;
@@ -889,7 +902,6 @@ bool CsvFile::readCsvData(wxTextFile& file, sData& data)
 
 bool CsvFile::writeMatrixIndexCsv(wxTextFile& file, const sData& data, bool continuous)
 {
-    // ID Für Real Nummern einfügen
     int xPoints = data.getNumberOfPts_X();
     int yPoints = data.getNumberOfPts_Y();
 

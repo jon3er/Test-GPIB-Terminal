@@ -19,14 +19,12 @@
 #include "Mesurement.h"
 #include "TerminalWindow.h"
 #include "FunctionWindow.h"
-#include "ValidationWindow/ValidationWindow.h"
 #include "SettingsWindow.h"
 #include "MSetDialog.h"
 #include "helpTab/helpWin.h"
 // document header
 #include "MeasurementDocument.h"
 #include "TerminalDocument.h"
-#include "ValidationWindow/ValidationDocument.h"
 #include "SettingsDocument.h"
 #include "helpTab/helpDocument.h"
 // Data

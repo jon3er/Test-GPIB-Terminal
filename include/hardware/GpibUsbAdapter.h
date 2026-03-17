@@ -113,6 +113,7 @@ public:
      */
     void checkForGpibBusError(wxWindow* parent);
 
+    // Clear and Reset the Buffer
     bool resetGpibBusBuffer();
 
     // get methodes
@@ -131,8 +132,6 @@ public:
 
 private:
     PrologixDeviceInfo m_deviceInfo;
-
-
 
     // helper Functionen
 

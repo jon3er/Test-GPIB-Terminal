@@ -61,27 +61,40 @@ public:
 
     ~fsuMeasurement();
 
-    /**
-     * @brief To check if the last mesurement had complex values
-     */
-    bool isImagValues() { return m_ImagValues; };
+
+    
 
     // Get Methodes
-
     std::vector<double> getX_Data() {return m_x_Data; };
     std::vector<double> getY_Data() {return m_y_Data; };
 
     wxString getMesurmentTime() { return m_lastMesurementTime; };
     unsigned int getNoPoints_x() { return m_NoPoints_x; };
     unsigned int getNoPoints_y() { return m_NoPoints_y; };
-    void setNoPoints(unsigned int x, unsigned int y) { m_NoPoints_x = x; m_NoPoints_y = y; };
+
+    // Custom Measurement file Paths
+    std::string getFilePath() { return m_filePathCustomMeasurement; };
+    std::string getFileName() { return m_fileNameCustomMeasurement; };
+
+    MeasurementMode getMeasurementMode() const { return m_lastMeasurementMode; };
+    
+
 
     // Set Methodes
-
     void setX_Data(std::vector<double> x) { m_x_Data = x; };
     void setY_Data(std::vector<double> y) { m_y_Data = y; };
+
+    void setNoPoints(unsigned int x, unsigned int y) { m_NoPoints_x = x; m_NoPoints_y = y; };
     void setFreqStartEnd(unsigned int FreqS, unsigned int FreqE);
 
+    // Custom Measurement file Paths
+    void setFilePath(wxString path) { m_filePathCustomMeasurement = path; };
+    void setFileName(wxString name) { m_fileNameCustomMeasurement = name; };
+    
+    void setMeasurementMode(MeasurementMode mode) { m_lastMeasurementMode = mode; };
+
+    // Check If last measurement had Imag Values
+    bool isImagValues() { return m_ImagValues; };
 
     // Measurement
     /**
@@ -117,13 +130,13 @@ public:
     // Definition der unterstützten Datentypen für die Parameter
 
     using SettingValue = std::variant<double,unsigned int, int, std::string>;
+    /**
+     * @brief Checks Input data is within the Valid range
+     */
     bool checkIfSettingsValid(ScpiCommand command, const SettingValue& value);
 
-    void setMeasurementMode(MeasurementMode mode) { m_lastMeasurementMode = mode; };
-    MeasurementMode getMeasurementMode() const { return m_lastMeasurementMode; };
-
     // Helper for Measurement settings
-    // Sweep Messung
+    // Sweep Messung Settings Struct
     struct lastSweepSettings
     {
         double startFreq = 10'000'000;
@@ -137,12 +150,12 @@ public:
         std::string sweepTime = "ON";
         std::string detector = "POS";
     };
-
+    // Sweep Measurement Kommunikation PC <-> GPIB Device
     bool writeSweepSettings(lastSweepSettings settings);
     bool readSweepSettings();
     auto returnSweepSettings() { return m_lastSwpSettings; };
 
-    // IQ Messung
+    // IQ Messung Settings Struct
     struct IqSettings
     {
         double centerFreq = 50'000'000;
@@ -159,12 +172,12 @@ public:
         double triggerLevel = 0;
         double triggerDelay = 0;
     };
-
+    // IQ Measurement Kommunikation PC <-> GPIB Device
     bool writeIqSettings(IqSettings settings);
     bool readIqSettings();
     auto returnIqSettings() { return m_lastIqSettings; };
 
-    // Marker Peak Messung
+    // Marker Peak Messung Settings Struct 
     struct MarkerPeakSettings
     {
         double startFreq = 10'000'000;
@@ -176,16 +189,10 @@ public:
         int vbw = 10000;
         std::string detector = "POS";
     };
-
+    // Marker Peak Measurement Kommunikation PC <-> GPIB Device
     bool writeMarkerPeakSettings(MarkerPeakSettings settings);
     bool readMarkerPeakSettings();
     auto returnMarkerPeakSettings() { return m_lastMarkerPeakSettings; };
-
-    // Custom Measurement
-    void setFilePath(wxString path) { m_filePathCustomMeasurement = path; };
-    void setFileName(wxString name) { m_fileNameCustomMeasurement = name; };
-    std::string getFilePath() { return m_filePathCustomMeasurement; };
-    std::string getFileName() { return m_fileNameCustomMeasurement; };
 
     /**
      * @brief Cached copy of fsuMeasurement settings for CSV I/O
@@ -234,6 +241,7 @@ private:
     IqSettings m_lastIqSettings;
     MarkerPeakSettings m_lastMarkerPeakSettings;
 
+    // Timeout Reference Parameter to calculate the estimateded Measurement time
     SweepTimeoutRef m_sweepTimeoutRef;
     IqTimeoutRef    m_iqTimeoutRef;
 };

@@ -1,0 +1,113 @@
+Projekt: Test-GPIB-Terminal
+Datum: 2026-03-17
+Zweck: Datei-zu-Zielpfad-Mapping fuer die geplante Umstrukturierung.
+
+[CMake / Root]
+CMakeLists.txt -> cmake/CMakeLists.txt (oder im Root belassen)
+Makefile -> tools/build/Makefile.legacy
+README.md -> docs/README.md (oder im Root belassen)
+
+[Include: Hardware]
+include/hardware/fkt_d2xx.h -> include/infrastructure/hardware/ftdi/fkt_d2xx.h
+include/hardware/FsuMeasurement.h -> include/domain/measurement/FsuMeasurement.h
+include/hardware/GpibUsbAdapter.h -> include/infrastructure/hardware/gpib/GpibUsbAdapter.h
+
+[Include: Plotter]
+include/Plotter/CoordinatePanel.h -> include/ui/wx/plotter/CoordinatePanel.h
+include/Plotter/GrblConfigDialog.h -> include/ui/wx/plotter/GrblConfigDialog.h
+include/Plotter/GrblController.h -> include/domain/plotter/GrblController.h
+include/Plotter/GrblScanWindow.h -> include/ui/wx/plotter/GrblScanWindow.h
+include/Plotter/PlotterFrame.h -> include/ui/wx/plotter/PlotterFrame.h
+include/Plotter/SerialPortManager.h -> include/infrastructure/hardware/serial/SerialPortManager.h
+
+[Src: Data]
+src/data/cmdGpib.h -> src/domain/gpib/cmdGpib.h
+src/data/CsvManagement.cpp -> src/infrastructure/persistence/csv/CsvManagement.cpp
+src/data/CsvManagement.h -> src/infrastructure/persistence/csv/CsvManagement.h
+src/data/dataManagement.cpp -> src/domain/measurement/dataManagement.cpp
+src/data/dataManagement.h -> src/domain/measurement/dataManagement.h
+src/data/systemInfo.h -> src/infrastructure/system/systemInfo.h
+
+[Src: GUI Core]
+src/gui/Main.cpp -> apps/terminal-gui/main.cpp
+src/gui/main.h -> src/ui/wx/app/main.h
+src/gui/MainDocument.cpp -> src/ui/wx/main_window/MainDocument.cpp
+src/gui/MainDocument.h -> src/ui/wx/main_window/MainDocument.h
+src/gui/mainHelper.cpp -> src/ui/wx/app/mainHelper.cpp
+src/gui/mainHelper.h -> src/ui/wx/app/mainHelper.h
+
+[Src: GUI FunctionWindow]
+src/gui/FunctionWindow/FunctionDocument.cpp -> src/ui/wx/function_window/FunctionDocument.cpp
+src/gui/FunctionWindow/FunctionDocument.h -> src/ui/wx/function_window/FunctionDocument.h
+src/gui/FunctionWindow/FunctionWindow.cpp -> src/ui/wx/function_window/FunctionWindow.cpp
+src/gui/FunctionWindow/FunctionWindow.h -> src/ui/wx/function_window/FunctionWindow.h
+
+[Src: GUI Help]
+src/gui/helpTab/helpDocument.cpp -> src/ui/wx/help/helpDocument.cpp
+src/gui/helpTab/helpDocument.h -> src/ui/wx/help/helpDocument.h
+src/gui/helpTab/helpWin.cpp -> src/ui/wx/help/helpWin.cpp
+src/gui/helpTab/helpWin.h -> src/ui/wx/help/helpWin.h
+
+[Src: GUI Measurement]
+src/gui/MesurementWindow/MeasurementDocument.cpp -> src/ui/wx/measurement_window/MeasurementDocument.cpp
+src/gui/MesurementWindow/MeasurementDocument.h -> src/ui/wx/measurement_window/MeasurementDocument.h
+src/gui/MesurementWindow/Mesurement.cpp -> src/ui/wx/measurement_window/Mesurement.cpp
+src/gui/MesurementWindow/Mesurement.h -> src/ui/wx/measurement_window/Mesurement.h
+src/gui/MesurementWindow/InputDialog/MSetDialog.cpp -> src/ui/wx/measurement_window/input_dialog/MSetDialog.cpp
+src/gui/MesurementWindow/InputDialog/MSetDialog.h -> src/ui/wx/measurement_window/input_dialog/MSetDialog.h
+src/gui/MesurementWindow/InputDialog/MSetDocument.cpp -> src/ui/wx/measurement_window/input_dialog/MSetDocument.cpp
+src/gui/MesurementWindow/InputDialog/MSetDocument.h -> src/ui/wx/measurement_window/input_dialog/MSetDocument.h
+
+[Src: GUI Settings]
+src/gui/SettingsWindow/SettingsDocument.cpp -> src/ui/wx/settings_window/SettingsDocument.cpp
+src/gui/SettingsWindow/SettingsDocument.h -> src/ui/wx/settings_window/SettingsDocument.h
+src/gui/SettingsWindow/SettingsWindow.cpp -> src/ui/wx/settings_window/SettingsWindow.cpp
+src/gui/SettingsWindow/SettingsWindow.h -> src/ui/wx/settings_window/SettingsWindow.h
+
+[Src: GUI Terminal]
+src/gui/TerminalWindow/TerminalDocument.cpp -> src/ui/wx/terminal_window/TerminalDocument.cpp
+src/gui/TerminalWindow/TerminalDocument.h -> src/ui/wx/terminal_window/TerminalDocument.h
+src/gui/TerminalWindow/TerminalWindow.cpp -> src/ui/wx/terminal_window/TerminalWindow.cpp
+src/gui/TerminalWindow/TerminalWindow.h -> src/ui/wx/terminal_window/TerminalWindow.h
+
+[Src: GUI Validation]
+src/gui/ValidationWindow/ValidationDocument.cpp -> src/ui/wx/validation_window/ValidationDocument.cpp
+src/gui/ValidationWindow/ValidationDocument.h -> src/ui/wx/validation_window/ValidationDocument.h
+src/gui/ValidationWindow/ValidationWindow.cpp -> src/ui/wx/validation_window/ValidationWindow.cpp
+src/gui/ValidationWindow/ValidationWindow.h -> src/ui/wx/validation_window/ValidationWindow.h
+
+[Src: Hardware]
+src/hardware/fkt_d2xx.cpp -> src/infrastructure/hardware/ftdi/fkt_d2xx.cpp
+src/hardware/FsuMeasurement.cpp -> src/domain/measurement/FsuMeasurement.cpp
+src/hardware/GpibUsbAdapter.cpp -> src/infrastructure/hardware/gpib/GpibUsbAdapter.cpp
+
+[Src: Plotter]
+src/Plotter/CoordinatePanel.cpp -> src/ui/wx/plotter/CoordinatePanel.cpp
+src/Plotter/GrblConfigDialog.cpp -> src/ui/wx/plotter/GrblConfigDialog.cpp
+src/Plotter/GrblController.cpp -> src/domain/plotter/GrblController.cpp
+src/Plotter/GrblScanWindow.cpp -> src/ui/wx/plotter/GrblScanWindow.cpp
+src/Plotter/PlotterFrame.cpp -> src/ui/wx/plotter/PlotterFrame.cpp
+src/Plotter/SerialPortManager.cpp -> src/infrastructure/hardware/serial/SerialPortManager.cpp
+
+[Third Party]
+third-party/FTDI/ftd2xx.h -> third_party/ftdi/ftd2xx.h
+third-party/FTDI/ftd2xx.lib -> third_party/ftdi/lib/ftd2xx.lib
+third-party/wxMathplots/mathplot.cpp -> third_party/wxmathplot/mathplot.cpp
+third-party/wxMathplots/mathplot.h -> third_party/wxmathplot/mathplot.h
+
+[Skripte / Presets]
+GpibScripts/PlotMessung.txt -> resources/scripts/gpib/PlotMessung.txt
+GpibScripts/Preset1.txt -> resources/presets/gpib/Preset1.txt
+GpibScripts/TestPlot.txt -> resources/scripts/gpib/TestPlot.txt
+GpibScripts/TestScript.txt -> resources/scripts/gpib/TestScript.txt
+GpibScripts/Z_Log.txt -> resources/logs/gpib/Z_Log.txt
+
+[Log / CSV]
+LogFiles/Copy des Sweeps.csv -> resources/sample-data/legacy/Copy des Sweeps.csv
+LogFiles/Copy IQ_Semi.csv -> resources/sample-data/legacy/Copy IQ_Semi.csv
+LogFiles/Copy IQ.csv -> resources/sample-data/legacy/Copy IQ.csv
+LogFiles/Copy Marker.csv -> resources/sample-data/legacy/Copy Marker.csv
+LogFiles/PlotterScan_IQ_2026-03-14_17_08_07.csv -> resources/logs/plotter/PlotterScan_IQ_2026-03-14_17_08_07.csv
+LogFiles/PlotterScan_Marker_2026-03-14_16_06_09.csv -> resources/logs/plotter/PlotterScan_Marker_2026-03-14_16_06_09.csv
+LogFiles/PlotterScan_Sweep_2026-03-14_19_24_53.csv -> resources/logs/plotter/PlotterScan_Sweep_2026-03-14_19_24_53.csv
+LogFiles/PlotterScan_Sweep_PlotterData.csv -> resources/sample-data/plotter/PlotterScan_Sweep_PlotterData.csv

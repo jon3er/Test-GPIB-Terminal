@@ -42,16 +42,11 @@ public:
     MainDocument(const MainDocument&) = delete;
     MainDocument& operator=(const MainDocument&) = delete;
 
-    // ------------------------------------------------------------------
     // Observer registration
-    // ------------------------------------------------------------------
     void AddObserver(IMainObserver* observer);
     void RemoveObserver(IMainObserver* observer);
 
-    // ------------------------------------------------------------------
     // File operations
-    // ------------------------------------------------------------------
-
     /**
      * Open a CSV file from disk.
      * @return true on success, false if the file could not be read.
@@ -75,9 +70,8 @@ public:
      */
     void CloseFile();
 
-    // ------------------------------------------------------------------
+
     // Accessors (read-only via const reference)
-    // ------------------------------------------------------------------
     const sData&    GetData()     const { return m_data; }
     const wxString& GetFilePath() const { return m_filePath; }
     bool            IsFileOpen()  const { return m_fileOpen; }
