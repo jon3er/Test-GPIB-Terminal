@@ -177,8 +177,6 @@ PlotWindow::PlotWindow(wxWindow *parent, MainDocument* mainDoc)
     plotPanelSizer->Add(m_plot, 1, wxEXPAND);
     m_plotPanel->SetSizer(plotPanelSizer);
 
-    // ---- Bottom 1/3: left = controls, right = info ----
-
     // Left: control buttons and [x ; y] selector
     wxBoxSizer* leftSizer = new wxBoxSizer(wxVERTICAL);
     leftSizer->Add(executeMesurment,   0, wxEXPAND | wxALL, 3);
@@ -684,9 +682,8 @@ void PlotWindow::PopulateSelectors(unsigned int nX, unsigned int nY)
         m_choiceYSelector->SetSelection((prevY >= 0 && static_cast<unsigned int>(prevY) < nY) ? prevY : 0);
 }
 
-// -----------------------------------------------------------------------
-// UpdateSettingsPanel — shows current fsuMeasurement device settings
-// -----------------------------------------------------------------------
+
+// shows current fsuMeasurement device settings
 void PlotWindow::UpdateSettingsPanel()
 {
     const fsuMeasurement::FsuSettings* settings = nullptr;
@@ -765,9 +762,8 @@ void PlotWindow::UpdateSettingsPanel()
     m_settingsPanel->Layout();
 }
 
-// -----------------------------------------------------------------------
+
 // File menu handlers (local to this PlotWindow)
-// -----------------------------------------------------------------------
 void PlotWindow::UpdateInfoPanel(sData::sParam* param)
 {
     if (!param)
@@ -922,7 +918,6 @@ void PlotWindow::OnMenuFileExit(wxCommandEvent& event)
 
 
 // Measurement menu handlers (forward to parent MainProgrammWin)
-
 void PlotWindow::OnMenuMesurementOpen(wxCommandEvent& event)
 {
     MainProgrammWin* parent = dynamic_cast<MainProgrammWin*>(GetParent());

@@ -71,11 +71,11 @@ protected:
     wxMenuBar*    m_menuBar;
 
     // Layout panels
-    wxPanel*      m_plotPanel;   ///< Container that constrains the plot to a square
-    wxPanel*      m_infoPanel;   ///< Right-side info area (placeholder)
-    wxStaticText* m_infoText;    ///< Placeholder text inside the info panel
-    wxPanel*      m_settingsPanel;  ///< Current FSU device settings panel
-    wxStaticText* m_settingsText;   ///< Text inside the settings panel
+    wxPanel*      m_plotPanel;   // Container that constrains the plot to a square
+    wxPanel*      m_infoPanel;   // Right-side info area (placeholder)
+    wxStaticText* m_infoText;    // Placeholder text inside the info panel
+    wxPanel*      m_settingsPanel;  // Current FSU device settings panel
+    wxStaticText* m_settingsText;   // Text inside the settings panel
     wxStaticText* m_selectedMeasurementText; ///< Shows currently selected [x ; y]
 
     // Matrix measurement selector [x ; y]

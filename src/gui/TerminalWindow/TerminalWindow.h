@@ -5,14 +5,6 @@
 
 /**
  * @brief Pure View in the Document/View pattern for the GPIB terminal.
- *
- * TerminalWindow is responsible only for:
- *  - Building the UI widgets
- *  - Forwarding user input to the document via ProcessCommand()
- *  - Rendering document output via OnDocumentChanged()
- *
- * It holds a NON-OWNING pointer to TerminalDocument.
- * The document is owned and lifetime-managed by the caller (main.cpp).
  */
 class TerminalWindow : public wxDialog, public ITerminalObserver
 {

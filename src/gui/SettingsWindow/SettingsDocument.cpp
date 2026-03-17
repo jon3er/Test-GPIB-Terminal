@@ -4,10 +4,7 @@
 
 #include <algorithm>
 
-// ---------------------------------------------------------------------------
 // Construction
-// ---------------------------------------------------------------------------
-
 SettingsDocument::SettingsDocument(PrologixUsbGpibAdapter& adapter)
     : m_adapter(adapter)
 {
@@ -15,10 +12,7 @@ SettingsDocument::SettingsDocument(PrologixUsbGpibAdapter& adapter)
     m_adapter.config();
 }
 
-// ---------------------------------------------------------------------------
 // Observer management
-// ---------------------------------------------------------------------------
-
 void SettingsDocument::AddObserver(ISettingsObserver* observer)
 {
     if (observer && std::find(m_observers.begin(), m_observers.end(), observer) == m_observers.end())
@@ -37,10 +31,7 @@ void SettingsDocument::NotifyObservers(const std::string& changeType)
             obs->OnDocumentChanged(changeType);
 }
 
-// ---------------------------------------------------------------------------
 // State
-// ---------------------------------------------------------------------------
-
 bool SettingsDocument::IsConnected() const
 {
     return m_adapter.getConnected();
@@ -52,10 +43,7 @@ void SettingsDocument::SetFreqMode(bool useStartEnd)
     NotifyObservers("FreqModeChanged");
 }
 
-// ---------------------------------------------------------------------------
 // ApplySettings — write all display settings to the device
-// ---------------------------------------------------------------------------
-
 void SettingsDocument::ApplySettings(
     const std::string& freqStart,     const std::string& freqStartUnit,
     const std::string& freqEnd,       const std::string& freqEndUnit,
@@ -118,16 +106,14 @@ void SettingsDocument::ApplySettings(
     NotifyObservers("SettingsApplied");
 }
 
-// ---------------------------------------------------------------------------
-// QueryFromDevice — read all display settings from the device
-// ---------------------------------------------------------------------------
 
+// QueryFromDevice read all display settings from the device
 void SettingsDocument::QueryFromDevice()
 {
     if (!m_adapter.getConnected())
         return;
 
-    // Each query result stored in its correct member (fixes original scrambled-assignment bug)
+    // Each query result stored in its correct member
     m_freqStart  = m_adapter.send(ScpiQueryCmdLookup.at(ScpiQueryCmd::FREQ_STAR));
     m_freqEnd    = m_adapter.send(ScpiQueryCmdLookup.at(ScpiQueryCmd::FREQ_STOP));
     m_freqCenter = m_adapter.send(ScpiQueryCmdLookup.at(ScpiQueryCmd::FREQ_CENT));

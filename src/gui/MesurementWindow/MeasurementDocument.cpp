@@ -12,10 +12,8 @@
 #include <iostream>
 #include <algorithm>
 
-// ---------------------------------------------------------------------------
-// Construction / Destruction
-// ---------------------------------------------------------------------------
 
+// Construction / Destruction
 MeasurementDocument::MeasurementDocument(PrologixUsbGpibAdapter& adapter,
                                          fsuMeasurement& messung)
     : m_adapter(adapter)
@@ -26,14 +24,12 @@ MeasurementDocument::MeasurementDocument(PrologixUsbGpibAdapter& adapter,
 MeasurementDocument::~MeasurementDocument()
 {
     StopMeasurement();
-    // NOTE: Do NOT disconnect the shared adapter singleton here.
+    // Do NOT disconnect the shared adapter singleton here.
     // Multiple MeasurementDocuments may share the same adapter.
     // The adapter lifecycle is managed at the application level.
 }
 
-// ---------------------------------------------------------------------------
 // Observer management
-// ---------------------------------------------------------------------------
 
 void MeasurementDocument::AddObserver(IMeasurementObserver* observer)
 {
@@ -60,10 +56,8 @@ void MeasurementDocument::NotifyObservers(const std::string& changeType)
     }
 }
 
-// ---------------------------------------------------------------------------
 // Commands
-// ---------------------------------------------------------------------------
-
+// Only executes one measurement
 void MeasurementDocument::StartMeasurement(const std::string& dirPath,
                                            const std::string& scriptName,
                                            int                measurementNumber)
@@ -81,7 +75,7 @@ void MeasurementDocument::StartMeasurement(const std::string& dirPath,
     NotifyObservers("MeasurementStarted");
 
     m_thread = std::thread(&MeasurementDocument::WorkerThread,
-                           this, dirPath, scriptName, measurementNumber);
+                           this, dirPath, scriptName, 1);
 }
 
 void MeasurementDocument::StopMeasurement()
@@ -132,80 +126,120 @@ void MeasurementDocument::WriteMarker2(bool setToMax, const std::string& freqRaw
     }
 }
 
-// ---------------------------------------------------------------------------
-// Worker thread — replaces PlotWindow::MeasurementWorkerThread
-// ---------------------------------------------------------------------------
 
+// Worker thread
 void MeasurementDocument::WorkerThread(const std::string& dirPath,
                                        const std::string& scriptName,
                                        int                measurementNumber)
 {
     std::cout << "MeasurementDocument: worker thread started" << std::endl;
     CsvFile csvFile(m_csvSeparator);
+    static wxString fileName;
 
     try
     {
-        wxArrayString logAdapterReceived;
         wxString wxDirPath    = wxString::FromUTF8(dirPath);
         wxString wxScriptName = wxString::FromUTF8(scriptName);
 
-        // Prefer direct device measurement when no script is provided.
-        // Custom-script mode still works via fsuMeasurement::executeMeasurement().
-        if (scriptName.empty())
+        if (measurementNumber == 1)
         {
-            if (!m_messung.executeMeasurement())
+            m_results.importFsuSettings();
+
+            int pointsPerMeasurement = 1;
+            wxString typeText = "Measurement";
+            switch (m_messung.getMeasurementMode())
             {
-                throw std::runtime_error("executeMeasurement failed");
+            case MeasurementMode::SWEEP:
+                pointsPerMeasurement = std::max(1, m_results.getNumberOfPts_Array());
+                typeText = "Sweep";
+                break;
+            case MeasurementMode::IQ:
+                pointsPerMeasurement = std::max(1, m_results.getRecordLength());
+                typeText = "IQ";
+                break;
+            case MeasurementMode::MARKER_PEAK:
+                pointsPerMeasurement = 1;
+                typeText = "Marker";
+                break;
+            case MeasurementMode::COSTUM:
+                pointsPerMeasurement = std::max(1, m_results.getNumberOfPts_Array());
+                typeText = "Costum";
+                break;
             }
+
+            m_results.setNumberofPts_Array(pointsPerMeasurement);
+
+            fileName = System::filePathRoot + "LogFiles" + System::fileSystemSlash
+                     + m_results.GetFile() + "_" + "Single_Measurement_" + typeText + "_"
+                     + m_results.GetDate() + "_" + m_results.GetTime() + ".csv";
         }
-        else
+
+        // Get script name if custom
+        if (!scriptName.empty())
         {
-            // Execute the GPIB script — blocks until completed or stopped
-            m_adapter.readScriptFile(wxDirPath, wxScriptName, &logAdapterReceived, &m_stopFlag);
+            m_messung.setFilePath(wxDirPath);
+            m_messung.setFileName(wxScriptName);
         }
 
-        for (size_t i = 0; i < logAdapterReceived.GetCount(); i++)
-            std::cerr << logAdapterReceived[i] << std::endl;
+        if (!m_messung.executeMeasurement())
+        {
+            const std::string reason = m_messung.getLastError();
+            throw std::runtime_error(reason.empty() ? "executeMeasurement failed" : reason);
+        }
 
-        // Collect results from the shared fsuMesurement sink
-        std::vector<double> x_copy = m_messung.getX_Data();
-        std::vector<double> y_copy = m_results.GetFreqStepVector();
+        // get Resultes
+        std::vector<double> realValues = m_messung.getX_Data();
+        std::vector<double> imagValues = m_messung.getY_Data();
+
+        if (realValues.empty())
+        {
+            throw std::runtime_error("No measurement values returned");
+        }
 
         sData::sParam* info = m_results.GetParameter();
 
-        if (measurementNumber == 1)
-        {
-            m_results.setNumberofPts_Array(x_copy.size());
-        }
-
         int xPos = 0, yPos = 0;
         m_results.getXYCord(xPos, yPos, measurementNumber);
-        m_results.set3DDataReal(x_copy, xPos, yPos);
+        m_results.set3DDataReal(realValues, xPos, yPos);
 
-        std::vector<double> freqScale = m_results.GetFreqStepVector();
+        if (!imagValues.empty())
+            m_results.set3DDataImag(imagValues, xPos, yPos);
 
-        if (m_messung.isImagValues())
-            m_results.set3DDataImag(y_copy, xPos, yPos);
+        std::vector<double> xAxis;
+        if (m_messung.getMeasurementMode() == MeasurementMode::IQ)
+            xAxis = m_results.GetTimeIQStepVector();
+        else
+            xAxis = m_results.GetFreqStepVector();
+
+        if (xAxis.empty())
+        {
+            xAxis.resize(realValues.size());
+            for (size_t i = 0; i < xAxis.size(); ++i)
+                xAxis[i] = static_cast<double>(i);
+        }
+
+        const size_t n = std::min(xAxis.size(), realValues.size());
+        xAxis.resize(n);
+        realValues.resize(n);
 
         // Update document state then notify observers
-        // NOTE: observers must use CallAfter for any wxWidgets GUI calls
-        m_x = freqScale;
-        m_y = x_copy;   // matches original PlotWindow swap
+        // observers must use CallAfter for any wxWidgets GUI calls
+        m_x = std::move(xAxis);
+        m_y = std::move(realValues);
 
         NotifyObservers("DataUpdated");
-
-        // Save result to file
-        wxString filePath = System::filePathRoot + System::fileSystemSlash
-                          + "LogFiles" + System::fileSystemSlash
-                          + "Messung " + info->Time;
 
         if (info && !m_includePlotterSettings)
             info->hasPlotterData = false;
 
-        wxTextFile file(filePath);
-        file.Create();
-        if (!file.Open())
-            csvFile.saveCsvFile(filePath, m_results, measurementNumber);
+        if (fileName.IsEmpty() && info)
+        {
+            fileName = System::filePathRoot + "LogFiles" + System::fileSystemSlash
+                     + "Messung_" + info->Time + ".csv";
+        }
+
+        if (!csvFile.saveCsvFile(fileName, m_results, measurementNumber))
+            std::cerr << "[MeasurementDocument] failed to save CSV" << std::endl;
 
         std::cout << "MeasurementDocument: worker thread completed" << std::endl;
     }

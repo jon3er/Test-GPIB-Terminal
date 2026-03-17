@@ -5,7 +5,7 @@
 #include <map>
 #include <functional>
 
-// Forward declaration — no wxWidgets in the document
+// Forward declaration
 class PrologixUsbGpibAdapter;
 
 /**
@@ -15,9 +15,9 @@ class PrologixUsbGpibAdapter;
  * when the document state changes.
  *
  * Change types:
- *   "OutputAppended"      — new text was added to the output log
- *   "ConnectionChanged"   — adapter connected / disconnected
- *   "Cleared"             — document state was reset
+ *   "OutputAppended"      new text was added to the output log
+ *   "ConnectionChanged"   adapter connected / disconnected
+ *   "Cleared"             document state was reset
  */
 class ITerminalObserver
 {
@@ -28,14 +28,6 @@ public:
 
 /**
  * @brief Document in the Document/View pattern for the GPIB terminal.
- *
- * Responsibilities:
- *  - Own all terminal state (output log, connection state)
- *  - Execute all GPIB hardware commands via the injected adapter reference
- *  - Notify registered observers on every state change
- *
- * This class is pure C++ — it has NO wxWidgets dependency and is fully
- * unit-testable without a GUI.
  */
 class TerminalDocument
 {
@@ -56,15 +48,13 @@ public:
     const std::vector<std::string>& GetCommandHistory()  const { return m_commandHistory; }
     bool                            IsConnected()        const;
 
-    // ---- Command interface (called by the view's event handler) ----
-
+    // ---- Command interface 
     /**
      * Parse and execute a raw user input string.
-     * Dispatches to the appropriate command method below.
      */
     void ProcessCommand(const std::string& input);
 
-    // Individual commands — also callable directly (e.g. from tests)
+    // Individual commands
     std::string ScanDevices     (const std::string& args = "");
     std::string StatusDevice    (const std::string& args = "");
     std::string ConnectDevice   (const std::string& args = "");

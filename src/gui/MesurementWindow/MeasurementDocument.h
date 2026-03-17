@@ -11,10 +11,10 @@
  * @brief Observer interface for MeasurementDocument.
  *
  * Change types emitted:
- *   "MeasurementStarted"  — worker thread has been launched
- *   "DataUpdated"         — new x/y data is ready  ← may come from worker thread!
- *   "MarkerUpdated"      — a marker command was sent to the instrument
- *   "MeasurementStopped"  — thread finished or was stopped
+ *   "MeasurementStarted"  worker thread has been launched
+ *   "DataUpdated"         new x/y data is ready  ← may come from worker thread!
+ *   "MarkerUpdated"       a marker command was sent to the instrument
+ *   "MeasurementStopped"  thread finished or was stopped
  *
  * IMPORTANT: "DataUpdated" can arrive from a background thread.
  * Views *must* guard GUI updates with wxEvtHandler::CallAfter().

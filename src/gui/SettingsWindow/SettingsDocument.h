@@ -3,16 +3,16 @@
 #include <string>
 #include <vector>
 
-// Forward declaration — no wxWidgets in the document
+// Forward declaration
 class PrologixUsbGpibAdapter;
 
 /**
  * @brief Observer interface for SettingsDocument changes.
  *
  * Change types:
- *   "SettingsApplied"   — settings were written to the device
- *   "SettingsLoaded"    — settings were read from the device
- *   "FreqModeChanged"   — freq mode toggled (Start/End <-> Center/Span)
+ *   "SettingsApplied"   settings were written to the device
+ *   "SettingsLoaded"    settings were read from the device
+ *   "FreqModeChanged"   freq mode toggled (Start/End <-> Center/Span)
  */
 class ISettingsObserver
 {
@@ -23,13 +23,6 @@ public:
 
 /**
  * @brief Document in the Document/View pattern for the Settings window.
- *
- * Responsibilities:
- *  - Own all display-settings state (frequencies, level, scaling)
- *  - Execute all GPIB hardware commands via the injected adapter reference
- *  - Notify registered observers on every state change
- *
- * This class is pure C++ — it has NO wxWidgets dependency.
  */
 class SettingsDocument
 {
@@ -74,13 +67,13 @@ public:
     );
 
     /**
-     * Query all current settings from the device and store them.
+     * @brief Query all current settings from the device and store them.
      * Notifies observers with "SettingsLoaded".
      */
     void QueryFromDevice();
 
     /**
-     * Toggle the frequency input mode.
+     * @brief Toggle the frequency input mode.
      * Notifies observers with "FreqModeChanged".
      */
     void SetFreqMode(bool useStartEnd);

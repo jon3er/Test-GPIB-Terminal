@@ -199,11 +199,10 @@ void fsuMeasurement::seperateDataBlock(const wxString& receivedString,
                                         std::vector<double>& Real, std::vector<double>& Imag)
 {
     // removes \n at the end of the msg
-    wxString str = receivedString; //.AfterFirst('\n');
+    wxString str = receivedString; 
 
     str.Trim(true).Trim(false);
 
-    // Responses can be comma-separated (sweep/IQ) or semicolon-separated (marker X;Y).
     wxArrayString seperatedStrings = wxStringTokenize(str, ",;");
 
     //std::cout << "seperated Data: " << seperatedStrings << std::endl;
@@ -243,7 +242,7 @@ void fsuMeasurement::seperateDataBlock(const wxString& receivedString,
     }
 
     // Debug Output
-    std::cerr << "Daten verarbeitet. X-Groesse: " << Real.size()
+    std::cout << "Daten verarbeitet. X-Groesse: " << Real.size()
               << " Y-Groesse: " << Imag.size() << std::endl;
 
 }
@@ -291,7 +290,7 @@ try {
         case ScpiCommand::START_FREQUENCY:
         case ScpiCommand::END_FREQUENCY: {
             double freq = std::get<double>(value);
-            // Beispiel: R&S FSU26 geht bis 26.5 GHz
+            // Beispiel: R&S FSU bis 26.5 GHz
             return (freq >= 0.0 && freq <= 26.5e9);
         }
 
@@ -399,7 +398,6 @@ bool fsuMeasurement::writeSettingsToGpib()
 
         default:
             return false;
-
     }
 }
 
@@ -715,14 +713,14 @@ int fsuMeasurement::estimateMeasurementTimeIQ()
     double ifBandwidthHz    = m_lastIqSettings.ifBandwidth;
 
     const IqTimeoutRef& ref = m_iqTimeoutRef;
-
+    // reference values
     double safetyFactor = 1.5;
     int offsetMs        = 300;
     int minMs           = 500;
     int maxMs           = 120'000; 
 
 
-
+    // prevent too small values (std::max returns the bigger of two values)
     const int n     = std::max(1, recordLength);
     const double fs = std::max(1.0, sampleRateHz);
     const double bw = std::max(1.0, ifBandwidthHz);

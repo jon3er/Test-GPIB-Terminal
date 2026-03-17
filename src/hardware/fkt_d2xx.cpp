@@ -52,8 +52,6 @@ FT_STATUS configUsbDev(DWORD numDev, FT_HANDLE &ftHandle,int BaudRate)  //Sets B
     return ftStatus;
 }
 
-
-
 FT_STATUS writeUsbDev(FT_HANDLE ftHandle, std::vector<char> cmdText,DWORD& bytesWritten)
 {
     FT_STATUS ftStatus;
@@ -128,7 +126,7 @@ FT_STATUS readUsbDev(FT_HANDLE ftHandle,std::vector<char>& RPBuffer,DWORD &Bytes
     return ftStatus;
 }
 
-const char * statusString(FT_STATUS status) //Error Codes
+const char * statusString(FT_STATUS status) //Error Codes form FTDI D2XX
 {
     switch (status)
     {

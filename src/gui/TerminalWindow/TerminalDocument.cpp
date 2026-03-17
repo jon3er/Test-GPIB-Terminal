@@ -9,10 +9,7 @@
 #include <sstream>
 #include <algorithm>
 
-// ---------------------------------------------------------------------------
 // Construction / Destruction
-// ---------------------------------------------------------------------------
-
 TerminalDocument::TerminalDocument(PrologixUsbGpibAdapter& adapter)
     : m_adapter(adapter)
 {
@@ -24,10 +21,8 @@ TerminalDocument::~TerminalDocument()
 
 }
 
-// ---------------------------------------------------------------------------
-// Observer management
-// ---------------------------------------------------------------------------
 
+// Observer management
 void TerminalDocument::AddObserver(ITerminalObserver* observer)
 {
     if (observer && std::find(m_observers.begin(), m_observers.end(), observer) == m_observers.end())
@@ -50,19 +45,14 @@ void TerminalDocument::NotifyObservers(const std::string& changeType)
     }
 }
 
-// ---------------------------------------------------------------------------
 // State accessors
-// ---------------------------------------------------------------------------
-
 bool TerminalDocument::IsConnected() const
 {
     return m_adapter.getConnected();
 }
 
-// ---------------------------------------------------------------------------
-// Internal output helper
-// ---------------------------------------------------------------------------
 
+// Internal output helper
 void TerminalDocument::AppendOutput(const std::string& text)
 {
     m_lastOutput = text;
@@ -70,10 +60,8 @@ void TerminalDocument::AppendOutput(const std::string& text)
     NotifyObservers("OutputAppended");
 }
 
-// ---------------------------------------------------------------------------
-// Command dispatch setup
-// ---------------------------------------------------------------------------
 
+// Command dispatch setup
 void TerminalDocument::SetupCommands()
 {
     m_cmds["scan"]       = [this](const std::string& args) { return ScanDevices(args); };
@@ -87,10 +75,8 @@ void TerminalDocument::SetupCommands()
     m_cmds["test"]       = [this](const std::string& args) { return TestDevice(args); };
 }
 
-// ---------------------------------------------------------------------------
-// ProcessCommand — parse input and dispatch
-// ---------------------------------------------------------------------------
 
+// ProcessCommand — parse input and dispatch
 void TerminalDocument::ProcessCommand(const std::string& input)
 {
     m_commandHistory.push_back(input);
@@ -124,10 +110,8 @@ void TerminalDocument::ProcessCommand(const std::string& input)
     }
 }
 
-// ---------------------------------------------------------------------------
-// Command implementations
-// ---------------------------------------------------------------------------
 
+// Command implementations
 std::string TerminalDocument::ScanDevices(const std::string& /*args*/)
 {
     DWORD devNum = scanUsbDev();

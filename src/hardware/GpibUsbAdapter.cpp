@@ -9,8 +9,6 @@ bool startsWith(const std::string& value, const std::string& prefix)
 }
 }
 
-
-//TODO Create Device Class and Create new read read and write funtions
 PrologixUsbGpibAdapter::PrologixUsbGpibAdapter()
 {
 
@@ -200,12 +198,10 @@ bool PrologixUsbGpibAdapter::checkIfAdapterAvailable()
 
 bool PrologixUsbGpibAdapter::checkIfGpibDeviceAvailable()
 {
-
     if (!checkIfAdapterAvailable())
     {
         return false;
     }
-
     if (!connect())
     {
         return false;
@@ -656,7 +652,7 @@ void PrologixUsbGpibAdapter::checkForGpibBusError(wxWindow* parent)
                 // check error msg of R&S device
                 std::string errorMsg = send("SYST:ERR?");
 
-                // 5. wxWidgets warning window popup
+                // wxWidgets warning window popup
                 wxMessageBox(
                     wxString::Format("Spektrumanalysator meldet einen Fehler:\n%s", errorMsg.c_str()),
                     "Gerätefehler",

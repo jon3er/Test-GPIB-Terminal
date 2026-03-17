@@ -6,9 +6,8 @@
 #include "dataManagement.h"
 #include "CsvManagement.h"
 
-// -----------------------------------------------------------------------
-// Observer interface — implemented by any view that watches MainDocument
-// -----------------------------------------------------------------------
+
+// Observer interface
 class IMainObserver
 {
 public:
@@ -16,7 +15,6 @@ public:
 
     /**
      * Called whenever the loaded data or open-state changes
-     * (after open, close, save-as).
      */
     virtual void OnFileChanged(const sData& data, bool isOpen) = 0;
 
@@ -26,12 +24,10 @@ public:
     virtual void OnFilePathChanged(const wxString& path) = 0;
 };
 
-// -----------------------------------------------------------------------
-// MainDocument — owns the application-level CSV data and file path.
+// MainDocument owns the application-level CSV data and file path.
 //
 // Lifetime: created once in MainWin::OnInit, destroyed when the app exits.
 // Thread-safety: all methods must be called from the main (UI) thread.
-// -----------------------------------------------------------------------
 class MainDocument
 {
 public:

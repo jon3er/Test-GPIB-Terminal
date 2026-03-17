@@ -207,10 +207,8 @@ SettingsTabDisplay::SettingsTabDisplay(wxNotebook *parent, const wxString &label
     UpdateToggleWidgetState();
 }
 
-// ---------------------------------------------------------------------------
-// Document/View wiring
-// ---------------------------------------------------------------------------
 
+// Document/View 
 void SettingsTabDisplay::SetDocument(SettingsDocument* doc)
 {
     if (m_doc)
@@ -238,10 +236,7 @@ void SettingsTabDisplay::OnDocumentChanged(const std::string& changeType)
     }
 }
 
-// ---------------------------------------------------------------------------
 // View helpers
-// ---------------------------------------------------------------------------
-
 void SettingsTabDisplay::RefreshFromDocument()
 {
     if (!m_doc)
@@ -280,10 +275,7 @@ void SettingsTabDisplay::UpdateToggleWidgetState()
     m_freqEinheitAuswahl_4->Enable(!useStartEnd);
 }
 
-// ---------------------------------------------------------------------------
 // Event handlers
-// ---------------------------------------------------------------------------
-
 void SettingsTabDisplay::OnAnwenden(wxCommandEvent& event)
 {
     if (!m_doc)
