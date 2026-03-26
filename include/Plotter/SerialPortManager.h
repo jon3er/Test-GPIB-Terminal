@@ -1,14 +1,7 @@
 #ifndef SERIALPORTMANAGER_H
 #define SERIALPORTMANAGER_H
 
-// Add this line to silence the Boost bind warnings
-#define BOOST_BIND_GLOBAL_PLACEHOLDER
-
 #include <boost/asio.hpp>
-#include <boost/bind.hpp>
-#include <boost/asio/deadline_timer.hpp>
-#include <boost/asio/buffer.hpp>
-#include <boost/optional.hpp>
 #include <vector>
 #include <string>
 #include <iostream>
@@ -38,7 +31,6 @@ class SerialPortManager
         bool IsOpen() const;
 
         bool Write(const std::string& data);
-        bool Write(const boost::asio::const_buffer &buffer);
 
         void StartAsyncRead(std::function<void(const std::string&)> onLineRead);
 

@@ -1,8 +1,6 @@
 #ifndef MAINFRAME_H
 #define MAINFRAME_H
 
-#include <boost/bind.hpp>
-
 #include <wx/wx.h>
 #include <wx/splitter.h>
 #include <wx/artprov.h>

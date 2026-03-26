@@ -9,11 +9,15 @@ endif()
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-# 1. wxWidgets & Boost
+# 1. wxWidgets & local Boost (header-only using asio)
 find_package(wxWidgets REQUIRED COMPONENTS core base adv net richtext)
 include(${wxWidgets_USE_FILE})
 
-find_package(Boost REQUIRED COMPONENTS system)
+# Use local Boost from third-party (header-only)
+set(Boost_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/third-party/boost_1_90_0")
+if(NOT EXISTS "${Boost_INCLUDE_DIRS}/boost/asio.hpp")
+    message(FATAL_ERROR "Boost not found in ${Boost_INCLUDE_DIRS}. Please ensure boost_1_90_0 is extracted there.")
+endif()
 
 # 2. FTDI & wxMathplots
 if(WIN32)
@@ -28,18 +32,17 @@ set(wxMathplots_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third-party")
 set(VCPKG_APPLOCAL_DEPS ON CACHE BOOL "")
 # supress wxMathplotswarnigs
 
-# 3. Sources (Tipp: Vermeide GLOB, aber für Prototypen okay)
-file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS "src/**/*.cpp" "third-party/*.cpp")
+# 3. Sources (wxMathplots only, exclude boost library)
+file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS "src/**/*.cpp" "third-party/wxMathplots/mathplot.cpp")
 
 add_executable(TEST-GPIB-Terminal ${SOURCE_FILES})
 if(WIN32)
     set_target_properties(TEST-GPIB-Terminal PROPERTIES WIN32_EXECUTABLE YES)
 endif()
 
-# --- 6. Präprozessor-Fixes (Löst deine Warnungen) ---
+# --- 6. Präprozessor-Fixes ---
 target_compile_definitions(TEST-GPIB-Terminal PRIVATE 
     wxUSE_GUI=1
-    BOOST_BIND_GLOBAL_PLACEHOLDERS  # Fix für Boost: Bind Warnung
 )
 
 if(WIN32)
@@ -58,7 +61,6 @@ endif()
 # 4. Linking & Includes
 target_link_libraries(TEST-GPIB-Terminal PRIVATE 
     ${wxWidgets_LIBRARIES} 
-    Boost::system 
     ${FTDI_LIBRARY}
 )
 

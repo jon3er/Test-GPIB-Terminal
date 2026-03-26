@@ -86,7 +86,7 @@ bool SerialPortManager::OpenPort(const std::string& portName, unsigned int baudR
         std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 
         return true;
-    } catch (const boost::system::system_error& e) {
+    } catch (const std::exception& e) {
         std::cerr << "Error opening port " << portName << ": " << e.what() << "\n";
         return false;
     }
@@ -101,16 +101,12 @@ bool SerialPortManager::IsOpen() const {
 }
 
 bool SerialPortManager::Write(const std::string& data) {
-	return this->Write(boost::asio::buffer(data));
-}
-
-bool SerialPortManager::Write(const boost::asio::const_buffer& buffer) {
     if (!m_serial.is_open()) return false;
 
     try {
-        boost::asio::write(m_serial, buffer);
+        boost::asio::write(m_serial, boost::asio::buffer(data));
         return true;
-    } catch (const boost::system::system_error& e) {
+    } catch (const std::exception& e) {
         std::cerr << "Write error: " << e.what() << "\n";
         return false;
     }
