@@ -224,7 +224,7 @@ void FunctionDocument::TestSaveFile()
     sData::sParam* TestData = TestObjekt.GetParameter();
     std::cerr << "Zeit: " << TestData->Time << std::endl;
 
-    wxString Dateiname = "D:\\CodeProjects\\VSCode\\projects\\Diplom\\Test-GPIB-Terminal\\LogFiles\\TestCSVNeu";
+    wxString Dateiname = System::filePathRoot + "LogFiles" + System::fileSystemSlash + "TestCSVNeu";
 
     int messungen = TestObjekt.getNumberOfPts_X() * TestObjekt.getNumberOfPts_Y();
     for (int i = 1; i <= messungen; i++)
@@ -235,7 +235,7 @@ void FunctionDocument::TestSaveFile()
 
     csvFile1.readCsvFile(Dateiname, TestObjekt2);
 
-    wxString Dateiname2 = "D:\\CodeProjects\\VSCode\\projects\\Diplom\\Test-GPIB-Terminal\\LogFiles\\TestCSVNeuKopie";
+    wxString Dateiname2 = System::filePathRoot + "LogFiles" + System::fileSystemSlash + "TestCSVNeuKopie";
 
     int totalpoints = TestObjekt2.getNumberOfPts_X() * TestObjekt2.getNumberOfPts_Y();
     std::cout << "[Debug] Totalpoints: " << totalpoints << std::endl;

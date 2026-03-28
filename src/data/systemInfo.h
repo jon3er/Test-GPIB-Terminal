@@ -1,6 +1,7 @@
 #pragma once
 
 #include <wx/wx.h>
+#include <wx/filename.h>
 #include <unordered_map>
 #include "mathplot.h"
 #include "dataManagement.h"
@@ -9,15 +10,31 @@
 // defines path for linux and windows systems
 namespace System
 {
-#if defined(_WIN32)
-    inline wxString filePathSystem = "D:\\CodeProjects\\VSCode\\projects\\Diplom\\Test-GPIB-Terminal\\GpibScripts\\";
-    inline wxString filePathRoot = "D:\\CodeProjects\\VSCode\\projects\\Diplom\\Test-GPIB-Terminal\\";
-    inline wxString fileSystemSlash = "\\";
-#elif defined(__linux__)
-    inline wxString filePathSystem = "/home/jon3r/Documents/Code/CodeBlocks/Test_GPIB_Terminal/GpibScripts/";
-    inline wxString filePathRoot = "/home/jon3r/Documents/Code/CodeBlocks/Test_GPIB_Terminal/";
-    inline wxString fileSystemSlash = "/";
-#endif
+    /**
+     * Get the project root directory based on the current working directory or executable location.
+     * This ensures cross-platform compatibility.
+     */
+    inline wxString GetProjectRoot()
+    {
+        wxString cwd = wxGetCwd();
+        
+        // If running from build directory, navigate back to project root
+        if (cwd.EndsWith("Debug") || cwd.EndsWith("Release"))
+        {
+            // Navigate up two levels: build/Debug -> build -> project root
+            wxFileName path(cwd + wxFileName::GetPathSeparator());
+            path.RemoveLastDir();  // Remove Debug/Release
+            path.RemoveLastDir();  // Remove build
+            return path.GetFullPath() + wxFileName::GetPathSeparator();
+        }
+        
+        // Otherwise assume cwd is already the project root
+        return cwd + wxFileName::GetPathSeparator();
+    }
+
+    inline wxString filePathRoot = GetProjectRoot();
+    inline wxString filePathSystem = GetProjectRoot() + "GpibScripts" + wxFileName::GetPathSeparator();
+    inline wxString fileSystemSlash = wxFileName::GetPathSeparator();
 }
 
 // ID for main Window menu bar
