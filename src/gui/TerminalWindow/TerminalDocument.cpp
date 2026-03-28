@@ -380,7 +380,7 @@ std::string TerminalDocument::TestDevice(const std::string& args)
         fsuMeasurement::get_instance().setX_Data(bufferReal);
 
         wxFile file;
-        if (file.Open("GpibScripts/Z_Log.txt", wxFile::write_append))
+        if (file.Open(System::filePathRoot + "GpibScripts/Z_Log.txt", wxFile::write_append))
         {
             file.Write(trace);
             file.Close();
